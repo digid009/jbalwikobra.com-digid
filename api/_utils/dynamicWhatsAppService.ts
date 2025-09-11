@@ -1,14 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
+// Lazily initialize Supabase client to avoid throwing during module import
+let supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient | null {
+  if (supabase) return supabase;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.warn('[DynamicWhatsAppService] Supabase env missing. Service will be no-op.');
+    return null;
   }
-});
+  supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+  return supabase;
+}
 
 interface WhatsAppProvider {
   id: string;
@@ -57,7 +63,9 @@ export class DynamicWhatsAppService {
    */
   private async getActiveApiKey(providerName: string = 'woo-wa'): Promise<WhatsAppApiKey | null> {
     try {
-      const { data, error } = await supabase.rpc('get_active_api_key', {
+  const sb = getSupabase();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('get_active_api_key', {
         provider_name: providerName
       });
 
@@ -336,7 +344,9 @@ Ada pertanyaan? Balas pesan ini! 💬`;
     responseTime: number;
   }): Promise<void> {
     try {
-      await supabase.rpc('log_whatsapp_message', {
+  const sb = getSupabase();
+  if (!sb) return;
+  await sb.rpc('log_whatsapp_message', {
         p_api_key_id: params.apiKeyId,
         p_phone_number: params.phone,
         p_message_type: params.messageType,
@@ -360,7 +370,9 @@ Ada pertanyaan? Balas pesan ini! 💬`;
    */
   async getProviders(): Promise<WhatsAppProvider[]> {
     try {
-      const { data, error } = await supabase
+  const sb = getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb
         .from('whatsapp_providers')
         .select('*')
         .eq('is_active', true)
@@ -383,8 +395,10 @@ Ada pertanyaan? Balas pesan ini! 💬`;
    */
   async addApiKey(providerName: string, keyName: string, apiKey: string, isPrimary: boolean = false): Promise<boolean> {
     try {
-      // Get provider ID
-      const { data: provider } = await supabase
+  const sb = getSupabase();
+  if (!sb) return false;
+  // Get provider ID
+  const { data: provider } = await sb
         .from('whatsapp_providers')
         .select('id')
         .eq('name', providerName)
@@ -397,14 +411,14 @@ Ada pertanyaan? Balas pesan ini! 💬`;
 
       // If setting as primary, unset other primary keys
       if (isPrimary) {
-        await supabase
+        await sb
           .from('whatsapp_api_keys')
           .update({ is_primary: false })
           .eq('provider_id', provider.id);
       }
 
       // Insert new key
-      const { error } = await supabase
+      const { error } = await sb
         .from('whatsapp_api_keys')
         .insert({
           provider_id: provider.id,
@@ -437,7 +451,9 @@ Ada pertanyaan? Balas pesan ini! 💬`;
     offset?: number;
   } = {}): Promise<any[]> {
     try {
-      let query = supabase
+  const sb = getSupabase();
+  if (!sb) return [];
+  let query = sb
         .from('whatsapp_message_logs')
         .select(`
           *,

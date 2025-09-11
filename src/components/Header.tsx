@@ -50,11 +50,11 @@ const Header: React.FC = () => {
     const disposers: Array<() => void> = [];
     const runPrefetch = (path: string) => {
       // dynamic import warmups for key routes
-      if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
-      else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
-      else if (path === '/feed') warmImport(() => import('../pages/HomePage'));
-      else if (path === '/help') warmImport(() => import('../pages/HelpPage'));
-      else if (path === '/') warmImport(() => import('../pages/HomePage'));
+  if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
+  else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
+  else if (path === '/feed') warmImport(() => import('../pages/FeedPage'));
+  else if (path === '/help') warmImport(() => import('../pages/HelpPage'));
+  else if (path === '/') warmImport(() => import('../pages/HomePage'));
     };
     // attach to all header nav links when rendered (desktop only here)
     const root = document.querySelector('header nav');
@@ -69,24 +69,7 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header 
-      className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/95 border-b border-ios-border/50 safe-top force-fixed-header" 
-      data-fixed="header"
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        width: '100%',
-        transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
-        backfaceVisibility: 'hidden', // Improve performance
-        WebkitBackfaceVisibility: 'hidden',
-        paddingTop: 'env(safe-area-inset-top)', // iOS safe area
-        WebkitTransform: 'translate3d(0, 0, 0)',
-        willChange: 'transform'
-      }}
-    >
+  <header className="mobile-header" data-fixed="header">
       {/* Mobile-first design - Base styles for mobile */}
       <IOSContainer padding={false} className="px-4 py-4">
         <div className="flex items-center justify-between min-h-[44px]"> {/* Minimum touch target */}

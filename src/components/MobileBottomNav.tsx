@@ -18,11 +18,11 @@ const MobileBottomNav: React.FC = () => {
     if (!shouldPrefetch()) return;
     const disposers: Array<() => void> = [];
     const runPrefetch = (path: string) => {
-      if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
-      else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
-      else if (path === '/feed') warmImport(() => import('../pages/HomePage'));
-      else if (path === '/profile') warmImport(() => import('../pages/ProfilePage'));
-      else if (path === '/') warmImport(() => import('../pages/HomePage'));
+  if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
+  else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
+  else if (path === '/feed') warmImport(() => import('../pages/FeedPage'));
+  else if (path === '/profile') warmImport(() => import('../pages/ProfilePage'));
+  else if (path === '/') warmImport(() => import('../pages/HomePage'));
     };
     const root = document.querySelector('nav');
     if (root) {
@@ -37,22 +37,8 @@ const MobileBottomNav: React.FC = () => {
 
   return (
     <div 
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] w-full bg-white/95 backdrop-blur-md border-t border-gray-200 safe-bottom shadow-lg mobile-bottom-nav-fixed force-fixed-bottom" 
+      className="lg:hidden mobile-bottom-nav" 
       data-fixed="bottom-nav"
-      style={{ 
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 60,
-        width: '100%',
-        transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
-        backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden',
-        paddingBottom: 'env(safe-area-inset-bottom)', // iOS safe area
-        WebkitTransform: 'translate3d(0, 0, 0)',
-        willChange: 'transform'
-      }}
     >
       <nav className="flex justify-around items-center px-2 py-3 min-h-[65px]">
         {navItems.map((item) => {

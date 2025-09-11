@@ -100,8 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         body: JSON.stringify({ identifier: normalizedIdentifier, password }),
       });
-
-      const data = await response.json();
+      // Some hosts return HTML on 500; guard JSON parsing
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json')
+        ? await response.json()
+        : { error: await response.text() };
 
       if (!response.ok) {
         return { error: data.error || 'Login failed' };
@@ -152,7 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ phone: normalizedPhone, password }),
       });
 
-      const data = await response.json();
+  const ct2 = response.headers.get('content-type') || '';
+  const data = ct2.includes('application/json') ? await response.json() : { error: await response.text() };
 
       if (!response.ok) {
         return { error: data.error || 'Signup failed' };
@@ -179,7 +183,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ user_id: userId, verification_code: code }),
       });
 
-      const data = await response.json();
+  const ct3 = response.headers.get('content-type') || '';
+  const data = ct3.includes('application/json') ? await response.json() : { error: await response.text() };
 
       if (!response.ok) {
         return { error: data.error || 'Verification failed' };
@@ -240,7 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
 
-      const data = await response.json();
+  const ct4 = response.headers.get('content-type') || '';
+  const data = ct4.includes('application/json') ? await response.json() : { error: await response.text() };
 
       if (!response.ok) {
         return { error: data.error || 'Profile completion failed' };

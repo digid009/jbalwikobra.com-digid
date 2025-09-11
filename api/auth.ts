@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -61,6 +61,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Early environment check to prevent framework HTML 500s
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Auth API misconfiguration: Missing Supabase URL or Service Key');
+      return res.status(500).json({ error: 'Server configuration error. Please try again later.' });
+    }
+
     const { action } = req.query;
     const clientIp = getClientIP(req);
 
@@ -118,7 +124,10 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Verify password
+    // Verify password (handle users without password hash gracefully)
+    if (!user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });

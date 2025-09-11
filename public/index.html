@@ -61,6 +61,26 @@
     <title>JB Alwikobra - Jual Beli Rental Akun Game Terpercaya</title>
   </head>
   <body>
+    <!-- Google tag (gtag.js) - load only in production environments -->
+    <script>
+      (function() {
+        try {
+          var isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+          if (!isLocalhost) {
+            var gtagScript = document.createElement('script');
+            gtagScript.async = true;
+            gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-4K6YY64XKN';
+            document.head.appendChild(gtagScript);
+
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);} // eslint-disable-line
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', 'G-4K6YY64XKN');
+          }
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
     <script>
       // Ensure dark mode by default and prevent iOS white flash during load
       try {

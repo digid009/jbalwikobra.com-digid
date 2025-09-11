@@ -1,18 +1,20 @@
 // API Request Optimization Utilities
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import Redis from 'ioredis'; // Assuming ioredis is installed
-
-// Initialize Redis client
-// Ensure REDIS_URL is set in your environment variables
-const redisClient = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL)
-  : null;
-
-if (!redisClient) {
-  console.warn('REDIS_URL not found. Caching will fall back to in-memory (limited in serverless).');
-} else {
-  redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-  redisClient.on('connect', () => console.log('Redis Client Connected'));
+// Make Redis optional at runtime to avoid build errors when 'ioredis' isn't installed
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let redisClient: any = null;
+const redisUrl = process.env.REDIS_URL;
+if (redisUrl) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Redis = require('ioredis');
+    redisClient = new Redis(redisUrl);
+    redisClient.on('error', (err: unknown) => console.error('Redis Client Error:', err));
+    redisClient.on('connect', () => console.log('Redis Client Connected'));
+  } catch (e) {
+    console.warn('ioredis not installed or failed to initialize. Falling back to in-memory cache.');
+    redisClient = null;
+  }
 }
 
 export function generateCacheKey(req: VercelRequest): string {
@@ -78,7 +80,7 @@ export async function clearCache(): Promise<void> {
 
   try {
     await redisClient.flushdb(); // Clear all keys in the current DB
-  n} catch (error) {
+  } catch (error) {
     console.error('Error clearing Redis cache:', error);
   }
 }
