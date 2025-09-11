@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter, Users } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
 import { reviewService, type UserReview } from '../services/reviewService';
-import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader } from '../components/ios/IOSDesignSystem';
+import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero } from '../components/ios/IOSDesignSystem';
 import { ConsistentLayout, PageWrapper, ContentSection } from '../components/layout/ConsistentLayout';
 import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
+import { standardClasses, cn } from '../styles/standardClasses';
 
 // Mobile-first constants
 const MIN_TOUCH_TARGET = 44; // iOS HIG minimum 44pt touch target
@@ -89,22 +90,22 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 sm:gap-2 mt-8">
+    <div className={cn(standardClasses.flex.center, 'gap-1 sm:gap-2 mt-8')}>
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1 || loading}
-        className={`
-          min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg flex items-center justify-center transition-all duration-200
-          ${currentPage === 1 || loading 
+        className={cn(
+          standardClasses.flex.center,
+          `min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg transition-all duration-200`,
+          currentPage === 1 || loading 
             ? 'bg-ios-surface/50 text-ios-text-secondary/50 cursor-not-allowed' 
             : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80'
-          }
-        `}
+        )}
       >
         <ChevronLeft size={20} />
       </button>
 
-      <div className="flex items-center gap-1 mx-2">
+      <div className={cn(standardClasses.flex.row, 'gap-1 mx-2')}>
         {getPageNumbers().map((pageNum, index) => (
           <button
             key={index}
@@ -362,12 +363,15 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-ios-background text-ios-text">
-      <IOSContainer maxWidth="md" className="pt-2 pb-24 with-bottom-nav">
-        <IOSSectionHeader 
-          title="Feed Komunitas" 
-          subtitle={user ? 'Bergabunglah dalam diskusi' : 'Login untuk berinteraksi'}
-          className="mb-2"
-        />
+      {/* Hero Section */}
+      <IOSHero
+        title="Feed Komunitas"
+        subtitle="Bergabunglah dalam diskusi, bagikan pengalaman, dan dapatkan update terbaru dari komunitas gamer"
+        icon={Users}
+        backgroundGradient="from-green-500 via-emerald-500 to-teal-500"
+      />
+
+      <IOSContainer maxWidth="md" className="pt-6 pb-24 with-bottom-nav">
         {/* Mobile-First Tab Navigation */}
         <div className="flex gap-1 mb-6 p-1 bg-ios-bg-secondary rounded-xl overflow-x-auto">
           <Tab
@@ -427,8 +431,8 @@ export default function FeedPage() {
             {feedPosts.map((post) => (
               <IOSCard key={post.id} padding="medium" className="hover:shadow-md transition-shadow">
                 {/* User row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className={standardClasses.flex.between}>
+                  <div className={standardClasses.flex.rowGap3}>
                     {post.authorAvatarUrl ? (
                       <img
                         src={post.authorAvatarUrl}
@@ -437,7 +441,7 @@ export default function FeedPage() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-ios-accent to-pink-600 flex items-center justify-center text-xs font-bold text-white">
+                      <div className={cn(standardClasses.flex.center, 'w-9 h-9 rounded-full bg-gradient-to-br from-ios-accent to-pink-600 text-xs font-bold text-white')}>
                         {(post.authorName || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -562,8 +566,8 @@ export default function FeedPage() {
                 </div>
                 
                 {/* 2-column content: image left, review right */}
-                <div className="grid grid-cols-2 gap-4 items-start mb-2">
-                  <div>
+                <div className="grid grid-cols-[auto_1fr] gap-4 items-start mb-2">
+                  <div className="w-fit">
                     {review.product_image ? (
                       <button
                         onClick={() => setImagePreview(review.product_image)}
@@ -573,12 +577,12 @@ export default function FeedPage() {
                         <img
                           src={review.product_image}
                           alt={review.product_name || 'Product'}
-                          className="w-full max-w-[160px] h-auto rounded-xl object-cover border border-ios-border"
+                          className="w-full max-w-[120px] h-auto rounded-xl object-cover border border-ios-border"
                           loading="lazy"
                         />
                       </button>
                     ) : (
-                      <div className="w-full max-w-[160px] h-[120px] rounded-xl bg-ios-surface-secondary border border-ios-border" />
+                      <div className="w-[120px] h-[90px] rounded-xl bg-ios-surface-secondary border border-ios-border" />
                     )}
                   </div>
                   <div>

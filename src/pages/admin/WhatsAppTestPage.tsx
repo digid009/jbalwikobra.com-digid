@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, MessageCircle, Phone, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { standardClasses, cn } from '../../styles/standardClasses';
 
 const WhatsAppTestPage: React.FC = () => {
   const [testPhone, setTestPhone] = useState('6281234567890');
@@ -39,7 +40,7 @@ const WhatsAppTestPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-app-dark text-gray-200">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={standardClasses.container.boxed}>
         {/* Header */}
         <div className="flex items-center mb-6">
           <Link

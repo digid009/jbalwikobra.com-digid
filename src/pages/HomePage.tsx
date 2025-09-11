@@ -15,6 +15,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
 import ProductCard from '../components/ProductCard';
+import { standardClasses, cn } from '../styles/standardClasses';
 import { 
   Zap, 
   ShoppingBag, 
@@ -289,7 +290,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="w-full max-w-6xl mx-auto">
+      <div className={standardClasses.container.boxed}>
       {/* Error banner for partial failures */}
       {state.error && (state.flashSaleProducts.length > 0 || state.popularGames.length > 0) && (
         <div className="mx-4 mt-4 bg-amber-900/20 border border-amber-600/30 rounded-xl p-4">

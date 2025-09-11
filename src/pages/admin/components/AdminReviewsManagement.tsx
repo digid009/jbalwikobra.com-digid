@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus } from 'lucide-react';
 import { adminService, Review } from '../../../services/adminService';
-import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { IOSAvatar } from '../../../components/ios/IOSAvatar';
+import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
+import { cn } from '../../../styles/standardClasses';
+import { getUserAvatarUrl, getUserDisplayName } from '../../../utils/avatarUtils';
 
 export const AdminReviewsManagement: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -10,7 +14,10 @@ export const AdminReviewsManagement: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [tableExists, setTableExists] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const itemsPerPage = 20;
+  const [hasErrors, setHasErrors] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   useEffect(() => {
     loadReviews();
@@ -20,17 +27,22 @@ export const AdminReviewsManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      setHasErrors(false);
+      setErrorMessage('');
       const result = await adminService.getReviews(currentPage, itemsPerPage);
       setReviews(result.data);
       setTotalCount(result.count);
       setTableExists(true);
     } catch (error: any) {
       console.error('Error loading reviews:', error);
+      setHasErrors(true);
       if (error.message?.includes('reviews') && error.message?.includes('schema cache')) {
         setTableExists(false);
         setError('Reviews table not found. Click "Setup Reviews" to initialize the reviews system.');
+        setErrorMessage('Reviews table not found');
       } else {
         setError(error.message || 'Failed to load reviews');
+        setErrorMessage(error.message || 'Failed to load reviews');
       }
     } finally {
       setLoading(false);
@@ -66,15 +78,16 @@ export const AdminReviewsManagement: React.FC = () => {
     return 'text-red-600';
   };
 
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+      <RLSDiagnosticsBanner 
+        hasErrors={hasErrors}
+        errorMessage={errorMessage}
+        statsLoaded={!loading}
+      />
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Reviews Management</h2>
-          <p className="text-gray-600">Manage customer reviews and feedback</p>
-        </div>
+        <IOSSectionHeader title="Reviews Management" subtitle="Manage customer reviews and feedback" />
         <div className="flex items-center space-x-2">
           {!tableExists && (
             <IOSButton 
@@ -95,76 +108,78 @@ export const AdminReviewsManagement: React.FC = () => {
       </div>
 
       {error && (
-        <IOSCard className="bg-yellow-50 border border-yellow-200">
-          <div className="p-4 flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <IOSCard variant="elevated" padding="medium" className="bg-ios-warning/10 border border-ios-warning/20">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-ios-warning flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-medium text-yellow-800">Setup Required</h3>
-              <p className="text-sm text-yellow-700 mt-1">{error}</p>
+              <h3 className="text-sm font-semibold text-ios-warning mb-1">Setup Required</h3>
+              <p className="text-sm text-ios-text-secondary">{error}</p>
             </div>
           </div>
         </IOSCard>
       )}
 
-      <IOSCard>
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-8 text-center">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-500">Loading reviews...</p>
-            </div>
-          ) : reviews.length > 0 ? (
+      <IOSCard variant="elevated" padding="none">
+        {loading ? (
+          <div className="p-12 text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
+            <p className="text-ios-text-secondary font-medium">Loading reviews...</p>
+          </div>
+        ) : reviews.length > 0 ? (
+          <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className={cn(
+                'bg-ios-surface border-b border-ios-border'
+              )}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Rating
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Review
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-ios-border">
                 {reviews.map((review) => (
-                  <tr key={review.id} className="hover:bg-gray-50">
+                  <tr key={review.id} className="hover:bg-ios-surface transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-ios-text">
                           {review.user_name || 'Anonymous'}
                         </div>
                         {review.user_id ? (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-ios-text-secondary">
                             ID: {review.user_id.slice(-8)}
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-400 italic">No User ID</div>
+                          <div className="text-sm text-ios-text-secondary italic">No User ID</div>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-ios-text">
                           {review.product_name || 'Unknown Product'}
                         </div>
                         {review.product_id ? (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-ios-text-secondary">
                             ID: {review.product_id.slice(-8)}
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-400 italic">No Product ID</div>
+                          <div className="text-sm text-ios-text-secondary italic">No Product ID</div>
                         )}
                       </div>
                     </td>
@@ -173,13 +188,16 @@ export const AdminReviewsManagement: React.FC = () => {
                         <div className="flex items-center">
                           {renderStars(review.rating)}
                         </div>
-                        <span className={`text-sm font-medium ${getRatingColor(review.rating)}`}>
+                        <span className={`text-sm font-medium ${
+                          review.rating >= 4 ? 'text-ios-success' : 
+                          review.rating >= 3 ? 'text-ios-warning' : 'text-ios-error'
+                        }`}>
                           {review.rating}/5
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs">
+                      <div className="text-sm text-ios-text max-w-xs">
                         {review.comment ? (
                           <p className="truncate" title={review.comment}>
                             {review.comment.length > 100 
@@ -188,22 +206,22 @@ export const AdminReviewsManagement: React.FC = () => {
                             }
                           </p>
                         ) : (
-                          <span className="text-gray-400 italic">No comment</span>
+                          <span className="text-ios-text-secondary italic">No comment</span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-ios-text-secondary">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <IOSButton variant="ghost" size="small">
-                          <ThumbsUp className="w-4 h-4 text-green-500" />
+                          <ThumbsUp className="w-4 h-4 text-ios-success" />
                         </IOSButton>
                         <IOSButton variant="ghost" size="small">
-                          <ThumbsDown className="w-4 h-4 text-red-500" />
+                          <ThumbsDown className="w-4 h-4 text-ios-error" />
                         </IOSButton>
                       </div>
                     </td>
@@ -211,45 +229,26 @@ export const AdminReviewsManagement: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          ) : (
-            <div className="p-8 text-center">
-              <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No reviews found</p>
+          </div>
+        ) : (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
+              <Star className="w-8 h-8 text-ios-text-secondary" />
             </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} results
-              </div>
-              <div className="flex items-center space-x-2">
-                <IOSButton
-                  variant="ghost"
-                  size="small"
-                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </IOSButton>
-                <span className="text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <IOSButton
-                  variant="ghost"
-                  size="small"
-                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </IOSButton>
-              </div>
-            </div>
+            <p className="text-ios-text-secondary font-medium">No reviews found</p>
+            <p className="text-ios-text-secondary/70 text-sm">Reviews will appear here once customers leave feedback</p>
           </div>
         )}
+
+        <IOSPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalCount}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          showItemsPerPageSelector={true}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       </IOSCard>
     </div>
   );

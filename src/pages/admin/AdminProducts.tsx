@@ -8,6 +8,9 @@ import ImageUploader from '../../components/ImageUploader';
 import { uploadFiles } from '../../services/storageService';
 import { formatNumberID, parseNumberID } from '../../utils/helpers';
 import { useToast } from '../../components/Toast';
+import { standardClasses, cn } from '../../styles/standardClasses';
+import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../components/ios/IOSDesignSystem';
+import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 // Admin page cleaned: diagnostics imports removed
 
 type FormState = {
@@ -48,6 +51,8 @@ const AdminProducts: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [games, setGames] = useState<GameTitle[]>([]);
+  const [hasErrors, setHasErrors] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   // Filter and pagination states
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,6 +86,8 @@ const AdminProducts: React.FC = () => {
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
+      setHasErrors(false);
+      setErrorMessage('');
       
       if (!supabase) {
         // Fallback: Use OptimizedProductService for better performance
@@ -179,8 +186,10 @@ const AdminProducts: React.FC = () => {
       
   // Removed verbose product load log for production
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading products:', error);
+      setHasErrors(true);
+      setErrorMessage(error.message || 'Failed to load products');
       push('Gagal memuat data', 'error');
     } finally {
       setLoading(false);
@@ -353,41 +362,44 @@ const AdminProducts: React.FC = () => {
   // Diagnostics helpers removed from cleaned admin page
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+      <RLSDiagnosticsBanner 
+        hasErrors={hasErrors}
+        errorMessage={errorMessage}
+        statsLoaded={!loading}
+      />
+      
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-ios-text">Produk</h1>
-          <p className="text-ios-text-secondary">Kelola daftar produk</p>
-        </div>
-        <button onClick={startCreate} className="px-4 py-2 rounded-lg bg-ios-accent text-white hover:bg-ios-accent/80 transition-colors">
-          Tambah Produk
-        </button>
+        <IOSSectionHeader title="Produk" subtitle="Kelola daftar produk" />
+        <IOSButton onClick={startCreate} variant="primary" className="flex items-center space-x-2">
+          <span>Tambah Produk</span>
+        </IOSButton>
       </div>
 
       {!showForm && (
         <>
           {/* Filters and Search */}
-          <div className="bg-ios-surface border border-ios-border rounded-xl p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <IOSCard variant="elevated" padding="large">
+            <div className={standardClasses.grid.responsiveAdmin}>
               {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Cari Produk</label>
+                <label className="block text-sm font-semibold text-ios-text mb-2">Cari Produk</label>
                 <input
                   type="text"
                   placeholder="Nama, deskripsi, level..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 bg-ios-background border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  className={cn(standardClasses.input.base, 'w-full')}
                 />
               </div>
               
               {/* Game Filter */}
               <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Filter Game</label>
+                <label className="block text-sm font-semibold text-ios-text mb-2">Filter Game</label>
                 <select
                   value={selectedGame}
                   onChange={(e) => setSelectedGame(e.target.value)}
-                  className="w-full px-3 py-2 bg-ios-background border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  className={cn(standardClasses.input.base, 'w-full')}
                 >
                   <option value="">Semua Game</option>
                   {games.map(game => (
@@ -398,11 +410,11 @@ const AdminProducts: React.FC = () => {
               
               {/* Tier Filter */}
               <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Filter Tier</label>
+                <label className="block text-sm font-semibold text-ios-text mb-2">Filter Tier</label>
                 <select
                   value={selectedTier}
                   onChange={(e) => setSelectedTier(e.target.value)}
-                  className="w-full px-3 py-2 bg-ios-background border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  className={cn(standardClasses.input.base, 'w-full')}
                 >
                   <option value="">Semua Tier</option>
                   {tiers.map(tier => (
@@ -413,11 +425,11 @@ const AdminProducts: React.FC = () => {
               
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                <label className="block text-sm font-semibold text-ios-text mb-2">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={cn(standardClasses.input.base, 'w-full')}
                 >
                   <option value="all">Semua</option>
                   <option value="active">Aktif</option>
@@ -427,177 +439,158 @@ const AdminProducts: React.FC = () => {
             </div>
             
             {/* Results Info and Items Per Page */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-pink-500/20">
-              <div className="text-sm text-gray-400">
+            <div className={cn(standardClasses.flex.colGap4, 'sm:flex-row justify-between items-start sm:items-center pt-6 border-t border-ios-border')}>
+              <div className="text-sm text-ios-text-secondary">
                 Menampilkan {paginatedProducts.length} dari {filteredProducts.length} produk
                 {filteredProducts.length !== products.length && ` (difilter dari ${products.length} total)`}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-400">Tampilkan:</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-2 py-1 bg-black border border-pink-500/40 rounded text-white text-sm"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-                <span className="text-sm text-gray-400">per halaman</span>
-              </div>
             </div>
-          </div>
+          </IOSCard>
 
           {/* Product List */}
-          <div className="bg-black/60 border border-pink-500/30 rounded-xl overflow-hidden">
-            <div className="grid grid-cols-12 text-xs uppercase text-gray-400 px-4 py-2 border-b border-pink-500/20">
+          <IOSCard variant="elevated" padding="none">
+            <div className="grid grid-cols-12 text-xs font-semibold uppercase text-ios-text-secondary px-6 py-4 border-b border-ios-border bg-ios-surface">
               <div className="col-span-5">Nama</div>
               <div className="col-span-2">Game</div>
               <div className="col-span-2">Harga</div>
               <div className="col-span-3 text-right">Aksi</div>
             </div>
             {loading ? (
-              <div className="p-4 text-gray-400">Memuat...</div>
+              <div className="p-12 text-center">
+                <div className="w-8 h-8 border-2 border-ios-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-ios-text-secondary font-medium">Memuat produk...</p>
+              </div>
             ) : paginatedProducts.length === 0 ? (
-              <div className="p-4 text-gray-400">
-                {filteredProducts.length === 0 && products.length > 0 
-                  ? 'Tidak ada produk yang sesuai dengan filter.'
-                  : 'Belum ada produk.'
-                }
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-ios-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <p className="text-ios-text-secondary font-medium mb-2">
+                  {filteredProducts.length === 0 && products.length > 0 
+                    ? 'Tidak ada produk yang sesuai dengan filter.'
+                    : 'Belum ada produk.'
+                  }
+                </p>
+                <p className="text-ios-text-secondary/70 text-sm">Produk yang ditambahkan akan muncul di sini</p>
               </div>
             ) : (
-              paginatedProducts.map(p => (
-              <div key={p.id} className="grid grid-cols-12 items-center px-4 py-3 border-b border-pink-500/10">
-                <div className="col-span-5 flex items-center gap-3">
-                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover" />
-                  <div>
-                    <div className="text-white font-medium line-clamp-1">{p.name}</div>
-                    <div className="text-xs text-gray-500 line-clamp-1 flex items-center gap-2">
-                      <span>{p.accountLevel || '-'}</span>
-                      {((p as any).isActive === false || (p as any).archivedAt) && (
-                        <span className="px-2 py-0.5 rounded bg-yellow-900/50 text-amber-300 border border-amber-600/40">Diarsipkan</span>
+              <div className="divide-y divide-ios-border">
+                {paginatedProducts.map(p => (
+                  <div key={p.id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-ios-surface transition-colors duration-200">
+                    <div className={cn('col-span-5', standardClasses.flex.rowGap3)}>
+                      <img 
+                        src={p.image} 
+                        alt={p.name} 
+                        className="w-12 h-12 rounded-lg object-cover border border-ios-border" 
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-product.png';
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-ios-text font-medium line-clamp-1">{p.name}</div>
+                        <div className={cn('text-xs text-ios-text-secondary line-clamp-1', standardClasses.flex.rowGap2)}>
+                          <span>{p.accountLevel || '-'}</span>
+                          {((p as any).isActive === false || (p as any).archivedAt) && (
+                            <span className="px-2 py-0.5 rounded-full bg-ios-warning/20 text-ios-warning border border-ios-warning/30 text-xs font-medium">
+                              Diarsipkan
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-span-2 text-ios-text">{p.gameTitleData?.name || p.gameTitle}</div>
+                    <div className="col-span-2 text-ios-text font-semibold">Rp {Number(p.price||0).toLocaleString('id-ID')}</div>
+                    <div className="col-span-3 text-right space-x-2">
+                      <IOSButton 
+                        onClick={() => startEdit(p)} 
+                        variant="ghost" 
+                        size="small"
+                        className="text-ios-accent border-ios-accent/30 hover:bg-ios-accent/10"
+                      >
+                        Edit
+                      </IOSButton>
+                      {(p as any).isActive === false || (p as any).archivedAt ? (
+                        <IOSButton 
+                          onClick={async()=>{
+                            if (!supabase) return; 
+                            await (supabase as any).from('products').update({ is_active: true, archived_at: null }).eq('id', p.id);
+                            await loadProducts();
+                            push('Produk dipulihkan dari arsip', 'success');
+                          }} 
+                          variant="ghost" 
+                          size="small"
+                          className="text-ios-success border-ios-success/30 hover:bg-ios-success/10"
+                        >
+                          Pulihkan
+                        </IOSButton>
+                      ) : (
+                        <IOSButton 
+                          onClick={async()=>{
+                            if (!confirm('Arsipkan produk ini?')) return;
+                            if (!supabase) return; 
+                            await (supabase as any).from('products').update({ is_active: false, archived_at: new Date().toISOString() }).eq('id', p.id);
+                            await loadProducts();
+                            push('Produk diarsipkan', 'success');
+                          }} 
+                          variant="ghost" 
+                          size="small"
+                          className="text-ios-warning border-ios-warning/30 hover:bg-ios-warning/10"
+                        >
+                          Arsipkan
+                        </IOSButton>
                       )}
+                      <IOSButton 
+                        onClick={() => handleDelete(p.id)} 
+                        variant="ghost" 
+                        size="small"
+                        className="text-ios-error border-ios-error/30 hover:bg-ios-error/10"
+                      >
+                        Hapus
+                      </IOSButton>
                     </div>
                   </div>
-                </div>
-                <div className="col-span-2 text-gray-300">{p.gameTitleData?.name || p.gameTitle}</div>
-                <div className="col-span-2 text-gray-300">Rp {Number(p.price||0).toLocaleString('id-ID')}</div>
-                <div className="col-span-3 text-right">
-                  <button onClick={() => startEdit(p)} className="px-3 py-1.5 rounded border border-white/20 text-white hover:bg-white/10 mr-2">Edit</button>
-                  {(p as any).isActive === false || (p as any).archivedAt ? (
-                    <button onClick={async()=>{
-                      if (!supabase) return; 
-                      await (supabase as any).from('products').update({ is_active: true, archived_at: null }).eq('id', p.id);
-                      await loadProducts(); // Use optimized reload
-                      push('Produk dipulihkan dari arsip', 'success');
-                    }} className="px-3 py-1.5 rounded border border-green-500/40 text-green-300 hover:bg-green-500/10 mr-2">Pulihkan</button>
-                  ) : (
-                    <button onClick={async()=>{
-                      if (!confirm('Arsipkan produk ini?')) return;
-                      if (!supabase) return; 
-                      await (supabase as any).from('products').update({ is_active: false, archived_at: new Date().toISOString() }).eq('id', p.id);
-                      await loadProducts(); // Use optimized reload
-                      push('Produk diarsipkan', 'success');
-                    }} className="px-3 py-1.5 rounded border border-yellow-500/40 text-amber-300 hover:bg-yellow-500/10 mr-2">Arsipkan</button>
-                  )}
-                  <button onClick={() => handleDelete(p.id)} className="px-3 py-1.5 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10">Hapus</button>
-                </div>
+                ))}
               </div>
-            ))
-          )}
-        </div>
-        
-        {/* Enhanced Pagination with Items Per Page */}
-        {!loading && totalPages > 1 && (
-          <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Items per halaman</label>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="bg-black border border-pink-500/40 rounded px-3 py-1 text-white text-sm"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-                <div className="text-sm text-gray-400">
-                  Menampilkan {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalProducts)} dari {totalProducts.toLocaleString()} produk
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 rounded border border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ← Sebelumnya
-                </button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                    let page;
-                    if (totalPages <= 7) {
-                      page = i + 1;
-                    } else if (currentPage <= 4) {
-                      page = i + 1;
-                    } else if (currentPage >= totalPages - 3) {
-                      page = totalPages - 6 + i;
-                    } else {
-                      page = currentPage - 3 + i;
-                    }
-                    
-                    if (page < 1 || page > totalPages) return null;
-                    
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 rounded text-sm ${
-                          page === currentPage
-                            ? 'bg-pink-600 text-white'
-                            : 'border border-white/20 text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded border border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Selanjutnya →
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            )}
+            
+            <IOSPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalProducts}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              showItemsPerPageSelector={true}
+              onItemsPerPageChange={setItemsPerPage}
+            />
+          </IOSCard>
         </>
       )}
 
       {showForm && (
-        <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
+        <IOSCard variant="elevated" padding="large"
+          className="bg-ios-surface"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
+            <div className={cn('md:col-span-2', standardClasses.spacing.section)}>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Nama Produk</label>
-                <input value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                <input 
+                  value={form.name} 
+                  onChange={(e)=>setForm({...form, name:e.target.value})} 
+                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
+                />
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Deskripsi</label>
-                <textarea value={form.description} onChange={(e)=>setForm({...form, description:e.target.value})} rows={6} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                <textarea 
+                  value={form.description} 
+                  onChange={(e)=>setForm({...form, description:e.target.value})} 
+                  rows={6} 
+                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -626,14 +619,22 @@ const AdminProducts: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Game</label>
-                  <select value={form.gameTitleId} onChange={(e)=>setForm({...form, gameTitleId:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white">
+                  <select 
+                    value={form.gameTitleId} 
+                    onChange={(e)=>setForm({...form, gameTitleId:e.target.value})} 
+                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                  >
                     <option value="">-- pilih game --</option>
                     {games.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Tier</label>
-                  <select value={form.tierId} onChange={(e)=>setForm({...form, tierId:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white">
+                  <select 
+                    value={form.tierId} 
+                    onChange={(e)=>setForm({...form, tierId:e.target.value})} 
+                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                  >
                     <option value="">-- pilih tier --</option>
                     {tiers.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
                   </select>
@@ -642,11 +643,19 @@ const AdminProducts: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Level Akun (opsional)</label>
-                  <input value={form.accountLevel} onChange={(e)=>setForm({...form, accountLevel:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <input 
+                    value={form.accountLevel} 
+                    onChange={(e)=>setForm({...form, accountLevel:e.target.value})} 
+                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Detail Akun (opsional)</label>
-                  <input value={form.accountDetails} onChange={(e)=>setForm({...form, accountDetails:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <input 
+                    value={form.accountDetails} 
+                    onChange={(e)=>setForm({...form, accountDetails:e.target.value})} 
+                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
+                  />
                 </div>
               </div>
             </div>
@@ -697,10 +706,14 @@ const AdminProducts: React.FC = () => {
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10">Batal</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60">{saving ? 'Menyimpan...' : 'Simpan'}</button>
+            <IOSButton onClick={cancelForm} variant="ghost" className="border-ios-border text-ios-text">
+              Batal
+            </IOSButton>
+            <IOSButton onClick={handleSave} variant="primary" disabled={saving}>
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </IOSButton>
           </div>
-        </div>
+        </IOSCard>
       )}
     </div>
   );

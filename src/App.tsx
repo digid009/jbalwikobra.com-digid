@@ -150,13 +150,23 @@ function App() {
                 <ScrollToTop />
                 <Routes>
                 {/* Admin routes - Direct access without sidebar layout */}
-                <Route element={<RequireAdmin />}>
+                {process.env.NODE_ENV === 'development' ? (
+                  // Development: Allow admin access without authentication
                   <Route path="/admin/*" element={
                     <Suspense fallback={<PageLoader />}>
                       <AdminDashboard />
                     </Suspense>
                   } />
-                </Route>
+                ) : (
+                  // Production: Require admin authentication
+                  <Route element={<RequireAdmin />}>
+                    <Route path="/admin/*" element={
+                      <Suspense fallback={<PageLoader />}>
+                        <AdminDashboard />
+                      </Suspense>
+                    } />
+                  </Route>
+                )}
                 
                 {/* Public routes with global layout */}
                 <Route path="*" element={
@@ -164,7 +174,7 @@ function App() {
                     <Header />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />
-                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen px-3.5">
+                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">

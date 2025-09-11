@@ -29,7 +29,7 @@ const MobileBottomNav: React.FC = () => {
     },
     {
       path: '/products',
-      label: 'Cari',
+      label: 'Produk',
       icon: Search,
       activeIcon: Search,
     },

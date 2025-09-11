@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Product, ProductTier } from '../types';
 import ProductCard from '../components/ProductCard';
+import { IOSContainer, IOSSectionHeader, IOSHero } from '../components/ios/IOSDesignSystem';
+import { standardClasses, cn, buildButtonClass, buildCardClass } from '../styles/standardClasses';
 import { 
   Zap, 
   Clock, 
@@ -219,31 +221,31 @@ const FlashSalesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ios-background text-ios-text">
-        <section className="py-10">
-          <div className="max-w-7xl mx-auto">
+      <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-ios-text')}>
+        <section className={cn(standardClasses.spacing.padding.large, 'py-10')}>
+          <IOSContainer>
             <div className="ios-skeleton h-10 w-56 mb-8"></div>
-            <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
+            <div className={cn('grid', 'grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4')}>
               {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="bg-ios-surface rounded-2xl border border-ios-border p-3">
+                <div key={i} className={cn(standardClasses.card.base, standardClasses.spacing.padding.small)}>
                   <div className="ios-skeleton h-32 w-full mb-3 rounded-xl"></div>
                   <div className="ios-skeleton h-4 w-3/4 mb-2"></div>
                   <div className="ios-skeleton h-4 w-1/2 mb-3"></div>
-                  <div className="flex gap-2">
+                  <div className={standardClasses.flex.rowGap2}>
                     <div className="ios-skeleton h-8 w-20 rounded-lg"></div>
                     <div className="ios-skeleton h-8 w-24 rounded-lg"></div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </IOSContainer>
         </section>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text flash-sales-page">
+    <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-ios-text')}>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 py-12 lg:py-16">
         <div className="max-w-7xl mx-auto text-center">

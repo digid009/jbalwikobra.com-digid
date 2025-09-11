@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { standardClasses, cn } from '../../styles/standardClasses';
 
 // iOS Design System Types
 export interface IOSColors {
@@ -323,7 +324,7 @@ export const IOSHero: React.FC<IOSHeroProps> = ({
   className = ''
 }) => (
   <section className={`bg-gradient-to-r ${backgroundGradient} py-12 lg:py-16 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div className={cn(standardClasses.container.boxed, 'text-center')}>
       {Icon && (
         <div className="flex items-center justify-center space-x-3 mb-6">
           <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
@@ -385,7 +386,7 @@ export const IOSContainer: React.FC<IOSContainerProps> = ({
     sm: 'max-w-sm',
     md: 'max-w-2xl',
     lg: 'max-w-4xl',
-    xl: 'max-w-7xl',
+    xl: 'max-w-6xl',
     '2xl': 'max-w-screen-2xl',
     full: 'max-w-full'
   };
@@ -403,3 +404,5 @@ export const IOSContainer: React.FC<IOSContainerProps> = ({
 };
 
 // Export all design tokens and components
+export { IOSPagination } from './IOSPagination';
+export { IOSAvatar } from './IOSAvatar';

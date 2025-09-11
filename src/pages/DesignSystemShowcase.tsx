@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { standardClasses, cn } from '../styles/standardClasses';
 import { 
   IOSContainer, 
   IOSCard, 
@@ -54,7 +55,7 @@ const DesignSystemShowcase: React.FC = () => {
 
   return (
     <IOSContainer className="py-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className={cn(standardClasses.container.boxed, 'space-y-8')}>
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-ios-text">iOS Design System Showcase</h1>

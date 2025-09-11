@@ -22,7 +22,8 @@ import {
 import { 
   IOSContainer, 
   IOSCard, 
-  IOSButton 
+  IOSButton,
+  IOSHero 
 } from '../components/ios/IOSDesignSystem';
 
 const faqs = [
@@ -136,29 +137,23 @@ const HelpPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-ios-background">
-      {/* Hero */}
-      <div className="bg-gradient-to-r from-ios-accent/10 to-ios-accent/5 border-b border-ios-border">
-        <IOSContainer maxWidth="lg" className="py-12">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-ios-surface border border-ios-border mb-6">
-              <HelpCircle className="text-ios-accent w-8 h-8" />
-            </div>
-            <h1 className="text-4xl font-bold text-ios-text mb-4">Pusat Bantuan</h1>
-            <p className="text-ios-text-secondary text-lg mb-8 max-w-2xl mx-auto">
-              Temukan jawaban untuk pertanyaan umum, panduan lengkap, dan kontak support untuk pengalaman terbaik di JB Alwikobra
-            </p>
-            <div className="max-w-md mx-auto relative">
-              <input 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-ios-surface border border-ios-border rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-ios-text placeholder:text-ios-text-secondary focus:outline-none focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/20 text-sm sm:text-base" 
-                placeholder="Cari: pembelian, pembayaran, keamanan..." 
-              />
-              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-ios-text-secondary" />
-            </div>
-          </div>
-        </IOSContainer>
-      </div>
+      {/* Hero Section */}
+      <IOSHero
+        title="Pusat Bantuan"
+        subtitle="Temukan jawaban untuk pertanyaan umum, panduan lengkap, dan kontak support untuk pengalaman terbaik di JB Alwikobra"
+        icon={HelpCircle}
+        backgroundGradient="from-indigo-500 via-purple-500 to-pink-500"
+      >
+        <div className="max-w-md mx-auto relative">
+          <input 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-white placeholder:text-white/80 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 text-sm sm:text-base" 
+            placeholder="Cari: pembelian, pembayaran, keamanan..." 
+          />
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80" />
+        </div>
+      </IOSHero>
 
       <IOSContainer className="py-12">
 

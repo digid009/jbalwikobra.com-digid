@@ -12,13 +12,19 @@ interface ProductCardProps {
   showFlashSaleTimer?: boolean;
   fromCatalogPage?: boolean;
   className?: string;
+  /**
+   * Controls whether the primary image should be prioritized (eager loaded).
+   * Defaults to true to preserve existing behavior. Pass false to enable lazy loading.
+   */
+  imagePriority?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ 
   product, 
   showFlashSaleTimer = false,
   fromCatalogPage = false,
-  className = ''
+  className = '',
+  imagePriority = true
 }) => {
   const timeRemaining = product.flashSaleEndTime
     ? calculateTimeRemaining(product.flashSaleEndTime)
@@ -33,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   // - Everywhere else (catalog, normal cards): show original/base price
   const displayPrice = (() => {
     const hasValidDiscount = product.originalPrice && product.originalPrice > product.price;
-    if (isFlashSaleActive && hasValidDiscount) return product.price;
+    if (showFlashSaleTimer && hasValidDiscount) return product.price; // always show sale price on flash sale cards
     return product.originalPrice && product.originalPrice > 0 ? product.originalPrice : product.price;
   })();
 
@@ -153,7 +159,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             src={images[0]}
             alt={product.name}
             className="w-full h-full"
-            priority={showFlashSaleTimer} // Prioritize flash sale images
+            priority={showFlashSaleTimer && imagePriority}
             quality={85}
             aspectRatio={4/5}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -260,7 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 <span className="inline-flex items-center rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-bold text-gray-900 shadow-lg border border-white/20">
                   {formatCurrency(displayPrice)}
                 </span>
-                {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
+                {showFlashSaleTimer && product.originalPrice && product.originalPrice > product.price && (
                   <span className="inline-flex items-center text-xs font-semibold px-1.5 sm:px-2 py-1 rounded-md sm:rounded-lg bg-red-500/30 text-white border border-red-400/60 backdrop-blur-sm shadow-sm whitespace-nowrap leading-none">
                     -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                   </span>
@@ -268,7 +274,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </div>
               
               {/* Original Price */}
-              {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
+              {showFlashSaleTimer && product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-xs line-through text-white/80 mt-1 font-medium" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatCurrency(product.originalPrice)}
                 </span>

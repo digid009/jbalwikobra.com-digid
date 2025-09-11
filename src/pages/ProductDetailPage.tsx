@@ -3,6 +3,7 @@ import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
 import { Product, Customer, RentalOption } from '../types';
+import { standardClasses, cn } from '../styles/standardClasses';
 import {
   formatCurrency, 
   calculateTimeRemaining,
@@ -345,7 +346,7 @@ const ProductDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-ios-background text-ios-text">
-  <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div className={standardClasses.container.boxed}>
           <div className="ios-skeleton h-5 w-64 mb-6"></div>
           <div className="lg:grid lg:grid-cols-2 lg:gap-12">
             <div>
@@ -407,7 +408,7 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-ios-background text-ios-text">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={standardClasses.container.boxed}>
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-ios-text-secondary mb-6">
           <Link to="/" className="hover:text-ios-text">Beranda</Link>

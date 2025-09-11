@@ -12,6 +12,8 @@ import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import FloatingNotifications from './FloatingNotifications';
+import { AdminNotificationsProvider } from './notifications/AdminNotificationsContext';
+import { standardClasses, cn } from '../../styles/standardClasses';
 
 export type AdminTab = 
   | 'dashboard' 
@@ -88,7 +90,8 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AdminNotificationsProvider>
+    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-ios-text">
       <AdminHeader 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -100,7 +103,7 @@ const AdminDashboard: React.FC = () => {
       />
 
       <div className="pt-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className={standardClasses.container.boxed}>
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Desktop Navigation */}
             <div className="hidden lg:block w-64 flex-shrink-0">
@@ -142,6 +145,7 @@ const AdminDashboard: React.FC = () => {
       {/* Floating Notifications */}
       <FloatingNotifications />
     </div>
+    </AdminNotificationsProvider>
   );
 };
 

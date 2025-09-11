@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { isLoggedIn } from '../services/authService';
+import { standardClasses, cn } from '../styles/standardClasses';
 
 type Order = {
   id: string;
@@ -103,7 +104,7 @@ const PaymentStatusPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-ios-background text-ios-text with-bottom-nav">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
+      <div className={standardClasses.container.boxed}>
         <div className="bg-ios-surface border border-ios-border rounded-2xl p-6 sm:p-8 shadow-lg">
           <h1 className={`text-xl sm:text-2xl font-bold mb-4 ${style.color}`}>{style.title}</h1>
           

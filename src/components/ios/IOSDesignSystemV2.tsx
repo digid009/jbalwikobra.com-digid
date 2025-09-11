@@ -278,7 +278,7 @@ export const IOSContainer: React.FC<IOSContainerProps> = ({
     sm: 'max-w-sm',
     md: 'max-w-2xl',
     lg: 'max-w-4xl', 
-    xl: 'max-w-7xl',
+    xl: 'max-w-6xl',
     full: 'max-w-full'
   };
 

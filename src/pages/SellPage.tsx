@@ -5,7 +5,8 @@ import {
 } from '../utils/helpers';
 import { SettingsService } from '../services/settingsService';
 import { ProductService } from '../services/productService';
-import { IOSHero, IOSContainer, IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
+import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero } from '../components/ios/IOSDesignSystem';
+import { standardClasses, cn } from '../styles/standardClasses';
 import {
   MessageCircle,
   DollarSign,
@@ -194,13 +195,13 @@ const SellPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
+    <div className="bg-ios-background text-ios-text pb-20 sm:pb-0">
       {/* Hero Section */}
       <IOSHero
         title="Jual Akun Game Anda"
         subtitle="Platform terpercaya untuk menjual akun game Anda. Proses mudah, aman, dan harga kompetitif. Sudah dipercaya oleh ribuan gamer di Indonesia."
       >
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className={cn(standardClasses.flex.colGap4, 'sm:flex-row justify-center')}>
           <IOSButton variant="secondary" size="large" onClick={scrollToForm}>
             <MessageCircle size={20} />
             <span className="ml-2">Mulai Jual Akun</span>
@@ -217,7 +218,7 @@ const SellPage: React.FC = () => {
       {/* Quick Form Section */}
       <section id="sell-form" className="py-12 sm:py-16 bg-ios-background border-t border-ios-border">
         <div ref={formRef} className="scroll-mt-20">
-          <IOSContainer maxWidth="lg" className="with-bottom-nav px-4 sm:px-6">
+          <div className={cn(standardClasses.container.boxed, 'with-bottom-nav')}>
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-ios-text mb-4">
                 Estimasi Harga Akun Anda
@@ -227,7 +228,7 @@ const SellPage: React.FC = () => {
               </p>
             </div>
 
-            <IOSCard padding="large" className="w-full max-w-4xl mx-auto">
+            <IOSCard padding="large" className="w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-ios-text-secondary">
@@ -306,16 +307,16 @@ const SellPage: React.FC = () => {
                 </div>
 
                 {/* Sticky CTA for mobile - anchored above bottom nav */}
-                <div className="sm:hidden h-16" />
-                <div className="sm:hidden fixed left-0 right-0 bottom-[82px] z-40">
-                  <div className="mx-auto max-w-4xl px-4">
+                <div className="sm:hidden h-20" />
+                <div className="sm:hidden fixed left-0 right-0 bottom-[90px] z-40 px-4">
+                  <div>
                     <button
                       onClick={handleSellAccount}
-                      className="w-full bg-pink-600 text-white font-semibold py-3 min-h-[44px] rounded-xl shadow-lg active:scale-[0.99] transition-transform"
+                      className={cn(standardClasses.button.primary, 'w-full py-4 min-h-[44px] shadow-lg active:scale-[0.99] transition-transform')}
                     >
-                      <div className="flex items-center justify-center gap-2">
+                      <div className={standardClasses.flex.center}>
                         <MessageCircle size={18} />
-                        <span>Hubungi Admin untuk Evaluasi</span>
+                        <span className="mx-2">Hubungi Admin untuk Evaluasi</span>
                         <ArrowRight size={18} />
                       </div>
                     </button>
@@ -323,13 +324,13 @@ const SellPage: React.FC = () => {
                 </div>
               </div>
             </IOSCard>
-          </IOSContainer>
+          </div>
         </div>
       </section>
 
       {/* Benefits Section */}
       <section className="py-16 bg-ios-background border-t border-ios-border">
-  <IOSContainer className="with-bottom-nav">
+        <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-ios-text mb-4">
               Mengapa Jual di JB Alwikobra?
@@ -349,16 +350,16 @@ const SellPage: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-ios-text mb-2">{benefit.title}</h3>
                   <p className="text-ios-text-secondary">{benefit.description}</p>
-        </IOSCard>
+                </IOSCard>
               );
             })}
           </div>
-    </IOSContainer>
+        </div>
       </section>
 
       {/* Popular Games */}
       <section className="py-16 bg-ios-background border-t border-ios-border">
-  <IOSContainer className="with-bottom-nav">
+        <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-ios-text mb-4">
               Game Paling Laris Dijual
@@ -392,17 +393,17 @@ const SellPage: React.FC = () => {
                     <p className="text-sm text-ios-text-secondary">
                       {game.count === 'Tersedia' ? 'Siap dibeli' : `${game.count} terjual`}
                     </p>
-          </IOSCard>
+                  </IOSCard>
                 );
               })
             )}
           </div>
-    </IOSContainer>
+        </div>
       </section>
 
       {/* How It Works */}
       <section id="how-it-works" className="py-16 bg-ios-background border-t border-ios-border">
-  <IOSContainer className="with-bottom-nav">
+        <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-ios-text mb-4">
               Cara Jual Akun di JB Alwikobra
@@ -432,64 +433,64 @@ const SellPage: React.FC = () => {
               </div>
             ))}
           </div>
-    </IOSContainer>
+        </div>
       </section>
 
       {/* Stats Section */}
       <section className="py-16 bg-pink-600">
-        <IOSContainer>
+        <div className={standardClasses.container.boxed}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="flex items-center justify-center space-x-1 text-white mb-2">
+              <div className={cn(standardClasses.flex.center, 'space-x-1 text-white mb-2')}>
                 <Users size={24} />
                 <span className="text-3xl font-bold">5000+</span>
               </div>
               <p className="text-pink-100">Akun Terjual</p>
             </div>
             <div>
-              <div className="flex items-center justify-center space-x-1 text-white mb-2">
+              <div className={cn(standardClasses.flex.center, 'space-x-1 text-white mb-2')}>
                 <Star size={24} />
                 <span className="text-3xl font-bold">4.9</span>
               </div>
               <p className="text-pink-100">Rating Kepuasan</p>
             </div>
             <div>
-              <div className="flex items-center justify-center space-x-1 text-white mb-2">
+              <div className={cn(standardClasses.flex.center, 'space-x-1 text-white mb-2')}>
                 <Clock size={24} />
                 <span className="text-3xl font-bold">24</span>
               </div>
               <p className="text-pink-100">Jam Evaluasi</p>
             </div>
             <div>
-              <div className="flex items-center justify-center space-x-1 text-white mb-2">
+              <div className={cn(standardClasses.flex.center, 'space-x-1 text-white mb-2')}>
                 <CheckCircle size={24} />
                 <span className="text-3xl font-bold">100%</span>
               </div>
               <p className="text-pink-100">Transaksi Aman</p>
             </div>
           </div>
-        </IOSContainer>
+        </div>
       </section>
 
       {/* CTA Section */}
-    <section className="py-16 bg-ios-background border-t border-ios-border">
-  <IOSContainer maxWidth="lg" className="with-bottom-nav">
+      <section className="py-16 bg-ios-background border-t border-ios-border">
+        <div className={standardClasses.container.boxed}>
           <div className="text-center">
-      <h2 className="text-3xl font-bold text-ios-text mb-4">
-            Siap Menjual Akun Game Anda?
-          </h2>
-      <p className="text-ios-text-secondary mb-8 max-w-2xl mx-auto">
-            Bergabunglah dengan ribuan gamer lainnya yang sudah mempercayakan penjualan akun mereka kepada kami.
-            Proses mudah, aman, dan harga terbaik!
-          </p>
-          <IOSButton size="large" onClick={scrollToForm}>
-            <div className="flex items-center gap-2">
-              <MessageCircle size={20} />
-              <span>Mulai Jual Akun Sekarang</span>
-            </div>
-          </IOSButton>
+            <h2 className="text-3xl font-bold text-ios-text mb-4">
+              Siap Menjual Akun Game Anda?
+            </h2>
+            <p className="text-ios-text-secondary mb-8 max-w-2xl mx-auto">
+              Bergabunglah dengan ribuan gamer lainnya yang sudah mempercayakan penjualan akun mereka kepada kami.
+              Proses mudah, aman, dan harga terbaik!
+            </p>
+            <IOSButton size="large" onClick={scrollToForm}>
+              <div className={standardClasses.flex.rowGap2}>
+                <MessageCircle size={20} />
+                <span>Mulai Jual Akun Sekarang</span>
+              </div>
+            </IOSButton>
           </div>
-        </IOSContainer>
+        </div>
       </section>
     </div>
   );

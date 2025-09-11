@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useWishlist } from '../contexts/WishlistContext';
 import { formatCurrency } from '../utils/helpers';
+import { standardClasses, cn } from '../styles/standardClasses';
 
 const WishlistPage: React.FC = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
@@ -22,7 +23,7 @@ const WishlistPage: React.FC = () => {
       }}>
       
       <div className="pt-20 pb-20 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className={standardClasses.container.boxed}>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">

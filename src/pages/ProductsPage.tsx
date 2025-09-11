@@ -14,6 +14,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Product, Tier, GameTitle } from '../types';
 import ProductCard from '../components/ProductCard';
+import { IOSHero } from '../components/ios/IOSDesignSystem';
+import { standardClasses, cn } from '../styles/standardClasses';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -21,7 +23,8 @@ import {
   ChevronRight, 
   Filter,
   X,
-  ArrowUpDown
+  ArrowUpDown,
+  ShoppingBag
 } from 'lucide-react';
 
 // Mobile-first constants
@@ -54,13 +57,13 @@ interface FilterState {
 const ProductsLoadingSkeleton = React.memo(() => (
   <div className="min-h-screen bg-black">
     {/* Header skeleton */}
-    <div className="px-4 pt-6 pb-4">
+    <div className={standardClasses.container.boxed}>
       <div className="h-8 bg-zinc-800 rounded-lg w-48 mb-4 animate-pulse"></div>
       <div className="h-10 bg-zinc-800 rounded-xl mb-4 animate-pulse"></div>
     </div>
     
     {/* Filter bar skeleton */}
-    <div className="px-4 mb-6">
+    <div className={standardClasses.container.boxed}>
       <div className="flex space-x-3">
         <div className="h-10 bg-zinc-800 rounded-xl flex-1 animate-pulse"></div>
         <div className="h-10 w-10 bg-zinc-800 rounded-xl animate-pulse"></div>
@@ -68,7 +71,7 @@ const ProductsLoadingSkeleton = React.memo(() => (
     </div>
     
     {/* Products grid skeleton */}
-    <div className="px-4">
+    <div className={standardClasses.container.boxed}>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="bg-zinc-900/50 rounded-2xl p-3 animate-pulse">
@@ -113,15 +116,15 @@ const MobileFilterPanel = React.memo(({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm lg:bg-black/40"
         onClick={onClose}
       />
       
       {/* Panel */}
-      <div className="absolute bottom-0 left-0 right-0 bg-zinc-900 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+      <div className="absolute bottom-0 left-0 right-0 bg-zinc-900 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto lg:absolute lg:top-1/2 lg:left-1/2 lg:transform lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-96 lg:rounded-2xl lg:max-h-[70vh]">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">Filter & Urutkan</h3>
@@ -523,15 +526,18 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <section className="px-4 py-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Katalog Produk</h1>
-        <p className="text-zinc-400 text-sm">Temukan akun game impian Anda</p>
-      </section>
+      {/* Hero Section */}
+      <IOSHero
+        title="Katalog Produk"
+        subtitle="Temukan akun game impian Anda dengan koleksi lengkap dari berbagai game populer"
+        icon={ShoppingBag}
+        backgroundGradient="from-blue-500 via-purple-500 to-pink-500"
+      />
 
       {/* Search & Filter Bar */}
-      <section className="px-4 mb-6">
-        <div className="flex space-x-3">
+      <section className="mb-6 pt-6">
+        <div className={standardClasses.container.boxed}>
+          <div className={standardClasses.flex.rowGap3}>
           {/* Search Input */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500" size={20} />
@@ -552,60 +558,65 @@ const ProductsPage: React.FC = () => {
           >
             <Filter size={20} className="text-zinc-300" />
           </button>
+          </div>
         </div>
       </section>
 
       {/* Results Info */}
-      <section className="px-4 mb-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">
-            {state.filteredProducts.length} produk ditemukan
-            {totalPages > 1 && (
-              <span className="ml-2">• Halaman {currentPage} dari {totalPages}</span>
-            )}
-          </span>
+      <section className="mb-4">
+        <div className={standardClasses.container.boxed}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-zinc-400">
+              {state.filteredProducts.length} produk ditemukan
+              {totalPages > 1 && (
+                <span className="ml-2">• Halaman {currentPage} dari {totalPages}</span>
+              )}
+            </span>
+          </div>
         </div>
       </section>
 
       {/* Products Grid */}
-      <section className="px-4">
-        {currentProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-            {currentProducts.map((product) => (
-              <div key={product.id} className="w-full">
-                <ProductCard 
-                  product={product} 
-                  fromCatalogPage={true}
-                  className="w-full h-full" 
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-8 text-center">
-            <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Search className="text-zinc-500" size={24} />
+      <section className="mb-8">
+        <div className={standardClasses.container.boxed}>
+          {currentProducts.length > 0 ? (
+            <div className={cn(standardClasses.grid.responsive4, 'mb-6')}>
+              {currentProducts.map((product) => (
+                <div key={product.id} className="w-full">
+                  <ProductCard 
+                    product={product} 
+                    fromCatalogPage={true}
+                    className="w-full h-full" 
+                  />
+                </div>
+              ))}
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Tidak ada produk ditemukan
-            </h3>
-            <p className="text-zinc-400 mb-6 text-sm">
-              Coba ubah kata kunci pencarian atau filter Anda
-            </p>
-            <button
-              onClick={() => {
-                handleFilterChange('searchTerm', '');
-                handleFilterChange('selectedGame', '');
-                handleFilterChange('selectedTier', '');
-                handleFilterChange('sortBy', 'newest');
-              }}
-              className="bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
-              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
-            >
-              Reset Filter
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-8 text-center">
+              <div className={cn(standardClasses.flex.center, 'w-16 h-16 bg-zinc-800 rounded-2xl mx-auto mb-4')}>
+                <Search className="text-zinc-500" size={24} />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Tidak ada produk ditemukan
+              </h3>
+              <p className="text-zinc-400 mb-6 text-sm">
+                Coba ubah kata kunci pencarian atau filter Anda
+              </p>
+              <button
+                onClick={() => {
+                  handleFilterChange('searchTerm', '');
+                  handleFilterChange('selectedGame', '');
+                  handleFilterChange('selectedTier', '');
+                  handleFilterChange('sortBy', 'newest');
+                }}
+                className="bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+                style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+              >
+                Reset Filter
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Pagination */}

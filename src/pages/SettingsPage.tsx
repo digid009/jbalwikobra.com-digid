@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useTheme } from '../contexts/ThemeContext';
+import { standardClasses, cn } from '../styles/standardClasses';
 
 interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
@@ -83,7 +84,7 @@ const SettingsPage: React.FC = () => {
     <AuthRequired>
       <div className="min-h-screen bg-ios-background">
         <div className="pt-20 pb-20 px-4 with-bottom-nav">
-          <div className="max-w-4xl mx-auto">
+          <div className={standardClasses.container.boxed}>
             {/* Header */}
             <div className="flex items-center space-x-4 mb-8">
               <div

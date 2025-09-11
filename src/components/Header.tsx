@@ -5,6 +5,7 @@ import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag, Arro
 import { notificationService } from '../services/notificationService';
 import { IOSButton } from './ios/IOSDesignSystem';
 import { SettingsService } from '../services/settingsService';
+import { standardClasses, cn } from '../styles/standardClasses';
 import type { WebsiteSettings } from '../types';
 
 const Header = () => {
@@ -99,10 +100,10 @@ const Header = () => {
   return (
     <>
       <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className={standardClasses.container.boxed}>
+          <div className={cn(standardClasses.flex.between, 'h-16 lg:h-18')}>
             {/* Logo Section */}
-            <Link to="/" className="flex items-center space-x-3 flex-shrink-0 group">
+            <Link to="/" className={cn(standardClasses.flex.rowGap3, 'flex-shrink-0 group')}>
               {/* Dynamic logo if available */}
               {settings?.logoUrl ? (
                 <img
@@ -111,7 +112,7 @@ const Header = () => {
                   className="w-9 h-9 rounded-xl object-cover ring-1 ring-ios-border group-hover:ring-ios-accent transition-all duration-200"
                 />
               ) : (
-                <div className="w-9 h-9 bg-gradient-to-br from-ios-primary to-ios-accent rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
+                <div className={cn(standardClasses.flex.center, 'w-9 h-9 bg-gradient-to-br from-ios-primary to-ios-accent rounded-xl shadow-sm group-hover:shadow-md transition-all duration-200')}>
                   <span className="text-white font-bold text-sm">JB</span>
                 </div>
               )}
@@ -124,7 +125,7 @@ const Header = () => {
             </Link>
 
             {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <div className="hidden md:flex flex-1 max-w-2xl mx-6 lg:mx-12">
               <form onSubmit={handleSearch} className="w-full">
                 <div className={`relative transition-all duration-300 ${
                   isSearchFocused ? 'transform scale-[1.02]' : ''
@@ -137,31 +138,33 @@ const Header = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-12 pr-4 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-ios-surface transition-all duration-300 text-sm"
+                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-ios-surface transition-all duration-300 text-sm lg:text-base"
                   />
                 </div>
               </form>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
+            <nav className={cn('hidden lg:flex', standardClasses.flex.rowGap2, 'xl:gap-3')}>
               {navigationItems.slice(0, 5).map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                  className={cn(
+                    standardClasses.flex.rowGap2,
+                    'px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg transition-all duration-200',
                     location.pathname === item.path
                       ? 'bg-ios-accent text-white shadow-sm'
                       : 'text-ios-text hover:bg-ios-surface-secondary'
-                  }`}
+                  )}
                 >
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="font-medium text-sm lg:text-base">{item.label}</span>
                 </Link>
               ))}
             </nav>
 
             {/* Action Buttons */}
-            <div className="flex items-center space-x-1">
+            <div className={cn(standardClasses.flex.row, 'space-x-1 lg:space-x-2 ml-2 lg:ml-4')}>
               {/* Mobile Search */}
               <IOSButton
                 variant="ghost"
