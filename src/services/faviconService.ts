@@ -1,23 +1,23 @@
 import { SettingsService } from './settingsService';
 
 export class FaviconService {
-  private static defaultFavicon = '/favicon.ico';
+  private static defaultFavicon = '/favicon.svg';
 
   static async updateFavicon(): Promise<void> {
     try {
       const settings = await SettingsService.get();
-      const faviconUrl = settings?.faviconUrl || this.defaultFavicon;
+  const faviconUrl = settings?.faviconUrl || this.defaultFavicon;
       
       // Remove existing favicon links
       const existingLinks = document.querySelectorAll('link[rel*="icon"]');
       existingLinks.forEach(link => link.remove());
       
-      // Add new favicon link
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/x-icon';
-      link.href = faviconUrl;
-      document.head.appendChild(link);
+  // Add new favicon link
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = faviconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/x-icon';
+  link.href = faviconUrl;
+  document.head.appendChild(link);
       
       // Also update apple-touch-icon if available
       if (settings?.faviconUrl) {
@@ -30,11 +30,11 @@ export class FaviconService {
     } catch (error) {
       console.error('Failed to update favicon:', error);
       // Fallback to default favicon
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/x-icon';
-      link.href = this.defaultFavicon;
-      document.head.appendChild(link);
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = this.defaultFavicon.endsWith('.svg') ? 'image/svg+xml' : 'image/x-icon';
+  link.href = this.defaultFavicon;
+  document.head.appendChild(link);
     }
   }
 

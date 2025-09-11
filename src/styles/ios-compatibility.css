@@ -348,12 +348,6 @@ p, span, h1, h2, h3, h4, h5, h6 {
     transform: none;
   }
   
-  /* Improve scrolling performance */
-  * {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-  
   /* Reduce animations on lower-end devices */
   @media (prefers-reduced-motion: reduce) {
     * {
