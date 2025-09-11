@@ -1,9 +1,9 @@
-// Temporary service for orders that uses service role to bypass RLS issues
+// Service for orders data access with admin privileges
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const serviceRoleClient = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseServiceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY!;
+const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
 export interface Order {
   id: string;
@@ -30,7 +30,7 @@ export const ordersService = {
     const offset = (page - 1) * limit;
 
     try {
-      let query = serviceRoleClient
+      let query = adminClient
         .from('orders')
         .select(`
           id,
@@ -56,7 +56,7 @@ export const ordersService = {
       }
 
       // Get total count for pagination
-      const { count: totalCount, error: countError } = await serviceRoleClient
+      const { count: totalCount, error: countError } = await adminClient
         .from('orders')
         .select('*', { count: 'exact', head: true });
 
@@ -87,7 +87,7 @@ export const ordersService = {
 
   async getOrderStats() {
     try {
-      const { data: orders, error } = await serviceRoleClient
+      const { data: orders, error } = await adminClient
         .from('orders')
         .select('status, amount');
 
@@ -114,7 +114,7 @@ export const ordersService = {
 
   async updateOrderStatus(orderId: string, status: Order['status']) {
     try {
-      const { error } = await serviceRoleClient
+      const { error } = await adminClient
         .from('orders')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', orderId);
@@ -132,7 +132,7 @@ export const ordersService = {
 
   async deleteOrder(orderId: string) {
     try {
-      const { error } = await serviceRoleClient
+      const { error } = await adminClient
         .from('orders')
         .delete()
         .eq('id', orderId);

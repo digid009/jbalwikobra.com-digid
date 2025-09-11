@@ -72,17 +72,17 @@ export const AdminDashboardContent: React.FC = () => {
   const getNotificationColor = (type: AdminNotification['type']) => {
     switch (type) {
       case 'new_order':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-ios-primary/10 border-ios-primary/20';
       case 'paid_order':
-        return 'bg-green-50 border-green-200';
+        return 'bg-ios-success/10 border-ios-success/20';
       case 'cancelled_order':
-        return 'bg-red-50 border-red-200';
+        return 'bg-ios-danger/10 border-ios-danger/20';
       case 'new_user':
-        return 'bg-purple-50 border-purple-200';
+        return 'bg-ios-secondary/10 border-ios-secondary/20';
       case 'new_review':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-ios-warning/10 border-ios-warning/20';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-ios-surface/50 border-ios-primary/20';
     }
   };
 
@@ -100,7 +100,7 @@ export const AdminDashboardContent: React.FC = () => {
       <IOSCard>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h3 className="text-lg font-semibold text-ios-text flex items-center">
               <Clock className="w-5 h-5 mr-2" />
               Recent Activity
             </h3>
@@ -108,7 +108,7 @@ export const AdminDashboardContent: React.FC = () => {
               <IOSButton size="small" variant="ghost" onClick={handleRefresh} disabled={refreshing} className="flex items-center">
                 <RotateCcw className={`w-4 h-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
               </IOSButton>
-              <span className="text-sm text-gray-500 hidden sm:inline">Last 24 hours</span>
+              <span className="text-sm text-ios-text/60 hidden sm:inline">Last 24 hours</span>
             </div>
           </div>
 
@@ -116,10 +116,10 @@ export const AdminDashboardContent: React.FC = () => {
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="animate-pulse flex space-x-4">
-                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="w-10 h-10 bg-ios-surface/30 rounded-lg"></div>
                   <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-ios-surface/30 rounded w-3/4"></div>
+                    <div className="h-3 bg-ios-surface/30 rounded w-1/2"></div>
                   </div>
                 </div>
               ))}
@@ -135,16 +135,16 @@ export const AdminDashboardContent: React.FC = () => {
                     <span className="text-2xl leading-none pt-0.5">{getNotificationIcon(notification.type)}</span>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">{notification.title}</h4>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/70 text-gray-600 border border-gray-200 backdrop-blur">
+                        <h4 className="font-medium text-ios-text">{notification.title}</h4>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/70 text-ios-text/70 border border-ios-primary/20 backdrop-blur">
                           {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-ios-text/70 mt-1">
                         {notification.message}
                       </p>
                       {notification.amount && (
-                        <p className="text-sm font-semibold text-green-600 mt-1">Rp {notification.amount.toLocaleString()}</p>
+                        <p className="text-sm font-semibold text-ios-success mt-1">Rp {notification.amount.toLocaleString()}</p>
                       )}
                     </div>
                   </div>
@@ -153,8 +153,8 @@ export const AdminDashboardContent: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No recent activity</p>
+              <AlertCircle className="w-12 h-12 text-ios-text/40 mx-auto mb-4" />
+              <p className="text-ios-text/60">No recent activity</p>
             </div>
           )}
         </div>
@@ -164,17 +164,17 @@ export const AdminDashboardContent: React.FC = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <div className="flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <Calendar className="w-5 h-5 text-ios-text/60" />
+            <div className="flex items-center bg-white rounded-lg border border-ios-primary/20 overflow-hidden">
               {(['7d','14d','30d'] as const).map(opt => (
-                <button key={opt} onClick={() => handleRangeChange(opt)} className={`px-3 py-1.5 text-sm font-medium transition-colors ${range===opt ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{opt}</button>
+                <button key={opt} onClick={() => handleRangeChange(opt)} className={`px-3 py-1.5 text-sm font-medium transition-colors ${range===opt ? 'bg-ios-primary text-white' : 'text-ios-text/70 hover:bg-ios-surface/50'}`}>{opt}</button>
               ))}
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <input type="date" value={customStart} onChange={e=>setCustomStart(e.target.value)} className="border rounded-lg px-2 py-1 text-sm" />
-            <span className="text-gray-500 text-sm">to</span>
-            <input type="date" value={customEnd} onChange={e=>setCustomEnd(e.target.value)} className="border rounded-lg px-2 py-1 text-sm" />
+            <input type="date" value={customStart} onChange={e=>setCustomStart(e.target.value)} className="border border-ios-primary/20 rounded-lg px-2 py-1 text-sm bg-ios-surface/50 text-ios-text" />
+            <span className="text-ios-text/60 text-sm">to</span>
+            <input type="date" value={customEnd} onChange={e=>setCustomEnd(e.target.value)} className="border border-ios-primary/20 rounded-lg px-2 py-1 text-sm bg-ios-surface/50 text-ios-text" />
             <IOSButton size="small" onClick={applyCustomRange} disabled={!customStart || !customEnd}>Apply</IOSButton>
           </div>
         </div>
@@ -182,23 +182,23 @@ export const AdminDashboardContent: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <IOSCard>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center"><TrendingUp className="w-5 h-5 mr-2" /> Orders & Revenue</h3>
+            <h3 className="text-lg font-semibold text-ios-text mb-4 flex items-center"><TrendingUp className="w-5 h-5 mr-2" /> Orders & Revenue</h3>
             {loading && series.length===0 ? (
-              <div className="h-40 flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>
+              <div className="h-40 flex items-center justify-center text-ios-text/60 text-sm">Loading chart...</div>
             ) : series.length===0 ? (
-              <div className="h-40 flex items-center justify-center text-gray-400 text-sm">No data</div>
+              <div className="h-40 flex items-center justify-center text-ios-text/60 text-sm">No data</div>
             ) : (
               <div className="space-y-4">
                 <div className="h-40 relative">
                   <svg className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
-                    {series.map((d,i)=>{ const x=(i/(series.length-1))*100; const y=100-(d.count/maxCount)*100; return <circle key={d.date+'c'} cx={x+'%'} cy={y+'%'} r={3} fill="#2563eb" />; })}
-                    {series.map((d,i)=>{ if(i===0) return null; const prev=series[i-1]; const x1=((i-1)/(series.length-1))*100; const x2=(i/(series.length-1))*100; const y1=100-(prev.count/maxCount)*100; const y2=100-(d.count/maxCount)*100; return <line key={d.date+'l'} x1={x1+'%'} y1={y1+'%'} x2={x2+'%'} y2={y2+'%'} stroke="#2563eb" strokeWidth={2} />; })}
-                    {series.map((d,i)=>{ const x=(i/(series.length-1))*100; const h=(d.revenue/maxRevenue)*100; const y=100-h; return <rect key={d.date+'r'} x={`calc(${x}% - 2px)`} y={y+'%'} width={4} height={h+'%'} fill="#16a34a" opacity={0.4} />; })}
+                    {series.map((d,i)=>{ const x=(i/(series.length-1))*100; const y=100-(d.count/maxCount)*100; return <circle key={d.date+'c'} cx={x+'%'} cy={y+'%'} r={3} fill="#007AFF" />; })}
+                    {series.map((d,i)=>{ if(i===0) return null; const prev=series[i-1]; const x1=((i-1)/(series.length-1))*100; const x2=(i/(series.length-1))*100; const y1=100-(prev.count/maxCount)*100; const y2=100-(d.count/maxCount)*100; return <line key={d.date+'l'} x1={x1+'%'} y1={y1+'%'} x2={x2+'%'} y2={y2+'%'} stroke="#007AFF" strokeWidth={2} />; })}
+                    {series.map((d,i)=>{ const x=(i/(series.length-1))*100; const h=(d.revenue/maxRevenue)*100; const y=100-h; return <rect key={d.date+'r'} x={`calc(${x}% - 2px)`} y={y+'%'} width={4} height={h+'%'} fill="#34C759" opacity={0.4} />; })}
                   </svg>
                 </div>
-                <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-                  <div className="flex items-center space-x-1"><span className="w-3 h-3 rounded-full bg-blue-600 inline-block" /> <span>Orders</span></div>
-                  <div className="flex items-center space-x-1"><span className="w-3 h-3 rounded bg-green-600 inline-block" /> <span>Revenue</span></div>
+                <div className="flex flex-wrap gap-4 text-xs text-ios-text/70">
+                  <div className="flex items-center space-x-1"><span className="w-3 h-3 rounded-full bg-ios-primary inline-block" /> <span>Orders</span></div>
+                  <div className="flex items-center space-x-1"><span className="w-3 h-3 rounded bg-ios-success inline-block" /> <span>Revenue</span></div>
                 </div>
               </div>
             )}
@@ -207,20 +207,20 @@ export const AdminDashboardContent: React.FC = () => {
 
         <IOSCard>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products</h3>
+            <h3 className="text-lg font-semibold text-ios-text mb-4">Top Products</h3>
             {loading && topProducts.length===0 ? (
-              <div className="space-y-3">{[...Array(3)].map((_,i)=><div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />)}</div>
+              <div className="space-y-3">{[...Array(3)].map((_,i)=><div key={i} className="h-8 bg-ios-surface/30 rounded animate-pulse" />)}</div>
             ) : topProducts.length===0 ? (
-              <p className="text-sm text-gray-500">No product data</p>
+              <p className="text-sm text-ios-text/60">No product data</p>
             ) : (
               <div className="space-y-4">
                 {topProducts.map(p => (
                   <div key={p.product_id} className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{p.product_name}</p>
-                      <p className="text-xs text-gray-500">{p.count} orders</p>
+                      <p className="font-medium text-ios-text">{p.product_name}</p>
+                      <p className="text-xs text-ios-text/60">{p.count} orders</p>
                     </div>
-                    <span className="text-sm font-semibold text-green-600">Rp {p.revenue.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-ios-success">Rp {p.revenue.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
