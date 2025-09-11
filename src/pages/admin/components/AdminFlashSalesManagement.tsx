@@ -71,6 +71,12 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   return (
     <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+      <RLSDiagnosticsBanner 
+        hasErrors={!!error}
+        errorMessage={error || ''}
+        statsLoaded={!loading}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <IOSSectionHeader

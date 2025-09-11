@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Image, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, X } from 'lucide-react';
 import { adminService, Banner } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
+import { cn } from '../../../styles/standardClasses';
 
 interface AdminBannersManagementProps {
   onRefresh?: () => void;
@@ -72,6 +74,12 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
 
   return (
     <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+      <RLSDiagnosticsBanner 
+        hasErrors={!!error}
+        errorMessage={error || ''}
+        statsLoaded={!loading}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <IOSSectionHeader

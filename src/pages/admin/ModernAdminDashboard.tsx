@@ -136,7 +136,7 @@ const ModernAdminDashboard: React.FC = () => {
         return (
           <>
             <AdminStatsOverview stats={stats} loading={loading} />
-            <AdminDashboardContent />
+            <AdminDashboardContent onRefreshStats={loadStats} />
           </>
         );
       case 'orders':

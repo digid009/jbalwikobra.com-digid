@@ -4,7 +4,11 @@ import { adminService, AdminNotification, OrderDayStat, TopProductStat } from '.
 import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystem';
 import { adminCache } from '../../../services/adminCache';
 
-export const AdminDashboardContent: React.FC = () => {
+interface AdminDashboardContentProps {
+  onRefreshStats?: () => void;
+}
+
+export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ onRefreshStats }) => {
   const [recentNotifications, setRecentNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -19,6 +23,11 @@ export const AdminDashboardContent: React.FC = () => {
     // Prefetch dashboard data on mount
     adminService.prefetchDashboardData();
   }, []);
+
+  // Reload data when range changes
+  useEffect(() => {
+    loadDashboardData();
+  }, [range]);
 
   const loadDashboardData = async () => {
     try {
@@ -45,6 +54,10 @@ export const AdminDashboardContent: React.FC = () => {
       adminCache.invalidatePattern('admin:');
       await loadDashboardData();
       await adminService.prefetchDashboardData();
+      // Also refresh the main stats
+      if (onRefreshStats) {
+        onRefreshStats();
+      }
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {

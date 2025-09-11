@@ -4,6 +4,7 @@ import { ordersService, Order } from '../../../services/ordersService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
+import { cn } from '../../../styles/standardClasses';
 
 export const AdminOrdersManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -44,15 +45,15 @@ export const AdminOrdersManagement: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-orange-100 text-orange-700 border border-orange-200';
+        return 'bg-ios-warning/10 text-ios-warning border border-ios-warning/20';
       case 'paid':
-        return 'bg-blue-100 text-blue-700 border border-blue-200';
+        return 'bg-ios-primary/10 text-ios-primary border border-ios-primary/20';
       case 'completed':
-        return 'bg-green-100 text-green-700 border border-green-200';
+        return 'bg-ios-success/10 text-ios-success border border-ios-success/20';
       case 'cancelled':
-        return 'bg-red-100 text-red-700 border border-red-200';
+        return 'bg-ios-danger/10 text-ios-danger border border-ios-danger/20';
       default:
-        return 'bg-gray-100 text-gray-700 border border-gray-200';
+        return 'bg-ios-surface/50 text-ios-text/70 border border-ios-primary/20';
     }
   };
 
@@ -64,15 +65,21 @@ export const AdminOrdersManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+      <RLSDiagnosticsBanner 
+        hasErrors={!!error}
+        errorMessage={error || ''}
+        statsLoaded={!loading}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <IOSSectionHeader
           title="Orders Management"
           subtitle="Manage and track all customer orders"
         />
-        <IOSButton onClick={loadOrders} className="flex items-center space-x-2">
-          <RefreshCw className="w-4 h-4" />
+        <IOSButton onClick={loadOrders} className="flex items-center space-x-2" disabled={loading}>
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
         </IOSButton>
       </div>
@@ -129,54 +136,56 @@ export const AdminOrdersManagement: React.FC = () => {
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-            <p className="text-gray-500 font-medium">Loading orders...</p>
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
+            <p className="text-ios-text-secondary font-medium">Loading orders...</p>
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <thead className={cn(
+                'bg-ios-surface border-b border-ios-border'
+              )}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Order ID
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="divide-y divide-ios-border">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-blue-50/50 transition-colors duration-200">
+                  <tr key={order.id} className="hover:bg-ios-surface transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-sm font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                        <span className="text-sm font-mono font-medium text-ios-primary bg-ios-primary/10 px-2 py-1 rounded-lg">
                           #{order.id.slice(-8)}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">{order.customer_name}</span>
+                        <span className="text-sm font-medium text-ios-text">{order.customer_name}</span>
                         {order.customer_email && (
-                          <span className="text-xs text-gray-500">{order.customer_email}</span>
+                          <span className="text-xs text-ios-text-secondary">{order.customer_email}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-green-600">
+                      <span className="text-sm font-semibold text-ios-success">
                         Rp {order.amount.toLocaleString()}
                       </span>
                     </td>
@@ -187,10 +196,10 @@ export const AdminOrdersManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-ios-text">
                           {new Date(order.created_at).toLocaleDateString()}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-ios-text-secondary">
                           {new Date(order.created_at).toLocaleTimeString()}
                         </span>
                       </div>
@@ -215,11 +224,11 @@ export const AdminOrdersManagement: React.FC = () => {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-ios-surface/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-ios-text-secondary" />
             </div>
-            <p className="text-gray-500 font-medium">No orders found</p>
-            <p className="text-gray-400 text-sm">Try adjusting your search or filter criteria</p>
+            <p className="text-ios-text-secondary font-medium">No orders found</p>
+            <p className="text-ios-text/50 text-sm">Try adjusting your search or filter criteria</p>
           </div>
         )}
 
