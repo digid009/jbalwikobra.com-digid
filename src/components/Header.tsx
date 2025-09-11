@@ -290,9 +290,19 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     className="flex items-center space-x-2"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center shadow-sm">
-                      <User className="w-4 h-4 text-white" />
-                    </div>
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name || 'User'}
+                        className="w-8 h-8 rounded-full object-cover shadow-sm border border-ios-border"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center shadow-sm">
+                        <span className="text-white text-sm font-medium">
+                          {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <span className="hidden sm:block text-ios-text font-medium max-w-20 truncate">
                       {user.email?.split('@')[0] || 'User'}
                     </span>
@@ -303,11 +313,21 @@ const Header = () => {
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-ios-border">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-white" />
-                          </div>
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.name || 'User'}
+                              className="w-10 h-10 rounded-full object-cover border border-ios-border"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center">
+                              <span className="text-white text-lg font-medium">
+                                {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-ios-text truncate">{user.email}</p>
+                            <p className="text-sm font-semibold text-ios-text truncate">{user.name || user.email}</p>
                             <p className="text-xs text-ios-success flex items-center">
                               <div className="w-2 h-2 bg-ios-success rounded-full mr-1.5"></div>
                               Online

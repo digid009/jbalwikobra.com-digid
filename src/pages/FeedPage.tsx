@@ -6,6 +6,7 @@ import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader } from '../component
 import { ConsistentLayout, PageWrapper, ContentSection } from '../components/layout/ConsistentLayout';
 import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/TraditionalAuthContext';
 
 // Mobile-first constants
 const MIN_TOUCH_TARGET = 44; // iOS HIG minimum 44pt touch target
@@ -158,14 +159,6 @@ const FeedSkeleton: React.FC = () => (
   </div>
 );
 
-// Mock user state - in real app this would come from auth context
-const mockUser = {
-  id: 'user123',
-  name: 'John Doe',
-  isLoggedIn: false, // Set to true to simulate logged in user
-  hasPurchaseHistory: true
-};
-
 function timeAgo(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return `${Math.max(1, Math.floor(diff))} dtk`;
@@ -175,6 +168,7 @@ function timeAgo(iso: string) {
 }
 
 export default function FeedPage() {
+  const { user } = useAuth();
   // State management
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
@@ -264,7 +258,7 @@ export default function FeedPage() {
   };
 
   const toggleLike = async (postId: string) => {
-    if (!mockUser.isLoggedIn) {
+    if (!user) {
       alert('Silakan login untuk memberikan like');
       return;
     }
@@ -290,7 +284,7 @@ export default function FeedPage() {
   };
 
   const addComment = async (postId: string) => {
-    if (!mockUser.isLoggedIn) {
+    if (!user) {
       alert('Silakan login untuk memberikan komentar');
       return;
     }
@@ -371,7 +365,7 @@ export default function FeedPage() {
       <IOSContainer maxWidth="md" className="pt-2 pb-24 with-bottom-nav">
         <IOSSectionHeader 
           title="Feed Komunitas" 
-          subtitle={mockUser.isLoggedIn ? 'Bergabunglah dalam diskusi' : 'Login untuk berinteraksi'}
+          subtitle={user ? 'Bergabunglah dalam diskusi' : 'Login untuk berinteraksi'}
           className="mb-2"
         />
         {/* Mobile-First Tab Navigation */}
@@ -397,13 +391,13 @@ export default function FeedPage() {
         </div>
 
         {/* Login Notice for Guests */}
-        {!mockUser.isLoggedIn && (
+        {!user && (
           <IOSCard padding="medium" className="mb-6 border border-pink-200 bg-pink-50">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm text-pink-800">
                 <strong>Info:</strong> Anda sebagai guest. Masuk untuk like, komentar, dan review.
               </p>
-              <IOSButton size="small" variant="primary" onClick={() => navigate('/login')}>
+              <IOSButton size="small" variant="primary" onClick={() => navigate('/auth')}>
                 Masuk
               </IOSButton>
             </div>
@@ -554,7 +548,7 @@ export default function FeedPage() {
                     </div>
                   </div>
                   
-                  {review.user_id === mockUser.id && review.canEdit && (
+                  {review.user_id === user?.id && review.canEdit && (
                     <IOSButton
                       variant="ghost"
                       size="small"
