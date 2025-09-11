@@ -1,18 +1,30 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
+// Lazily initialize Supabase client to avoid module-load failures
+let supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient {
+  if (supabase) return supabase;
+  
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase configuration');
   }
-});
+  
+  supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+  
+  return supabase;
+}
 
 const whatsappService = new DynamicWhatsAppService();
 
@@ -62,8 +74,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Early environment check to prevent framework HTML 500s
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Auth API misconfiguration: Missing Supabase URL or Service Key');
+    try {
+      getSupabase(); // This will throw if env vars are missing
+    } catch (error) {
+      console.error('Auth API misconfiguration:', error);
       return res.status(500).json({ error: 'Server configuration error. Please try again later.' });
     }
 
@@ -114,7 +128,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     }
 
     // Find user by phone or email
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await getSupabase()
       .from('users')
       .select('*')
       .or(`phone.eq.${identifier},email.eq.${identifier}`)
@@ -142,7 +156,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    const { error: sessionError } = await supabase
+    const { error: sessionError } = await getSupabase()
       .from('user_sessions')
       .insert({
         user_id: user.id,
@@ -157,7 +171,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     }
 
     // Update last login
-    await supabase
+    await getSupabase()
       .from('users')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', user.id);

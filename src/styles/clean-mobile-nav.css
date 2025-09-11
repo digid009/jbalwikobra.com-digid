@@ -1,7 +1,7 @@
 /* CLEAN MOBILE NAVIGATION FIX - Single Source of Truth */
 /* This replaces all other mobile navigation fixes */
 
-/* Mobile Header Styling */
+/* Base styles for mobile header and nav */
 .mobile-header {
   display: flex;
   align-items: center;
@@ -23,49 +23,58 @@
   align-items: center;
 }
 
-/* Mobile Navigation Fixed Positioning - FINAL VERSION */
+/* CRITICAL: Mobile Navigation Fixed Positioning */
+/* Force fixed positioning on mobile regardless of other CSS */
 @media screen and (max-width: 768px) {
   /* Ensure body doesn't interfere */
   body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
   }
   
-  /* Main content spacing */
-  .App main {
+  /* Main content spacing - target App component specifically */
+  .App main,
+  main {
     padding-top: 80px !important;
     padding-bottom: 90px !important;
-    min-height: calc(100vh - 170px);
+    min-height: calc(100vh - 170px) !important;
   }
   
-  /* HEADER - Simple and reliable */
+  /* HEADER - Override everything with strongest specificity */
+  header.mobile-header,
   .mobile-header,
+  header[data-fixed="header"],
   header {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100% !important;
-    z-index: 1000 !important;
+    width: 100vw !important;
+    z-index: 9999 !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
   }
   
-  /* BOTTOM NAVIGATION - Simple and reliable */
+  /* BOTTOM NAVIGATION - Override everything */
   .mobile-bottom-nav,
-  nav[data-fixed="bottom-nav"],
-  div[data-fixed="bottom-nav"] {
+  div[data-fixed="bottom-nav"],
+  nav[data-fixed="bottom-nav"] {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100% !important;
-    z-index: 999 !important;
+    width: 100vw !important;
+    z-index: 9998 !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
   }
 }
 
 /* Desktop - Remove mobile fixes */
 @media screen and (min-width: 769px) {
-  .App main {
+  .App main,
+  main {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
