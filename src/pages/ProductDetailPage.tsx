@@ -26,6 +26,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { createXenditInvoice } from '../services/paymentService';
+import ResponsiveImage from '../components/ResponsiveImage';
 import { getCurrentUserProfile, isLoggedIn, getAuthUserId } from '../services/authService';
 import { useWishlist } from '../contexts/WishlistContext';
 import PhoneInput from '../components/PhoneInput';
@@ -419,7 +420,7 @@ const ProductDetailPage: React.FC = () => {
         {/* Back Button */}
         <button
           onClick={handleBackToCatalog}
-          className="inline-flex items-center space-x-2 text-ios-text-secondary hover:text-ios-text mb-6 transition-colors"
+          className="inline-flex items-center space-x-2 text-ios-text-secondary hover:text-ios-text mb-6 transition-colors min-h-[44px]"
         >
           <ChevronLeft size={20} />
           <span>Kembali ke Katalog</span>
@@ -429,11 +430,15 @@ const ProductDetailPage: React.FC = () => {
           {/* Image Gallery */}
           <div>
                         <div className="relative aspect-[4/5] mb-4 bg-ios-surface rounded-xl overflow-hidden border border-ios-border">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+                          <ResponsiveImage
+                            src={images[selectedImage]}
+                            alt={product.name}
+                            className="w-full h-full"
+                            priority={true}
+                            quality={85}
+                            aspectRatio={4/5}
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                          />
               
               {/* Flash Sale Badge */}
               {isFlashSaleActive && (
@@ -601,10 +606,10 @@ const ProductDetailPage: React.FC = () => {
             {/* Action Buttons */}
             <div className="space-y-3 mb-6">
               {/* Purchase Button */}
-      <button
+  <button
                 onClick={handlePurchase}
                 disabled={product.stock === 0}
-                className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-colors ${
+        className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-colors min-h-[44px] ${
                   product.stock === 0
         ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
         : 'bg-pink-600 text-white hover:bg-pink-700'
@@ -618,10 +623,10 @@ const ProductDetailPage: React.FC = () => {
 
               {/* Rental Button - hidden if user came from flash sale card */}
               {(!cameFromFlashSaleCard) && product.hasRental && selectedRental && (
-        <button
+  <button
                   onClick={() => handleRental(selectedRental)}
                   disabled={product.stock === 0}
-                  className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold border-2 transition-colors ${
+      className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold border-2 transition-colors min-h-[44px] ${
                     product.stock === 0
           ? 'border-gray-700 text-gray-400 cursor-not-allowed'
           : 'border-pink-600 text-pink-400 hover:bg-white/5'
@@ -720,7 +725,7 @@ const ProductDetailPage: React.FC = () => {
                     required
                     value={customer.name}
                     onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                    className="w-full px-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent min-h-[44px]"
                     placeholder="Masukkan nama lengkap"
                   />
                 </div>
@@ -734,7 +739,7 @@ const ProductDetailPage: React.FC = () => {
                     required
                     value={customer.email}
                     onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                    className="w-full px-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent min-h-[44px]"
                     placeholder="Masukkan email"
                   />
                 </div>
@@ -776,7 +781,7 @@ const ProductDetailPage: React.FC = () => {
 
                 {/* Terms acceptance (required for purchase) */}
                 {checkoutType === 'purchase' && (
-                  <label className="flex items-start space-x-2 text-sm text-ios-text-secondary">
+                  <label className="flex items-start space-x-2 text-sm text-ios-text-secondary min-h-[44px]">
                     <input
                       type="checkbox"
                       checked={acceptedTerms}
@@ -796,7 +801,7 @@ const ProductDetailPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowCheckoutForm(false)}
-                    className="flex-1 px-4 py-2 border border-ios-border text-ios-text-secondary rounded-lg hover:bg-ios-surface transition-colors"
+                    className="flex-1 px-4 border border-ios-border text-ios-text-secondary rounded-lg hover:bg-ios-surface transition-colors min-h-[44px]"
                   >
                     Batal
                   </button>
@@ -806,7 +811,7 @@ const ProductDetailPage: React.FC = () => {
                       type="button"
                       onClick={handleCheckout}
                       disabled={!acceptedTerms || creatingInvoice}
-                      className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                      className={`flex-1 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] ${
                         acceptedTerms && !creatingInvoice
                           ? 'bg-pink-600 text-white hover:bg-pink-700'
                           : 'bg-gray-700 text-gray-400 cursor-not-allowed'
@@ -821,7 +826,7 @@ const ProductDetailPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleWhatsAppContact('rental')}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      className="flex-1 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors min-h-[44px]"
                     >
                       Lanjut ke WhatsApp
                     </button>

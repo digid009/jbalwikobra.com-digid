@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Camera, Upload } from 'lucide-react';
 import { IOSButton, IOSCard } from '../../../components/ios/IOSDesignSystem';
-import { Product } from '../types';
+import { Product } from '../../../services/enhancedAdminService';
 
 interface ProductDialogProps {
   product: Product | null;
@@ -20,9 +20,8 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     price: 0,
     original_price: 0,
     category: '',
-    stock_quantity: 1,
-    is_flash_sale: false,
-    image: '',
+    stock: 1,
+    image_url: '',
     is_active: true
   });
   const [saving, setSaving] = useState(false);
@@ -31,7 +30,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   useEffect(() => {
     if (product) {
       setFormData(product);
-      setImagePreview(product.image || '');
+      setImagePreview(product.image_url || '');
     }
   }, [product]);
 
@@ -49,7 +48,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
         setImagePreview(imageUrl);
-        handleInputChange('image', imageUrl);
+        handleInputChange('image_url', imageUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -126,7 +125,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                     size="small"
                     onClick={() => {
                       setImagePreview('');
-                      handleInputChange('image', '');
+                      handleInputChange('image_url', '');
                     }}
                     className="absolute top-2 right-2 p-2"
                   >
@@ -239,12 +238,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-ios-text mb-2">
-                Stock Quantity
+                Stock
               </label>
               <input
                 type="number"
-                value={formData.stock_quantity || 0}
-                onChange={(e) => handleInputChange('stock_quantity', parseInt(e.target.value) || 0)}
+                value={formData.stock || 0}
+                onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
                 className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
                 placeholder="0"
                 min="0"
@@ -254,19 +253,6 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
           {/* Options */}
           <div className="space-y-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_flash_sale"
-                checked={formData.is_flash_sale || false}
-                onChange={(e) => handleInputChange('is_flash_sale', e.target.checked)}
-                className="mr-3 w-4 h-4 text-ios-primary bg-ios-surface border-ios-separator rounded focus:ring-ios-primary"
-              />
-              <label htmlFor="is_flash_sale" className="text-sm text-ios-text">
-                Flash Sale Product
-              </label>
-            </div>
-
             <div className="flex items-center">
               <input
                 type="checkbox"

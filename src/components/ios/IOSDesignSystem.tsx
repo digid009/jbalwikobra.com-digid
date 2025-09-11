@@ -218,7 +218,7 @@ export const IOSCard: React.FC<IOSCardProps> = ({
 
   const paddingClasses = {
     none: '',
-    small: 'p-3',
+    small: 'p-4',
     medium: 'p-4',
     large: 'p-6'
   };
@@ -256,7 +256,7 @@ export const IOSGrid: React.FC<IOSGridProps> = ({
   };
 
   const gapClasses = {
-    small: 'gap-2',
+    small: 'gap-3',
     medium: 'gap-4',
     large: 'gap-6'
   };

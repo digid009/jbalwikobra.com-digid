@@ -1,0 +1,564 @@
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { Product, Tier, GameTitle } from '../types';
+import ProductCard from '../components/ProductCard';
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { IOSContainer, IOSCard, IOSSectionHeader, IOSButton, IOSGrid } from '../components/ios/IOSDesignSystem';
+
+const ProductsPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedGame, setSelectedGame] = useState(searchParams.get('game') || '');
+  const [selectedTier, setSelectedTier] = useState(searchParams.get('tier') || '');
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Pagination state dengan logic untuk restore dari sessionStorage
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Cek apakah user kembali dari detail produk
+    const savedState = sessionStorage.getItem('productsPageState');
+    if (savedState && location.state?.fromProductDetail) {
+      try {
+        const parsedState = JSON.parse(savedState);
+        return parsedState.currentPage || 1;
+      } catch {
+        return 1;
+      }
+    }
+    return 1;
+  });
+  const productsPerPage = 8; // 8 products per page (2 columns x 4 rows)
+
+  const sortOptions = [
+    { value: 'newest', label: 'Terbaru' },
+    { value: 'oldest', label: 'Terlama' },
+    { value: 'price-low', label: 'Harga Terendah' },
+    { value: 'price-high', label: 'Harga Tertinggi' },
+    { value: 'name-az', label: 'Nama A-Z' },
+    { value: 'name-za', label: 'Nama Z-A' }
+  ];
+
+  useEffect(() => {
+    let mounted = true;
+    
+    const fetchData = async () => {
+      try {
+        // Dynamic imports for better code splitting
+        const [
+          { ProductService },
+          { OptimizedProductService }
+        ] = await Promise.all([
+          import('../services/productService'),
+          import('../services/optimizedProductService')
+        ]);
+        
+        if (!mounted) return;
+        
+        const [productsResponse, tiersData, gameTitlesData] = await Promise.all([
+          OptimizedProductService.getProductsPaginated({
+            status: 'active'
+          }, {
+            page: 1,
+            limit: 100 // Large initial load for backwards compatibility
+          }),
+          ProductService.getTiers(),
+          ProductService.getGameTitles()
+        ]);
+        
+        if (!mounted) return;
+        
+        setProducts(productsResponse.data);
+        
+        // Sort tiers: Pelajar → Reguler → Premium
+        const sortedTiers = [...tiersData].sort((a, b) => {
+          const order = { 'pelajar': 1, 'reguler': 2, 'premium': 3 };
+          const aOrder = order[a.slug] || 999;
+          const bOrder = order[b.slug] || 999;
+          return aOrder - bOrder;
+        });
+        setTiers(sortedTiers);
+        
+        setGameTitles(gameTitlesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Restore filter state jika user kembali dari detail produk
+  useEffect(() => {
+    const savedState = sessionStorage.getItem('productsPageState');
+    if (savedState && location.state?.fromProductDetail) {
+      try {
+        const parsedState = JSON.parse(savedState);
+        if (parsedState.searchTerm !== undefined) setSearchTerm(parsedState.searchTerm);
+        if (parsedState.selectedGame !== undefined) setSelectedGame(parsedState.selectedGame);
+        if (parsedState.selectedTier !== undefined) setSelectedTier(parsedState.selectedTier);
+        if (parsedState.sortBy !== undefined) setSortBy(parsedState.sortBy);
+      } catch (error) {
+        console.error('Error parsing saved state:', error);
+      }
+    }
+  }, [location.state]);
+
+  // Simpan state pagination dan filter setiap kali berubah
+  useEffect(() => {
+    const state = {
+      currentPage,
+      searchTerm,
+      selectedGame,
+      selectedTier,
+      sortBy
+    };
+    sessionStorage.setItem('productsPageState', JSON.stringify(state));
+  }, [currentPage, searchTerm, selectedGame, selectedTier, sortBy]);
+
+  useEffect(() => {
+    let filtered = [...products];
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.gameTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Game filter
+    if (selectedGame) {
+      filtered = filtered.filter(product => {
+        const gameName = product.gameTitleData?.name || product.gameTitle;
+        return gameName?.toLowerCase() === selectedGame.toLowerCase();
+      });
+    }
+
+    // Tier filter
+    if (selectedTier) {
+      filtered = filtered.filter(product => {
+        const tierSlug = product.tierData?.slug || product.tier;
+        return tierSlug?.toLowerCase() === selectedTier.toLowerCase();
+      });
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'name-az':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'name-za':
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, selectedGame, selectedTier, sortBy]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedGame, selectedTier, sortBy]);
+
+  useEffect(() => {
+    // Update URL params
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (selectedGame) params.set('game', selectedGame);
+    if (selectedTier) params.set('tier', selectedTier);
+    if (sortBy !== 'newest') params.set('sortBy', sortBy);
+    
+    setSearchParams(params);
+  }, [searchTerm, selectedGame, selectedTier, sortBy, setSearchParams]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedGame('');
+    setSelectedTier('');
+    setSortBy('newest');
+    setCurrentPage(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-ios-background text-ios-text">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="ios-skeleton h-8 w-48 mb-6"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-ios-surface rounded-2xl border border-ios-border p-3">
+                <div className="ios-skeleton h-36 w-full mb-3 rounded-xl"></div>
+                <div className="ios-skeleton h-4 w-3/4 mb-2"></div>
+                <div className="ios-skeleton h-4 w-1/2 mb-3"></div>
+                <div className="flex gap-2">
+                  <div className="ios-skeleton h-8 w-16 rounded-lg"></div>
+                  <div className="ios-skeleton h-8 w-20 rounded-lg"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-ios-background text-ios-text">
+      <IOSContainer maxWidth="xl" className="py-4 sm:py-6 lg:py-8">
+        {/* Header */}
+        <IOSSectionHeader title="Katalog Produk" className="mb-4 sm:mb-6 lg:mb-8" />
+
+    <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+          {/* Sidebar Filters - Desktop */}
+          <div className="hidden lg:block">
+      <IOSCard padding="large" className="sticky top-24">
+              {/* Search */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                  Cari Produk
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-ios-text-secondary" size={20} />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                    placeholder="Nama akun, game..."
+                  />
+                </div>
+              </div>
+
+              {/* Game Filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                  Game
+                </label>
+                <select
+                  value={selectedGame}
+                  onChange={(e) => setSelectedGame(e.target.value)}
+                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                >
+                  <option value="">Semua Game</option>
+                  {gameTitles.map(game => (
+                    <option key={game.slug} value={game.name}>{game.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tier Filter */}
+              <div className="mb-2">
+                <label className="block text-sm font-medium text-ios-text-secondary mb-2">Kategori</label>
+                <select
+                  value={selectedTier}
+                  onChange={(e) => setSelectedTier(e.target.value)}
+                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                >
+                  <option value="">Semua Kategori</option>
+                  {tiers.map(tier => (
+                    <option key={tier.slug} value={tier.slug}>{tier.name}</option>
+                  ))}
+                </select>
+              </div>
+            </IOSCard>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Grid moved to main content for correct layout */}
+            {filteredProducts.length > 0 && (
+              <div className="hidden lg:block mb-6">
+                <IOSGrid columns={3} gap="medium">
+                  {currentProducts.map((product) => (
+                    <div key={product.id}>
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </IOSGrid>
+              </div>
+            )}
+            {/* Mobile Category Filter - Segmented Tabs (matching FeedPage design) */}
+            <div className="lg:hidden mb-4">
+              <div className="flex gap-1 p-1 bg-ios-bg-secondary rounded-xl overflow-x-auto scrollbar-hide">
+                {[{ slug: '', name: 'Semua' } as any, ...tiers].map((tier) => {
+                  const active = (selectedTier || '') === (tier.slug || '');
+                  
+                  // Get tier-specific color based on the tier slug
+                  const getTierColor = (tierSlug: string) => {
+                    switch (tierSlug) {
+                      case 'pelajar':
+                        return 'bg-blue-500 text-white shadow-lg'; // Pelajar Blue
+                      case 'reguler':
+                        return 'bg-gray-400 text-white shadow-lg'; // Reguler Silver
+                      case 'premium':
+                        return 'bg-yellow-500 text-white shadow-lg'; // Premium Gold
+                      default:
+                        return 'bg-ios-accent text-white shadow-lg'; // Default for "Semua"
+                    }
+                  };
+                  
+                  return (
+                    <button
+                      key={tier.slug || 'all'}
+                      onClick={() => setSelectedTier(tier.slug || '')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
+                        active
+                          ? getTierColor(tier.slug || '')
+                          : 'bg-ios-surface text-ios-text-secondary hover:bg-ios-surface/80 hover:text-ios-text'
+                      }`}
+                    >
+                      {tier.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile Filter Toggle */}
+      <div className="lg:hidden mb-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+        className="w-full flex items-center justify-center space-x-2 bg-ios-surface border border-ios-border rounded-lg px-4 py-2 text-ios-text"
+              >
+                <SlidersHorizontal size={20} />
+                <span>Filter Lainnya</span>
+              </button>
+            </div>
+
+            {/* Mobile Filters */}
+            {showFilters && (
+              <IOSCard padding="medium" className="lg:hidden mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Cari</label>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                      placeholder="Nama akun..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Game</label>
+                    <select
+                      value={selectedGame}
+                      onChange={(e) => setSelectedGame(e.target.value)}
+                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                    >
+                      <option value="">Semua Game</option>
+                      {gameTitles.map(game => (
+                        <option key={game.slug} value={game.name}>{game.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Urutkan</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                    >
+                      {sortOptions.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4 flex space-x-2">
+                  <IOSButton variant="secondary" size="small" onClick={clearFilters}>Reset</IOSButton>
+                  <IOSButton size="small" onClick={() => setShowFilters(false)}>Terapkan</IOSButton>
+                </div>
+              </IOSCard>
+            )}
+
+            {/* Toolbar */}
+      <IOSCard padding="medium" className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+        <span className="text-sm text-ios-text-secondary">
+                  Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} dari {filteredProducts.length} produk
+                  {totalPages > 1 && (
+                    <span className="ml-2 text-ios-text-secondary">
+                      (Halaman {currentPage} dari {totalPages})
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                {/* Sort - Desktop */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  <label className="text-sm text-ios-text-secondary">Urutkan:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border border-ios-border bg-ios-surface text-ios-text rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  >
+                    {sortOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </IOSCard>
+
+      {/* Grid Layout dengan Pagination */}
+      {filteredProducts.length > 0 ? (
+              <>
+        {/* Products Grid - Responsive: 2 cols mobile, 3 cols tablet and desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:hidden">
+                  {currentProducts.map((product) => (
+                    <div key={product.id} className="w-full">
+                      <ProductCard 
+                        product={product} 
+                        fromCatalogPage={true}
+                        className="w-full h-full" 
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination - Bigger touch targets */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center space-x-2 sm:space-x-3 mt-8 px-4 sm:px-0">
+                    {/* Previous Button */}
+                    <button
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center px-3 sm:px-4 py-3 rounded-xl transition-colors text-sm ${
+                        currentPage === 1
+                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
+                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                      }`}
+                    >
+                      <ChevronLeft size={18} className="mr-1" />
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                      <span className="sm:hidden">Prev</span>
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center space-x-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        // Show first page, last page, current page, and pages around current
+                        const showPage = 
+                          page === 1 || 
+                          page === totalPages || 
+                          (page >= currentPage - 1 && page <= currentPage + 1);
+                        
+                        if (!showPage) {
+                          // Show ellipsis for gaps
+                          if (page === currentPage - 2 || page === currentPage + 2) {
+                            return (
+                  <span key={page} className="px-2 sm:px-3 py-2 text-gray-500 text-sm">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        }
+
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => goToPage(page)}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl transition-colors text-sm font-medium ${
+                              currentPage === page
+                                ? 'bg-pink-600 text-white'
+                                : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center px-3 sm:px-4 py-3 rounded-xl transition-colors text-sm ${
+                        currentPage === totalPages
+                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
+                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Selanjutnya</span>
+                      <span className="sm:hidden">Next</span>
+                      <ChevronRight size={18} className="ml-1" />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <IOSCard padding="large" className="text-center">
+                <div className="w-24 h-24 bg-black border border-pink-500/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="text-pink-400" size={32} />
+                </div>
+                <h3 className="text-lg font-semibold text-ios-text mb-2">
+                  Tidak ada produk ditemukan
+                </h3>
+                <p className="text-ios-text-secondary mb-4">
+                  Coba ubah kata kunci pencarian atau filter Anda
+                </p>
+                <IOSButton onClick={clearFilters}>Reset Filter</IOSButton>
+              </IOSCard>
+            )}
+          </div>
+        </div>
+      </IOSContainer>
+    </div>
+  );
+};
+
+export default ProductsPage;

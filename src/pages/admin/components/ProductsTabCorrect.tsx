@@ -21,7 +21,7 @@ import {
 import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { useProducts, useCrudOperations, useBulkOperations } from '../../../hooks/useAdminData';
 import { enhancedAdminService, Product } from '../../../services/enhancedAdminService';
-// import ProductDialog from './ProductDialog';
+import ProductDialog from './ProductDialog';
 
 const ProductsTab: React.FC = () => {
   // State for UI
@@ -576,7 +576,7 @@ const ProductsTab: React.FC = () => {
       </IOSCard>
 
       {/* Product Dialog */}
-      {/* {showProductDialog && (
+      {showProductDialog && (
         <ProductDialog
           product={editingProduct}
           onSave={handleSaveProduct}
@@ -585,7 +585,7 @@ const ProductsTab: React.FC = () => {
             setEditingProduct(null);
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };

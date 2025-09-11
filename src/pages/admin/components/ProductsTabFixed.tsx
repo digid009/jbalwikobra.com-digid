@@ -20,8 +20,9 @@ import {
 } from 'lucide-react';
 import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { useProducts, useCrudOperations, useBulkOperations } from '../../../hooks/useAdminData';
-import { enhancedAdminService, Product } from '../../../services/enhancedAdminService';
-// import ProductDialog from './ProductDialog';
+import { enhancedAdminService } from '../../../services/enhancedAdminService';
+import { Product } from '../types';
+import ProductDialog from './ProductDialog';
 
 const ProductsTab: React.FC = () => {
   // State for UI
@@ -33,7 +34,7 @@ const ProductsTab: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Data hooks - Using proper typing
+  // Data hooks
   const {
     data: products,
     loading,
@@ -97,8 +98,9 @@ const ProductsTab: React.FC = () => {
   }, []);
 
   const handleSort = useCallback((column: string) => {
-    changeSorting(column);
-  }, [changeSorting]);
+    const newOrder = sortBy === column && sortOrder === 'asc' ? 'desc' : 'asc';
+    updateSort(column, newOrder);
+  }, [sortBy, sortOrder, updateSort]);
 
   const handlePageChange = useCallback((page: number) => {
     updatePagination({ page });
@@ -109,8 +111,8 @@ const ProductsTab: React.FC = () => {
   }, [toggleSelection]);
 
   const handleSelectAll = useCallback(() => {
-    toggleAll(products.map((p: Product) => p.id));
-  }, [toggleAll, products]);
+    toggleSelectAll(products.map(p => p.id));
+  }, [toggleSelectAll, products]);
 
   const handleAddProduct = useCallback(() => {
     setEditingProduct(null);
@@ -132,83 +134,61 @@ const ProductsTab: React.FC = () => {
 
   const handleDeleteProduct = useCallback(async (product: Product) => {
     if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
-      await remove(
-        () => enhancedAdminService.deleteProduct(product.id),
-        () => refresh(),
-        (error) => console.error('Failed to delete product:', error)
-      );
+      try {
+        await deleteProduct(product.id);
+        refresh();
+      } catch (error) {
+        console.error('Failed to delete product:', error);
+      }
     }
-  }, [remove, refresh]);
+  }, [deleteProduct, refresh]);
 
   const handleToggleStatus = useCallback(async (product: Product) => {
-    await update(
-      () => enhancedAdminService.updateProduct(product.id, { is_active: !product.is_active }),
-      () => refresh(),
-      (error) => console.error('Failed to update product status:', error)
-    );
-  }, [update, refresh]);
+    try {
+      await updateProduct(product.id, { is_active: !product.is_active });
+      refresh();
+    } catch (error) {
+      console.error('Failed to update product status:', error);
+    }
+  }, [updateProduct, refresh]);
 
   const handleBulkStatusChange = useCallback(async (isActive: boolean) => {
-    await executeBulkOperation(
-      (ids) => enhancedAdminService.bulkUpdateProducts(ids, { is_active: isActive }),
-      () => {
-        clearSelection();
-        refresh();
-      },
-      (error) => console.error('Failed to bulk update products:', error)
-    );
-  }, [executeBulkOperation, clearSelection, refresh]);
+    try {
+      await bulkUpdate(selectedIds, { is_active: isActive });
+      clearSelection();
+      refresh();
+    } catch (error) {
+      console.error('Failed to bulk update products:', error);
+    }
+  }, [bulkUpdate, selectedIds, clearSelection, refresh]);
 
   const handleBulkDelete = useCallback(async () => {
     if (window.confirm(`Are you sure you want to delete ${selectedIds.length} products?`)) {
-      await executeBulkOperation(
-        (ids) => enhancedAdminService.bulkDeleteProducts(ids),
-        () => {
-          clearSelection();
-          refresh();
-        },
-        (error) => console.error('Failed to bulk delete products:', error)
-      );
+      try {
+        await bulkDelete(selectedIds);
+        clearSelection();
+        refresh();
+      } catch (error) {
+        console.error('Failed to bulk delete products:', error);
+      }
     }
-  }, [executeBulkOperation, selectedIds.length, clearSelection, refresh]);
+  }, [bulkDelete, selectedIds, clearSelection, refresh]);
 
   const handleSaveProduct = useCallback(async (productData: Partial<Product>) => {
     try {
       if (editingProduct) {
-        await update(
-          () => enhancedAdminService.updateProduct(editingProduct.id, productData),
-          () => {
-            setShowProductDialog(false);
-            setEditingProduct(null);
-            refresh();
-          }
-        );
+        await updateProduct(editingProduct.id, productData);
       } else {
-        // Ensure required fields are present for creation
-        const createData = {
-          name: productData.name || '',
-          description: productData.description || '',
-          price: productData.price || 0,
-          category: productData.category || '',
-          stock: productData.stock || 0,
-          is_active: productData.is_active !== undefined ? productData.is_active : true,
-          ...productData
-        };
-        
-        await create(
-          () => enhancedAdminService.createProduct(createData),
-          () => {
-            setShowProductDialog(false);
-            setEditingProduct(null);
-            refresh();
-          }
-        );
+        await createProduct(productData);
       }
+      setShowProductDialog(false);
+      setEditingProduct(null);
+      refresh();
     } catch (error) {
       console.error('Failed to save product:', error);
       throw error; // Re-throw to let dialog handle the error
     }
-  }, [editingProduct, update, create, refresh]);
+  }, [editingProduct, updateProduct, createProduct, refresh]);
 
   // Utility functions
   const formatPrice = (price: number) => {
@@ -227,8 +207,8 @@ const ProductsTab: React.FC = () => {
   };
 
   const renderSortIcon = (column: string) => {
-    if (pagination.sortBy !== column) return null;
-    return pagination.sortOrder === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
+    if (sortBy !== column) return null;
+    return sortOrder === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
 
   // Loading state
@@ -355,7 +335,6 @@ const ProductsTab: React.FC = () => {
                   onClick={() => handleBulkStatusChange(true)}
                   variant="secondary"
                   size="small"
-                  disabled={crudLoading}
                 >
                   Activate
                 </IOSButton>
@@ -363,7 +342,6 @@ const ProductsTab: React.FC = () => {
                   onClick={() => handleBulkStatusChange(false)}
                   variant="secondary"
                   size="small"
-                  disabled={crudLoading}
                 >
                   Deactivate
                 </IOSButton>
@@ -372,7 +350,6 @@ const ProductsTab: React.FC = () => {
                   variant="secondary"
                   size="small"
                   className="text-red-600"
-                  disabled={crudLoading}
                 >
                   Delete
                 </IOSButton>
@@ -421,7 +398,7 @@ const ProductsTab: React.FC = () => {
         ) : (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product: Product) => (
+              {products.map((product) => (
                 <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                   {/* Product Image */}
                   <div className="relative h-48 bg-gray-100">
@@ -530,7 +507,6 @@ const ProductsTab: React.FC = () => {
                         size="small"
                         onClick={() => handleDeleteProduct(product)}
                         className="flex items-center justify-center gap-2 text-red-600"
-                        disabled={crudLoading}
                       >
                         <Trash2 className="w-4 h-4" />
                       </IOSButton>
@@ -576,7 +552,7 @@ const ProductsTab: React.FC = () => {
       </IOSCard>
 
       {/* Product Dialog */}
-      {/* {showProductDialog && (
+      {showProductDialog && (
         <ProductDialog
           product={editingProduct}
           onSave={handleSaveProduct}
@@ -585,7 +561,7 @@ const ProductsTab: React.FC = () => {
             setEditingProduct(null);
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };

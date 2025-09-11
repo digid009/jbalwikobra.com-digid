@@ -64,13 +64,28 @@ const PaymentStatusPage: React.FC = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-app-dark text-gray-200">
+      <div className="min-h-screen flex items-center justify-center bg-ios-background text-ios-text px-4 with-bottom-nav">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Tidak ada detail order</h2>
-          <p className="text-gray-300 mb-4">Jika pembayaran berhasil, Anda akan menerima email konfirmasi. {authed ? 'Cek juga riwayat order Anda.' : 'Silakan login untuk melihat riwayat order.'}</p>
-          <div className="flex gap-3 justify-center">
-            {authed && <Link to="/orders" className="bg-pink-600 text-white px-4 py-2 rounded-lg">Lihat Riwayat Order</Link>}
-            <Link to="/" className="border border-pink-500/40 px-4 py-2 rounded-lg">Beranda</Link>
+          <h2 className="text-xl sm:text-2xl font-bold text-ios-text mb-4">Tidak ada detail order</h2>
+          <p className="text-ios-text-secondary mb-6 text-sm sm:text-base">
+            Jika pembayaran berhasil, Anda akan menerima email konfirmasi. 
+            {authed ? ' Cek juga riwayat order Anda.' : ' Silakan login untuk melihat riwayat order.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {authed && (
+              <Link 
+                to="/orders" 
+                className="bg-pink-600 text-white px-6 py-3 min-h-[44px] rounded-xl font-semibold hover:bg-pink-700 transition-colors text-center"
+              >
+                Lihat Riwayat Order
+              </Link>
+            )}
+            <Link 
+              to="/" 
+              className="border border-ios-border px-6 py-3 min-h-[44px] rounded-xl bg-ios-surface text-ios-text hover:bg-ios-surface/80 transition-colors text-center"
+            >
+              Beranda
+            </Link>
           </div>
         </div>
       </div>
@@ -87,23 +102,84 @@ const PaymentStatusPage: React.FC = () => {
   const style = map[order.status];
 
   return (
-    <div className="min-h-screen bg-app-dark text-gray-200">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className={`p-6 rounded-xl border bg-black/70 border-pink-500/30`}>
-          <h1 className={`text-2xl font-bold mb-2 ${style.color}`}>{style.title}</h1>
-          <p className="text-gray-300 mb-4">Order ID: <span className="font-mono">{order.id}</span></p>
-          <p className="text-gray-300 mb-6">Total Pembayaran: <strong>Rp {Number(order.amount).toLocaleString('id-ID')}</strong></p>
-          <div className="text-sm text-gray-300 space-y-1 mb-6">
-            {order.payment_channel && <p>Metode: <strong className="capitalize">{order.payment_channel.toLowerCase().replace(/_/g,' ')}</strong></p>}
-            {order.payer_email && <p>Email Pembayar: <strong>{order.payer_email}</strong></p>}
-            {order.xendit_invoice_id && <p>Invoice ID: <span className="font-mono">{order.xendit_invoice_id}</span></p>}
-            {order.xendit_invoice_url && <p><a href={order.xendit_invoice_url} target="_blank" rel="noreferrer" className="text-pink-400">Buka invoice Xendit</a></p>}
-            {order.expires_at && <p>Expired: {new Date(order.expires_at).toLocaleString('id-ID')}</p>}
-            {order.paid_at && <p>Dibayar: {new Date(order.paid_at).toLocaleString('id-ID')}</p>}
+    <div className="min-h-screen bg-ios-background text-ios-text with-bottom-nav">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16">
+        <div className="bg-ios-surface border border-ios-border rounded-2xl p-6 sm:p-8 shadow-lg">
+          <h1 className={`text-xl sm:text-2xl font-bold mb-4 ${style.color}`}>{style.title}</h1>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+              <span className="text-ios-text-secondary text-sm">Order ID:</span>
+              <span className="font-mono text-sm sm:text-base">{order.id}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+              <span className="text-ios-text-secondary text-sm">Total Pembayaran:</span>
+              <span className="font-bold text-lg text-ios-text">Rp {Number(order.amount).toLocaleString('id-ID')}</span>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Link to="/products" className="bg-pink-600 text-white px-4 py-2 rounded-lg">Lanjut belanja</Link>
-            <Link to="/" className="border border-pink-500/40 px-4 py-2 rounded-lg">Beranda</Link>
+
+          {/* Payment Details */}
+          <div className="bg-ios-bg-secondary rounded-xl p-4 mb-6">
+            <h3 className="font-semibold text-ios-text mb-3">Detail Pembayaran</h3>
+            <div className="space-y-2 text-sm">
+              {order.payment_channel && (
+                <div className="flex justify-between">
+                  <span className="text-ios-text-secondary">Metode:</span>
+                  <span className="font-medium capitalize">{order.payment_channel.toLowerCase().replace(/_/g,' ')}</span>
+                </div>
+              )}
+              {order.payer_email && (
+                <div className="flex justify-between">
+                  <span className="text-ios-text-secondary">Email:</span>
+                  <span className="font-medium">{order.payer_email}</span>
+                </div>
+              )}
+              {order.xendit_invoice_id && (
+                <div className="flex justify-between">
+                  <span className="text-ios-text-secondary">Invoice ID:</span>
+                  <span className="font-mono text-xs">{order.xendit_invoice_id}</span>
+                </div>
+              )}
+              {order.expires_at && (
+                <div className="flex justify-between">
+                  <span className="text-ios-text-secondary">Expired:</span>
+                  <span className="font-medium">{new Date(order.expires_at).toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              {order.paid_at && (
+                <div className="flex justify-between">
+                  <span className="text-ios-text-secondary">Dibayar:</span>
+                  <span className="font-medium">{new Date(order.paid_at).toLocaleString('id-ID')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {order.xendit_invoice_url && order.status === 'pending' && (
+              <a 
+                href={order.xendit_invoice_url} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-pink-600 text-white px-6 py-3 min-h-[44px] rounded-xl font-semibold hover:bg-pink-700 transition-colors text-center"
+              >
+                Bayar Sekarang
+              </a>
+            )}
+            <Link 
+              to="/products" 
+              className="bg-ios-accent text-white px-6 py-3 min-h-[44px] rounded-xl font-semibold hover:bg-ios-accent/90 transition-colors text-center"
+            >
+              Lanjut Belanja
+            </Link>
+            <Link 
+              to="/" 
+              className="border border-ios-border px-6 py-3 min-h-[44px] rounded-xl bg-ios-surface text-ios-text hover:bg-ios-surface/80 transition-colors text-center"
+            >
+              Beranda
+            </Link>
           </div>
         </div>
       </div>

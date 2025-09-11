@@ -69,6 +69,13 @@ main {
   }
 }
 
+/* Flash Sales Page - No padding override */
+.flash-sales-page main {
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 /* Additional mobile fixes */
 @media (max-width: 1024px) {
   .App {

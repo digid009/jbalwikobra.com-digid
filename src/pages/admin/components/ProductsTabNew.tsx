@@ -20,8 +20,9 @@ import {
 } from 'lucide-react';
 import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { useProducts, useCrudOperations, useBulkOperations } from '../../../hooks/useAdminData';
-import { enhancedAdminService, Product } from '../../../services/enhancedAdminService';
-// import ProductDialog from './ProductDialog';
+import { enhancedAdminService } from '../../../services/enhancedAdminService';
+import { Product } from '../types';
+import ProductDialog from './ProductDialog';
 
 const ProductsTab: React.FC = () => {
   // State for UI
@@ -33,7 +34,7 @@ const ProductsTab: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Data hooks - Using proper typing
+  // Data hooks
   const {
     data: products,
     loading,
@@ -109,7 +110,7 @@ const ProductsTab: React.FC = () => {
   }, [toggleSelection]);
 
   const handleSelectAll = useCallback(() => {
-    toggleAll(products.map((p: Product) => p.id));
+    toggleAll(products.map(p => p.id));
   }, [toggleAll, products]);
 
   const handleAddProduct = useCallback(() => {
@@ -184,19 +185,8 @@ const ProductsTab: React.FC = () => {
           }
         );
       } else {
-        // Ensure required fields are present for creation
-        const createData = {
-          name: productData.name || '',
-          description: productData.description || '',
-          price: productData.price || 0,
-          category: productData.category || '',
-          stock: productData.stock || 0,
-          is_active: productData.is_active !== undefined ? productData.is_active : true,
-          ...productData
-        };
-        
         await create(
-          () => enhancedAdminService.createProduct(createData),
+          () => enhancedAdminService.createProduct(productData),
           () => {
             setShowProductDialog(false);
             setEditingProduct(null);
@@ -421,7 +411,7 @@ const ProductsTab: React.FC = () => {
         ) : (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product: Product) => (
+              {products.map((product) => (
                 <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                   {/* Product Image */}
                   <div className="relative h-48 bg-gray-100">
@@ -431,9 +421,9 @@ const ProductsTab: React.FC = () => {
                       onChange={() => handleSelectProduct(product.id)}
                       className="absolute top-3 left-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500 z-10"
                     />
-                    {product.image_url ? (
+                    {product.image ? (
                       <img
-                        src={product.image_url}
+                        src={product.image}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
@@ -495,7 +485,7 @@ const ProductsTab: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Package className="w-4 h-4" />
-                          {product.stock} left
+                          {product.stock_quantity} left
                         </div>
                       </div>
 
@@ -576,7 +566,7 @@ const ProductsTab: React.FC = () => {
       </IOSCard>
 
       {/* Product Dialog */}
-      {/* {showProductDialog && (
+      {showProductDialog && (
         <ProductDialog
           product={editingProduct}
           onSave={handleSaveProduct}
@@ -585,7 +575,7 @@ const ProductsTab: React.FC = () => {
             setEditingProduct(null);
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };

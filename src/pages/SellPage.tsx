@@ -236,7 +236,7 @@ const SellPage: React.FC = () => {
                   <select
                     value={selectedGame}
                     onChange={(e) => setSelectedGame(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     required
                   >
                     <option value="">{loadingGames ? 'Memuat…' : 'Pilih game...'}</option>
@@ -254,7 +254,7 @@ const SellPage: React.FC = () => {
                     type="text"
                     value={accountLevel}
                     onChange={(e) => setAccountLevel(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     placeholder="Contoh: Mythic Glory, Conqueror, dll"
                   />
                 </div>
@@ -267,7 +267,7 @@ const SellPage: React.FC = () => {
                     type="text"
                     value={estimatedPrice}
                     onChange={handlePriceChange}
-                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     placeholder="Contoh: Rp 2,000,000"
                   />
                 </div>
@@ -279,28 +279,48 @@ const SellPage: React.FC = () => {
                   <textarea
                     value={accountDetails}
                     onChange={(e) => setAccountDetails(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[88px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base resize-none"
                     rows={3}
                     placeholder="Skin, hero, item khusus, dll"
                   />
                 </div>
             </div>
 
-              <div className="mt-6 sm:mt-8 text-center">
-                <IOSButton 
-                  size="large" 
-                  onClick={handleSellAccount} 
-                  className="w-full sm:w-auto px-6 py-3 text-sm sm:text-base"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <MessageCircle size={18} className="sm:w-5 sm:h-5" />
-                    <span>Hubungi Admin untuk Evaluasi</span>
-                    <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+              <div className="mt-6 sm:mt-8">
+                {/* Inline CTA for desktop */}
+                <div className="hidden sm:block text-center">
+                  <IOSButton 
+                    size="large" 
+                    onClick={handleSellAccount} 
+                    className="px-6 py-3 text-base"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <MessageCircle size={20} />
+                      <span>Hubungi Admin untuk Evaluasi</span>
+                      <ArrowRight size={20} />
+                    </div>
+                  </IOSButton>
+                  <p className="text-sm text-ios-text-secondary mt-4">
+                    Admin akan menghubungi Anda untuk evaluasi lebih lanjut
+                  </p>
+                </div>
+
+                {/* Sticky CTA for mobile - anchored above bottom nav */}
+                <div className="sm:hidden h-16" />
+                <div className="sm:hidden fixed left-0 right-0 bottom-[82px] z-40">
+                  <div className="mx-auto max-w-4xl px-4">
+                    <button
+                      onClick={handleSellAccount}
+                      className="w-full bg-pink-600 text-white font-semibold py-3 min-h-[44px] rounded-xl shadow-lg active:scale-[0.99] transition-transform"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <MessageCircle size={18} />
+                        <span>Hubungi Admin untuk Evaluasi</span>
+                        <ArrowRight size={18} />
+                      </div>
+                    </button>
                   </div>
-                </IOSButton>
-                <p className="text-xs sm:text-sm text-ios-text-secondary mt-3 sm:mt-4">
-                  Admin akan menghubungi Anda untuk evaluasi lebih lanjut
-                </p>
+                </div>
               </div>
             </IOSCard>
           </IOSContainer>
@@ -462,7 +482,7 @@ const SellPage: React.FC = () => {
             Bergabunglah dengan ribuan gamer lainnya yang sudah mempercayakan penjualan akun mereka kepada kami.
             Proses mudah, aman, dan harga terbaik!
           </p>
-          <IOSButton size="large" onClick={handleSellAccount}>
+          <IOSButton size="large" onClick={scrollToForm}>
             <div className="flex items-center gap-2">
               <MessageCircle size={20} />
               <span>Mulai Jual Akun Sekarang</span>

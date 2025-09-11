@@ -71,7 +71,7 @@ const AdminLayout: React.FC = () => {
         </aside>
 
         {/* Content */}
-        <main className="p-6 md:p-8 text-ios-text min-h-[calc(100vh-64px)]">
+        <main className="p-3.5 text-ios-text min-h-[calc(100vh-64px)]">
           <Outlet />
         </main>
       </div>

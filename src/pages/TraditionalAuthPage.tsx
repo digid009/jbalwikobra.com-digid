@@ -6,6 +6,9 @@ import PhoneInput from '../components/PhoneInput';
 import PasswordInput from '../components/PasswordInput';
 import { IOSButton, IOSCard } from '../components/ios/IOSDesignSystem';
 
+// Mobile-first constants
+const MIN_TOUCH_TARGET = 44;
+
 const AuthPage: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'signup' | 'verify' | 'complete'>('login');
   const [loading, setLoading] = useState(false);
@@ -213,10 +216,10 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLoginTab('email')}
-          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex-1 py-3 px-4 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg text-sm font-medium transition-all ${
                     loginTab === 'email'
-            ? 'bg-ios-accent text-white shadow-sm'
-            : 'text-ios-text-secondary hover:bg-white/5'
+                      ? 'bg-ios-accent text-white shadow-sm'
+                      : 'text-ios-text-secondary hover:bg-white/5'
                   }`}
                 >
                   Email
@@ -224,10 +227,10 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setLoginTab('phone')}
-          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex-1 py-3 px-4 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg text-sm font-medium transition-all ${
                     loginTab === 'phone'
-            ? 'bg-ios-accent text-white shadow-sm'
-            : 'text-ios-text-secondary hover:bg-white/5'
+                      ? 'bg-ios-accent text-white shadow-sm'
+                      : 'text-ios-text-secondary hover:bg-white/5'
                   }`}
                 >
                   Nomor HP
@@ -247,7 +250,7 @@ const AuthPage: React.FC = () => {
                         type="email"
                         value={emailLoginData.email}
                         onChange={(e) => setEmailLoginData({ ...emailLoginData, email: e.target.value })}
-                        className="w-full px-4 py-3 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                        className="w-full px-4 py-3 min-h-[44px] bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-base"
                         placeholder="email@example.com"
                         required
                       />
@@ -288,7 +291,7 @@ const AuthPage: React.FC = () => {
                   </>
                 )}
 
-                <button type="submit" disabled={loading} className="ios-button w-full disabled:opacity-50">
+                <button type="submit" disabled={loading} className="w-full bg-pink-600 text-white py-3 min-h-[44px] rounded-xl font-semibold hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                   {loading ? 'Masuk...' : `Masuk dengan ${loginTab === 'email' ? 'Email' : 'Nomor HP'}`}
                 </button>
 
@@ -341,7 +344,7 @@ const AuthPage: React.FC = () => {
                 required
               />
 
-              <button type="submit" disabled={loading} className="ios-button w-full disabled:opacity-50">
+              <button type="submit" disabled={loading} className="w-full bg-pink-600 text-white py-3 min-h-[44px] rounded-xl font-semibold hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                 {loading ? 'Mendaftar...' : 'Daftar'}
               </button>
 

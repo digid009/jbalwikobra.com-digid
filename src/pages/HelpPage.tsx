@@ -151,7 +151,7 @@ const HelpPage: React.FC = () => {
               <input 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-ios-surface border border-ios-border rounded-xl pl-12 pr-4 py-3 text-ios-text placeholder:text-ios-text-secondary focus:outline-none focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/20" 
+                className="w-full bg-ios-surface border border-ios-border rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-ios-text placeholder:text-ios-text-secondary focus:outline-none focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/20 text-sm sm:text-base" 
                 placeholder="Cari: pembelian, pembayaran, keamanan..." 
               />
               <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-ios-text-secondary" />
@@ -162,46 +162,69 @@ const HelpPage: React.FC = () => {
 
       <IOSContainer className="py-12">
 
-        {/* Quick Topics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-12">
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+        {/* Quick Topics - Mobile Optimized */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-12">
+          <button 
+            onClick={() => setSelectedCategory('Akun & Registrasi')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <User className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Akun</p>
-          </IOSCard>
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Akun</p>
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Pembelian')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <ShoppingBag className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Pembelian</p>
-          </IOSCard>
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Pembelian</p>
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Pembayaran')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <CreditCard className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Pembayaran</p>
-          </IOSCard>
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Pembayaran</p>
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Keamanan')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <ShieldCheck className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Keamanan</p>
-          </IOSCard>
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Keamanan</p>
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Fitur')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <Heart className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Wishlist</p>
-          </IOSCard>
-          <IOSCard padding="small" className="text-center hover:border-ios-accent/50 transition-colors cursor-pointer">
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Wishlist</p>
+          </button>
+          <button 
+            onClick={() => setSelectedCategory('Fitur')}
+            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+          >
             <Zap className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-sm font-medium text-ios-text">Flash Sale</p>
-          </IOSCard>
+            <p className="text-xs sm:text-sm font-medium text-ios-text">Flash Sale</p>
+          </button>
         </div>
 
-        {/* Category Filter */}
+        {/* Mobile-First Category Filter */}
         <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {categories.map((category) => (
-              <IOSButton
+              <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                variant={selectedCategory === category ? 'primary' : 'secondary'}
-                size="small"
+                className={`
+                  px-3 sm:px-4 py-2 min-h-[44px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base whitespace-nowrap
+                  ${selectedCategory === category 
+                    ? 'bg-ios-accent text-white shadow-lg' 
+                    : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80'
+                  }
+                `}
               >
                 {category}
-              </IOSButton>
+              </button>
             ))}
           </div>
         </div>
@@ -216,23 +239,26 @@ const HelpPage: React.FC = () => {
             
             <IOSCard className="divide-y divide-ios-border">
               {filteredFaqs.map((item, idx) => (
-                <div key={idx} className="p-6">
+                <div key={idx} className="p-4 sm:p-6">
                   <button
                     onClick={() => setOpen(open === idx ? null : idx)}
-                    className="w-full text-left focus:outline-none"
+                    className="w-full text-left focus:outline-none min-h-[44px] flex items-start"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex items-start justify-between w-full gap-3">
+                      <div className="flex-1">
                         <span className="inline-block px-2 py-1 bg-ios-accent/20 text-ios-accent text-xs rounded-full mb-2">
                           {item.category}
                         </span>
-                        <h3 className="font-semibold text-ios-text text-lg">{item.q}</h3>
+                        <h3 className="font-semibold text-ios-text text-base sm:text-lg pr-2">{item.q}</h3>
                       </div>
-                      <ChevronDown className={`transition-transform text-ios-accent ${open === idx ? 'rotate-180' : ''}`} />
+                      <ChevronDown 
+                        className={`transition-transform text-ios-accent flex-shrink-0 mt-1 ${open === idx ? 'rotate-180' : ''}`} 
+                        size={20}
+                      />
                     </div>
                   </button>
                   {open === idx && (
-                    <div className="mt-4 text-ios-text-secondary leading-relaxed">
+                    <div className="mt-4 text-ios-text-secondary leading-relaxed text-sm sm:text-base">
                       {item.a}
                     </div>
                   )}

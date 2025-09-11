@@ -1,0 +1,214 @@
+import React, { useEffect, useRef } from 'react';
+import { Search, Bell, Menu, X, UserCircle } from 'lucide-react';
+import { IOSButton } from '../../../components/ios/IOSDesignSystem';
+
+interface AdminHeaderProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onSearch: () => void;
+  showNotifications: boolean;
+  onToggleNotifications: () => void;
+  onToggleMobileMenu: () => void;
+  isMobileMenuOpen?: boolean;
+}
+
+export const AdminHeader: React.FC<AdminHeaderProps> = ({
+  searchQuery,
+  onSearchChange,
+  onSearch,
+  showNotifications,
+  onToggleNotifications,
+  onToggleMobileMenu,
+  isMobileMenuOpen = false,
+}) => {
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch();
+  };
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        if (showNotifications) {
+          onToggleNotifications();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications, onToggleNotifications]);
+
+  return (
+    <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Left: Logo and Mobile Menu */}
+          <div className="flex items-center space-x-4">
+            <IOSButton
+              variant="ghost"
+              size="small"
+              onClick={onToggleMobileMenu}
+              className="lg:hidden"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </IOSButton>
+            
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">JB</span>
+              </div>
+              <h1 className="text-xl font-semibold text-gray-900 hidden sm:block">
+                Admin Dashboard
+              </h1>
+            </div>
+          </div>
+
+          {/* Center: Search Bar (Desktop) */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <form onSubmit={handleSearchSubmit} className="w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Search orders, users, products..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <IOSButton
+                  type="submit"
+                  size="small"
+                  className="absolute right-1 top-1 bottom-1"
+                >
+                  Search
+                </IOSButton>
+              </div>
+            </form>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center space-x-2">
+            {/* Mobile Search Button */}
+            <IOSButton
+              variant="ghost"
+              size="small"
+              onClick={onSearch}
+              className="md:hidden"
+            >
+              <Search className="w-5 h-5" />
+            </IOSButton>
+
+            {/* Notifications */}
+            <div className="relative" ref={notificationRef}>
+              <IOSButton
+                variant="ghost"
+                size="small"
+                onClick={onToggleNotifications}
+                className="relative"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  3
+                </span>
+              </IOSButton>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    <div className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            New Order #12345
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            FREE FIRE B1 - Rp 25,000
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">2 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Order Paid #12344
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            MOBILE LEGENDS - Rp 50,000
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">5 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 hover:bg-gray-50">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Order Cancelled #12343
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            PUBG Mobile - Rp 30,000
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">10 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 border-t border-gray-200">
+                    <IOSButton variant="ghost" size="small" className="w-full">
+                      View All Notifications
+                    </IOSButton>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile */}
+            <IOSButton variant="ghost" size="small">
+              <UserCircle className="w-5 h-5" />
+            </IOSButton>
+          </div>
+        </div>
+
+        {/* Mobile Search Bar */}
+        <div className="md:hidden pb-4">
+          <form onSubmit={handleSearchSubmit}>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <IOSButton
+                type="submit"
+                size="small"
+                className="absolute right-1 top-1 bottom-1"
+              >
+                Search
+              </IOSButton>
+            </div>
+          </form>
+        </div>
+      </div>
+    </header>
+  );
+};

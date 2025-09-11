@@ -19,6 +19,8 @@ import { FaviconService } from './services/faviconService';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
+import { enhancedProductService } from './services/enhancedProductService';
+import FloatingNotifications from './components/FloatingNotifications';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -118,6 +120,8 @@ function App() {
       warmImport(() => import('./pages/FlashSalesPage'));
       warmImport(() => import('./pages/SellPage'));
       warmImport(() => import('./pages/ProfilePage'));
+      // Warm product data to minimize egress on navigation
+      enhancedProductService.getAllProducts().catch(() => {});
     }, 1000);
   }, []);
 
@@ -158,7 +162,9 @@ function App() {
                 <Route path="*" element={
                   <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200 relative">
                     <Header />
-                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen">
+                    {/* Floating notifications for public app */}
+                    <FloatingNotifications />
+                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen px-3.5">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">

@@ -1,27 +1,338 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * ProductsPage - Mobile-First Refactored Version
+ * Following iOS Human Interface Guidelines & Android Material Design 3
+ * 
+ * Key Improvements:
+ * - Touch-optimized filtering and search
+ * - Native-like product browsing experience  
+ * - Improved pagination with gesture-friendly controls
+ * - Performance-optimized product loading
+ * - Better visual hierarchy for product discovery
+ */
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Product, Tier, GameTitle } from '../types';
 import ProductCard from '../components/ProductCard';
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
-import { IOSContainer, IOSCard, IOSSectionHeader, IOSButton } from '../components/ios/IOSDesignSystem';
+import { 
+  Search, 
+  SlidersHorizontal, 
+  ChevronLeft, 
+  ChevronRight, 
+  Filter,
+  X,
+  ArrowUpDown
+} from 'lucide-react';
+
+// Mobile-first constants
+const MOBILE_CONSTANTS = {
+  MIN_TOUCH_TARGET: 44,
+  PRODUCTS_PER_PAGE: 12, // Optimized for mobile scrolling
+  PRODUCTS_PER_PAGE_MOBILE: 8, // Fewer products on mobile for faster loading
+  CONTENT_PADDING: 16,
+  FILTER_ANIMATION_DURATION: 300,
+} as const;
+
+interface ProductsPageState {
+  products: Product[];
+  filteredProducts: Product[];
+  tiers: Tier[];
+  gameTitles: GameTitle[];
+  loading: boolean;
+  error: string | null;
+}
+
+interface FilterState {
+  searchTerm: string;
+  selectedGame: string;
+  selectedTier: string;
+  sortBy: string;
+  showFilters: boolean;
+}
+
+// Mobile-optimized loading skeleton
+const ProductsLoadingSkeleton = React.memo(() => (
+  <div className="min-h-screen bg-black">
+    {/* Header skeleton */}
+    <div className="px-4 pt-6 pb-4">
+      <div className="h-8 bg-zinc-800 rounded-lg w-48 mb-4 animate-pulse"></div>
+      <div className="h-10 bg-zinc-800 rounded-xl mb-4 animate-pulse"></div>
+    </div>
+    
+    {/* Filter bar skeleton */}
+    <div className="px-4 mb-6">
+      <div className="flex space-x-3">
+        <div className="h-10 bg-zinc-800 rounded-xl flex-1 animate-pulse"></div>
+        <div className="h-10 w-10 bg-zinc-800 rounded-xl animate-pulse"></div>
+      </div>
+    </div>
+    
+    {/* Products grid skeleton */}
+    <div className="px-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="bg-zinc-900/50 rounded-2xl p-3 animate-pulse">
+            <div className="aspect-square bg-zinc-800 rounded-xl mb-3"></div>
+            <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-zinc-800 rounded w-1/2 mb-3"></div>
+            <div className="h-8 bg-zinc-800 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+));
+
+ProductsLoadingSkeleton.displayName = 'ProductsLoadingSkeleton';
+
+// Mobile-optimized filter panel
+const MobileFilterPanel = React.memo(({ 
+  isOpen, 
+  onClose, 
+  filterState, 
+  onFilterChange,
+  gameTitles,
+  tiers 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  filterState: FilterState;
+  onFilterChange: (key: string, value: string) => void;
+  gameTitles: GameTitle[];
+  tiers: Tier[];
+}) => {
+  const sortOptions = [
+    { value: 'newest', label: 'Terbaru' },
+    { value: 'oldest', label: 'Terlama' },
+    { value: 'price-low', label: 'Harga Terendah' },
+    { value: 'price-high', label: 'Harga Tertinggi' },
+    { value: 'name-az', label: 'Nama A-Z' },
+    { value: 'name-za', label: 'Nama Z-A' }
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Panel */}
+      <div className="absolute bottom-0 left-0 right-0 bg-zinc-900 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-white">Filter & Urutkan</h3>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center transition-colors hover:bg-zinc-700"
+          >
+            <X size={20} className="text-white" />
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="space-y-6">
+          {/* Game Filter */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-3">
+              Game
+            </label>
+            <select
+              value={filterState.selectedGame}
+              onChange={(e) => onFilterChange('selectedGame', e.target.value)}
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+            >
+              <option value="">Semua Game</option>
+              {gameTitles.map(game => (
+                <option key={game.slug} value={game.name}>{game.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tier Filter */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-3">
+              Tier
+            </label>
+            <select
+              value={filterState.selectedTier}
+              onChange={(e) => onFilterChange('selectedTier', e.target.value)}
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+            >
+              <option value="">Semua Tier</option>
+              {tiers.map(tier => (
+                <option key={tier.slug} value={tier.slug}>{tier.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-3">
+              Urutkan
+            </label>
+            <select
+              value={filterState.sortBy}
+              onChange={(e) => onFilterChange('sortBy', e.target.value)}
+              className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+            >
+              {sortOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex space-x-3 mt-8">
+          <button
+            onClick={() => {
+              onFilterChange('searchTerm', '');
+              onFilterChange('selectedGame', '');
+              onFilterChange('selectedTier', '');
+              onFilterChange('sortBy', 'newest');
+            }}
+            className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+            style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+          >
+            Reset
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+            style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+          >
+            Terapkan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+MobileFilterPanel.displayName = 'MobileFilterPanel';
+
+// Mobile-optimized pagination
+const MobilePagination = React.memo(({ 
+  currentPage, 
+  totalPages, 
+  onPageChange 
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  const getVisiblePages = () => {
+    const delta = 1;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter((page, index, array) => array.indexOf(page) === index);
+  };
+
+  return (
+    <div className="flex items-center justify-center space-x-2 px-4 py-6">
+      {/* Previous Button */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
+          currentPage === 1
+            ? 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed'
+            : 'bg-zinc-800 hover:bg-zinc-700 text-white'
+        }`}
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      {/* Page Numbers */}
+      <div className="flex items-center space-x-2 mx-4">
+        {getVisiblePages().map((page, index) => (
+          <React.Fragment key={index}>
+            {page === '...' ? (
+              <span className="px-2 text-zinc-500">...</span>
+            ) : (
+              <button
+                onClick={() => onPageChange(page as number)}
+                className={`w-10 h-10 rounded-xl font-medium transition-colors ${
+                  currentPage === page
+                    ? 'bg-pink-600 text-white'
+                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                }`}
+              >
+                {page}
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Next Button */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors ${
+          currentPage === totalPages
+            ? 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed'
+            : 'bg-zinc-800 hover:bg-zinc-700 text-white'
+        }`}
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+});
+
+MobilePagination.displayName = 'MobilePagination';
 
 const ProductsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [tiers, setTiers] = useState<Tier[]>([]);
-  const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedGame, setSelectedGame] = useState(searchParams.get('game') || '');
-  const [selectedTier, setSelectedTier] = useState(searchParams.get('tier') || '');
-  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest');
-  const [showFilters, setShowFilters] = useState(false);
   
-  // Pagination state dengan logic untuk restore dari sessionStorage
+  const [state, setState] = useState<ProductsPageState>({
+    products: [],
+    filteredProducts: [],
+    tiers: [],
+    gameTitles: [],
+    loading: true,
+    error: null
+  });
+
+  const [filterState, setFilterState] = useState<FilterState>({
+    searchTerm: searchParams.get('search') || '',
+    selectedGame: searchParams.get('game') || '',
+    selectedTier: searchParams.get('tier') || '',
+    sortBy: searchParams.get('sortBy') || 'newest',
+    showFilters: false
+  });
+
   const [currentPage, setCurrentPage] = useState(() => {
-    // Cek apakah user kembali dari detail produk
     const savedState = sessionStorage.getItem('productsPageState');
     if (savedState && location.state?.fromProductDetail) {
       try {
@@ -33,132 +344,102 @@ const ProductsPage: React.FC = () => {
     }
     return 1;
   });
-  const productsPerPage = 8; // 8 products per page (2 columns x 4 rows)
 
-  const sortOptions = [
-    { value: 'newest', label: 'Terbaru' },
-    { value: 'oldest', label: 'Terlama' },
-    { value: 'price-low', label: 'Harga Terendah' },
-    { value: 'price-high', label: 'Harga Tertinggi' },
-    { value: 'name-az', label: 'Nama A-Z' },
-    { value: 'name-za', label: 'Nama Z-A' }
-  ];
-
-  useEffect(() => {
-    let mounted = true;
-    
-    const fetchData = async () => {
-      try {
-        // Dynamic imports for better code splitting
-        const [
-          { ProductService },
-          { OptimizedProductService }
-        ] = await Promise.all([
-          import('../services/productService'),
-          import('../services/optimizedProductService')
-        ]);
-        
-        if (!mounted) return;
-        
-        const [productsResponse, tiersData, gameTitlesData] = await Promise.all([
-          OptimizedProductService.getProductsPaginated({
-            status: 'active'
-          }, {
-            page: 1,
-            limit: 100 // Large initial load for backwards compatibility
-          }),
-          ProductService.getTiers(),
-          ProductService.getGameTitles()
-        ]);
-        
-        if (!mounted) return;
-        
-        setProducts(productsResponse.data);
-        
-        // Sort tiers: Pelajar → Reguler → Premium
-        const sortedTiers = [...tiersData].sort((a, b) => {
-          const order = { 'pelajar': 1, 'reguler': 2, 'premium': 3 };
-          const aOrder = order[a.slug] || 999;
-          const bOrder = order[b.slug] || 999;
-          return aOrder - bOrder;
-        });
-        setTiers(sortedTiers);
-        
-        setGameTitles(gameTitlesData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-    
-    return () => {
-      mounted = false;
-    };
+  // Determine products per page based on screen size
+  const productsPerPage = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768 
+        ? MOBILE_CONSTANTS.PRODUCTS_PER_PAGE_MOBILE 
+        : MOBILE_CONSTANTS.PRODUCTS_PER_PAGE;
+    }
+    return MOBILE_CONSTANTS.PRODUCTS_PER_PAGE;
   }, []);
 
-  // Restore filter state jika user kembali dari detail produk
-  useEffect(() => {
-    const savedState = sessionStorage.getItem('productsPageState');
-    if (savedState && location.state?.fromProductDetail) {
-      try {
-        const parsedState = JSON.parse(savedState);
-        if (parsedState.searchTerm !== undefined) setSearchTerm(parsedState.searchTerm);
-        if (parsedState.selectedGame !== undefined) setSelectedGame(parsedState.selectedGame);
-        if (parsedState.selectedTier !== undefined) setSelectedTier(parsedState.selectedTier);
-        if (parsedState.sortBy !== undefined) setSortBy(parsedState.sortBy);
-      } catch (error) {
-        console.error('Error parsing saved state:', error);
-      }
+  // Optimized data fetching
+  const fetchData = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+
+      const [
+        { ProductService },
+        { OptimizedProductService }
+      ] = await Promise.all([
+        import('../services/productService'),
+        import('../services/optimizedProductService')
+      ]);
+
+      const [productsResponse, tiersData, gameTitlesData] = await Promise.all([
+        OptimizedProductService.getProductsPaginated({
+          status: 'active'
+        }, {
+          page: 1,
+          limit: 100
+        }),
+        ProductService.getTiers(),
+        ProductService.getGameTitles()
+      ]);
+
+      // Sort tiers: Pelajar → Reguler → Premium
+      const sortedTiers = [...tiersData].sort((a, b) => {
+        const order = { 'pelajar': 1, 'reguler': 2, 'premium': 3 };
+        const aOrder = order[a.slug] || 999;
+        const bOrder = order[b.slug] || 999;
+        return aOrder - bOrder;
+      });
+
+      setState({
+        products: productsResponse.data,
+        filteredProducts: productsResponse.data,
+        tiers: sortedTiers,
+        gameTitles: gameTitlesData,
+        loading: false,
+        error: null
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Gagal memuat produk. Silakan coba lagi.'
+      }));
     }
-  }, [location.state]);
-
-  // Simpan state pagination dan filter setiap kali berubah
-  useEffect(() => {
-    const state = {
-      currentPage,
-      searchTerm,
-      selectedGame,
-      selectedTier,
-      sortBy
-    };
-    sessionStorage.setItem('productsPageState', JSON.stringify(state));
-  }, [currentPage, searchTerm, selectedGame, selectedTier, sortBy]);
+  }, []);
 
   useEffect(() => {
-    let filtered = [...products];
+    fetchData();
+  }, [fetchData]);
+
+  // Filter products
+  useEffect(() => {
+    let filtered = [...state.products];
 
     // Search filter
-    if (searchTerm) {
+    if (filterState.searchTerm) {
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.gameTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(filterState.searchTerm.toLowerCase()) ||
+        product.gameTitle.toLowerCase().includes(filterState.searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(filterState.searchTerm.toLowerCase())
       );
     }
 
     // Game filter
-    if (selectedGame) {
+    if (filterState.selectedGame) {
       filtered = filtered.filter(product => {
         const gameName = product.gameTitleData?.name || product.gameTitle;
-        return gameName?.toLowerCase() === selectedGame.toLowerCase();
+        return gameName?.toLowerCase() === filterState.selectedGame.toLowerCase();
       });
     }
 
     // Tier filter
-    if (selectedTier) {
+    if (filterState.selectedTier) {
       filtered = filtered.filter(product => {
         const tierSlug = product.tierData?.slug || product.tier;
-        return tierSlug?.toLowerCase() === selectedTier.toLowerCase();
+        return tierSlug?.toLowerCase() === filterState.selectedTier.toLowerCase();
       });
     }
 
     // Sort
-    switch (sortBy) {
+    switch (filterState.sortBy) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
@@ -179,377 +460,173 @@ const ProductsPage: React.FC = () => {
         break;
     }
 
-    setFilteredProducts(filtered);
-  }, [products, searchTerm, selectedGame, selectedTier, sortBy]);
+    setState(prev => ({ ...prev, filteredProducts: filtered }));
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [state.products, filterState.searchTerm, filterState.selectedGame, filterState.selectedTier, filterState.sortBy]);
 
-  // Reset to first page when filters change
+  // Update URL params
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedGame, selectedTier, sortBy]);
-
-  useEffect(() => {
-    // Update URL params
     const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
-    if (selectedGame) params.set('game', selectedGame);
-    if (selectedTier) params.set('tier', selectedTier);
-    if (sortBy !== 'newest') params.set('sortBy', sortBy);
-    
+    if (filterState.searchTerm) params.set('search', filterState.searchTerm);
+    if (filterState.selectedGame) params.set('game', filterState.selectedGame);
+    if (filterState.selectedTier) params.set('tier', filterState.selectedTier);
+    if (filterState.sortBy !== 'newest') params.set('sortBy', filterState.sortBy);
     setSearchParams(params);
-  }, [searchTerm, selectedGame, selectedTier, sortBy, setSearchParams]);
+  }, [filterState, setSearchParams]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const startIndex = (currentPage - 1) * productsPerPage;
-  const endIndex = startIndex + productsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  // Save state for navigation back
+  useEffect(() => {
+    const stateToSave = {
+      currentPage,
+      ...filterState
+    };
+    sessionStorage.setItem('productsPageState', JSON.stringify(stateToSave));
+  }, [currentPage, filterState]);
 
-  const goToPage = (page: number) => {
+  const handleFilterChange = useCallback((key: string, value: string) => {
+    setFilterState(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
-    }
-  };
+  // Pagination calculations
+  const totalPages = Math.ceil(state.filteredProducts.length / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = state.filteredProducts.slice(startIndex, endIndex);
 
-  const prevPage = () => {
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
-    }
-  };
+  if (state.loading) {
+    return <ProductsLoadingSkeleton />;
+  }
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedGame('');
-    setSelectedTier('');
-    setSortBy('newest');
-    setCurrentPage(1);
-  };
-
-  if (loading) {
+  if (state.error) {
     return (
-      <div className="min-h-screen bg-ios-background text-ios-text">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="ios-skeleton h-8 w-48 mb-6"></div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-ios-surface rounded-2xl border border-ios-border p-3">
-                <div className="ios-skeleton h-36 w-full mb-3 rounded-xl"></div>
-                <div className="ios-skeleton h-4 w-3/4 mb-2"></div>
-                <div className="ios-skeleton h-4 w-1/2 mb-3"></div>
-                <div className="flex gap-2">
-                  <div className="ios-skeleton h-8 w-16 rounded-lg"></div>
-                  <div className="ios-skeleton h-8 w-20 rounded-lg"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-8 text-center max-w-md w-full">
+          <div className="text-6xl mb-4">😔</div>
+          <h2 className="text-xl font-bold text-white mb-2">Gagal Memuat Produk</h2>
+          <p className="text-zinc-400 mb-6 text-sm">{state.error}</p>
+          <button
+            onClick={fetchData}
+            className="w-full bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+            style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+          >
+            Coba Lagi
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
-      <IOSContainer maxWidth="xl" className="py-4 sm:py-6 lg:py-8">
-        {/* Header */}
-        <IOSSectionHeader title="Katalog Produk" className="mb-4 sm:mb-6 lg:mb-8" />
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <section className="px-4 py-6">
+        <h1 className="text-2xl font-bold text-white mb-1">Katalog Produk</h1>
+        <p className="text-zinc-400 text-sm">Temukan akun game impian Anda</p>
+      </section>
 
-        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
-          {/* Sidebar Filters - Desktop */}
-          <div className="hidden lg:block">
-            <IOSCard padding="large" className="sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-ios-text">Filter</h3>
-                <IOSButton variant="ghost" size="small" onClick={clearFilters}>
-                  Reset
-                </IOSButton>
-              </div>
-
-              {/* Search */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Cari Produk
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-ios-text-secondary" size={20} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
-                    placeholder="Nama akun, game..."
-                  />
-                </div>
-              </div>
-
-              {/* Game Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Game
-                </label>
-                <select
-                  value={selectedGame}
-                  onChange={(e) => setSelectedGame(e.target.value)}
-                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
-                >
-                  <option value="">Semua Game</option>
-                  {gameTitles.map(game => (
-                    <option key={game.slug} value={game.name}>{game.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Tier Filter */}
-              <div className="mb-2">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">Kategori</label>
-                <select
-                  value={selectedTier}
-                  onChange={(e) => setSelectedTier(e.target.value)}
-                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
-                >
-                  <option value="">Semua Kategori</option>
-                  {tiers.map(tier => (
-                    <option key={tier.slug} value={tier.slug}>{tier.name}</option>
-                  ))}
-                </select>
-              </div>
-            </IOSCard>
+      {/* Search & Filter Bar */}
+      <section className="px-4 mb-6">
+        <div className="flex space-x-3">
+          {/* Search Input */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500" size={20} />
+            <input
+              type="text"
+              value={filterState.searchTerm}
+              onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              placeholder="Cari akun game..."
+              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+            />
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Mobile Category Filter - Horizontal Scroll */}
-            <div className="lg:hidden mb-4">
-              <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                  onClick={() => setSelectedTier('')}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedTier === ''
-                      ? 'bg-pink-600 text-white'
-                      : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
-                  }`}
-                >
-                  Semua
-                </button>
-                {tiers.map(tier => (
-                  <button
-                    key={tier.slug}
-                    onClick={() => setSelectedTier(tier.slug)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      selectedTier === tier.slug
-                        ? 'text-white'
-                        : 'text-ios-text hover:bg-ios-surface/80'
-                    }`}
-                    style={{
-                      backgroundColor: selectedTier === tier.slug ? tier.color : 'var(--ios-surface)',
-                      borderColor: tier.color + '40',
-                      borderWidth: '1px',
-                      borderStyle: 'solid'
-                    }}
-                  >
-                    {tier.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Mobile Filter Toggle */}
-      <div className="lg:hidden mb-4">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-        className="w-full flex items-center justify-center space-x-2 bg-ios-surface border border-ios-border rounded-lg px-4 py-2 text-ios-text"
-              >
-                <SlidersHorizontal size={20} />
-                <span>Filter Lainnya</span>
-              </button>
-            </div>
-
-            {/* Mobile Filters */}
-            {showFilters && (
-              <IOSCard padding="medium" className="lg:hidden mb-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Cari</label>
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
-                      placeholder="Nama akun..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Game</label>
-                    <select
-                      value={selectedGame}
-                      onChange={(e) => setSelectedGame(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
-                    >
-                      <option value="">Semua Game</option>
-                      {gameTitles.map(game => (
-                        <option key={game.slug} value={game.name}>{game.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Urutkan</label>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
-                    >
-                      {sortOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="mt-4 flex space-x-2">
-                  <IOSButton variant="secondary" size="small" onClick={clearFilters}>Reset</IOSButton>
-                  <IOSButton size="small" onClick={() => setShowFilters(false)}>Terapkan</IOSButton>
-                </div>
-              </IOSCard>
-            )}
-
-            {/* Toolbar */}
-      <IOSCard padding="medium" className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-              <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-        <span className="text-sm text-ios-text-secondary">
-                  Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} dari {filteredProducts.length} produk
-                  {totalPages > 1 && (
-                    <span className="ml-2 text-ios-text-secondary">
-                      (Halaman {currentPage} dari {totalPages})
-                    </span>
-                  )}
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                {/* Sort - Desktop */}
-                <div className="hidden lg:flex items-center space-x-2">
-                  <label className="text-sm text-ios-text-secondary">Urutkan:</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-ios-border bg-ios-surface text-ios-text rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-ios-accent focus:border-transparent"
-                  >
-                    {sortOptions.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </IOSCard>
-
-            {/* Grid Layout dengan Pagination */}
-            {filteredProducts.length > 0 ? (
-              <>
-                {/* Products Grid - Responsive: 2 cols mobile, 3 cols tablet and desktop */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-                  {currentProducts.map((product) => (
-                    <div key={product.id} className="w-full">
-                      <ProductCard 
-                        product={product} 
-                        fromCatalogPage={true}
-                        className="w-full h-full" 
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination - Better mobile spacing */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center space-x-1 sm:space-x-2 mt-8 px-4 sm:px-0">
-                    {/* Previous Button */}
-                    <button
-                      onClick={prevPage}
-                      disabled={currentPage === 1}
-                      className={`flex items-center px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm ${
-                        currentPage === 1
-                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
-                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
-                      }`}
-                    >
-                      <ChevronLeft size={16} className="mr-1" />
-                      <span className="hidden sm:inline">Sebelumnya</span>
-                      <span className="sm:hidden">Prev</span>
-                    </button>
-
-                    {/* Page Numbers */}
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                        // Show first page, last page, current page, and pages around current
-                        const showPage = 
-                          page === 1 || 
-                          page === totalPages || 
-                          (page >= currentPage - 1 && page <= currentPage + 1);
-                        
-                        if (!showPage) {
-                          // Show ellipsis for gaps
-                          if (page === currentPage - 2 || page === currentPage + 2) {
-                            return (
-                              <span key={page} className="px-1 sm:px-2 py-1 text-gray-500 text-sm">
-                                ...
-                              </span>
-                            );
-                          }
-                          return null;
-                        }
-
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => goToPage(page)}
-                            className={`px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm ${
-                              currentPage === page
-                                ? 'bg-pink-600 text-white'
-                                : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={nextPage}
-                      disabled={currentPage === totalPages}
-                      className={`flex items-center px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm ${
-                        currentPage === totalPages
-                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
-                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
-                      }`}
-                    >
-                      <span className="hidden sm:inline">Selanjutnya</span>
-                      <span className="sm:hidden">Next</span>
-                      <ChevronRight size={16} className="ml-1" />
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <IOSCard padding="large" className="text-center">
-                <div className="w-24 h-24 bg-black border border-pink-500/40 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="text-pink-400" size={32} />
-                </div>
-                <h3 className="text-lg font-semibold text-ios-text mb-2">
-                  Tidak ada produk ditemukan
-                </h3>
-                <p className="text-ios-text-secondary mb-4">
-                  Coba ubah kata kunci pencarian atau filter Anda
-                </p>
-                <IOSButton onClick={clearFilters}>Reset Filter</IOSButton>
-              </IOSCard>
-            )}
-          </div>
+          {/* Filter Button */}
+          <button
+            onClick={() => setFilterState(prev => ({ ...prev, showFilters: true }))}
+            className="w-12 h-12 bg-zinc-900/50 border border-zinc-800 rounded-xl flex items-center justify-center transition-colors hover:bg-zinc-800"
+          >
+            <Filter size={20} className="text-zinc-300" />
+          </button>
         </div>
-      </IOSContainer>
+      </section>
+
+      {/* Results Info */}
+      <section className="px-4 mb-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-zinc-400">
+            {state.filteredProducts.length} produk ditemukan
+            {totalPages > 1 && (
+              <span className="ml-2">• Halaman {currentPage} dari {totalPages}</span>
+            )}
+          </span>
+        </div>
+      </section>
+
+      {/* Products Grid */}
+      <section className="px-4">
+        {currentProducts.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+            {currentProducts.map((product) => (
+              <div key={product.id} className="w-full">
+                <ProductCard 
+                  product={product} 
+                  fromCatalogPage={true}
+                  className="w-full h-full" 
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Search className="text-zinc-500" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Tidak ada produk ditemukan
+            </h3>
+            <p className="text-zinc-400 mb-6 text-sm">
+              Coba ubah kata kunci pencarian atau filter Anda
+            </p>
+            <button
+              onClick={() => {
+                handleFilterChange('searchTerm', '');
+                handleFilterChange('selectedGame', '');
+                handleFilterChange('selectedTier', '');
+                handleFilterChange('sortBy', 'newest');
+              }}
+              className="bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* Pagination */}
+      <MobilePagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+
+      {/* Mobile Filter Panel */}
+      <MobileFilterPanel
+        isOpen={filterState.showFilters}
+        onClose={() => setFilterState(prev => ({ ...prev, showFilters: false }))}
+        filterState={filterState}
+        onFilterChange={handleFilterChange}
+        gameTitles={state.gameTitles}
+        tiers={state.tiers}
+      />
+
+      {/* Bottom spacing for mobile navigation */}
+      <div className="h-6"></div>
     </div>
   );
 };

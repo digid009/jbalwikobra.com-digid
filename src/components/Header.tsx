@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag } from 'lucide-react';
+import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
+import { notificationService } from '../services/notificationService';
 import { IOSButton } from './ios/IOSDesignSystem';
 import { SettingsService } from '../services/settingsService';
 import type { WebsiteSettings } from '../types';
@@ -11,6 +12,9 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
@@ -18,6 +22,19 @@ const Header = () => {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const count = await notificationService.getUnreadCount(user?.id);
+        if (mounted) setUnreadCount(count);
+      } catch (e) {
+        // non-fatal
+      }
+    })();
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     // Load website settings for dynamic header info
@@ -35,11 +52,29 @@ const Header = () => {
     };
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setIsSearchFocused(false);
+    }
+  };
+
+  const handleNotificationClick = async () => {
+    // Open popover and load notifications (supports guests too)
+    setIsNotifOpen((o) => !o);
+    if (!isNotifOpen) {
+      try {
+        // Use cached service to minimize egress - limit to 5 for header dropdown
+        const list = await notificationService.getLatest(5, user?.id);
+        setNotifications(list);
+        // Refresh unread count only if we fetched new data
+        const count = await notificationService.getUnreadCount(user?.id);
+        setUnreadCount(count);
+      } catch (e) {
+        console.warn('Failed to load notifications', e);
+      }
     }
   };
 
@@ -53,12 +88,12 @@ const Header = () => {
   };
 
   const navigationItems = [
-    { path: '/', label: 'Beranda', icon: '🏠' },
-    { path: '/products', label: 'Produk', icon: '🛍️' },
-    { path: '/flash-sales', label: 'Flash Sale', icon: '⚡' },
-    { path: '/feed', label: 'Feed', icon: '📱' },
-    { path: '/sell', label: 'Jual', icon: '💰' },
-    { path: '/help', label: 'Bantuan', icon: '❓' },
+    { path: '/', label: 'Beranda' },
+    { path: '/products', label: 'Produk' },
+    { path: '/flash-sales', label: 'Flash Sale' },
+    { path: '/feed', label: 'Feed' },
+    { path: '/sell', label: 'Jual' },
+    { path: '/help', label: 'Bantuan' },
   ];
 
   return (
@@ -108,6 +143,23 @@ const Header = () => {
               </form>
             </div>
 
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              {navigationItems.slice(0, 5).map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    location.pathname === item.path
+                      ? 'bg-ios-accent text-white shadow-sm'
+                      : 'text-ios-text hover:bg-ios-surface-secondary'
+                  }`}
+                >
+                  <span className="font-medium text-sm">{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+
             {/* Action Buttons */}
             <div className="flex items-center space-x-1">
               {/* Mobile Search */}
@@ -115,20 +167,119 @@ const Header = () => {
                 variant="ghost"
                 size="small"
                 className="md:hidden"
-                onClick={() => {/* TODO: Open mobile search modal */}}
+                onClick={() => setIsSearchFocused(!isSearchFocused)}
               >
                 <Search className="w-5 h-5" />
               </IOSButton>
 
-              {/* Notifications */}
-              <IOSButton
-                variant="ghost" 
-                size="small"
-                className="relative"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-ios-destructive rounded-full ring-2 ring-ios-background"></span>
-              </IOSButton>
+              {/* Notifications - Only for logged in users */}
+              {user && (
+                <div className="relative">
+                  <IOSButton
+                  variant="ghost" 
+                  size="small"
+                  className="relative"
+                  onClick={handleNotificationClick}
+                  >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-ios-destructive text-white text-[10px] leading-[18px] rounded-full ring-2 ring-ios-background text-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                  </IOSButton>
+                {isNotifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-ios-background border border-ios-border rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-ios-border bg-ios-surface/50">
+                      <span className="text-sm font-semibold text-ios-text">Notifikasi</span>
+                      <div className="flex items-center gap-2">
+                        {user && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await notificationService.markAllAsRead(user?.id);
+                                // optimistically mark local list as read
+                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                                const count = await notificationService.getUnreadCount(user?.id);
+                                setUnreadCount(count);
+                              } catch {}
+                            }}
+                            className="text-xs text-ios-accent hover:underline"
+                          >
+                            Tandai semua dibaca
+                          </button>
+                        )}
+                        <button onClick={() => setIsNotifOpen(false)} className="text-ios-text-secondary hover:text-ios-text p-1">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="text-sm text-ios-text-secondary px-4 py-8 text-center">
+                          <Bell className="w-8 h-8 text-ios-text-secondary/50 mx-auto mb-2" />
+                          <p>Tidak ada notifikasi</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-ios-border">
+                          {notifications.map((n) => (
+                            <div key={n.id}>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    if (user) {
+                                      await notificationService.markAsRead(n.id, user?.id);
+                                      setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
+                                      const count = await notificationService.getUnreadCount(user?.id);
+                                      setUnreadCount(count);
+                                    }
+                                  } catch {}
+                                  setIsNotifOpen(false);
+                                  if (n.link_url) navigate(n.link_url);
+                                }}
+                                className={`w-full text-left px-4 py-3 hover:bg-ios-surface-secondary transition-colors flex items-start gap-3 ${
+                                  !n.is_read ? 'bg-ios-accent/5' : ''
+                                }`}
+                              >
+                                <div className="mt-1">
+                                  <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-ios-border' : 'bg-ios-accent'}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-ios-text truncate">{n.title}</div>
+                                  {n.body && <div className="text-xs text-ios-text-secondary line-clamp-2 mt-1">{n.body}</div>}
+                                  <div className="text-xs text-ios-text-secondary mt-1">{new Date(n.created_at).toLocaleString('id-ID', { 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}</div>
+                                </div>
+                                {n.link_url && (
+                                  <ArrowRight className="w-4 h-4 text-ios-text-secondary" />
+                                )}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {notifications.length > 0 && (
+                        <div className="p-3 border-t border-ios-border bg-ios-surface/30">
+                          <button
+                            onClick={() => {
+                              setIsNotifOpen(false);
+                              navigate('/notifications');
+                            }}
+                            className="w-full text-center text-sm text-ios-accent hover:underline"
+                          >
+                            Lihat semua notifikasi
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                </div>
+              )}
 
               {/* User Menu */}
               {user ? (
@@ -235,6 +386,32 @@ const Header = () => {
           </div>
         </div>
 
+        {/* Mobile Search Modal */}
+        {isSearchFocused && (
+          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-ios-surface border-b border-ios-border shadow-lg">
+            <div className="p-4">
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                <input
+                  type="text"
+                  placeholder="Cari produk, akun game, atau layanan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full pl-12 pr-12 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsSearchFocused(false)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-ios-text-secondary hover:text-ios-text"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
@@ -265,7 +442,6 @@ const Header = () => {
                         : 'text-ios-text hover:bg-ios-surface-secondary'
                     }`}
                   >
-                    <span className="text-xl">{item.icon}</span>
                     <span className="font-medium">{item.label}</span>
                   </Link>
                 ))}

@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   SlidersHorizontal,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 
 // --- Sorting helpers extracted outside component to avoid any ESLint false-positives ---
@@ -33,12 +34,12 @@ const FLASH_SORT_COMPARATORS: Record<
 // Pagination configuration
 const ITEMS_PER_PAGE = 12;
 
-// Updated grid layouts with mobile-first approach and proper spacing
+// Updated grid layouts with mobile-first approach and consistent spacing pattern
 const GRID_LAYOUTS = {
-  '2': 'grid-cols-2 gap-3 sm:gap-4',
-  '3': 'grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3',
-  '4': 'grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4',
-  '6': 'grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6'
+  '2': 'grid-cols-2 gap-4 sm:gap-4',
+  '3': 'grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-3',
+  '4': 'grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4',
+  '6': 'grid-cols-2 gap-4 sm:gap-4 md:grid-cols-3 lg:grid-cols-6'
 } as const;
 
 type GridLayout = keyof typeof GRID_LAYOUTS;
@@ -220,9 +221,9 @@ const FlashSalesPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-ios-background text-ios-text">
         <section className="py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
             <div className="ios-skeleton h-10 w-56 mb-8"></div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
               {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="bg-ios-surface rounded-2xl border border-ios-border p-3">
                   <div className="ios-skeleton h-32 w-full mb-3 rounded-xl"></div>
@@ -242,10 +243,10 @@ const FlashSalesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
+    <div className="min-h-screen bg-ios-background text-ios-text flash-sales-page">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 py-12 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
             <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
               <Zap className="text-white" size={32} />
@@ -261,8 +262,8 @@ const FlashSalesPage: React.FC = () => {
       </section>
 
       {/* Flash Sale Stats */}
-  <section className="py-6 bg-ios-surface border-b border-ios-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-6 bg-ios-surface border-b border-ios-border">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-center">
             <div className="grid grid-cols-2 gap-8 lg:gap-12">
               <div className="text-center">
@@ -285,8 +286,8 @@ const FlashSalesPage: React.FC = () => {
       </section>
 
       {/* Filters and Search */}
-  <section className="py-6 bg-ios-surface/60 border-b border-ios-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-6 bg-ios-surface/60 border-b border-ios-border">
+        <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
@@ -296,7 +297,7 @@ const FlashSalesPage: React.FC = () => {
                 placeholder="Cari produk flash sale..."
                 value={filters.searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 bg-ios-surface border border-ios-border rounded-lg text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                className="w-full pl-10 pr-4 bg-ios-surface border border-ios-border rounded-lg text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-transparent min-h-[44px]"
               />
             </div>
 
@@ -325,7 +326,7 @@ const FlashSalesPage: React.FC = () => {
                 <select
                   value={filters.sortBy}
                   onChange={handleSortChange}
-                  className="flex-1 sm:flex-none px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-sm text-ios-text focus:ring-2 focus:ring-ios-accent"
+                  className="flex-1 sm:flex-none px-3 bg-ios-surface border border-ios-border rounded-lg text-sm text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                 >
                   <option value="discount-desc">Diskon Terbesar</option>
                   <option value="price-asc">Harga Terendah</option>
@@ -334,12 +335,12 @@ const FlashSalesPage: React.FC = () => {
                 </select>
 
                 {/* Advanced Filters Toggle - Only on Mobile */}
-                <button
+        <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`sm:hidden flex items-center justify-center px-3 py-2 rounded-lg border transition-colors ${
                     showFilters
                       ? 'bg-pink-600 border-pink-600 text-white'
-                      : 'bg-ios-surface border-ios-border text-ios-text hover:bg-ios-surface/80'
+          : 'bg-ios-surface border-ios-border text-ios-text hover:bg-ios-surface/80'
                   }`}
                 >
                   <SlidersHorizontal size={16} />
@@ -352,39 +353,32 @@ const FlashSalesPage: React.FC = () => {
               </div>
             </div>
 
-          {/* Mobile Game Filter Pills */}
+          {/* Mobile Game Filter - Segmented Tabs (matching ProductsPage design) */}
           <div className="mt-3 sm:hidden">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setFilters(prev => ({ ...prev, gameFilter: '' }))}
-                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
-                  !filters.gameFilter
-                    ? 'bg-pink-600 border-pink-600 text-white'
-                    : 'bg-ios-surface border-ios-border text-ios-text'
-                }`}
-              >
-                Semua
-              </button>
-              {gameOptions.slice(0, 5).map((game) => (
-                <button
-                  key={game}
-                  onClick={() => setFilters(prev => ({ ...prev, gameFilter: game }))}
-                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
-                    filters.gameFilter === game
-                      ? 'bg-pink-600 border-pink-600 text-white'
-                      : 'bg-ios-surface border-ios-border text-ios-text'
-                  }`}
-                >
-                  {game}
-                </button>
-              ))}
+            <div className="flex gap-1 p-1 bg-ios-bg-secondary rounded-xl overflow-x-auto scrollbar-hide">
+              {["", ...gameOptions.slice(0, 6)].map((game, idx) => {
+                const active = (filters.gameFilter || '') === game;
+                return (
+                  <button
+                    key={idx === 0 ? 'all' : game}
+                    onClick={() => setFilters(prev => ({ ...prev, gameFilter: game }))}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
+                      active
+                        ? 'bg-ios-accent text-white shadow-lg'
+                        : 'bg-ios-surface text-ios-text-secondary hover:bg-ios-surface/80 hover:text-ios-text'
+                    }`}
+                  >
+                    {idx === 0 ? 'Semua' : game}
+                  </button>
+                );
+              })}
             </div>
           </div>
           </div>
 
           {/* Desktop Expanded Filters */}
           {showFilters && (
-            <div className="mt-4 p-4 bg-ios-surface rounded-lg border border-ios-border">
+            <div className="hidden sm:block mt-4 p-4 bg-ios-surface rounded-lg border border-ios-border">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-ios-text-secondary mb-2">
@@ -393,7 +387,7 @@ const FlashSalesPage: React.FC = () => {
                   <select
                     value={filters.gameFilter}
                     onChange={handleGameFilterChange}
-                    className="w-full px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent"
+                    className="w-full px-3 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                   >
                     <option value="">Semua Game</option>
                     {gameOptions.map((game) => (
@@ -410,7 +404,7 @@ const FlashSalesPage: React.FC = () => {
                   <select
                     value={filters.sortBy}
                     onChange={handleSortChange}
-                    className="w-full px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent"
+                    className="w-full px-3 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                   >
                     <option value="discount-desc">Diskon Terbesar</option>
                     <option value="price-asc">Harga Terendah</option>
@@ -421,12 +415,93 @@ const FlashSalesPage: React.FC = () => {
               </div>
             </div>
           )}
+          {/* Mobile Filter Panel - ProductsPage Style */}
+          {showFilters && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              {/* Backdrop */}
+              <div 
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setShowFilters(false)}
+              />
+              
+              {/* Panel */}
+              <div className="absolute bottom-0 left-0 right-0 bg-zinc-900 rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-white">Filter & Urutkan</h3>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center transition-colors hover:bg-zinc-700"
+                  >
+                    <X size={20} className="text-white" />
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="space-y-6">
+                  {/* Game Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-3">
+                      Game
+                    </label>
+                    <select
+                      value={filters.gameFilter}
+                      onChange={handleGameFilterChange}
+                      className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      style={{ minHeight: '44px' }}
+                    >
+                      <option value="">Semua Game</option>
+                      {gameOptions.map((game) => (
+                        <option key={game} value={game}>{game}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-3">
+                      Urutkan
+                    </label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={handleSortChange}
+                      className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      style={{ minHeight: '44px' }}
+                    >
+                      <option value="discount-desc">Diskon Terbesar</option>
+                      <option value="price-asc">Harga Terendah</option>
+                      <option value="price-desc">Harga Tertinggi</option>
+                      <option value="name-asc">Nama A-Z</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex space-x-3 mt-8">
+                  <button
+                    onClick={() => setFilters({ searchQuery: '', sortBy: 'discount-desc', gameFilter: '' })}
+                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-3 px-6 rounded-xl transition-colors"
+                    style={{ minHeight: '44px' }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="flex-1 bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                    style={{ minHeight: '44px' }}
+                  >
+                    Terapkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Flash Sale Products Grid */}
       <section className="py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           {filteredProducts.length > 0 ? (
             <div className="space-y-8">
               {/* Products Grid with improved mobile spacing */}
@@ -449,19 +524,19 @@ const FlashSalesPage: React.FC = () => {
                     Menampilkan {paginationInfo.startIndex + 1}-{paginationInfo.endIndex} dari {paginationInfo.totalItems} produk
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     {/* Previous Button */}
                     <button
                       onClick={handlePreviousPage}
                       disabled={currentPage === 1}
-                      className="flex items-center space-x-1 px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center space-x-1 px-4 bg-ios-surface border border-ios-border rounded-xl text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
                     >
                       <ChevronLeft size={16} />
                       <span className="hidden sm:inline">Previous</span>
                     </button>
 
                     {/* Page Numbers */}
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-2">
                       {Array.from({ length: Math.min(5, paginationInfo.totalPages) }, (_, i) => {
                         let pageNum;
                         if (paginationInfo.totalPages <= 5) {
@@ -478,10 +553,10 @@ const FlashSalesPage: React.FC = () => {
                           <button
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
-              className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                            className={`w-11 h-11 rounded-xl font-medium transition-colors ${
                               pageNum === currentPage
                                 ? 'bg-pink-600 text-white'
-                : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80 border border-ios-border'
+                                : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80 border border-ios-border'
                             }`}
                           >
                             {pageNum}
@@ -494,7 +569,7 @@ const FlashSalesPage: React.FC = () => {
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === paginationInfo.totalPages}
-                      className="flex items-center space-x-1 px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center space-x-1 px-4 bg-ios-surface border border-ios-border rounded-xl text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
                     >
                       <span className="hidden sm:inline">Next</span>
                       <ChevronRight size={16} />
@@ -541,7 +616,7 @@ const FlashSalesPage: React.FC = () => {
 
       {/* How Flash Sale Works */}
       <section className="py-16 bg-black/60 border-t border-pink-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
               Cara Kerja Flash Sale
@@ -593,7 +668,7 @@ const FlashSalesPage: React.FC = () => {
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-pink-600 to-rose-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Jual Akun Anda Sekarang!
           </h2>
