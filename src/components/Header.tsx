@@ -63,113 +63,145 @@ const Header = () => {
 
   return (
     <>
-      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border">
+      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
+            {/* Logo Section */}
+            <Link to="/" className="flex items-center space-x-3 flex-shrink-0 group">
               {/* Dynamic logo if available */}
               {settings?.logoUrl ? (
                 <img
                   src={settings.logoUrl}
                   alt={settings.siteName || 'Logo'}
-                  className="w-8 h-8 rounded-lg object-cover"
+                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-ios-border group-hover:ring-ios-accent transition-all duration-200"
                 />
               ) : (
-                <div className="w-8 h-8 bg-ios-accent rounded-lg flex items-center justify-center">
+                <div className="w-9 h-9 bg-gradient-to-br from-ios-primary to-ios-accent rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
                   <span className="text-white font-bold text-sm">JB</span>
                 </div>
               )}
-              <span className="font-semibold text-ios-text text-lg hidden sm:block">
-                {settings?.siteName || 'JBalwikobra'}
-              </span>
+              <div className="hidden sm:block">
+                <span className="font-semibold text-ios-text text-lg tracking-tight">
+                  {settings?.siteName || 'JBalwikobra'}
+                </span>
+                <p className="text-xs text-ios-text-secondary -mt-0.5">Digital Store</p>
+              </div>
             </Link>
 
-            <div className="hidden md:flex flex-1 max-w-xl mx-8">
+            {/* Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
               <form onSubmit={handleSearch} className="w-full">
-                <div className={`relative transition-all duration-200 ${
-                  isSearchFocused ? 'transform scale-105' : ''
+                <div className={`relative transition-all duration-300 ${
+                  isSearchFocused ? 'transform scale-[1.02]' : ''
                 }`}>
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
                   <input
                     type="text"
-                    placeholder="Cari produk..."
+                    placeholder="Cari produk, akun game, atau layanan..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-ios-surface transition-all duration-300 text-sm"
                   />
                 </div>
               </form>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <button className="md:hidden p-2 rounded-lg hover:bg-ios-surface transition-colors">
-                <Search className="w-5 h-5 text-ios-text" />
-              </button>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-1">
+              {/* Mobile Search */}
+              <IOSButton
+                variant="ghost"
+                size="small"
+                className="md:hidden"
+                onClick={() => {/* TODO: Open mobile search modal */}}
+              >
+                <Search className="w-5 h-5" />
+              </IOSButton>
 
-              <button className="p-2 rounded-lg hover:bg-ios-surface transition-colors relative">
-                <Bell className="w-5 h-5 text-ios-text" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-              </button>
+              {/* Notifications */}
+              <IOSButton
+                variant="ghost" 
+                size="small"
+                className="relative"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-ios-destructive rounded-full ring-2 ring-ios-background"></span>
+              </IOSButton>
 
+              {/* User Menu */}
               {user ? (
                 <div className="relative">
-                  <button
+                  <IOSButton
+                    variant="ghost"
+                    size="small"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-ios-surface transition-colors"
+                    className="flex items-center space-x-2"
                   >
-                    <div className="w-8 h-8 bg-ios-accent rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center shadow-sm">
                       <User className="w-4 h-4 text-white" />
                     </div>
-                    <span className="hidden sm:block text-ios-text font-medium">
+                    <span className="hidden sm:block text-ios-text font-medium max-w-20 truncate">
                       {user.email?.split('@')[0] || 'User'}
                     </span>
-                  </button>
+                  </IOSButton>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-64 bg-ios-background border border-ios-border rounded-xl shadow-lg py-2 z-50">
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-ios-background border border-ios-border rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
+                      {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-ios-border">
-                        <p className="text-sm font-medium text-ios-text">{user.email}</p>
-                        <p className="text-xs text-ios-text-secondary">Online</p>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-ios-text truncate">{user.email}</p>
+                            <p className="text-xs text-ios-success flex items-center">
+                              <div className="w-2 h-2 bg-ios-success rounded-full mr-1.5"></div>
+                              Online
+                            </p>
+                          </div>
+                        </div>
                       </div>
                       
+                      {/* Navigation Links */}
                       <nav className="py-2">
                         <Link
                           to="/profile"
-                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
                         >
-                          <User className="w-4 h-4" />
-                          <span>Profil</span>
+                          <User className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <span className="font-medium">Profil Saya</span>
                         </Link>
                         <Link
                           to="/wishlist"
-                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
                         >
-                          <Heart className="w-4 h-4" />
-                          <span>Wishlist</span>
+                          <Heart className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-destructive transition-colors" />
+                          <span className="font-medium">Wishlist</span>
                         </Link>
                         <Link
                           to="/orders"
-                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
                         >
-                          <ShoppingBag className="w-4 h-4" />
-                          <span>Pesanan</span>
+                          <ShoppingBag className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <span className="font-medium">Riwayat Pembelian</span>
                         </Link>
                         <Link
                           to="/settings"
-                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
                         >
-                          <Settings className="w-4 h-4" />
-                          <span>Pengaturan</span>
+                          <Settings className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <span className="font-medium">Pengaturan</span>
                         </Link>
-                        <hr className="my-2 border-ios-border" />
+                        <div className="my-2 border-t border-ios-border"></div>
                         <button
                           onClick={handleLogout}
-                          className="flex items-center space-x-3 px-4 py-2 text-red-500 hover:bg-ios-surface transition-colors w-full text-left"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-destructive hover:bg-ios-surface-secondary transition-colors w-full text-left group"
                         >
                           <LogOut className="w-4 h-4" />
-                          <span>Keluar</span>
+                          <span className="font-medium">Keluar</span>
                         </button>
                       </nav>
                     </div>
@@ -180,65 +212,72 @@ const Header = () => {
                   onClick={() => navigate('/auth')}
                   variant="primary"
                   size="small"
-                  className="hidden sm:block"
+                  className="hidden sm:flex font-medium"
                 >
                   Masuk
                 </IOSButton>
               )}
 
-              <button
+              {/* Mobile Menu Toggle */}
+              <IOSButton
+                variant="ghost"
+                size="small"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-ios-surface transition-colors"
+                className="lg:hidden"
               >
                 {isMenuOpen ? (
-                  <X className="w-5 h-5 text-ios-text" />
+                  <X className="w-5 h-5" />
                 ) : (
-                  <Menu className="w-5 h-5 text-ios-text" />
+                  <Menu className="w-5 h-5" />
                 )}
-              </button>
+              </IOSButton>
             </div>
           </div>
         </div>
 
+        {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden bg-ios-background border-t border-ios-border">
-            <div className="px-4 py-4">
-              <form onSubmit={handleSearch} className="mb-4">
+          <div className="lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
+            <div className="px-4 py-4 space-y-4">
+              {/* Mobile Search */}
+              <form onSubmit={handleSearch}>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
                   <input
                     type="text"
-                    placeholder="Cari produk..."
+                    placeholder="Cari produk atau layanan..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                    className="w-full pl-12 pr-4 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
                   />
                 </div>
               </form>
 
-              <nav className="space-y-2">
+              {/* Navigation */}
+              <nav className="space-y-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       location.pathname === item.path
-                        ? 'bg-ios-accent text-white'
-                        : 'text-ios-text hover:bg-ios-surface'
+                        ? 'bg-ios-accent text-white shadow-sm'
+                        : 'text-ios-text hover:bg-ios-surface-secondary'
                     }`}
                   >
-                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-xl">{item.icon}</span>
                     <span className="font-medium">{item.label}</span>
                   </Link>
                 ))}
               </nav>
 
+              {/* Auth Section */}
               {!user && (
-                <div className="mt-4 pt-4 border-t border-ios-border">
+                <div className="pt-4 border-t border-ios-border">
                   <IOSButton
                     onClick={() => navigate('/auth')}
                     variant="primary"
-                    className="w-full"
+                    className="w-full font-medium"
                   >
                     Masuk / Daftar
                   </IOSButton>
@@ -249,6 +288,7 @@ const Header = () => {
         )}
       </header>
 
+      {/* Mobile Menu Backdrop */}
       {isMenuOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"

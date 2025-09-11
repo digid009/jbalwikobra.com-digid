@@ -300,10 +300,10 @@ const FlashSalesPage: React.FC = () => {
               />
             </div>
 
-            {/* Filters and Controls */}
-            <div className="flex items-center gap-4">
-              {/* Grid Layout Toggle */}
-              <div className="flex items-center space-x-1 bg-ios-surface rounded-lg p-1 border border-ios-border">
+            {/* Mobile-First Filters and Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Grid Layout Toggle - Hidden on Mobile */}
+              <div className="hidden lg:flex items-center space-x-1 bg-ios-surface rounded-lg p-1 border border-ios-border">
                 {(['2', '3', '4', '6'] as GridLayout[]).map((layout) => (
                   <button
                     key={layout}
@@ -319,27 +319,70 @@ const FlashSalesPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Filters Toggle */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${
-                  showFilters
-                    ? 'bg-pink-600 border-pink-600 text-white'
-                    : 'bg-ios-surface border-ios-border text-ios-text hover:bg-ios-surface/80'
-                }`}
-              >
-                <SlidersHorizontal size={16} />
-                <span className="hidden sm:inline">Filter</span>
-              </button>
+              {/* Mobile Inline Filters */}
+              <div className="flex items-center gap-2 flex-1">
+                {/* Quick Sort Dropdown */}
+                <select
+                  value={filters.sortBy}
+                  onChange={handleSortChange}
+                  className="flex-1 sm:flex-none px-3 py-2 bg-ios-surface border border-ios-border rounded-lg text-sm text-ios-text focus:ring-2 focus:ring-ios-accent"
+                >
+                  <option value="discount-desc">Diskon Terbesar</option>
+                  <option value="price-asc">Harga Terendah</option>
+                  <option value="price-desc">Harga Tertinggi</option>
+                  <option value="name-asc">Nama A-Z</option>
+                </select>
+
+                {/* Advanced Filters Toggle - Only on Mobile */}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`sm:hidden flex items-center justify-center px-3 py-2 rounded-lg border transition-colors ${
+                    showFilters
+                      ? 'bg-pink-600 border-pink-600 text-white'
+                      : 'bg-ios-surface border-ios-border text-ios-text hover:bg-ios-surface/80'
+                  }`}
+                >
+                  <SlidersHorizontal size={16} />
+                </button>
+              </div>
 
               {/* Results Info */}
-              <div className="text-sm text-ios-text-secondary">
+              <div className="text-sm text-ios-text-secondary whitespace-nowrap">
                 {paginationInfo.totalItems} produk
               </div>
             </div>
+
+          {/* Mobile Game Filter Pills */}
+          <div className="mt-3 sm:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, gameFilter: '' }))}
+                className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
+                  !filters.gameFilter
+                    ? 'bg-pink-600 border-pink-600 text-white'
+                    : 'bg-ios-surface border-ios-border text-ios-text'
+                }`}
+              >
+                Semua
+              </button>
+              {gameOptions.slice(0, 5).map((game) => (
+                <button
+                  key={game}
+                  onClick={() => setFilters(prev => ({ ...prev, gameFilter: game }))}
+                  className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
+                    filters.gameFilter === game
+                      ? 'bg-pink-600 border-pink-600 text-white'
+                      : 'bg-ios-surface border-ios-border text-ios-text'
+                  }`}
+                >
+                  {game}
+                </button>
+              ))}
+            </div>
+          </div>
           </div>
 
-          {/* Expanded Filters */}
+          {/* Desktop Expanded Filters */}
           {showFilters && (
             <div className="mt-4 p-4 bg-ios-surface rounded-lg border border-ios-border">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

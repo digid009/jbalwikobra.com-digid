@@ -83,6 +83,7 @@ interface IOSButtonProps {
   loading?: boolean;
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
+  type?: 'button' | 'submit' | 'reset';
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
@@ -96,6 +97,7 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
   loading = false,
   icon: Icon,
   iconPosition = 'left',
+  type = 'button',
   children,
   onClick,
   className = ''
@@ -125,6 +127,7 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
 
   return (
     <button
+      type={type}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       onClick={onClick}
       disabled={disabled || loading}
@@ -139,6 +142,46 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
         </>
       )}
     </button>
+  );
+};
+
+// iOS Badge Component
+interface IOSBadgeProps {
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'destructive';
+  size?: 'small' | 'medium';
+  className?: string;
+  children: React.ReactNode;
+}
+
+export const IOSBadge: React.FC<IOSBadgeProps> = ({
+  variant = 'primary',
+  size = 'small',
+  className = '',
+  children
+}) => {
+  const variantClasses = {
+    primary: 'bg-ios-accent text-white',
+    secondary: 'bg-ios-surface text-ios-text border border-ios-border',
+    success: 'bg-green-500 text-white',
+    warning: 'bg-yellow-500 text-black',
+    destructive: 'bg-red-500 text-white'
+  };
+
+  const sizeClasses = {
+    small: 'px-2 py-1 text-xs',
+    medium: 'px-3 py-1.5 text-sm'
+  };
+
+  return (
+    <span className={`
+      inline-flex items-center justify-center
+      font-medium rounded-full
+      ${variantClasses[variant]}
+      ${sizeClasses[size]}
+      ${className}
+    `}>
+      {children}
+    </span>
   );
 };
 

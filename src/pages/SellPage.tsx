@@ -215,91 +215,96 @@ const SellPage: React.FC = () => {
       </IOSHero>
 
       {/* Quick Form Section */}
-    <section id="sell-form" className="py-16 bg-ios-background border-t border-ios-border">
-  <div ref={formRef} className="scroll-mt-20">
-  <IOSContainer maxWidth="lg" className="with-bottom-nav">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-ios-text mb-4">
-              Estimasi Harga Akun Anda
-            </h2>
-            <p className="text-ios-text-secondary">
-              Isi form di bawah untuk mendapat estimasi harga akun game Anda
-            </p>
-          </div>
-
-          <IOSCard padding="large">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Pilih Game
-                </label>
-                <select
-                  value={selectedGame}
-                  onChange={(e) => setSelectedGame(e.target.value)}
-                  className="w-full px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
-                >
-                  <option value="">{loadingGames ? 'Memuat…' : 'Pilih game...'}</option>
-                  {gameOptions.map(game => (
-                    <option key={game} value={game}>{game}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Level/Rank Akun
-                </label>
-                <input
-                  type="text"
-                  value={accountLevel}
-                  onChange={(e) => setAccountLevel(e.target.value)}
-                  className="w-full px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
-                  placeholder="Contoh: Mythic Glory, Conqueror, dll"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Estimasi Harga (Opsional)
-                </label>
-                <input
-                  type="text"
-                  value={estimatedPrice}
-                  onChange={handlePriceChange}
-                  className="w-full px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
-                  placeholder="Contoh: Rp 2,000,000"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
-                  Detail Akun
-                </label>
-                <textarea
-                  value={accountDetails}
-                  onChange={(e) => setAccountDetails(e.target.value)}
-                  className="w-full px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
-                  rows={3}
-                  placeholder="Skin, hero, item khusus, dll"
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 text-center">
-              <IOSButton size="large" onClick={handleSellAccount} className="w-full sm:w-auto">
-                <div className="flex items-center gap-2">
-                  <MessageCircle size={20} />
-                  <span>Hubungi Admin untuk Evaluasi</span>
-                  <ArrowRight size={20} />
-                </div>
-              </IOSButton>
-              <p className="text-sm text-ios-text-secondary mt-4">
-                Admin akan menghubungi Anda untuk evaluasi lebih lanjut
+      <section id="sell-form" className="py-12 sm:py-16 bg-ios-background border-t border-ios-border">
+        <div ref={formRef} className="scroll-mt-20">
+          <IOSContainer maxWidth="lg" className="with-bottom-nav px-4 sm:px-6">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-ios-text mb-4">
+                Estimasi Harga Akun Anda
+              </h2>
+              <p className="text-ios-text-secondary text-sm sm:text-base">
+                Isi form di bawah untuk mendapat estimasi harga akun game Anda
               </p>
             </div>
-          </IOSCard>
-    </IOSContainer>
-  </div>
+
+            <IOSCard padding="large" className="w-full max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-ios-text-secondary">
+                    Pilih Game *
+                  </label>
+                  <select
+                    value={selectedGame}
+                    onChange={(e) => setSelectedGame(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    required
+                  >
+                    <option value="">{loadingGames ? 'Memuat…' : 'Pilih game...'}</option>
+                    {gameOptions.map(game => (
+                      <option key={game} value={game}>{game}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-ios-text-secondary">
+                    Level/Rank Akun
+                  </label>
+                  <input
+                    type="text"
+                    value={accountLevel}
+                    onChange={(e) => setAccountLevel(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    placeholder="Contoh: Mythic Glory, Conqueror, dll"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-ios-text-secondary">
+                    Estimasi Harga (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={estimatedPrice}
+                    onChange={handlePriceChange}
+                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    placeholder="Contoh: Rp 2,000,000"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-ios-text-secondary">
+                    Detail Akun
+                  </label>
+                  <textarea
+                    value={accountDetails}
+                    onChange={(e) => setAccountDetails(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-3 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    rows={3}
+                    placeholder="Skin, hero, item khusus, dll"
+                  />
+                </div>
+            </div>
+
+              <div className="mt-6 sm:mt-8 text-center">
+                <IOSButton 
+                  size="large" 
+                  onClick={handleSellAccount} 
+                  className="w-full sm:w-auto px-6 py-3 text-sm sm:text-base"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <MessageCircle size={18} className="sm:w-5 sm:h-5" />
+                    <span>Hubungi Admin untuk Evaluasi</span>
+                    <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+                  </div>
+                </IOSButton>
+                <p className="text-xs sm:text-sm text-ios-text-secondary mt-3 sm:mt-4">
+                  Admin akan menghubungi Anda untuk evaluasi lebih lanjut
+                </p>
+              </div>
+            </IOSCard>
+          </IOSContainer>
+        </div>
       </section>
 
       {/* Benefits Section */}

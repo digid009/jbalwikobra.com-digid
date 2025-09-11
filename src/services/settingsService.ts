@@ -44,6 +44,7 @@ export class SettingsService {
         facebookUrl: data.facebook_url ?? undefined,
         instagramUrl: data.instagram_url ?? undefined,
         tiktokUrl: data.tiktok_url ?? undefined,
+        youtubeUrl: data.youtube_url ?? undefined,
         heroTitle: data.hero_title ?? undefined,
         heroSubtitle: data.hero_subtitle ?? undefined,
         updatedAt: data.updated_at ?? undefined,
@@ -69,6 +70,7 @@ export class SettingsService {
         facebook_url: input.facebookUrl ?? current.facebookUrl ?? null,
         instagram_url: input.instagramUrl ?? current.instagramUrl ?? null,
         tiktok_url: input.tiktokUrl ?? current.tiktokUrl ?? null,
+        youtube_url: input.youtubeUrl ?? current.youtubeUrl ?? null,
         hero_title: input.heroTitle ?? current.heroTitle ?? null,
         hero_subtitle: input.heroSubtitle ?? current.heroSubtitle ?? null,
       };
@@ -103,6 +105,7 @@ export class SettingsService {
         facebookUrl: row.facebook_url ?? current.facebookUrl,
         instagramUrl: row.instagram_url ?? current.instagramUrl,
         tiktokUrl: row.tiktok_url ?? current.tiktokUrl,
+        youtubeUrl: row.youtube_url ?? current.youtubeUrl,
         heroTitle: row.hero_title ?? current.heroTitle,
         heroSubtitle: row.hero_subtitle ?? current.heroSubtitle,
         updatedAt: row.updated_at ?? new Date().toISOString(),

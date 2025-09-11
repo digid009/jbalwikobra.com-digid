@@ -33,6 +33,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Validate environment variables
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required environment variables:', {
+        supabaseUrl: !!supabaseUrl,
+        supabaseServiceKey: !!supabaseServiceKey
+      });
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        details: process.env.NODE_ENV === 'development' ? 'Missing Supabase credentials' : undefined
+      });
+    }
+
     const { action } = req.query;
 
     switch (action) {
@@ -71,8 +83,14 @@ async function handleDashboard(req: VercelRequest, res: VercelResponse) {
 
     // Use optimized queries
     const [tableStats, revenueStats] = await Promise.all([
-      OptimizedQueryBuilder.getTableCounts(),
-      OptimizedQueryBuilder.getRevenueStats(7)
+      OptimizedQueryBuilder.getTableCounts().catch(err => {
+        console.error('Table counts error:', err);
+        return { orders: 0, users: 0, products: 0, flashSales: 0 };
+      }),
+      OptimizedQueryBuilder.getRevenueStats(7).catch(err => {
+        console.error('Revenue stats error:', err);
+        return { total: 0, completed: 0, orderCount: 0, completedCount: 0 };
+      })
     ]);
 
     const dashboardData = {
