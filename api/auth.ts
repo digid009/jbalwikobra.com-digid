@@ -203,7 +203,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
     }
 
     // Check if user already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await getSupabase()
       .from('users')
       .select('id, phone_verified')
       .eq('phone', phone)
@@ -217,7 +217,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
     // Create user if doesn't exist
     if (!existingUser) {
-      const { data: newUser, error: userError } = await supabase
+      const { data: newUser, error: userError } = await getSupabase()
         .from('users')
         .insert({
           phone,
@@ -240,13 +240,13 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Delete any existing verification codes for this user
-    await supabase
+    await getSupabase()
       .from('phone_verifications')
       .delete()
       .eq('user_id', userId);
 
     // Create new verification record
-    const { error: verificationError } = await supabase
+    const { error: verificationError } = await getSupabase()
       .from('phone_verifications')
       .insert({
         user_id: userId,
@@ -296,7 +296,7 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
     }
 
     // Find verification record
-    const { data: verification, error: verificationError } = await supabase
+    const { data: verification, error: verificationError } = await getSupabase()
       .from('phone_verifications')
       .select('*')
       .eq('user_id', user_id)
@@ -314,7 +314,7 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
     }
 
     // Mark verification as used
-    await supabase
+    await getSupabase()
       .from('phone_verifications')
       .update({ 
         is_used: true,
@@ -323,7 +323,7 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
       .eq('id', verification.id);
 
     // Update user as phone verified
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await getSupabase()
       .from('users')
       .update({ 
         phone_verified: true,
@@ -341,7 +341,7 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await supabase
+    await getSupabase()
       .from('user_sessions')
       .insert({
         user_id: user.id,
@@ -383,7 +383,7 @@ async function handleCompleteProfile(req: VercelRequest, res: VercelResponse) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Update user profile
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await getSupabase()
       .from('users')
       .update({
         name,
@@ -425,7 +425,7 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Session token is required' });
     }
 
-    const { data: session, error: sessionError } = await supabase
+    const { data: session, error: sessionError } = await getSupabase()
       .from('user_sessions')
       .select(`
         *,
@@ -466,7 +466,7 @@ async function handleLogout(req: VercelRequest, res: VercelResponse) {
     const { session_token } = req.body;
 
     if (session_token) {
-      await supabase
+      await getSupabase()
         .from('user_sessions')
         .update({ is_active: false })
         .eq('session_token', session_token);
