@@ -22,14 +22,14 @@ export class SafeAdminService {
       });
 
       if (!response.ok) {
-        console.warn(`API ${url} failed with status ${response.status}`);
+        // API failed with status ${response.status}
         return null;
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      console.warn(`API ${url} error:`, error);
+      // API error silently handled
       return null;
     }
   }

@@ -18,22 +18,49 @@ export interface AdminStats {
   todayRevenue: number;
 }
 
+export interface CreateProductData {
+  name: string;
+  description: string;
+  price: number;
+  original_price?: number;
+  image?: string;
+  images?: string[];
+  category: string;
+  game_title?: string;
+  account_level?: string;
+  account_details?: string;
+  is_flash_sale?: boolean;
+  flash_sale_end_time?: string;
+  has_rental?: boolean;
+  stock: number;
+  tier_id?: string;
+  game_title_id?: string;
+  is_active?: boolean;
+  archived_at?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   original_price?: number;
+  image: string;
+  images: string[];
   category: string;
   game_title?: string;
+  account_level?: string;
+  account_details?: string;
+  is_flash_sale: boolean;
+  flash_sale_end_time?: string;
+  has_rental: boolean;
   stock: number;
-  is_active: boolean;
   created_at: string;
   updated_at?: string;
-  image_url?: string;
-  tier?: string;
-  tags?: string[];
-  meta_data?: Record<string, any>;
+  tier_id?: string;
+  game_title_id?: string;
+  is_active: boolean;
+  archived_at?: string;
 }
 
 export interface Order {
@@ -362,12 +389,29 @@ class EnhancedAdminService {
     }, 'Failed to fetch product');
   }
 
-  async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Product>> {
+  async createProduct(product: CreateProductData): Promise<ApiResponse<Product>> {
     return this.handleApiCall(async () => {
       const { data, error } = await supabase
         .from('products')
         .insert([{
-          ...product,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          original_price: product.original_price,
+          image: product.image || '',
+          images: product.images || [],
+          category: product.category,
+          game_title: product.game_title,
+          account_level: product.account_level,
+          account_details: product.account_details,
+          is_flash_sale: product.is_flash_sale || false,
+          flash_sale_end_time: product.flash_sale_end_time,
+          has_rental: product.has_rental || false,
+          stock: product.stock,
+          tier_id: product.tier_id,
+          game_title_id: product.game_title_id,
+          is_active: product.is_active !== undefined ? product.is_active : true,
+          archived_at: product.archived_at,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }])

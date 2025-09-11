@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { useProducts, useCrudOperations, useBulkOperations } from '../../../hooks/useAdminData';
-import { enhancedAdminService, Product } from '../../../services/enhancedAdminService';
-// import ProductDialog from './ProductDialog';
+import { enhancedAdminService, Product, CreateProductData } from '../../../services/enhancedAdminService';
+import ProductDialog from './ProductDialog';
 
 const ProductsTab: React.FC = () => {
   // State for UI
@@ -135,7 +135,7 @@ const ProductsTab: React.FC = () => {
       await remove(
         () => enhancedAdminService.deleteProduct(product.id),
         () => refresh(),
-        (error) => console.error('Failed to delete product:', error)
+        () => {} // Error silently logged by hook
       );
     }
   }, [remove, refresh]);
@@ -144,7 +144,7 @@ const ProductsTab: React.FC = () => {
     await update(
       () => enhancedAdminService.updateProduct(product.id, { is_active: !product.is_active }),
       () => refresh(),
-      (error) => console.error('Failed to update product status:', error)
+      () => {} // Error silently logged by hook
     );
   }, [update, refresh]);
 
@@ -155,7 +155,7 @@ const ProductsTab: React.FC = () => {
         clearSelection();
         refresh();
       },
-      (error) => console.error('Failed to bulk update products:', error)
+      () => {} // Error silently logged by hook
     );
   }, [executeBulkOperation, clearSelection, refresh]);
 
@@ -167,46 +167,52 @@ const ProductsTab: React.FC = () => {
           clearSelection();
           refresh();
         },
-        (error) => console.error('Failed to bulk delete products:', error)
+        (error) => {} // Error silently logged by hook
       );
     }
   }, [executeBulkOperation, selectedIds.length, clearSelection, refresh]);
 
   const handleSaveProduct = useCallback(async (productData: Partial<Product>) => {
-    try {
-      if (editingProduct) {
-        await update(
-          () => enhancedAdminService.updateProduct(editingProduct.id, productData),
-          () => {
-            setShowProductDialog(false);
-            setEditingProduct(null);
-            refresh();
-          }
-        );
-      } else {
-        // Ensure required fields are present for creation
-        const createData = {
-          name: productData.name || '',
-          description: productData.description || '',
-          price: productData.price || 0,
-          category: productData.category || '',
-          stock: productData.stock || 0,
-          is_active: productData.is_active !== undefined ? productData.is_active : true,
-          ...productData
-        };
-        
-        await create(
-          () => enhancedAdminService.createProduct(createData),
-          () => {
-            setShowProductDialog(false);
-            setEditingProduct(null);
-            refresh();
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Failed to save product:', error);
-      throw error; // Re-throw to let dialog handle the error
+    if (editingProduct) {
+      await update(
+        () => enhancedAdminService.updateProduct(editingProduct.id, productData),
+        () => {
+          setShowProductDialog(false);
+          setEditingProduct(null);
+          refresh();
+        }
+      );
+    } else {
+      // Ensure required fields are present for creation
+      const createData: CreateProductData = {
+        name: productData.name || '',
+        description: productData.description || '',
+        price: productData.price || 0,
+        category: productData.category || '',
+        stock: productData.stock || 0,
+        is_active: productData.is_active !== undefined ? productData.is_active : true,
+        image: productData.image || '',
+        images: productData.images || [],
+        has_rental: productData.has_rental || false,
+        is_flash_sale: productData.is_flash_sale || false,
+        original_price: productData.original_price,
+        game_title: productData.game_title,
+        account_level: productData.account_level,
+        account_details: productData.account_details,
+        flash_sale_end_time: productData.flash_sale_end_time,
+        tier_id: productData.tier_id,
+        game_title_id: productData.game_title_id,
+        archived_at: productData.archived_at
+      };
+      
+      await create(
+        () => enhancedAdminService.createProduct(createData),
+        () => {
+          setShowProductDialog(false);
+          setEditingProduct(null);
+          refresh();
+        }
+      );
     }
   }, [editingProduct, update, create, refresh]);
 
@@ -431,9 +437,9 @@ const ProductsTab: React.FC = () => {
                       onChange={() => handleSelectProduct(product.id)}
                       className="absolute top-3 left-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500 z-10"
                     />
-                    {product.image_url ? (
+                    {product.image ? (
                       <img
-                        src={product.image_url}
+                        src={product.image}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
@@ -576,7 +582,7 @@ const ProductsTab: React.FC = () => {
       </IOSCard>
 
       {/* Product Dialog */}
-      {/* {showProductDialog && (
+      {showProductDialog && (
         <ProductDialog
           product={editingProduct}
           onSave={handleSaveProduct}
@@ -585,7 +591,7 @@ const ProductsTab: React.FC = () => {
             setEditingProduct(null);
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };

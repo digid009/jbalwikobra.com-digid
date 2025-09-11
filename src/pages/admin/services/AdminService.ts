@@ -6,7 +6,7 @@ export class AdminService {
     try {
       const response = await fetch('/api/admin?action=dashboard');
       if (!response.ok) {
-        console.warn('Dashboard API failed, using fallback data');
+        // Dashboard API failed, using fallback data
         return {
           orders: { count: 0, completed: 0, revenue: 0, completedRevenue: 0 },
           users: { count: 0 },
@@ -17,7 +17,7 @@ export class AdminService {
       const data = await response.json();
       return data.data || data;
     } catch (error) {
-      console.warn('Dashboard API error, using fallback:', error);
+      // Dashboard API error, using fallback
       return {
         orders: { count: 0, completed: 0, revenue: 0, completedRevenue: 0 },
         users: { count: 0 },

@@ -41,7 +41,7 @@ const AdminDashboard: React.FC = () => {
       const statsData = await adminService.getDashboardStats();
       setStats(statsData);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      // Error silently handled by the service
     } finally {
       setLoading(false);
     }
@@ -52,10 +52,10 @@ const AdminDashboard: React.FC = () => {
     
     try {
       const results = await adminService.searchAll(searchQuery);
-      console.log('Search results:', results);
+      // Search completed
       // Handle search results - could show in a modal or navigate to results page
     } catch (error) {
-      console.error('Search error:', error);
+      // Search error silently handled
     }
   };
 

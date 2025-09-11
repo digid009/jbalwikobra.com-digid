@@ -14,7 +14,7 @@ export const useAdminData = () => {
       const data = await AdminService.fetchDashboardStats();
       setStats(data);
     } catch (err) {
-      console.error('Failed to load dashboard stats:', err);
+      // Error silently handled
       setError('Failed to load dashboard statistics');
     }
   };
@@ -49,7 +49,7 @@ export const useProducts = () => {
       const data = await AdminService.fetchProducts();
       setProducts(data);
     } catch (err) {
-      console.error('Failed to load products:', err);
+      // Error silently handled
       setError('Failed to load products');
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ export const useProducts = () => {
       
       return savedProduct;
     } catch (err) {
-      console.error('Failed to save product:', err);
+      // Error silently handled
       setError('Failed to save product');
       throw err;
     }
@@ -83,7 +83,7 @@ export const useProducts = () => {
       await AdminService.deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err) {
-      console.error('Failed to delete product:', err);
+      // Error silently handled
       setError('Failed to delete product');
       throw err;
     }

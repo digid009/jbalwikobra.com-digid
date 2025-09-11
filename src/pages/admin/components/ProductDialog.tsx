@@ -21,7 +21,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     original_price: 0,
     category: '',
     stock: 1,
-    image_url: '',
+    image: '',
     is_active: true
   });
   const [saving, setSaving] = useState(false);
@@ -30,7 +30,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   useEffect(() => {
     if (product) {
       setFormData(product);
-      setImagePreview(product.image_url || '');
+      setImagePreview(product.image || '');
     }
   }, [product]);
 
@@ -48,7 +48,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
         setImagePreview(imageUrl);
-        handleInputChange('image_url', imageUrl);
+        handleInputChange('image', imageUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -66,7 +66,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     try {
       await onSave(formData);
     } catch (err) {
-      console.error('Failed to save product:', err);
+      // Error silently handled
     } finally {
       setSaving(false);
     }
@@ -125,7 +125,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                     size="small"
                     onClick={() => {
                       setImagePreview('');
-                      handleInputChange('image_url', '');
+                      handleInputChange('image', '');
                     }}
                     className="absolute top-2 right-2 p-2"
                   >
