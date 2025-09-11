@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Search, Bell, Menu, X, UserCircle } from 'lucide-react';
 import { IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { useAuth } from '../../../contexts/TraditionalAuthContext';
 
 interface AdminHeaderProps {
   searchQuery: string;
@@ -22,6 +23,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   isMobileMenuOpen = false,
 }) => {
   const notificationRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo and Mobile Menu */}
           <div className="flex items-center space-x-4">
@@ -112,10 +114,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 variant="ghost"
                 size="small"
                 onClick={onToggleNotifications}
-                className="relative"
+                className="relative overflow-visible"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 min-w-[18px] h-5 px-1 bg-red-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow ring-2 ring-white">
                   3
                 </span>
               </IOSButton>
@@ -180,8 +182,19 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </div>
 
             {/* Profile */}
-            <IOSButton variant="ghost" size="small">
-              <UserCircle className="w-5 h-5" />
+            <IOSButton variant="ghost" size="small" className="relative overflow-visible">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name || 'Profile'}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-white font-semibold text-sm">
+                  {(user?.name || user?.email || 'A').charAt(0).toUpperCase()}
+                </div>
+              )}
             </IOSButton>
           </div>
         </div>

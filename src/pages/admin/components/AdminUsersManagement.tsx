@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Users as UsersIcon, Plus } from 'lucide-react';
 import { adminService, User } from '../../../services/adminService';
-import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 
 export const AdminUsersManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,7 +13,7 @@ export const AdminUsersManagement: React.FC = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage]);
+  }, [currentPage, searchTerm]);
 
   const loadUsers = async () => {
     try {
@@ -35,13 +35,12 @@ export const AdminUsersManagement: React.FC = () => {
     (user.phone && user.phone.includes(searchTerm))
   );
 
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Users Management</h2>
-          <p className="text-gray-600">Manage all registered users</p>
-        </div>
+        <IOSSectionHeader title="Users Management" subtitle="Manage all registered users" />
         <div className="flex items-center space-x-2">
           <IOSButton onClick={loadUsers} className="flex items-center space-x-2">
             <RefreshCw className="w-4 h-4" />
@@ -54,7 +53,7 @@ export const AdminUsersManagement: React.FC = () => {
         </div>
       </div>
 
-      <IOSCard>
+  <IOSCard variant="elevated" padding="none">
         <div className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -145,6 +144,39 @@ export const AdminUsersManagement: React.FC = () => {
             </div>
           )}
         </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700 font-medium">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} users
+              </div>
+              <div className="flex items-center space-x-3">
+                <IOSButton
+                  variant="ghost"
+                  size="small"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2"
+                >
+                  Previous
+                </IOSButton>
+                <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-lg border">
+                  {currentPage} / {totalPages}
+                </span>
+                <IOSButton
+                  variant="ghost"
+                  size="small"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2"
+                >
+                  Next
+                </IOSButton>
+              </div>
+            </div>
+          </div>
+        )}
       </IOSCard>
     </div>
   );

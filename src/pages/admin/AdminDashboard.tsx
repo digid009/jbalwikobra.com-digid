@@ -100,7 +100,7 @@ const AdminDashboard: React.FC = () => {
       />
 
       <div className="pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Desktop Navigation */}
             <div className="hidden lg:block w-64 flex-shrink-0">
