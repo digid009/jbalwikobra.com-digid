@@ -73,7 +73,7 @@ export interface Order {
   product_name: string;
   quantity: number;
   unit_price: number;
-  total_amount: number;
+  amount: number; // renamed from total_amount to match DB
   status: 'pending' | 'paid' | 'processing' | 'completed' | 'cancelled' | 'refunded';
   payment_method?: string;
   payment_id?: string;
@@ -282,16 +282,16 @@ class EnhancedAdminService {
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
         supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('orders').select('total_amount, status').in('status', ['paid', 'completed']),
-        supabase.from('orders').select('total_amount').gte('created_at', today),
+  supabase.from('orders').select('amount, status').in('status', ['paid', 'completed']),
+  supabase.from('orders').select('amount').gte('created_at', today),
         supabase.from('reviews').select('rating')
       ]);
 
       const totalRevenue = ordersWithAmounts.data?.reduce((sum, order) => 
-        sum + (Number(order.total_amount) || 0), 0) || 0;
+  sum + (Number(order.amount) || 0), 0) || 0;
 
       const todayRevenue = todayOrdersWithAmounts.data?.reduce((sum, order) => 
-        sum + (Number(order.total_amount) || 0), 0) || 0;
+  sum + (Number(order.amount) || 0), 0) || 0;
 
       const averageRating = reviewsData.data?.length > 0
         ? reviewsData.data.reduce((sum, review) => sum + review.rating, 0) / reviewsData.data.length

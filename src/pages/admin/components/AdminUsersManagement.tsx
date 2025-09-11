@@ -28,9 +28,10 @@ export const AdminUsersManagement: React.FC = () => {
     }
   };
 
+  const lowered = searchTerm.toLowerCase();
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.name && user.name.toLowerCase().includes(lowered)) ||
+    (user.email && user.email.toLowerCase().includes(lowered)) ||
     (user.phone && user.phone.includes(searchTerm))
   );
 

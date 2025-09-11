@@ -579,7 +579,7 @@ export const adminService = {
           supabase.from('orders').select('*', { count: 'exact', head: true }),
           supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-          supabase.from('orders').select('total_amount')
+    supabase.from('orders').select('amount')
         ]);
 
         // Try to get reviews (might not exist)
@@ -605,7 +605,7 @@ export const adminService = {
 
         // Calculate revenue
         const totalRevenue = ordersWithAmounts.data?.reduce((sum, order) => 
-          sum + (Number(order.total_amount) || 0), 0) || 0;
+          sum + (Number(order.amount) || 0), 0) || 0;
 
         return {
           totalOrders: totalOrders || 0,

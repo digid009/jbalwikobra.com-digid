@@ -20,7 +20,7 @@ export type Order = {
   id: string;
   user_id: string;
   product_id: string;
-  total_amount: number;
+  amount: number;
   status: 'pending' | 'paid' | 'cancelled' | 'processing' | 'completed';
   payment_method?: string;
   created_at: string;

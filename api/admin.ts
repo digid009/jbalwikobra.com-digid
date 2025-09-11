@@ -132,11 +132,9 @@ async function handleOrders(req: VercelRequest, res: VercelResponse) {
     let query = supabase
       .from('orders')
       .select(`
-        id, created_at, total_amount, status, user_id, admin_notes,
+        id, created_at, amount, status, user_id, admin_notes,
         customer_name, customer_email, customer_phone,
-        products!inner (
-          id, name, image
-        )
+        product_id
       `, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);

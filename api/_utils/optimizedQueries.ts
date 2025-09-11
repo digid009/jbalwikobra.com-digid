@@ -15,12 +15,12 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 export const OPTIMIZED_QUERIES = {
   // Dashboard queries - only essential fields
   ORDERS_STATS: `
-    id, total_amount, created_at, status
+  id, amount, created_at, status
   `,
   
   // Orders list - minimal fields for performance
   ORDERS_LIST: `
-    id, created_at, total_amount, status, user_id, admin_notes,
+  id, created_at, amount, status, user_id, admin_notes,
     customer_name, customer_email, customer_phone,
     products!inner (
       id, name, image
@@ -159,14 +159,14 @@ export class OptimizedQueryBuilder {
 
     const { data: orders } = await supabaseAdmin
       .from('orders')
-      .select('total_amount, status, created_at')
+  .select('amount, status, created_at')
       .gte('created_at', fromDate.toISOString());
 
     const totalRevenue = orders?.reduce((sum, order) => 
-      sum + (parseFloat(order.total_amount) || 0), 0) || 0;
+  sum + (parseFloat(order.amount) || 0), 0) || 0;
     
     const completedRevenue = orders?.filter(o => o.status === 'completed')
-      .reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0) || 0;
+  .reduce((sum, order) => sum + (parseFloat(order.amount) || 0), 0) || 0;
 
     return {
       total: totalRevenue,

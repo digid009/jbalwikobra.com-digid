@@ -107,7 +107,7 @@ const OrdersTab: React.FC = () => {
 
                 <div className="text-right">
                   <p className="text-xl font-semibold text-ios-primary mb-2">
-                    {formatCurrency(order.total_amount)}
+                    {formatCurrency(order.amount)}
                   </p>
                   <button className="flex items-center gap-1 text-ios-primary hover:text-ios-primary-dark transition-colors">
                     <Eye className="w-4 h-4" />
