@@ -51,11 +51,21 @@ export interface Product {
   original_price?: number;
   category: string;
   game_title?: string;
+  account_level?: string;
+  account_details?: string;
   stock: number;
   is_active: boolean;
   created_at: string;
-  image_url?: string;
+  updated_at?: string;
+  image?: string;
+  images?: string[];
   tier?: string;
+  tier_id?: string;
+  game_title_id?: string;
+  is_flash_sale?: boolean;
+  flash_sale_end_time?: string;
+  has_rental?: boolean;
+  archived_at?: string;
 }
 
 export interface Review {

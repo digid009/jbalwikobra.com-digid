@@ -236,9 +236,9 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                       <tr key={sale.id} className="hover:bg-ios-background/30 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-4">
-                            {sale.product?.image_url && (
+                            {sale.product?.image && (
                               <img
-                                src={sale.product.image_url}
+                                src={sale.product.image}
                                 alt={sale.product.name}
                                 className="w-12 h-12 rounded-lg object-cover border border-ios-border/30"
                               />

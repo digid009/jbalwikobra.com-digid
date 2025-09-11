@@ -406,3 +406,4 @@ export const IOSContainer: React.FC<IOSContainerProps> = ({
 // Export all design tokens and components
 export { IOSPagination } from './IOSPagination';
 export { IOSAvatar } from './IOSAvatar';
+export { IOSImageUploader } from './IOSImageUploader';
