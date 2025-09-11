@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import './App.css';
 import './styles/mobile-first.css';
 import './styles/navigation-fixes.css';
+import { forceFixedPositioning } from './utils/forceFixedPositioning';
 import RequireAdmin from './components/RequireAdmin';
 import { ToastProvider } from './components/Toast';
 import { ConfirmationProvider } from './components/ConfirmationModal';
@@ -130,6 +131,15 @@ function App() {
     }, 1000);
   }, []);
 
+  // Enforce fixed positioning behavior on mobile (iOS Safari quirks)
+  useEffect(() => {
+    try {
+      forceFixedPositioning();
+    } catch (e) {
+      console.warn('forceFixedPositioning failed:', e);
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
@@ -209,7 +219,7 @@ function App() {
                 <Route path="*" element={
                   <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200 relative">
                     <Header />
-                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden">
+                    <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">

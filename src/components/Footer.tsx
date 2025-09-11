@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Shield, HelpCircle, Mail, Phone, MapPin } from 'lucide-react';
+import { SettingsService } from '../services/settingsService';
+import type { WebsiteSettings } from '../types';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await SettingsService.get();
+        if (mounted) setSettings(data);
+      } catch (e) {
+        console.warn('Failed to load settings for footer:', e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const footerSections = [
     {
@@ -45,17 +63,21 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-ios-background border-t border-ios-border mt-auto">
+  <footer className="bg-ios-background border-t border-ios-border mt-auto">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-ios-accent rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">JB</span>
-              </div>
-              <span className="font-bold text-ios-text text-xl">JBalwikobra</span>
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt={settings.siteName || 'Logo'} className="w-10 h-10 rounded-xl object-cover" />
+              ) : (
+                <div className="w-10 h-10 bg-ios-accent rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">JB</span>
+                </div>
+              )}
+              <span className="font-bold text-ios-text text-xl">{settings?.siteName || 'JBalwikobra'}</span>
             </Link>
             <p className="text-ios-text-secondary text-sm mb-6 leading-relaxed">
               Platform jual beli online terpercaya dengan pengalaman berbelanja yang aman dan nyaman.
@@ -65,15 +87,15 @@ const Footer: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-ios-text-secondary">
                 <Mail className="w-4 h-4" />
-                <span className="text-sm">support@jbalwikobra.com</span>
+                <span className="text-sm">{settings?.contactEmail || 'support@jbalwikobra.com'}</span>
               </div>
               <div className="flex items-center space-x-3 text-ios-text-secondary">
                 <Phone className="w-4 h-4" />
-                <span className="text-sm">+62 812-3456-7890</span>
+                <span className="text-sm">{settings?.contactPhone || '+62 812-3456-7890'}</span>
               </div>
               <div className="flex items-center space-x-3 text-ios-text-secondary">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm">Jakarta, Indonesia</span>
+                <span className="text-sm">{settings?.address || 'Jakarta, Indonesia'}</span>
               </div>
             </div>
           </div>

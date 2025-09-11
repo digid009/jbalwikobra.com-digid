@@ -56,7 +56,7 @@ const MobileBottomNav: React.FC = () => {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-      <nav className="nav-bottom lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
+  <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
         <div className="flex items-center justify-around px-2 py-2">
           {navigationItems.map((item) => {
             const isActive = isActiveTab(item.path);

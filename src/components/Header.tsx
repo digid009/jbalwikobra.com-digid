@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag } from 'lucide-react';
 import { IOSButton } from './ios/IOSDesignSystem';
+import { SettingsService } from '../services/settingsService';
+import type { WebsiteSettings } from '../types';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -11,10 +13,27 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
 
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    // Load website settings for dynamic header info
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await SettingsService.get();
+        if (mounted) setSettings(data);
+      } catch (e) {
+        console.warn('Failed to load settings for header:', e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -44,15 +63,24 @@ const Header = () => {
 
   return (
     <>
-      <header className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border">
+      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-              <div className="w-8 h-8 bg-ios-accent rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">JB</span>
-              </div>
+              {/* Dynamic logo if available */}
+              {settings?.logoUrl ? (
+                <img
+                  src={settings.logoUrl}
+                  alt={settings.siteName || 'Logo'}
+                  className="w-8 h-8 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-ios-accent rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">JB</span>
+                </div>
+              )}
               <span className="font-semibold text-ios-text text-lg hidden sm:block">
-                JBalwikobra
+                {settings?.siteName || 'JBalwikobra'}
               </span>
             </Link>
 
