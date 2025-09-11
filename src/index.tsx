@@ -5,8 +5,10 @@ import App from './App';
 import { injectCriticalCSS, preloadCriticalResources } from './utils/criticalCSS';
 import { initWebVitalsMonitoring } from './utils/webVitalsMonitor';
 import { FontOptimizer } from './utils/fontOptimizer';
+import { silenceConsoleInProduction } from './utils/consoleSilencer';
 
 // Suppress React DevTools warning in development
+silenceConsoleInProduction();
 if (process.env.NODE_ENV === 'development') {
   // Silence React DevTools download suggestion
   if (typeof window !== 'undefined') {

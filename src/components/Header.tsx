@@ -70,7 +70,8 @@ const Header: React.FC = () => {
 
   return (
     <header 
-      className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/90 border-b border-ios-border" 
+      className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/95 border-b border-ios-border/50 safe-top force-fixed-header" 
+      data-fixed="header"
       style={{ 
         position: 'fixed',
         top: 0,
@@ -80,56 +81,45 @@ const Header: React.FC = () => {
         width: '100%',
         transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
         backfaceVisibility: 'hidden', // Improve performance
-        WebkitBackfaceVisibility: 'hidden'
+        WebkitBackfaceVisibility: 'hidden',
+        paddingTop: 'env(safe-area-inset-top)', // iOS safe area
+        WebkitTransform: 'translate3d(0, 0, 0)',
+        willChange: 'transform'
       }}
     >
-      {/* Mobile compact header */}
-      <div className="md:hidden">
-        <IOSContainer padding={false} className="px-4 py-2 pt-safe-top">
-          <div className="flex items-center justify-between h-12">
-            <Link to="/" className="flex items-center space-x-3">
-              {logoUrl ? (
-                <img src={logoUrl} alt={siteName} className="h-8 w-8 rounded-lg object-cover" />
-              ) : (
-                <div className="w-8 h-8 bg-gradient-to-br from-ios-accent to-pink-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">JB</span>
-                </div>
-              )}
-              <span className="text-lg font-bold text-ios-text truncate max-w-[180px]">{siteName}</span>
-            </Link>
-            
-            {/* Mobile user avatar */}
-            <Link 
-              to="/profile" 
-              className="w-10 h-10 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 active:scale-95 flex-shrink-0"
-            >
-              <User size={18} className="text-ios-text-secondary" />
-            </Link>
-          </div>
-        </IOSContainer>
-      </div>
-
-      {/* Desktop header */}
-      <div className="hidden md:block pt-safe-top">
-        <IOSContainer>
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-              {logoUrl ? (
-                <img src={logoUrl} alt={siteName} className="h-10 w-10 rounded-xl object-cover" />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-ios-accent to-pink-600 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">JB</span>
-                </div>
-              )}
-              <div>
-                <span className="text-xl font-bold text-ios-text">{siteName}</span>
-                <p className="text-xs text-ios-text-secondary -mt-1">Gaming Marketplace</p>
+      {/* Mobile-first design - Base styles for mobile */}
+      <IOSContainer padding={false} className="px-4 py-4">
+        <div className="flex items-center justify-between min-h-[44px]"> {/* Minimum touch target */}
+          {/* Logo and brand - Mobile optimized */}
+          <Link 
+            to="/" 
+            className="flex items-center space-x-3 min-h-[44px] touch-manipulation active:scale-95 transition-transform duration-150"
+          >
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={siteName} 
+                className="h-9 w-9 rounded-xl object-cover shadow-sm" 
+              />
+            ) : (
+              <div className="w-9 h-9 bg-gradient-to-br from-ios-accent to-pink-600 rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-white text-sm font-bold">JB</span>
               </div>
-            </Link>
-
-            {/* Navigation */}
-            <nav className="flex space-x-2">
+            )}
+            <div className="hidden xs:block">
+              <span className="text-lg font-bold text-ios-text truncate max-w-[140px] md:max-w-none">
+                {siteName}
+              </span>
+              <p className="text-xs text-ios-text-secondary -mt-1 hidden md:block">
+                Gaming Marketplace
+              </p>
+            </div>
+          </Link>
+          
+          {/* Mobile: Profile only, Desktop: Full navigation */}
+          <div className="flex items-center">
+            {/* Desktop navigation - Hidden on mobile */}
+            <nav className="hidden lg:flex space-x-1 mr-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -138,7 +128,7 @@ const Header: React.FC = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 min-h-[44px] ${
                       isActive
                         ? 'bg-ios-accent/10 text-ios-accent border border-ios-accent/20'
                         : 'text-ios-text-secondary hover:text-ios-text hover:bg-ios-surface/50'
@@ -151,35 +141,34 @@ const Header: React.FC = () => {
               })}
             </nav>
 
-            {/* Auth actions */}
-            <div className="flex items-center gap-3">
-              {user ? (
+            {/* User profile/auth - Always visible */}
+            {user ? (
+              <Link 
+                to="/profile" 
+                className="w-11 h-11 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 hover:border-ios-accent/50 active:scale-95 touch-manipulation"
+              >
+                <User size={20} className="text-ios-text" />
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
                 <Link 
-                  to="/profile" 
-                  className="w-10 h-10 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 hover:border-ios-accent/50"
+                  to="/auth" 
+                  className="hidden sm:flex px-3 py-2 text-sm font-medium text-ios-text-secondary hover:text-ios-text transition-colors min-h-[44px] items-center"
                 >
-                  <User size={18} className="text-ios-text" />
+                  Masuk
                 </Link>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link 
-                    to="/auth" 
-                    className="px-4 py-2 text-sm font-medium text-ios-text-secondary hover:text-ios-text transition-colors"
-                  >
-                    Masuk
-                  </Link>
-                  <Link 
-                    to="/auth" 
-                    className="px-4 py-2 bg-ios-accent text-white text-sm font-medium rounded-xl transition-all duration-200 hover:bg-ios-accent/90 active:scale-95"
-                  >
-                    Daftar
-                  </Link>
-                </div>
-              )}
-            </div>
+                <Link 
+                  to="/auth" 
+                  className="px-4 py-2 bg-ios-accent text-white text-sm font-medium rounded-xl transition-all duration-200 hover:bg-ios-accent/90 active:scale-95 min-h-[44px] flex items-center touch-manipulation"
+                >
+                  <span className="hidden sm:inline">Daftar</span>
+                  <span className="sm:hidden">Join</span>
+                </Link>
+              </div>
+            )}
           </div>
-        </IOSContainer>
-      </div>
+        </div>
+      </IOSContainer>
     </header>
   );
 };

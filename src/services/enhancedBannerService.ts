@@ -5,71 +5,18 @@
 
 import { supabase } from './supabase';
 import { globalCache } from './globalCacheManager';
-import { Banner } from '../types/index';
 
-// iOS-optimized banner data with proper aspect ratios and safe URLs
-const IOS_OPTIMIZED_BANNERS: Banner[] = [
-  {
-    id: 'ios-banner-1',
-    title: '🔥 Flash Sale Gaming Accounts',
-    subtitle: 'Dapatkan diskon hingga 70% untuk akun premium pilihan!',
-    imageUrl: 'https://images.unsplash.com/photo-1542751110-97427bbecf20?w=1200&h=800&fit=crop&auto=format&q=80',
-    linkUrl: '/flash-sales',
-    sortOrder: 1,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'ios-banner-2',
-    title: '🏆 Koleksi Akun Verified',
-    subtitle: 'Akun terverifikasi dengan rank tinggi dan item langka',
-    imageUrl: 'https://images.unsplash.com/photo-1605901309584-818e25960a8e?w=1200&h=800&fit=crop&auto=format&q=80',
-    linkUrl: '/products?tier=premium',
-    sortOrder: 2,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'ios-banner-3',
-    title: '💎 Rental System Terbaru',
-    subtitle: 'Sewa akun favorit dengan sistem yang aman dan mudah',
-    imageUrl: 'https://images.unsplash.com/photo-1556438064-2d7646166914?w=1200&h=800&fit=crop&auto=format&q=80',
-    linkUrl: '/products?type=rental',
-    sortOrder: 3,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'ios-banner-4',
-    title: '🎮 New Game Arrivals',
-    subtitle: 'Akun untuk game mobile terbaru dan terpopuler',
-    imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&h=800&fit=crop&auto=format&q=80',
-    linkUrl: '/products?category=new',
-    sortOrder: 4,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'ios-banner-5',
-    title: '⚡ Lightning Deals',
-    subtitle: 'Penawaran kilat terbatas waktu untuk member VIP',
-    imageUrl: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=1200&h=800&fit=crop&auto=format&q=80',
-    linkUrl: '/deals',
-    sortOrder: 5,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
-
-export interface BannerListResult {
-  banners: Banner[];
-  total: number;
-  activeCount: number;
+// Banner interface matching Supabase schema
+interface Banner {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string;
+  link_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export class EnhancedBannerService {
@@ -87,7 +34,7 @@ export class EnhancedBannerService {
   }
 
   /**
-   * Get all banners with iOS-optimized caching and fallback data
+   * List all banners with iOS-optimized caching
    */
   async list(): Promise<Banner[]> {
     const cacheKey = 'banners:all';
@@ -96,26 +43,73 @@ export class EnhancedBannerService {
       cacheKey,
       async () => {
         try {
-          // Try to fetch from Supabase
           if (supabase) {
-            const banners = await this.fetchFromDatabase();
-            if (banners.length > 0) {
-              return banners;
+            console.log('[BannerService] Fetching banners from Supabase...');
+            const { data, error } = await supabase
+              .from('banners')
+              .select('*')
+              .order('sort_order', { ascending: true });
+
+            if (error) {
+              console.error('[BannerService] Database error:', error);
+              console.log('[BannerService] This might be an RLS policy issue. Check RLS_POLICY_FIX_GUIDE.md');
+              
+              // Return fallback data if RLS is blocking
+              return this.getFallbackBanners();
             }
+
+            console.log('[BannerService] Fetched banners:', data?.length || 0);
+            
+            if (!data || data.length === 0) {
+              console.warn('[BannerService] No banners found, using fallback');
+              return this.getFallbackBanners();
+            }
+            
+            return data;
           }
           
-          // Fallback to iOS-optimized mock data
-          return this.getOptimizedMockBanners();
-        } catch (error) {
-          console.warn('Banner service error, using mock data:', error);
-          return this.getOptimizedMockBanners();
+          console.warn('[BannerService] Supabase not configured, using fallback');
+          return this.getFallbackBanners();
+        } catch (err) {
+          console.error('[BannerService] Error fetching banners:', err);
+          return this.getFallbackBanners();
         }
       },
       {
-        ttl: 10 * 60 * 1000, // 10 minutes for banner data (longer cache)
+        ttl: 10 * 60 * 1000, // 10 minutes
         tags: [EnhancedBannerService.CACHE_TAGS.BANNERS]
       }
     );
+  }
+
+  /**
+   * Get fallback banners when database is not accessible
+   */
+  private getFallbackBanners(): Banner[] {
+    return [
+      {
+        id: 'fallback-1',
+        title: 'TOP UP Game Termurah',
+        subtitle: 'Proses kilat, harga terjangkau',
+        image_url: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=1200',
+        link_url: '/products',
+        sort_order: 1,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'fallback-2',
+        title: 'Jual Akun Game Rare', 
+        subtitle: 'Koleksi akun game terlengkap',
+        image_url: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=1200',
+        link_url: '/accounts',
+        sort_order: 2,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
   }
 
   /**
@@ -127,10 +121,39 @@ export class EnhancedBannerService {
     return globalCache.getOrSet(
       cacheKey,
       async () => {
-        const allBanners = await this.list();
-        return allBanners
-          .filter(banner => banner.isActive)
-          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        try {
+          if (supabase) {
+            console.log('[BannerService] Fetching active banners from Supabase...');
+            const { data, error } = await supabase
+              .from('banners')
+              .select('*')
+              .eq('is_active', true)
+              .order('sort_order', { ascending: true });
+
+            if (error) {
+              console.error('[BannerService] Database error:', error);
+              console.log('[BannerService] This might be an RLS policy issue. Check RLS_POLICY_FIX_GUIDE.md');
+              
+              // Return fallback data if RLS is blocking
+              return this.getFallbackBanners().filter(b => b.is_active);
+            }
+
+            console.log('[BannerService] Fetched active banners:', data?.length || 0);
+            
+            if (!data || data.length === 0) {
+              console.warn('[BannerService] No active banners found, using fallback');
+              return this.getFallbackBanners().filter(b => b.is_active);
+            }
+            
+            return data;
+          }
+          
+          console.warn('[BannerService] Supabase not configured, using fallback');
+          return this.getFallbackBanners().filter(b => b.is_active);
+        } catch (err) {
+          console.error('[BannerService] Error fetching active banners:', err);
+          return this.getFallbackBanners().filter(b => b.is_active);
+        }
       },
       {
         ttl: 10 * 60 * 1000, // 10 minutes
@@ -140,203 +163,78 @@ export class EnhancedBannerService {
   }
 
   /**
-   * Fetch banners from Supabase database
+   * Create a new banner
    */
-  private async fetchFromDatabase(): Promise<Banner[]> {
+  async create(bannerData: Omit<Banner, 'id' | 'created_at' | 'updated_at'>): Promise<Banner> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
 
-    // First, check if the banners table exists and has the expected structure
     const { data, error } = await supabase
       .from('banners')
-      .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false });
+      .insert([bannerData])
+      .select()
+      .single();
 
-    if (error) {
-      console.error('Database query error for banners:', error);
-      throw error;
+    if (error) throw error;
+    if (!data) throw new Error('Failed to create banner');
+
+    await this.invalidateCache();
+    return data;
+  }
+
+  /**
+   * Update an existing banner
+   */
+  async update(id: string, updates: Partial<Banner>): Promise<Banner> {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
     }
 
-    if (!data || data.length === 0) {
-      console.info('No banners found in database, using fallback data');
-      return [];
+    const { data, error } = await supabase
+      .from('banners')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error('Banner not found');
+
+    await this.invalidateCache();
+    return data;
+  }
+
+  /**
+   * Delete a banner
+   */
+  async delete(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
     }
 
-    // Transform database data to Banner interface
-    const transformedBanners: Banner[] = data.map((banner: any) => ({
-      id: banner.id,
-      title: banner.title || '',
-      subtitle: banner.subtitle || '',
-      imageUrl: banner.image_url || banner.imageUrl || '',
-      linkUrl: banner.link_url || banner.linkUrl || '',
-      sortOrder: banner.sort_order || banner.sortOrder || 0,
-      isActive: banner.is_active !== false, // Default to true if not specified
-      createdAt: banner.created_at || banner.createdAt || new Date().toISOString(),
-      updatedAt: banner.updated_at || banner.updatedAt || new Date().toISOString(),
-    }));
+    const { error } = await supabase
+      .from('banners')
+      .delete()
+      .eq('id', id);
 
-    return transformedBanners;
+    if (error) throw error;
+    await this.invalidateCache();
   }
 
   /**
-   * Get iOS-optimized mock banners with proper fallback
+   * Invalidate all banner-related caches
    */
-  private getOptimizedMockBanners(): Banner[] {
-    // Return banners optimized for iOS with proper image URLs and safe dimensions
-    return IOS_OPTIMIZED_BANNERS.map(banner => ({
-      ...banner,
-      // Ensure image URLs work on iOS Safari
-      imageUrl: banner.imageUrl.includes('?') 
-        ? banner.imageUrl + '&fm=jpg&auto=compress' 
-        : banner.imageUrl + '?fm=jpg&auto=compress&q=80'
-    }));
-  }
-
-  /**
-   * Create a new banner (with cache invalidation)
-   */
-  async createBanner(bannerData: Omit<Banner, 'id' | 'createdAt' | 'updatedAt'>): Promise<Banner | null> {
-    try {
-      if (!supabase) {
-        console.warn('Cannot create banner: Supabase not configured');
-        return null;
-      }
-
-      const { data, error } = await supabase
-        .from('banners')
-        .insert({
-          title: bannerData.title,
-          subtitle: bannerData.subtitle,
-          image_url: bannerData.imageUrl,
-          link_url: bannerData.linkUrl,
-          sort_order: bannerData.sortOrder || 0,
-          is_active: bannerData.isActive !== false
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating banner:', error);
-        return null;
-      }
-
-      // Invalidate banner caches
-      await this.clearCache();
-
-      return {
-        id: data.id,
-        title: data.title,
-        subtitle: data.subtitle,
-        imageUrl: data.image_url,
-        linkUrl: data.link_url,
-        sortOrder: data.sort_order,
-        isActive: data.is_active,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-    } catch (error) {
-      console.error('Failed to create banner:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Update banner (with cache invalidation)
-   */
-  async updateBanner(id: string, updates: Partial<Banner>): Promise<Banner | null> {
-    try {
-      if (!supabase) {
-        console.warn('Cannot update banner: Supabase not configured');
-        return null;
-      }
-
-      const updateData: any = {};
-      if (updates.title !== undefined) updateData.title = updates.title;
-      if (updates.subtitle !== undefined) updateData.subtitle = updates.subtitle;
-      if (updates.imageUrl !== undefined) updateData.image_url = updates.imageUrl;
-      if (updates.linkUrl !== undefined) updateData.link_url = updates.linkUrl;
-      if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
-      if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
-
-      const { data, error } = await supabase
-        .from('banners')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating banner:', error);
-        return null;
-      }
-
-      // Invalidate banner caches
-      await this.clearCache();
-
-      return {
-        id: data.id,
-        title: data.title,
-        subtitle: data.subtitle,
-        imageUrl: data.image_url,
-        linkUrl: data.link_url,
-        sortOrder: data.sort_order,
-        isActive: data.is_active,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-    } catch (error) {
-      console.error('Failed to update banner:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get banner statistics
-   */
-  async getStats(): Promise<BannerListResult> {
-    const banners = await this.list();
-    const activeCount = banners.filter(b => b.isActive).length;
-
-    return {
-      banners,
-      total: banners.length,
-      activeCount
-    };
-  }
-
-  /**
-   * Clear all banner caches
-   */
-  async clearCache(): Promise<void> {
+  private async invalidateCache(): Promise<void> {
     await globalCache.invalidateByTags([
       EnhancedBannerService.CACHE_TAGS.BANNERS,
       EnhancedBannerService.CACHE_TAGS.ACTIVE_BANNERS
     ]);
   }
-
-  /**
-   * Warm up banner cache
-   */
-  async warmupCache(): Promise<void> {
-    try {
-      await Promise.all([
-        this.list(),
-        this.getActiveBanners()
-      ]);
-    } catch (error) {
-      console.warn('Banner cache warmup failed:', error);
-    }
-  }
 }
 
-// Create singleton instance
+// Export singleton instance
 export const enhancedBannerService = EnhancedBannerService.getInstance();
 
-// Legacy service compatibility
-export const BannerService = {
-  async list(): Promise<Banner[]> {
-    return enhancedBannerService.list();
-  }
-};
+// Export type and interface
+export type { Banner };

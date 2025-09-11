@@ -1,8 +1,19 @@
 // API Request Optimization Utilities
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import Redis from 'ioredis'; // Assuming ioredis is installed
 
-// Simple in-memory cache for API responses
-const apiCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+// Initialize Redis client
+// Ensure REDIS_URL is set in your environment variables
+const redisClient = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL)
+  : null;
+
+if (!redisClient) {
+  console.warn('REDIS_URL not found. Caching will fall back to in-memory (limited in serverless).');
+} else {
+  redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+  redisClient.on('connect', () => console.log('Redis Client Connected'));
+}
 
 export function generateCacheKey(req: VercelRequest): string {
   const { action, page, limit, search, status, ...otherParams } = req.query;
@@ -10,30 +21,66 @@ export function generateCacheKey(req: VercelRequest): string {
   return `${req.url}-${JSON.stringify(params)}`;
 }
 
-export function getFromCache<T>(key: string): T | null {
-  const cached = apiCache.get(key);
-  if (!cached) return null;
-  
-  const now = Date.now();
-  if (now > cached.timestamp + cached.ttl) {
-    apiCache.delete(key);
-    return null;
+export async function getFromCache<T>(key: string): Promise<T | null> {
+  if (!redisClient) {
+    // Fallback to in-memory if Redis is not configured
+    const cached = (global as any).apiCache?.get(key);
+    if (!cached) return null;
+    const now = Date.now();
+    if (now > cached.timestamp + cached.ttl) {
+      (global as any).apiCache.delete(key);
+      return null;
+    }
+    return cached.data as T;
   }
-  
-  return cached.data as T;
+
+  try {
+    const cached = await redisClient.get(key);
+    if (cached) {
+      return JSON.parse(cached) as T;
+    }
+  } catch (error) {
+    console.error('Error getting from Redis cache:', error);
+  }
+  return null;
 }
 
-export function setToCache<T>(key: string, data: T, ttlMinutes: number = 5): void {
-  const ttl = ttlMinutes * 60 * 1000; // Convert to milliseconds
-  apiCache.set(key, {
-    data,
-    timestamp: Date.now(),
-    ttl
-  });
+export async function setToCache<T>(key: string, data: T, ttlMinutes: number = 5): Promise<void> {
+  if (!redisClient) {
+    // Fallback to in-memory if Redis is not configured
+    if (!(global as any).apiCache) {
+      (global as any).apiCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+    }
+    const ttl = ttlMinutes * 60 * 1000; // Convert to milliseconds
+    (global as any).apiCache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+    return;
+  }
+
+  try {
+    // Set with expiration in seconds
+    await redisClient.setex(key, ttlMinutes * 60, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error setting to Redis cache:', error);
+  }
 }
 
-export function clearCache(): void {
-  apiCache.clear();
+export async function clearCache(): Promise<void> {
+  if (!redisClient) {
+    if ((global as any).apiCache) {
+      (global as any).apiCache.clear();
+    }
+    return;
+  }
+
+  try {
+    await redisClient.flushdb(); // Clear all keys in the current DB
+  n} catch (error) {
+    console.error('Error clearing Redis cache:', error);
+  }
 }
 
 // Middleware to add cache headers for better client-side caching

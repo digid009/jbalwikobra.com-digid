@@ -30,6 +30,26 @@ function getClientIP(req: VercelRequest): string {
          'unknown';
 }
 
+// In-memory rate limiter
+const rateLimit = new Map<string, { count: number; lastAttempt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5; // 5 requests per minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimit.get(ip);
+
+  if (!entry || (now - entry.lastAttempt > RATE_LIMIT_WINDOW_MS)) {
+    rateLimit.set(ip, { count: 1, lastAttempt: now });
+    return true;
+  } else {
+    entry.count++;
+    entry.lastAttempt = now; // Update last attempt time
+    rateLimit.set(ip, entry);
+    return entry.count <= MAX_REQUESTS_PER_WINDOW;
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,6 +62,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { action } = req.query;
+    const clientIp = getClientIP(req);
+
+    // Apply rate limit to specific actions
+    if (action === 'signup' || action === 'verify-phone') {
+      if (!checkRateLimit(clientIp)) {
+        return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+      }
+    }
 
     switch (action) {
       case 'login':
