@@ -292,11 +292,7 @@ class AdminService {
     try {
       const { data, error, count } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          products(name),
-          users(name)
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -309,8 +305,8 @@ class AdminService {
         rating: item.rating,
         comment: item.comment,
         created_at: item.created_at,
-        product_name: item.products?.name || 'Unknown Product',
-        user_name: item.users?.name || 'Anonymous'
+        product_name: item.product_name,
+        user_name: item.user_name
       }));
 
       return { data: reviews, count: count || 0 };
@@ -634,14 +630,13 @@ export const adminService = {
   },
 
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
+    // NOTE: Previous implementation attempted to select related users/products via
+    // PostgREST foreign key expansion (users(name,email), products(name)) but the
+    // database does not have declared FK relationships, causing 400 errors.
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
       let query = supabase
         .from('orders')
-        .select(`
-          *,
-          users(name, email),
-          products(name)
-        `, { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -652,9 +647,25 @@ export const adminService = {
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) throw error;
-      
+
+      // Map to Order interface enforcing fallbacks
+      const mapped: Order[] = (data || []).map((o: any) => ({
+        id: o.id,
+        customer_name: o.customer_name || 'Unknown Customer',
+        product_name: o.product_name || 'Product Order',
+        amount: Number(o.amount) || 0,
+        status: o.status || 'pending',
+        created_at: o.created_at,
+        user_id: o.user_id,
+        product_id: o.product_id,
+        customer_email: o.customer_email,
+        customer_phone: o.customer_phone,
+        payment_method: o.payment_method,
+        xendit_invoice_id: o.xendit_invoice_id
+      }));
+
       return {
-        data: data || [],
+        data: mapped,
         count: count || 0,
         page,
         totalPages: Math.ceil((count || 0) / limit)
@@ -717,18 +728,25 @@ export const adminService = {
       try {
         const { data, error, count } = await supabase
           .from('reviews')
-          .select(`
-            *,
-            users(name, email),
-            products(name)
-          `, { count: 'exact' })
+          .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
           .range((page - 1) * limit, page * limit - 1);
 
         if (error) throw error;
         
+        const mapped: Review[] = (data || []).map((r: any) => ({
+          id: r.id,
+            product_id: r.product_id,
+            user_id: r.user_id,
+            rating: r.rating,
+            comment: r.comment,
+            created_at: r.created_at,
+            product_name: r.product_name,
+            user_name: r.user_name
+        }));
+
         return {
-          data: data || [],
+          data: mapped,
           count: count || 0,
           page,
           totalPages: Math.ceil((count || 0) / limit)
@@ -892,17 +910,27 @@ export const adminService = {
   },
 
   async searchOrders(query: string): Promise<Order[]> {
+    // Remove relational selects; search only local columns
     const { data } = await supabase
       .from('orders')
-      .select(`
-        *,
-        users(name, email),
-        products(name)
-      `)
-      .or(`id.ilike.%${query}%,users.name.ilike.%${query}%,users.email.ilike.%${query}%`)
+      .select('*')
+      .or(`id.ilike.%${query}%,customer_name.ilike.%${query}%,customer_email.ilike.%${query}%`)
       .limit(10);
-    
-    return data || [];
+
+    return (data || []).map((o: any) => ({
+      id: o.id,
+      customer_name: o.customer_name || 'Unknown Customer',
+      product_name: o.product_name || 'Product Order',
+      amount: Number(o.amount) || 0,
+      status: o.status || 'pending',
+      created_at: o.created_at,
+      user_id: o.user_id,
+      product_id: o.product_id,
+      customer_email: o.customer_email,
+      customer_phone: o.customer_phone,
+      payment_method: o.payment_method,
+      xendit_invoice_id: o.xendit_invoice_id
+    }));
   },
 
   async searchUsers(query: string): Promise<User[]> {
@@ -929,15 +957,20 @@ export const adminService = {
     try {
       const { data } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          users(name, email),
-          products(name)
-        `)
-        .or(`comment.ilike.%${query}%,users.name.ilike.%${query}%`)
+        .select('*')
+        .or(`comment.ilike.%${query}%`)
         .limit(10);
-      
-      return data || [];
+
+      return (data || []).map((r: any) => ({
+        id: r.id,
+        product_id: r.product_id,
+        user_id: r.user_id,
+        rating: r.rating,
+        comment: r.comment,
+        created_at: r.created_at,
+        product_name: r.product_name, // may not exist; kept for compatibility
+        user_name: r.user_name
+      }));
     } catch (error) {
       return [];
     }

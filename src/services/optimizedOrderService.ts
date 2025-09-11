@@ -62,11 +62,9 @@ class OptimizedOrderService {
       let query = supabase
         .from('orders')
         .select(`
-          id, customer_name, customer_email, customer_phone, 
+          id, customer_name, customer_email, customer_phone,
           amount, status, payment_method, order_type,
-          created_at, updated_at, notes,
-          product_id,
-          products (id, name)
+          created_at, updated_at, notes, product_id
         `, { count: 'exact' });
 
       // Apply filters at database level

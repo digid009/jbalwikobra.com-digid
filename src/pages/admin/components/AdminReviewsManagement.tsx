@@ -143,21 +143,29 @@ export const AdminReviewsManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {review.user_name}
+                          {review.user_name || 'Anonymous'}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {review.user_id.slice(-8)}
-                        </div>
+                        {review.user_id ? (
+                          <div className="text-sm text-gray-500">
+                            ID: {review.user_id.slice(-8)}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400 italic">No User ID</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {review.product_name}
+                          {review.product_name || 'Unknown Product'}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {review.product_id.slice(-8)}
-                        </div>
+                        {review.product_id ? (
+                          <div className="text-sm text-gray-500">
+                            ID: {review.product_id.slice(-8)}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400 italic">No Product ID</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
