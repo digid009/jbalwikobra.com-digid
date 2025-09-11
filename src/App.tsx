@@ -43,17 +43,7 @@ const FeedPage = React.lazy(() => import('./pages/FeedPage'));
 const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
 
 // Lazy load admin pages (biggest performance impact)
-const AdminLayout = React.lazy(() => import('./layouts/AdminLayout'));
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminProducts = React.lazy(() => import('./pages/admin/AdminProducts'));
-const AdminFlashSales = React.lazy(() => import('./pages/admin/AdminFlashSales'));
-const AdminUsers = React.lazy(() => import('./pages/admin/AdminUsers'));
-const AdminBanners = React.lazy(() => import('./pages/admin/AdminBanners'));
-const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
-const AdminOrders = React.lazy(() => import('./pages/admin/AdminOrders'));
-const AdminGameTitles = React.lazy(() => import('./pages/admin/AdminGameTitles'));
-const WhatsAppTestPage = React.lazy(() => import('./pages/admin/WhatsAppTestPage'));
-const AdminPosts = React.lazy(() => import('./pages/admin/AdminPosts'));
 
 // Optimized loading component for better perceived performance (iOS skeleton)
 const PageLoader = () => (
@@ -155,64 +145,13 @@ function App() {
               >
                 <ScrollToTop />
                 <Routes>
-                {/* Admin branch without global header/footer */}
+                {/* Admin routes - Direct access without sidebar layout */}
                 <Route element={<RequireAdmin />}>
-                  <Route path="/admin" element={
+                  <Route path="/admin/*" element={
                     <Suspense fallback={<PageLoader />}>
-                      <AdminLayout />
+                      <AdminDashboard />
                     </Suspense>
-                  }>
-                    <Route index element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminDashboard />
-                      </Suspense>
-                    } />
-                    <Route path="products" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminProducts />
-                      </Suspense>
-                    } />
-                    <Route path="flash-sales" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminFlashSales />
-                      </Suspense>
-                    } />
-                    <Route path="game-titles" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminGameTitles />
-                      </Suspense>
-                    } />
-                    <Route path="users" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminUsers />
-                      </Suspense>
-                    } />
-                    <Route path="orders" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminOrders />
-                      </Suspense>
-                    } />
-                    <Route path="banners" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminBanners />
-                      </Suspense>
-                    } />
-                    <Route path="posts" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminPosts />
-                      </Suspense>
-                    } />
-                    <Route path="whatsapp-test" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <WhatsAppTestPage />
-                      </Suspense>
-                    } />
-                    <Route path="settings" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminSettings />
-                      </Suspense>
-                    } />
-                  </Route>
+                  } />
                 </Route>
                 
                 {/* Public routes with global layout */}

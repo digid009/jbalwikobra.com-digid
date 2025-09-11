@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Users, Package, MessageSquare, Settings, BarChart3 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Users, Package, MessageSquare, Settings, BarChart3, LogOut } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { IOSButton, IOSCard, IOSContainer } from '../../components/ios/IOSDesignSystem';
+import { useAuth } from '../../contexts/TraditionalAuthContext';
 import AdminSettings from './AdminSettings';
 import AdminPosts from './AdminPosts';
 
@@ -10,6 +11,30 @@ type AdminTab = 'dashboard' | 'posts' | 'settings';
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout } = useAuth();
+
+  // Update tab based on URL
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes('/posts')) {
+      setActiveTab('posts');
+    } else if (path.includes('/settings')) {
+      setActiveTab('settings');
+    } else {
+      setActiveTab('dashboard');
+    }
+  }, [location.pathname]);
+
+  // Handle tab change with URL update
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    if (tab === 'dashboard') {
+      navigate('/admin');
+    } else {
+      navigate(`/admin/${tab}`);
+    }
+  };
 
   const tabs = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: BarChart3 },
@@ -20,13 +45,13 @@ const AdminDashboard: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardOverview onTabChange={setActiveTab} />;
+        return <DashboardOverview onTabChange={handleTabChange} />;
       case 'posts':
         return <AdminPosts />;
       case 'settings':
         return <AdminSettings />;
       default:
-        return <DashboardOverview onTabChange={setActiveTab} />;
+        return <DashboardOverview onTabChange={handleTabChange} />;
     }
   };
 
@@ -46,10 +71,30 @@ const AdminDashboard: React.FC = () => {
                 <ArrowLeft className="w-4 h-4" />
                 Back to Home
               </IOSButton>
-              <h1 className="text-2xl font-semibold text-ios-text">
-                Admin Panel
-              </h1>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-ios-accent to-pink-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-ios-text">
+                    Admin Panel
+                  </h1>
+                  <div className="text-xs text-ios-text-secondary -mt-1">JB Alwikobra</div>
+                </div>
+              </div>
             </div>
+            <IOSButton
+              variant="secondary"
+              size="medium"
+              onClick={async () => { 
+                await logout(); 
+                window.location.href = '/'; 
+              }}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </IOSButton>
           </div>
         </IOSContainer>
       </div>
@@ -63,7 +108,7 @@ const AdminDashboard: React.FC = () => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
                       ? 'text-ios-accent border-ios-accent bg-ios-accent/5'
