@@ -225,9 +225,23 @@ const AdminPosts: React.FC = () => {
                   type="url"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent"
+                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent mb-2"
                   placeholder="https://..."
                 />
+                {/* Image Preview */}
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.image_url}
+                      alt="Image preview"
+                      className="w-24 h-24 object-cover rounded-lg border border-ios-border"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               
               <div>
@@ -297,31 +311,51 @@ const AdminPosts: React.FC = () => {
             {posts.filter(p => !p.is_deleted).map((post) => (
               <div key={post.id} className="p-4 hover:bg-ios-surface/50 transition-colors">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs px-2 py-1 bg-ios-accent/20 text-ios-accent rounded-full">
-                        {post.type}
-                      </span>
-                      {post.is_pinned && (
-                        <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1">
-                          <Pin size={12} />
-                          Pinned
+                  <div className="flex gap-4 flex-1">
+                    {/* Image Preview */}
+                    {post.image_url && (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={post.image_url}
+                          alt={post.title || 'Post image'}
+                          className="w-16 h-16 object-cover rounded-lg border border-ios-border"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs px-2 py-1 bg-ios-accent/20 text-ios-accent rounded-full">
+                          {post.type}
                         </span>
-                      )}
-                      {post.title && (
-                        <span className="font-medium text-ios-text">{post.title}</span>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-ios-text-secondary mb-2 line-clamp-2">
-                      {post.content}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-xs text-ios-text-secondary">
-                      <span>{formatDate(post.created_at)}</span>
-                      <span>{post.counts.likes} likes</span>
-                      <span>{post.counts.comments} comments</span>
-                      {post.rating && <span>⭐ {post.rating}/5</span>}
+                        {post.is_pinned && (
+                          <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1">
+                            <Pin size={12} />
+                            Pinned
+                          </span>
+                        )}
+                        {post.title && (
+                          <span className="font-medium text-ios-text">{post.title}</span>
+                        )}
+                      </div>
+                      
+                      <p className="text-sm text-ios-text-secondary mb-2 line-clamp-2">
+                        {post.content}
+                      </p>
+                      
+                      <div className="flex items-center gap-4 text-xs text-ios-text-secondary">
+                        <span>{formatDate(post.created_at)}</span>
+                        <span>{post.counts.likes} likes</span>
+                        <span>{post.counts.comments} comments</span>
+                        {post.rating && <span>⭐ {post.rating}/5</span>}
+                        {post.image_url && (
+                          <span className="text-blue-500">📷 Has Image</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   

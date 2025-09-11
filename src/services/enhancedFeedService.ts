@@ -78,7 +78,14 @@ export class EnhancedFeedService {
             
             let query = supabase
               .from('feed_posts')
-              .select('*', { count: 'exact' })
+              .select(`
+                *,
+                users:user_id (
+                  id,
+                  name,
+                  avatar_url
+                )
+              `, { count: 'exact' })
               .eq('is_deleted', false)
               .order('created_at', { ascending: false })
               .limit(limit);
@@ -97,23 +104,26 @@ export class EnhancedFeedService {
             console.log('[FeedService] Fetched posts:', { count, posts: data?.length });
 
             // Transform the data to match the expected format
-            const posts = (data || []).map(post => ({
-              ...post,
-              // Map database fields to expected interface
-              authorName: 'Admin', // Since we don't have user join yet
-              authorAvatarUrl: undefined,
-              media: post.image_url ? [{
-                id: post.id + '_img',
-                type: 'image' as const,
-                url: post.image_url,
-                position: 0
-              }] : [],
-              counts: {
-                likes: post.likes_count || 0,
-                comments: post.comments_count || 0
-              },
-              reacted: false // TODO: Check if current user liked this post
-            }));
+            const posts = (data || []).map(post => {
+              const user = Array.isArray(post.users) ? post.users[0] : post.users;
+              return {
+                ...post,
+                // Map database fields to expected interface
+                authorName: user?.name || 'Anonymous User',
+                authorAvatarUrl: user?.avatar_url || undefined,
+                media: post.image_url ? [{
+                  id: post.id + '_img',
+                  type: 'image' as const,
+                  url: post.image_url,
+                  position: 0
+                }] : [],
+                counts: {
+                  likes: post.likes_count || 0,
+                  comments: post.comments_count || 0
+                },
+                reacted: false // TODO: Check if current user liked this post
+              };
+            });
 
             const hasMore = (posts.length === limit) && (count || 0) > posts.length;
             const nextCursor = hasMore ? posts[posts.length - 1]?.created_at : undefined;
