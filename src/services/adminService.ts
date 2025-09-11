@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { adminCache } from './adminCache';
+import { ordersService } from './ordersService';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY!;
@@ -145,21 +146,16 @@ class AdminService {
   // Dashboard Stats
   async getDashboardStats(): Promise<AdminStats> {
     try {
-      // Get all stats in parallel
+      // Get orders stats from the working service
+      const orderStats = await ordersService.getOrderStats();
+      
+      // Get other stats in parallel
       const [
         { count: totalUsers },
-        { count: totalProducts },
-        { count: totalOrders },
-        { count: pendingOrders },
-        { count: completedOrders },
-        ordersWithAmounts
+        { count: totalProducts }
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-        supabase.from('orders').select('amount') // Use correct column name
+        supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
       // Try to get reviews (might not exist)
@@ -183,19 +179,15 @@ class AdminService {
         // Silent fallback if reviews table not present
       }
 
-      // Calculate revenue
-      const totalRevenue = ordersWithAmounts.data?.reduce((sum, order) => 
-        sum + (Number(order.amount) || 0), 0) || 0;
-
       return {
-        totalOrders: totalOrders || 0,
-        totalRevenue,
+        totalOrders: orderStats.totalOrders,
+        totalRevenue: orderStats.totalRevenue,
         totalUsers: totalUsers || 0,
         totalProducts: totalProducts || 0,
         totalReviews,
         averageRating: Math.round(averageRating * 10) / 10,
-        pendingOrders: pendingOrders || 0,
-        completedOrders: completedOrders || 0
+        pendingOrders: orderStats.pendingOrders,
+        completedOrders: orderStats.completedOrders
       };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);

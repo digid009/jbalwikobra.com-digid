@@ -10,7 +10,7 @@ import {
   Star 
 } from 'lucide-react';
 import { AdminStats } from '../../../services/adminService';
-import { AdminTab } from '../AdminDashboard';
+import { AdminTab } from '../ModernAdminDashboard';
 import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystem';
 
 interface AdminNavigationProps {
