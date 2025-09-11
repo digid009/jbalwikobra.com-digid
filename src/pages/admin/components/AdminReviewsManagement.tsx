@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus } from 'lucide-react';
+import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus, Search, Filter, X } from 'lucide-react';
 import { adminService, Review } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../../components/ios/IOSDesignSystem';
 import { IOSAvatar } from '../../../components/ios/IOSAvatar';
@@ -17,11 +17,14 @@ export const AdminReviewsManagement: React.FC = () => {
   const [hasErrors, setHasErrors] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [ratingFilter, setRatingFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   useEffect(() => {
     loadReviews();
-  }, [currentPage]);
+  }, [currentPage, searchTerm, ratingFilter, dateFilter]);
 
   const loadReviews = async () => {
     try {
@@ -114,6 +117,89 @@ export const AdminReviewsManagement: React.FC = () => {
             <div>
               <h3 className="text-sm font-semibold text-ios-warning mb-1">Setup Required</h3>
               <p className="text-sm text-ios-text-secondary">{error}</p>
+            </div>
+          </div>
+        </IOSCard>
+      )}
+
+      {/* Filters */}
+      {!error && (
+        <IOSCard variant="elevated" padding="medium">
+          <div className="space-y-4">
+            {/* First Row - Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+              <input
+                type="text"
+                placeholder="Search reviews by customer name, product name, or review text..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={cn(
+                  'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
+                  'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                )}
+              />
+            </div>
+
+            {/* Second Row - Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Rating Filter */}
+              <div className="flex items-center space-x-3 min-w-[140px]">
+                <Filter className="w-4 h-4 text-ios-text-secondary" />
+                <select
+                  value={ratingFilter}
+                  onChange={(e) => setRatingFilter(e.target.value)}
+                  className={cn(
+                    'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                    'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                    'transition-colors duration-200 text-ios-text'
+                  )}
+                >
+                  <option value="all">All Ratings</option>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                  <option value="high">4+ Stars</option>
+                  <option value="low">3 or Less</option>
+                </select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="flex items-center space-x-3 min-w-[140px]">
+                <span className="text-sm font-medium text-ios-text-secondary">Date:</span>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className={cn(
+                    'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                    'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                    'transition-colors duration-200 text-ios-text'
+                  )}
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="quarter">This Quarter</option>
+                </select>
+              </div>
+
+              {/* Clear Filters */}
+              <IOSButton 
+                variant="ghost" 
+                onClick={() => {
+                  setSearchTerm('');
+                  setRatingFilter('all');
+                  setDateFilter('all');
+                }}
+                className="flex items-center space-x-2"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear</span>
+              </IOSButton>
             </div>
           </div>
         </IOSCard>

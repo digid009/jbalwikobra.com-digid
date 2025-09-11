@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RefreshCw, Package as PackageIcon, Plus } from 'lucide-react';
+import { Search, RefreshCw, Package as PackageIcon, Plus, Filter, X } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
@@ -9,13 +9,16 @@ export const AdminProductsManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priceFilter, setPriceFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 20;
 
   useEffect(() => {
     loadProducts();
-  }, [currentPage]);
+  }, [currentPage, categoryFilter, statusFilter, priceFilter]);
 
   const loadProducts = async () => {
     try {
@@ -61,17 +64,103 @@ export const AdminProductsManagement: React.FC = () => {
         </div>
       </div>
 
-      <IOSCard>
-        <div className="p-4">
+      {/* Filters */}
+      <IOSCard variant="elevated" padding="medium">
+        <div className="space-y-4">
+          {/* First Row - Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text/40" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search products by name, description, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-ios-text/20 rounded-lg focus:ring-2 focus:ring-ios-primary focus:border-transparent"
+              className={cn(
+                'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
+                'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
+                'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+              )}
             />
+          </div>
+
+          {/* Second Row - Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Category Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Categories</option>
+                <option value="electronics">Electronics</option>
+                <option value="fashion">Fashion</option>
+                <option value="home">Home & Garden</option>
+                <option value="sports">Sports</option>
+                <option value="books">Books</option>
+                <option value="beauty">Beauty</option>
+                <option value="toys">Toys</option>
+                <option value="automotive">Automotive</option>
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <span className="text-sm font-medium text-ios-text-secondary">Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            {/* Price Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <span className="text-sm font-medium text-ios-text-secondary">Price:</span>
+              <select
+                value={priceFilter}
+                onChange={(e) => setPriceFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Prices</option>
+                <option value="low">Under Rp 50,000</option>
+                <option value="medium">Rp 50,000 - 200,000</option>
+                <option value="high">Rp 200,000 - 500,000</option>
+                <option value="premium">Over Rp 500,000</option>
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <IOSButton 
+              variant="ghost" 
+              onClick={() => {
+                setSearchTerm('');
+                setCategoryFilter('all');
+                setStatusFilter('all');
+                setPriceFilter('all');
+              }}
+              className="flex items-center space-x-2"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear</span>
+            </IOSButton>
           </div>
         </div>
       </IOSCard>

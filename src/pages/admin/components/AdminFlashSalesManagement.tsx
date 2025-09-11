@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Zap, Clock, CheckCircle, XCircle, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { RefreshCw, Plus, Zap, Clock, CheckCircle, XCircle, Search, Edit, Trash2, Eye, Filter, X } from 'lucide-react';
 import { adminService, FlashSale, PaginatedResponse } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
@@ -15,13 +15,15 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [discountFilter, setDiscountFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     loadFlashSales();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, statusFilter, discountFilter]);
 
   const loadFlashSales = async () => {
     try {
@@ -113,19 +115,81 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         />
       )}
 
-      {/* Search */}
+      {/* Filters */}
       <IOSCard variant="elevated" padding="medium">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text/60" />
-          <input
-            type="text"
-            placeholder="Search flash sales by product name or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-ios-background border border-ios-border rounded-xl 
-                       focus:ring-2 focus:ring-ios-primary focus:border-transparent 
-                       transition-colors duration-200 text-ios-text placeholder-ios-text/60"
-          />
+        <div className="space-y-4">
+          {/* First Row - Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+            <input
+              type="text"
+              placeholder="Search flash sales by product name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(
+                'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
+                'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
+                'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+              )}
+            />
+          </div>
+
+          {/* Second Row - Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Status Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+
+            {/* Discount Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <span className="text-sm font-medium text-ios-text-secondary">Discount:</span>
+              <select
+                value={discountFilter}
+                onChange={(e) => setDiscountFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Discounts</option>
+                <option value="low">Under 25%</option>
+                <option value="medium">25% - 50%</option>
+                <option value="high">50% - 75%</option>
+                <option value="super">75%+ Off</option>
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <IOSButton 
+              variant="ghost" 
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all');
+                setDiscountFilter('all');
+              }}
+              className="flex items-center space-x-2"
+            >
+              <X className="w-4 h-4" />
+              <span>Clear</span>
+            </IOSButton>
+          </div>
         </div>
       </IOSCard>
 

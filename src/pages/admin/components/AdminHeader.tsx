@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Search, Bell, Menu, X } from 'lucide-react';
+import { Search, Bell, Menu, X, UserCircle } from 'lucide-react';
 import { IOSButton } from '../../../components/ios/IOSDesignSystem';
-import { useAdminNotifications } from '../notifications/AdminNotificationsContext';
 import { useAuth } from '../../../contexts/TraditionalAuthContext';
 import { standardClasses, cn } from '../../../styles/standardClasses';
 
@@ -25,7 +24,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   isMobileMenuOpen = false,
 }) => {
   const notificationRef = useRef<HTMLDivElement>(null);
-  const { notifications, unreadCount, markRead, dismiss, markAllRead } = useAdminNotifications();
   const { user } = useAuth();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -47,9 +45,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications, onToggleNotifications]);
 
-  const accent = 'from-pink-600/60 via-rose-600/60 to-fuchsia-600/60';
   return (
-    <header className="fixed top-0 left-0 right-0 backdrop-blur-xl bg-black/70 border-b border-ios-border z-40">
+    <header className="fixed top-0 left-0 right-0 bg-ios-background shadow-sm border-b border-ios-border z-40">
       <div className={standardClasses.container.boxed}>
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo and Mobile Menu */}
@@ -68,11 +65,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </IOSButton>
             
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow ring-1 ring-white/20">
-                <span className="text-white font-bold text-sm tracking-wide">JB</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-ios-primary to-ios-accent rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">JB</span>
               </div>
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-white via-white to-zinc-300 bg-clip-text text-transparent hidden sm:block">
-                Admin
+              <h1 className="text-xl font-semibold text-ios-text hidden sm:block">
+                Admin Dashboard
               </h1>
             </div>
           </div>
@@ -86,13 +83,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search orders, users, products..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-ios-bg-secondary/60 border border-ios-border text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent"
+                  className="w-full pl-10 pr-4 py-2 border border-ios-border rounded-lg focus:ring-2 focus:ring-ios-primary focus:border-transparent bg-ios-surface text-ios-text placeholder-ios-text-secondary"
                 />
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-ios-text-secondary" />
                 <IOSButton
                   type="submit"
                   size="small"
-                  className="absolute right-1 top-1 bottom-1 bg-ios-accent text-white"
+                  className="absolute right-1 top-1 bottom-1"
                 >
                   Search
                 </IOSButton>
@@ -121,43 +118,65 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 className="relative overflow-visible"
               >
                 <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 min-w-[18px] h-5 px-1 bg-pink-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow ring-2 ring-black/40">
-                    {unreadCount}
-                  </span>
-                )}
+                <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 min-w-[18px] h-5 px-1 bg-ios-error text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow ring-2 ring-ios-background">
+                  3
+                </span>
               </IOSButton>
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-ios-surface/95 backdrop-blur-xl rounded-xl shadow-2xl border border-ios-border z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-ios-border/60 flex items-center justify-between">
-                    <h3 className="font-semibold text-white text-sm tracking-wide">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button onClick={markAllRead} className="text-[11px] text-ios-text-secondary hover:text-ios-text">Mark all</button>
-                    )}
+                <div className="absolute right-0 top-full mt-2 w-80 bg-ios-background rounded-lg shadow-lg border border-ios-border z-50">
+                  <div className="p-4 border-b border-ios-border">
+                    <h3 className="font-semibold text-ios-text">Notifications</h3>
                   </div>
-                  <div className="max-h-96 overflow-y-auto divide-y divide-ios-border/40">
-                    {notifications.length === 0 && (
-                      <div className="p-6 text-center text-ios-text-secondary text-sm">No notifications</div>
-                    )}
-                    {notifications.map(n => (
-                      <div key={n.id} className={`p-4 flex items-start gap-3 hover:bg-ios-bg-secondary/40 transition ${n.read ? 'opacity-70' : ''}`}> 
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold bg-gradient-to-br ${n.kind==='new_order'? 'from-pink-500 to-rose-600':'from-emerald-500 to-green-600'} text-white`}>#{n.orderId.slice(-4)}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-semibold text-white truncate">{n.kind === 'new_order' ? 'Pesanan Baru' : n.kind === 'status_paid' ? 'Pembayaran Diterima' : 'Pesanan Dibatalkan'}</p>
-                            {!n.read && <span className="inline-block w-2 h-2 rounded-full bg-pink-500" />}
-                          </div>
-                          <p className="text-[11px] text-ios-text-secondary mt-0.5 truncate">Rp {n.amount.toLocaleString('id-ID')} • Status: {n.status}</p>
-                          <p className="text-[10px] text-ios-text-secondary mt-1">{new Date(n.createdAt).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit'})}</p>
-                          {!n.read && (
-                            <button onClick={() => markRead(n.id)} className="mt-2 text-[11px] text-ios-accent hover:underline">Tandai dibaca</button>
-                          )}
+                  <div className="max-h-96 overflow-y-auto">
+                    <div className="p-4 border-b border-ios-border/50 hover:bg-ios-surface">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-ios-success rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-ios-text">
+                            New Order #12345
+                          </p>
+                          <p className="text-sm text-ios-text-secondary">
+                            FREE FIRE B1 - Rp 25,000
+                          </p>
+                          <p className="text-xs text-ios-text-secondary mt-1">2 minutes ago</p>
                         </div>
-                        <button onClick={() => dismiss(n.id)} className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-ios-bg-secondary/60 text-ios-text-secondary text-[10px]">✕</button>
                       </div>
-                    ))}
+                    </div>
+                    <div className="p-4 border-b border-ios-border/50 hover:bg-ios-surface">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-ios-primary rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-ios-text">
+                            Order Paid #12344
+                          </p>
+                          <p className="text-sm text-ios-text-secondary">
+                            MOBILE LEGENDS - Rp 50,000
+                          </p>
+                          <p className="text-xs text-ios-text-secondary mt-1">5 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 hover:bg-ios-surface">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-ios-error rounded-full mt-2"></div>
+                        <div>
+                          <p className="text-sm font-medium text-ios-text">
+                            Order Cancelled #12343
+                          </p>
+                          <p className="text-sm text-ios-text-secondary">
+                            PUBG Mobile - Rp 30,000
+                          </p>
+                          <p className="text-xs text-ios-text-secondary mt-1">10 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-3 border-t border-ios-border">
+                    <IOSButton variant="ghost" size="small" className="w-full">
+                      View All Notifications
+                    </IOSButton>
                   </div>
                 </div>
               )}
@@ -169,11 +188,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <img
                   src={user.avatarUrl}
                   alt={user.name || 'Profile'}
-                  className="w-9 h-9 rounded-xl object-cover border border-ios-border shadow-lg"
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-white font-semibold text-sm ring-1 ring-white/10">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-white font-semibold text-sm">
                   {(user?.name || user?.email || 'A').charAt(0).toUpperCase()}
                 </div>
               )}
@@ -190,13 +209,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Search..."
-                className="w-full pl-10 pr-20 py-2 rounded-xl bg-ios-bg-secondary/60 border border-ios-border text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent"
+                className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-ios-text-secondary" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <IOSButton
                 type="submit"
                 size="small"
-                className="absolute right-1 top-1 bottom-1 bg-ios-accent text-white"
+                className="absolute right-1 top-1 bottom-1"
               >
                 Search
               </IOSButton>

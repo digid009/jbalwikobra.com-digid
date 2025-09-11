@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, RefreshCw, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, Eye, Edit, Trash2, X } from 'lucide-react';
 import { ordersService, Order } from '../../../services/ordersService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
@@ -11,6 +11,8 @@ export const AdminOrdersManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [amountFilter, setAmountFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -19,7 +21,7 @@ export const AdminOrdersManagement: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-  }, [currentPage, statusFilter, searchTerm]);
+  }, [currentPage, statusFilter, searchTerm, dateFilter, amountFilter]);
 
   const loadOrders = async () => {
     try {
@@ -96,38 +98,103 @@ export const AdminOrdersManagement: React.FC = () => {
 
       {/* Filters */}
       <IOSCard variant="elevated" padding="medium">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text/60" />
-            <input
-              type="text"
-              placeholder="Search orders by customer name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-10 pr-4 py-3 bg-ios-background border border-ios-border rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-transparent 
-                         transition-colors duration-200 text-ios-text placeholder-ios-text/60"
-            />
+        <div className="space-y-4">
+          {/* First Row - Search and Status */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+              <input
+                type="text"
+                placeholder="Search orders by customer name, email, or order ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={cn(
+                  'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
+                  'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                )}
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-3 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center space-x-3">
-            <Filter className="w-4 h-4 text-ios-text/60" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-ios-border rounded-xl px-4 py-3 bg-ios-background 
-                         focus:ring-2 focus:ring-ios-primary focus:border-transparent 
-                         transition-colors duration-200 min-w-[120px] text-ios-text"
+          {/* Second Row - Date and Amount Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Date Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <span className="text-sm font-medium text-ios-text-secondary">Date:</span>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="quarter">This Quarter</option>
+              </select>
+            </div>
+
+            {/* Amount Filter */}
+            <div className="flex items-center space-x-3 min-w-[140px]">
+              <span className="text-sm font-medium text-ios-text-secondary">Amount:</span>
+              <select
+                value={amountFilter}
+                onChange={(e) => setAmountFilter(e.target.value)}
+                className={cn(
+                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'transition-colors duration-200 text-ios-text'
+                )}
+              >
+                <option value="all">All Amounts</option>
+                <option value="low">Under Rp 100,000</option>
+                <option value="medium">Rp 100,000 - 500,000</option>
+                <option value="high">Rp 500,000 - 1,000,000</option>
+                <option value="premium">Over Rp 1,000,000</option>
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <IOSButton 
+              variant="ghost" 
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all');
+                setDateFilter('all');
+                setAmountFilter('all');
+                setCurrentPage(1);
+              }}
+              className="flex items-center space-x-2"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              <X className="w-4 h-4" />
+              <span>Clear</span>
+            </IOSButton>
           </div>
         </div>
       </IOSCard>
@@ -207,13 +274,13 @@ export const AdminOrdersManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-1">
                         <IOSButton variant="ghost" size="small" className="p-2">
-                          <Eye className="w-4 h-4 text-blue-500" />
+                          <Eye className="w-4 h-4 text-ios-primary" />
                         </IOSButton>
                         <IOSButton variant="ghost" size="small" className="p-2">
-                          <Edit className="w-4 h-4 text-green-500" />
+                          <Edit className="w-4 h-4 text-ios-success" />
                         </IOSButton>
                         <IOSButton variant="ghost" size="small" className="p-2">
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-ios-error" />
                         </IOSButton>
                       </div>
                     </td>
