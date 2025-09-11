@@ -9,9 +9,6 @@
 @import './styles/ios-compatibility.css';
 @import './styles/android-compatibility.css';
 
-/* Import clean mobile navigation fix - FINAL VERSION */
-@import './styles/clean-mobile-nav.css';
-
 /* Mobile-first font sizing - like native apps */
 html {
   font-size: 14px; /* Smaller base font for mobile */

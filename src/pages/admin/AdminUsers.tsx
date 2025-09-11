@@ -155,12 +155,12 @@ const AdminUsers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Users & Roles</h1>
-          <p className="text-gray-400">Kelola pengguna dan peran dalam sistem</p>
+          <h1 className="text-3xl font-bold text-ios-text">Users & Roles</h1>
+          <p className="text-ios-text-secondary mt-2">Kelola pengguna dan peran dalam sistem</p>
         </div>
         <button
           onClick={load}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ios-accent text-white hover:bg-ios-accent/90 font-medium transition-all duration-200"
         >
           <RefreshCw size={16} />
           Refresh

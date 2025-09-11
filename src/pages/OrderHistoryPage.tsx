@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import Footer from '../components/Footer';
 import { AuthRequired } from '../components/ProtectedRoute';
 
 type Order = {
@@ -114,7 +113,6 @@ const OrderHistoryPage: React.FC = () => {
             )}
           </div>
         </div>
-        <Footer />
       </div>
     </AuthRequired>
   );

@@ -23,15 +23,23 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-ios-background text-ios-text">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-ios-background/90 backdrop-blur border-b border-ios-border pt-safe-top">
-        <div className="h-14 px-4 md:px-6 flex items-center justify-between">
-          <button onClick={() => setOpen(!open)} className="md:hidden text-ios-text" aria-label="Menu">
+      <header className="sticky top-0 z-30 bg-ios-background/95 backdrop-blur border-b border-ios-border pt-safe-top">
+        <div className="h-16 px-4 md:px-6 flex items-center justify-between">
+          <button onClick={() => setOpen(!open)} className="md:hidden text-ios-text p-2 rounded-lg hover:bg-ios-surface transition-colors" aria-label="Menu">
             <Menu size={20} />
           </button>
-          <div className="flex-1 text-center md:text-left font-semibold text-ios-text">Admin</div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-ios-accent to-pink-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm font-bold">A</span>
+            </div>
+            <div className="hidden md:block">
+              <div className="font-semibold text-ios-text">Admin Panel</div>
+              <div className="text-xs text-ios-text-secondary -mt-1">JB Alwikobra</div>
+            </div>
+          </div>
           <button
             onClick={async ()=>{ await logout(); window.location.href='/' }}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-ios-border hover:bg-white/5 text-sm text-ios-text"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ios-surface border border-ios-border hover:bg-ios-accent/10 hover:border-ios-accent/30 text-sm text-ios-text transition-all duration-200"
             title="Keluar"
           >
             <LogOut size={16} />
@@ -41,10 +49,10 @@ const AdminLayout: React.FC = () => {
       </header>
 
       {/* Shell with sidebar */}
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
         {/* Sidebar */}
-  <aside className={`bg-ios-surface border-r border-ios-border md:sticky md:top-14 md:h-[calc(100vh-56px)] overflow-y-auto ${open ? 'block' : 'hidden'} md:block`}>
-          <nav className="py-3">
+        <aside className={`bg-ios-surface border-r border-ios-border md:sticky md:top-16 md:h-[calc(100vh-64px)] overflow-y-auto ${open ? 'block' : 'hidden'} md:block`}>
+          <nav className="py-4 px-2">
             {links.map((l) => {
               const Icon = l.icon as any;
               return (
@@ -52,9 +60,9 @@ const AdminLayout: React.FC = () => {
                   key={l.to}
                   to={l.to}
                   end={(l as any).end}
-      className={({ isActive }) => `flex items-center gap-3 px-4 py-2 text-sm font-medium border-l-2 transition-colors ${isActive ? 'text-ios-text bg-white/5 border-ios-accent' : 'text-ios-text-secondary hover:text-ios-text hover:bg-white/5 border-transparent'}`}
+                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 mb-1 text-sm font-medium rounded-xl transition-all duration-200 ${isActive ? 'text-ios-accent bg-ios-accent/10 border border-ios-accent/20' : 'text-ios-text-secondary hover:text-ios-text hover:bg-ios-background'}`}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                   <span>{l.label}</span>
                 </NavLink>
               );
@@ -63,7 +71,7 @@ const AdminLayout: React.FC = () => {
         </aside>
 
         {/* Content */}
-  <main className="p-4 md:p-6 text-ios-text">
+        <main className="p-6 md:p-8 text-ios-text min-h-[calc(100vh-64px)]">
           <Outlet />
         </main>
       </div>

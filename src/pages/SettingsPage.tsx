@@ -6,7 +6,6 @@ import {
   Shield,
   Save,
 } from 'lucide-react';
-import Footer from '../components/Footer';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -310,8 +309,6 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <Footer />
   </div>
     </AuthRequired>
   );

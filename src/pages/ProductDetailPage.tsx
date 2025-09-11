@@ -28,7 +28,6 @@ import {
 import { createXenditInvoice } from '../services/paymentService';
 import { getCurrentUserProfile, isLoggedIn, getAuthUserId } from '../services/authService';
 import { useWishlist } from '../contexts/WishlistContext';
-import Footer from '../components/Footer';
 import PhoneInput from '../components/PhoneInput';
 import { useToast } from '../components/Toast';
 

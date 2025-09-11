@@ -173,8 +173,8 @@ const SellPage: React.FC = () => {
   const steps = [
     {
       number: '01',
-      title: 'Hubungi Admin',
-      description: 'Klik tombol WhatsApp untuk menghubungi admin dengan detail akun Anda.'
+      title: 'Isi Formulir',
+      description: 'Isi formulir singkat dengan data detail akun anda dan kirim. Admin kami akan menghubungi anda untuk konfirmasi.'
     },
     {
       number: '02',

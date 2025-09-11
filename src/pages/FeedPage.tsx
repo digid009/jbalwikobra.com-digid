@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
 import { IOSContainer, IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
+import LinkifyText from '../components/LinkifyText';
 
 // Fallback loading component
 const FeedSkeleton: React.FC = () => (
@@ -152,7 +153,9 @@ const FeedPage: React.FC = () => {
 
               {/* Content */}
               {post.content && (
-                <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                <div className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">
+                  <LinkifyText text={post.content} />
+                </div>
               )}
 
               {/* Media grid */}

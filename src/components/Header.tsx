@@ -1,158 +1,233 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Home, HelpCircle, User, Rss } from 'lucide-react';
-import { bindHoverPrefetch, warmImport, shouldPrefetch } from '../utils/prefetch';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import { IOSContainer } from './ios/IOSDesignSystem';
+import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag } from 'lucide-react';
+import { IOSButton } from './ios/IOSDesignSystem';
 
-const Header: React.FC = () => {
+const Header = () => {
+  const { user, logout } = useAuth();
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  const [siteName, setSiteName] = React.useState<string>('JB Alwikobra');
-  const [logoUrl, setLogoUrl] = React.useState<string | undefined>(undefined);
-  
-  // Lazy load settings to improve initial page load
-  React.useEffect(() => {
-    let mounted = true;
-    const loadSettings = async () => {
-      try {
-  const { SettingsService } = await import('../services/settingsService');
-        if (!mounted) return;
-        const s = await SettingsService.get();
-        if (mounted) {
-          if (s?.siteName) setSiteName(s.siteName);
-          if (s?.logoUrl) setLogoUrl(s.logoUrl);
-        }
-      } catch {
-        // Silent fail for better UX
-      }
-    };
-    // Delay settings load to prioritize critical content
-    const timer = setTimeout(loadSettings, 100);
-    return () => {
-      mounted = false;
-      clearTimeout(timer);
-    };
-  }, []);
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
-  const navItems = [
-    { path: '/', label: 'Beranda', icon: Home },
-    { path: '/feed', label: 'Feed', icon: Rss },
-    { path: '/products', label: 'Katalog', icon: ShoppingBag },
-    { path: '/sell', label: 'Jual Akun', icon: ShoppingBag },
-    { path: '/help', label: 'Bantuan', icon: HelpCircle },
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  const navigationItems = [
+    { path: '/', label: 'Beranda', icon: '🏠' },
+    { path: '/products', label: 'Produk', icon: '🛍️' },
+    { path: '/flash-sales', label: 'Flash Sale', icon: '⚡' },
+    { path: '/feed', label: 'Feed', icon: '📱' },
+    { path: '/sell', label: 'Jual', icon: '💰' },
+    { path: '/help', label: 'Bantuan', icon: '❓' },
   ];
 
-  // Light prefetch of routes on hover/touch
-  React.useEffect(() => {
-    if (!shouldPrefetch()) return;
-    const disposers: Array<() => void> = [];
-    const runPrefetch = (path: string) => {
-      // dynamic import warmups for key routes
-  if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
-  else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
-  else if (path === '/feed') warmImport(() => import('../pages/FeedPage'));
-  else if (path === '/help') warmImport(() => import('../pages/HelpPage'));
-  else if (path === '/') warmImport(() => import('../pages/HomePage'));
-    };
-    // attach to all header nav links when rendered (desktop only here)
-    const root = document.querySelector('header nav');
-    if (root) {
-      root.querySelectorAll('a[href]')?.forEach((el) => {
-        const href = (el as HTMLAnchorElement).getAttribute('href') || '';
-        if (!href.startsWith('/')) return;
-        disposers.push(bindHoverPrefetch(el, () => runPrefetch(href)));
-      });
-    }
-    return () => { disposers.forEach(d => d()); };
-  }, []);
-
   return (
-  <header className="mobile-header" data-fixed="header">
-      {/* Mobile-first design - Base styles for mobile */}
-      <IOSContainer padding={false} className="px-4 py-4">
-        <div className="flex items-center justify-between min-h-[44px]"> {/* Minimum touch target */}
-          {/* Logo and brand - Mobile optimized */}
-          <Link 
-            to="/" 
-            className="flex items-center space-x-3 min-h-[44px] touch-manipulation active:scale-95 transition-transform duration-150"
-          >
-            {logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt={siteName} 
-                className="h-9 w-9 rounded-xl object-cover shadow-sm" 
-              />
-            ) : (
-              <div className="w-9 h-9 bg-gradient-to-br from-ios-accent to-pink-600 rounded-xl flex items-center justify-center shadow-sm">
-                <span className="text-white text-sm font-bold">JB</span>
+    <>
+      <header className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
+              <div className="w-8 h-8 bg-ios-accent rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">JB</span>
               </div>
-            )}
-            <div className="hidden xs:block">
-              <span className="text-lg font-bold text-ios-text truncate max-w-[140px] md:max-w-none">
-                {siteName}
+              <span className="font-semibold text-ios-text text-lg hidden sm:block">
+                JBalwikobra
               </span>
-              <p className="text-xs text-ios-text-secondary -mt-1 hidden md:block">
-                Gaming Marketplace
-              </p>
+            </Link>
+
+            <div className="hidden md:flex flex-1 max-w-xl mx-8">
+              <form onSubmit={handleSearch} className="w-full">
+                <div className={`relative transition-all duration-200 ${
+                  isSearchFocused ? 'transform scale-105' : ''
+                }`}>
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </form>
             </div>
-          </Link>
-          
-          {/* Mobile: Profile only, Desktop: Full navigation */}
-          <div className="flex items-center">
-            {/* Desktop navigation - Hidden on mobile */}
-            <nav className="hidden lg:flex space-x-1 mr-4">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                
-                return (
+
+            <div className="flex items-center space-x-2">
+              <button className="md:hidden p-2 rounded-lg hover:bg-ios-surface transition-colors">
+                <Search className="w-5 h-5 text-ios-text" />
+              </button>
+
+              <button className="p-2 rounded-lg hover:bg-ios-surface transition-colors relative">
+                <Bell className="w-5 h-5 text-ios-text" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              </button>
+
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-ios-surface transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-ios-accent rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="hidden sm:block text-ios-text font-medium">
+                      {user.email?.split('@')[0] || 'User'}
+                    </span>
+                  </button>
+
+                  {isMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-ios-background border border-ios-border rounded-xl shadow-lg py-2 z-50">
+                      <div className="px-4 py-3 border-b border-ios-border">
+                        <p className="text-sm font-medium text-ios-text">{user.email}</p>
+                        <p className="text-xs text-ios-text-secondary">Online</p>
+                      </div>
+                      
+                      <nav className="py-2">
+                        <Link
+                          to="/profile"
+                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          <span>Profil</span>
+                        </Link>
+                        <Link
+                          to="/wishlist"
+                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                        >
+                          <Heart className="w-4 h-4" />
+                          <span>Wishlist</span>
+                        </Link>
+                        <Link
+                          to="/orders"
+                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>Pesanan</span>
+                        </Link>
+                        <Link
+                          to="/settings"
+                          className="flex items-center space-x-3 px-4 py-2 text-ios-text hover:bg-ios-surface transition-colors"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>Pengaturan</span>
+                        </Link>
+                        <hr className="my-2 border-ios-border" />
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center space-x-3 px-4 py-2 text-red-500 hover:bg-ios-surface transition-colors w-full text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Keluar</span>
+                        </button>
+                      </nav>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <IOSButton
+                  onClick={() => navigate('/auth')}
+                  variant="primary"
+                  size="small"
+                  className="hidden sm:block"
+                >
+                  Masuk
+                </IOSButton>
+              )}
+
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-ios-surface transition-colors"
+              >
+                {isMenuOpen ? (
+                  <X className="w-5 h-5 text-ios-text" />
+                ) : (
+                  <Menu className="w-5 h-5 text-ios-text" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {isMenuOpen && (
+          <div className="lg:hidden bg-ios-background border-t border-ios-border">
+            <div className="px-4 py-4">
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  />
+                </div>
+              </form>
+
+              <nav className="space-y-2">
+                {navigationItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 min-h-[44px] ${
-                      isActive
-                        ? 'bg-ios-accent/10 text-ios-accent border border-ios-accent/20'
-                        : 'text-ios-text-secondary hover:text-ios-text hover:bg-ios-surface/50'
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      location.pathname === item.path
+                        ? 'bg-ios-accent text-white'
+                        : 'text-ios-text hover:bg-ios-surface'
                     }`}
                   >
-                    <Icon size={16} />
-                    <span>{item.label}</span>
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
                   </Link>
-                );
-              })}
-            </nav>
+                ))}
+              </nav>
 
-            {/* User profile/auth - Always visible */}
-            {user ? (
-              <Link 
-                to="/profile" 
-                className="w-11 h-11 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 hover:border-ios-accent/50 active:scale-95 touch-manipulation"
-              >
-                <User size={20} className="text-ios-text" />
-              </Link>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link 
-                  to="/auth" 
-                  className="hidden sm:flex px-3 py-2 text-sm font-medium text-ios-text-secondary hover:text-ios-text transition-colors min-h-[44px] items-center"
-                >
-                  Masuk
-                </Link>
-                <Link 
-                  to="/auth" 
-                  className="px-4 py-2 bg-ios-accent text-white text-sm font-medium rounded-xl transition-all duration-200 hover:bg-ios-accent/90 active:scale-95 min-h-[44px] flex items-center touch-manipulation"
-                >
-                  <span className="hidden sm:inline">Daftar</span>
-                  <span className="sm:hidden">Join</span>
-                </Link>
-              </div>
-            )}
+              {!user && (
+                <div className="mt-4 pt-4 border-t border-ios-border">
+                  <IOSButton
+                    onClick={() => navigate('/auth')}
+                    variant="primary"
+                    className="w-full"
+                  >
+                    Masuk / Daftar
+                  </IOSButton>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </IOSContainer>
-    </header>
+        )}
+      </header>
+
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

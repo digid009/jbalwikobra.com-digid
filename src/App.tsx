@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Footer from './components/Footer';
 import './App.css';
 import './styles/mobile-first.css';
+import './styles/navigation-fixes.css';
 import RequireAdmin from './components/RequireAdmin';
 import { ToastProvider } from './components/Toast';
 import { ConfirmationProvider } from './components/ConfirmationModal';
@@ -38,6 +39,7 @@ const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const OrderHistoryPage = React.lazy(() => import('./pages/OrderHistoryPage'));
 const TermsPage = React.lazy(() => import('./pages/TermsPage'));
 const FeedPage = React.lazy(() => import('./pages/FeedPage'));
+const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
 
 // Lazy load admin pages (biggest performance impact)
 const AdminLayout = React.lazy(() => import('./layouts/AdminLayout'));
@@ -241,6 +243,8 @@ function App() {
                           <Route path="/terms" element={<TermsPage />} />
                           <Route path="/payment-status" element={<PaymentStatusPage />} />
                           <Route path="/orders" element={<OrderHistoryPage />} />
+                          {/* Hidden design system showcase - not linked in navigation */}
+                          <Route path="/internal/design-system" element={<DesignSystemShowcase />} />
                           <Route path="*" element={
                             <div className="min-h-screen flex items-center justify-center">
                               <p className="text-gray-600">Halaman tidak ditemukan</p>
