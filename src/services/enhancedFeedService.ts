@@ -74,7 +74,6 @@ export class EnhancedFeedService {
       async () => {
         try {
           if (supabase) {
-            console.log('[FeedService] Fetching from Supabase...', { limit, cursor });
             
             let query = supabase
               .from('feed_posts')
@@ -101,7 +100,6 @@ export class EnhancedFeedService {
               throw error;
             }
 
-            console.log('[FeedService] Fetched posts:', { count, posts: data?.length });
 
             // Transform the data to match the expected format
             const posts = (data || []).map(post => {

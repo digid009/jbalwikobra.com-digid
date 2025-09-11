@@ -31,28 +31,51 @@ class ReviewService {
     try {
       const offset = (page - 1) * limit;
       
-      const { data, error, count } = await supabase
+      // First attempt: verified reviews only (left joins to avoid dropping rows without related user/product)
+      let { data, error, count } = await supabase
         .from('reviews')
         .select(`
           *,
-          users!inner(
+          users(
             id,
             name,
             avatar_url
           ),
-          products!inner(
+          products(
             id,
             name,
             image
           )
         `, { count: 'exact' })
-        .eq('is_verified', true) // Only show verified reviews in feed
+        .eq('is_verified', true)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (error) {
-        console.error('Error fetching reviews for feed:', error);
-        throw error;
+      if (error) throw error;
+
+      // Fallback: if no verified reviews exist, load any reviews
+      if ((count || 0) === 0) {
+        const alt = await supabase
+          .from('reviews')
+          .select(`
+            *,
+            users(
+              id,
+              name,
+              avatar_url
+            ),
+            products(
+              id,
+              name,
+              image
+            )
+          `, { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (!alt.error) {
+          data = alt.data;
+          count = alt.count;
+        }
       }
 
       const reviews: UserReview[] = (data || []).map((item: any) => ({
@@ -79,7 +102,6 @@ class ReviewService {
         total: count || 0
       };
     } catch (error) {
-      console.error('Error in getReviewsForFeed:', error);
       return {
         reviews: [],
         hasMore: false,

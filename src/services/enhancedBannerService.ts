@@ -44,7 +44,6 @@ export class EnhancedBannerService {
       async () => {
         try {
           if (supabase) {
-            console.log('[BannerService] Fetching banners from Supabase...');
             const { data, error } = await supabase
               .from('banners')
               .select('*')
@@ -52,13 +51,13 @@ export class EnhancedBannerService {
 
             if (error) {
               console.error('[BannerService] Database error:', error);
-              console.log('[BannerService] This might be an RLS policy issue. Check RLS_POLICY_FIX_GUIDE.md');
+              // RLS issue hint removed in production
               
               // Return fallback data if RLS is blocking
               return this.getFallbackBanners();
             }
 
-            console.log('[BannerService] Fetched banners:', data?.length || 0);
+            // Removed verbose fetch count log
             
             if (!data || data.length === 0) {
               console.warn('[BannerService] No banners found, using fallback');
@@ -123,7 +122,6 @@ export class EnhancedBannerService {
       async () => {
         try {
           if (supabase) {
-            console.log('[BannerService] Fetching active banners from Supabase...');
             const { data, error } = await supabase
               .from('banners')
               .select('*')
@@ -132,13 +130,13 @@ export class EnhancedBannerService {
 
             if (error) {
               console.error('[BannerService] Database error:', error);
-              console.log('[BannerService] This might be an RLS policy issue. Check RLS_POLICY_FIX_GUIDE.md');
+              // RLS issue hint removed in production
               
               // Return fallback data if RLS is blocking
               return this.getFallbackBanners().filter(b => b.is_active);
             }
 
-            console.log('[BannerService] Fetched active banners:', data?.length || 0);
+            // Removed verbose active fetch count log
             
             if (!data || data.length === 0) {
               console.warn('[BannerService] No active banners found, using fallback');

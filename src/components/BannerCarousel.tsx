@@ -98,11 +98,7 @@ const BannerCarousel: React.FC<Props> = ({ slides }) => {
     ? dbSlides // Always use DB slides even if empty
     : (slides && slides.length > 0 ? slides : defaultSlides);
 
-  console.log('[BannerCarousel] Using slides:', { 
-    dbSlides: dbSlides?.length || 0,
-    resolvedSlides: resolvedSlides.length,
-    isUsingDefault: dbSlides === null && (!slides || slides.length === 0)
-  });
+  // Production: removed verbose slide logging
 
   const count = Math.min(resolvedSlides.length, 3);
 

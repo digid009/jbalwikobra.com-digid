@@ -128,6 +128,19 @@ export interface AdminNotification {
   is_read: boolean;
 }
 
+// Dashboard analytics helper types
+export interface OrderDayStat {
+  date: string; // YYYY-MM-DD
+  count: number;
+  revenue: number;
+}
+export interface TopProductStat {
+  product_id: string | null;
+  product_name: string;
+  count: number;
+  revenue: number;
+}
+
 class AdminService {
   // Dashboard Stats
   async getDashboardStats(): Promise<AdminStats> {
@@ -167,7 +180,7 @@ class AdminService {
           ? reviewsWithRating.data.reduce((sum, review) => sum + review.rating, 0) / reviewsWithRating.data.length
           : 0;
       } catch (reviewError) {
-        console.log('Reviews table not found, using default values');
+        // Silent fallback if reviews table not present
       }
 
       // Calculate revenue
@@ -596,7 +609,7 @@ export const adminService = {
             ? reviewsWithRating.data.reduce((sum, review) => sum + review.rating, 0) / reviewsWithRating.data.length
             : 0;
         } catch (reviewError) {
-          console.log('Reviews table not found, using default values');
+          // Silent fallback if reviews table missing
         }
 
         // Calculate revenue
@@ -821,6 +834,79 @@ export const adminService = {
         totalPages: Math.ceil((count || 0) / limit)
       };
     });
+  },
+
+  // ----- Dashboard Analytics -----
+  async getOrdersTimeSeries(params?: { startDate?: string; endDate?: string; days?: number }): Promise<OrderDayStat[]> {
+    const days = params?.days || 7;
+    const end = params?.endDate ? new Date(params.endDate) : new Date();
+    const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+
+    const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
+    const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).toISOString();
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('created_at, amount')
+      .gte('created_at', startISO)
+      .lte('created_at', endISO);
+
+    if (error) {
+      console.warn('getOrdersTimeSeries error', error);
+      return [];
+    }
+
+    // Initialize date buckets
+    const buckets: Record<string, OrderDayStat> = {};
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      buckets[key] = { date: key, count: 0, revenue: 0 };
+    }
+
+    (data || []).forEach(o => {
+      const key = new Date(o.created_at).toISOString().slice(0, 10);
+      if (!buckets[key]) {
+        buckets[key] = { date: key, count: 0, revenue: 0 };
+      }
+      buckets[key].count += 1;
+      buckets[key].revenue += Number((o as any).amount) || 0;
+    });
+
+    return Object.values(buckets).sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  async getTopProducts(params?: { startDate?: string; endDate?: string; limit?: number }): Promise<TopProductStat[]> {
+    const limit = params?.limit || 5;
+    const end = params?.endDate ? new Date(params.endDate) : new Date();
+    const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000); // default 7 days
+    const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
+    const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).toISOString();
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('product_id, product_name, amount')
+      .gte('created_at', startISO)
+      .lte('created_at', endISO);
+
+    if (error) {
+      console.warn('getTopProducts error', error);
+      return [];
+    }
+
+    const agg: Record<string, TopProductStat> = {};
+    (data || []).forEach(o => {
+      const pid = (o as any).product_id || 'unknown';
+      const name = (o as any).product_name || 'Unknown Product';
+      if (!agg[pid]) {
+        agg[pid] = { product_id: pid, product_name: name, count: 0, revenue: 0 };
+      }
+      agg[pid].count += 1;
+      agg[pid].revenue += Number((o as any).amount) || 0;
+    });
+
+    return Object.values(agg)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
   },
 
   async getNotifications(page: number = 1, limit: number = 20): Promise<AdminNotification[]> {

@@ -177,7 +177,7 @@ const AdminProducts: React.FC = () => {
       setGames(gList);
       setTotalProducts(count || 0);
       
-      console.log(`✅ Loaded ${mappedProducts.length} products (page ${currentPage}/${Math.ceil((count || 0) / itemsPerPage)}) - Total: ${count}`);
+  // Removed verbose product load log for production
       
     } catch (error) {
       console.error('Error loading products:', error);

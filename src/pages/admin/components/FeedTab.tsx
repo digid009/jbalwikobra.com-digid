@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Plus, Edit, Trash2, Calendar, User } from 'lucide-react';
+import { MessageSquare, Plus, Edit, Trash2, Calendar, User, Share2, Check } from 'lucide-react';
 import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { useFeedPosts } from '../hooks/useAdminData';
 import { FeedPost } from '../types';
@@ -9,6 +9,8 @@ const FeedTab: React.FC = () => {
   const { feedPosts, loading, error, saveFeedPost, deleteFeedPost } = useFeedPosts();
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [editingPost, setEditingPost] = useState<FeedPost | null>(null);
+  // Share state placed before any early returns to respect hook rules
+  const [sharedPostId, setSharedPostId] = useState<string | null>(null);
 
   const handleAddPost = () => {
     setEditingPost(null);
@@ -82,8 +84,27 @@ const FeedTab: React.FC = () => {
     );
   }
 
+  const handleShare = async (post: FeedPost) => {
+    const shareData = {
+  title: 'Feed Post',
+  text: post.content?.substring(0, 120) || 'Check out this post',
+  url: `${window.location.origin}/feed/${post.id}`
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+      }
+      setSharedPostId(post.id);
+      setTimeout(() => setSharedPostId(null), 2500);
+    } catch (e) {
+      console.error('Share failed', e);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-ios-text">Feed Management</h2>
@@ -109,7 +130,7 @@ const FeedTab: React.FC = () => {
           </IOSButton>
         </IOSCard>
       ) : (
-        <div className="space-y-4">
+  <div className="space-y-4">
           {feedPosts.map((post) => (
             <IOSCard key={post.id} className="p-6 hover:shadow-lg transition-all duration-200">
               {/* Post Header */}
@@ -140,7 +161,7 @@ const FeedTab: React.FC = () => {
               </div>
 
               {/* Post Actions */}
-              <div className="flex gap-2 pt-4 border-t border-ios-separator">
+              <div className="flex gap-2 pt-4 border-t border-ios-separator flex-wrap">
                 <IOSButton
                   variant="secondary"
                   size="small"
@@ -158,6 +179,15 @@ const FeedTab: React.FC = () => {
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete
+                </IOSButton>
+                <IOSButton
+                  variant="secondary"
+                  size="small"
+                  onClick={() => handleShare(post)}
+                  className="flex items-center gap-2"
+                >
+                  {sharedPostId === post.id ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                  {sharedPostId === post.id ? 'Copied' : 'Share'}
                 </IOSButton>
               </div>
             </IOSCard>

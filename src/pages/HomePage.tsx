@@ -289,6 +289,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
+      <div className="w-full max-w-6xl mx-auto">
       {/* Error banner for partial failures */}
       {state.error && (state.flashSaleProducts.length > 0 || state.popularGames.length > 0) && (
         <div className="mx-4 mt-4 bg-amber-900/20 border border-amber-600/30 rounded-xl p-4">
@@ -297,12 +298,12 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Banner Carousel */}
-      <section className="px-4 py-6">
+  <section className="px-4 py-6">
         <BannerCarousel />
       </section>
 
       {/* Hero Section - Mobile-first design */}
-      <section className="px-4 py-8 text-center">
+  <section className="px-4 py-8 text-center">
         <div className="max-w-md mx-auto mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
             Marketplace Akun Game
@@ -352,7 +353,7 @@ const HomePage: React.FC = () => {
 
       {/* Flash Sales Section */}
       {state.flashSaleProducts.length > 0 && (
-        <section className="py-8">
+  <section className="py-8">
           <div className="px-4 mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white mb-1">Flash Sale</h2>
@@ -384,7 +385,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* Features Section */}
-      <section className="px-4 py-8">
+  <section className="px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-white mb-2">Mengapa Pilih Kami?</h2>
           <p className="text-zinc-400 text-sm">Platform terdepan dengan jaminan keamanan terbaik</p>
@@ -404,7 +405,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Game Categories */}
-      <section className="px-4 py-8">
+  <section className="px-4 py-8">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-white mb-1">Game Populer</h2>
           <p className="text-zinc-400 text-sm">Pilih dari berbagai game populer</p>
@@ -433,7 +434,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Final CTA Section */}
-      <section className="px-4 py-12">
+  <section className="px-4 py-12">
         <div className="bg-gradient-to-br from-pink-600 via-rose-600 to-purple-700 rounded-3xl p-8 text-center relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute inset-0 opacity-20">
@@ -477,7 +478,8 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Bottom spacing for mobile navigation */}
-      <div className="h-6"></div>
+  <div className="h-6"></div>
+  </div>
     </div>
   );
 };
