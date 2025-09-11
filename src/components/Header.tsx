@@ -69,7 +69,20 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/90 border-b border-ios-border" style={{ position: 'fixed' }}>
+    <header 
+      className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/90 border-b border-ios-border" 
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        width: '100%',
+        transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
+        backfaceVisibility: 'hidden', // Improve performance
+        WebkitBackfaceVisibility: 'hidden'
+      }}
+    >
       {/* Mobile compact header */}
       <div className="md:hidden">
         <IOSContainer padding={false} className="px-4 py-2 pt-safe-top">

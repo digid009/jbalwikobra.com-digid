@@ -36,7 +36,20 @@ const MobileBottomNav: React.FC = () => {
   }, []);
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] w-full bg-black/95 backdrop-blur border-t border-ios-border" style={{ position: 'fixed' }}>
+    <div 
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[100] w-full bg-black/95 backdrop-blur border-t border-ios-border mobile-bottom-nav-fixed" 
+      style={{ 
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        width: '100%',
+        transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
+      }}
+    >
       <div className="pb-safe-bottom">
         <nav className="flex justify-around py-1 px-2 h-14 items-center">
           {navItems.map((item) => {
