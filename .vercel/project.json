@@ -1,11 +1,1 @@
-{
-  "framework": null,
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  }
-}
+{"projectId":"prj_SHFIVuH7f6u55k04qGl3VYtZ94He","orgId":"team_jzKzelKhJFTfV2wCLjDeB1qq","projectName":"jbalwikobra-com-digid"}

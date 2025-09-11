@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-black border-t border-gray-800 text-gray-300">
-      <IOSContainer className="pt-8 pb-28 md:pt-12 md:pb-12">
+      <IOSContainer className="pt-8 pb-20 md:pt-12 md:pb-12">
         <IOSGrid columns={4} gap="large" className="mb-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
@@ -149,15 +149,15 @@ const Footer: React.FC = () => {
         </IOSGrid>
 
         <div className="mt-8 pt-8 flex flex-col md:flex-row justify-between items-center border-t border-gray-800">
-          <p className="text-gray-400 text-xs md:text-sm text-center md:text-left mb-4 md:mb-0">
+          <p className="text-gray-400 text-sm md:text-sm text-center md:text-left mb-4 md:mb-0">
             © {currentYear} {siteName}. All rights reserved.
           </p>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 text-gray-400 text-xs md:text-sm">
-            <Link to="/terms" className="hover:text-pink-400 transition-colors py-1 px-2 rounded hover:bg-gray-800">Syarat & Ketentuan</Link>
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 text-gray-400 text-sm md:text-sm">
+            <Link to="/terms" className="hover:text-pink-400 transition-colors py-2 px-3 rounded hover:bg-gray-800 text-center">Syarat & Ketentuan</Link>
             <span className="opacity-50 hidden sm:inline">|</span>
             <div className="flex items-center space-x-2">
               <span>Made with</span>
-              <Heart size={14} className="text-pink-500" />
+              <Heart size={16} className="text-pink-500" />
               <span>for Indonesian Gamers</span>
             </div>
           </div>

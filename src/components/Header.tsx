@@ -69,11 +69,11 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="backdrop-blur-md fixed top-0 left-0 right-0 z-50 pt-safe-top bg-ios-background/90 border-b border-ios-border h-14 md:h-16">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-ios-background/90 border-b border-ios-border" style={{ position: 'fixed' }}>
       {/* Mobile compact header */}
       <div className="md:hidden">
-        <IOSContainer padding={false} className="px-4 py-3">
-          <div className="flex items-center justify-between">
+        <IOSContainer padding={false} className="px-4 py-2 pt-safe-top">
+          <div className="flex items-center justify-between h-12">
             <Link to="/" className="flex items-center space-x-3">
               {logoUrl ? (
                 <img src={logoUrl} alt={siteName} className="h-8 w-8 rounded-lg object-cover" />
@@ -82,22 +82,22 @@ const Header: React.FC = () => {
                   <span className="text-white text-sm font-bold">JB</span>
                 </div>
               )}
-              <span className="text-lg font-bold text-ios-text">{siteName}</span>
+              <span className="text-lg font-bold text-ios-text truncate max-w-[180px]">{siteName}</span>
             </Link>
             
             {/* Mobile user avatar */}
             <Link 
               to="/profile" 
-              className="w-8 h-8 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 active:scale-95"
+              className="w-10 h-10 bg-ios-surface rounded-full flex items-center justify-center border border-ios-border transition-all duration-200 active:scale-95 flex-shrink-0"
             >
-              <User size={16} className="text-ios-text-secondary" />
+              <User size={18} className="text-ios-text-secondary" />
             </Link>
           </div>
         </IOSContainer>
       </div>
 
       {/* Desktop header */}
-      <div className="hidden md:block">
+      <div className="hidden md:block pt-safe-top">
         <IOSContainer>
           <div className="flex justify-between items-center h-16">
             {/* Logo */}

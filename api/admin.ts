@@ -1,5 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { 
+  generateCacheKey, 
+  getFromCache, 
+  setToCache, 
+  setCacheHeaders,
+  validatePagination,
+  sendError,
+  sendSuccess
+} from './_utils/requestOptimizer';
+import { OptimizedQueryBuilder } from './_utils/optimizedQueries';
 
 // Admin service role client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL!;
@@ -51,51 +61,40 @@ async function handleDashboard(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get analytics data
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    // Check cache first
+    const cacheKey = generateCacheKey(req);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      setCacheHeaders(res, 300); // 5 minutes cache
+      return sendSuccess(res, cached);
+    }
 
-    const [
-      { data: orders, error: ordersError },
-      { count: usersCount, error: usersError },
-      { count: productsCount, error: productsError },
-      { count: flashSalesCount, error: flashSalesError }
-    ] = await Promise.all([
-      supabase
-        .from('orders')
-        .select('total_amount, created_at')
-        .gte('created_at', sevenDaysAgo.toISOString()),
-      supabase
-        .from('users')
-        .select('id', { count: 'exact', head: true }),
-      supabase
-        .from('products')
-        .select('id', { count: 'exact', head: true }),
-      supabase
-        .from('flash_sales')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true)
+    // Use optimized queries
+    const [tableStats, revenueStats] = await Promise.all([
+      OptimizedQueryBuilder.getTableCounts(),
+      OptimizedQueryBuilder.getRevenueStats(7)
     ]);
 
-    if (ordersError) throw ordersError;
-    if (usersError) throw usersError;
-    if (productsError) throw productsError;
-    if (flashSalesError) throw flashSalesError;
-
-    const totalRevenue = orders?.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0) || 0;
-
-    return res.status(200).json({
+    const dashboardData = {
       orders: {
-        count: orders?.length || 0,
-        revenue: totalRevenue
+        count: revenueStats.orderCount,
+        completed: revenueStats.completedCount,
+        revenue: revenueStats.total,
+        completedRevenue: revenueStats.completed
       },
-      users: usersCount || 0,
-      products: productsCount || 0,
-      flashSales: flashSalesCount || 0
-    });
+      users: { count: tableStats.users },
+      products: { count: tableStats.products },
+      flashSales: { count: tableStats.flashSales }
+    };
+
+    // Cache the result
+    setToCache(cacheKey, dashboardData, 5);
+    setCacheHeaders(res, 300);
+    
+    return sendSuccess(res, dashboardData);
   } catch (error) {
-    console.error('Dashboard error:', error);
-    return res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    console.error('Dashboard API error:', error);
+    return sendError(res, 'Failed to fetch dashboard data');
   }
 }
 
@@ -106,22 +105,30 @@ async function handleOrders(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { page = '1', limit = '20' } = req.query;
+    const { page = '1', limit = '20', status } = req.query;
     const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const limitNum = Math.min(parseInt(limit as string), 50); // Cap at 50 for performance
     const offset = (pageNum - 1) * limitNum;
 
-    const { data: orders, error, count } = await supabase
+    // Build optimized query with only necessary fields
+    let query = supabase
       .from('orders')
       .select(`
         id, created_at, total_amount, status, user_id, admin_notes,
-        products (
-          name,
-          image
+        customer_name, customer_email, customer_phone,
+        products!inner (
+          id, name, image
         )
       `, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
+
+    // Apply status filter if provided
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data: orders, error, count } = await query;
 
     if (error) throw error;
 

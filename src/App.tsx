@@ -204,9 +204,9 @@ function App() {
                 
                 {/* Public routes with global layout */}
                 <Route path="*" element={
-                  <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200">
+                  <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200 relative">
                     <Header />
-                    <main className="flex-1 with-bottom-nav pt-16 md:pt-20">
+                    <main className="flex-1 pt-16 md:pt-20 pb-16 md:pb-4 relative z-10">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">

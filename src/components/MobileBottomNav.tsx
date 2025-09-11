@@ -36,26 +36,30 @@ const MobileBottomNav: React.FC = () => {
   }, []);
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 backdrop-blur z-[1000] pb-safe-bottom" style={{ backgroundColor: 'rgba(0,0,0,0.9)', borderTop: '1px solid var(--border)' }}>
-      <nav className="flex justify-around py-2 h-[62px] items-end">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] w-full bg-black/95 backdrop-blur border-t border-ios-border" style={{ position: 'fixed' }}>
+      <div className="pb-safe-bottom">
+        <nav className="flex justify-around py-1 px-2 h-14 items-center">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center py-2 px-4 rounded-lg text-[11px] font-medium transition-colors ${
-                isActive ? 'text-pink-400' : 'text-gray-300'
-              }`}
-            >
-              <Icon size={22} />
-              <span className="mt-1 leading-none">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-medium transition-all duration-200 active:scale-95 min-w-[60px] h-12 ${
+                  isActive 
+                    ? 'text-ios-accent bg-ios-accent/10' 
+                    : 'text-ios-text-secondary hover:text-ios-text'
+                }`}
+              >
+                <Icon size={18} className="mb-0.5" />
+                <span className="leading-tight">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 };

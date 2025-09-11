@@ -183,25 +183,13 @@ class WebVitalsMonitor {
         });
       }
 
-      // Example: Send to custom analytics endpoint with better error handling
-      if (process.env.NODE_ENV === 'production') {
-        fetch('/api/analytics/vitals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: metric.name,
-            value: metric.value,
-            rating: metric.rating,
-            id: metric.id,
-            url: window.location.href,
-            timestamp: Date.now(),
-            userAgent: navigator.userAgent
-          })
-        }).catch(error => {
-          // Silently handle analytics failures - don't disrupt user experience
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('📊 Analytics endpoint unavailable:', error.message);
-          }
+      // Note: Analytics endpoint was consolidated into admin dashboard
+      // Custom analytics collection is now handled via Vercel Analytics instead
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📊 Web Vitals collected (analytics consolidated into admin dashboard):', {
+          name: metric.name,
+          value: `${Math.round(metric.value)}ms`,
+          rating: metric.rating
         });
       }
     } catch (error) {
