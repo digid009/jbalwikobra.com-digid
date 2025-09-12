@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ArrowLeft } from 'lucide-react';
 import { AdminStats, adminService } from '../../services/adminService';
 import { DashboardMetricsOverview } from './components/DashboardMetricsOverview';
 import { AdminDashboardContent } from './components/AdminDashboardContent';
@@ -11,6 +11,7 @@ import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import { AdminNotificationsPage } from './components/AdminNotificationsPage';
+import EnhancedAdminSettings from './EnhancedAdminSettings';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { IOSButton } from '../../components/ios/IOSDesignSystem';
@@ -32,6 +33,7 @@ const ModernAdminDashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasStatsError, setHasStatsError] = useState(false);
   const [statsErrorMessage, setStatsErrorMessage] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update main content margin when sidebar state changes
   useEffect(() => {
@@ -56,6 +58,15 @@ const ModernAdminDashboard: React.FC = () => {
     loadStats();
   }, []);
 
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const loadStats = async () => {
     try {
       setLoading(true);
@@ -70,6 +81,21 @@ const ModernAdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDateTime = (date: Date) => {
+    return {
+      time: date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      }),
+      date: date.toLocaleDateString('en-US', { 
+        weekday: 'short',
+        month: 'short', 
+        day: 'numeric' 
+      })
+    };
   };
 
   const renderContent = () => {
@@ -97,6 +123,8 @@ const ModernAdminDashboard: React.FC = () => {
         return <AdminReviewsManagement />;
       case 'notifications':
         return <AdminNotificationsPage />;
+      case 'settings':
+        return <EnhancedAdminSettings />;
       default:
         return <AdminDashboardContent onRefreshStats={loadStats} />;
     }
@@ -144,19 +172,25 @@ const ModernAdminDashboard: React.FC = () => {
                     Manage your {activeTab === 'dashboard' ? 'business overview' : activeTab.replace('-', ' ')}
                   </p>
                 </div>
-                <IOSButton
-                  variant="ghost"
-                  size="small"
-                  onClick={() => setActiveTab('notifications')}
-                  className={cn(
-                    'p-3 rounded-2xl border transition-all duration-200',
-                    activeTab === 'notifications' 
-                      ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
-                      : 'hover:bg-pink-500/20 border-pink-500/30 hover:border-pink-500/50 text-pink-500'
-                  )}
-                >
-                  <Bell className="w-6 h-6 text-pink-500" />
-                </IOSButton>
+                
+                <div className="flex items-center space-x-4">
+                  {/* Current Date and Time */}
+                  <div className="flex flex-col items-end text-right">
+                    <div className="text-lg font-bold text-pink-200">{formatDateTime(currentTime).time}</div>
+                    <div className="text-sm text-gray-400">{formatDateTime(currentTime).date}</div>
+                  </div>
+                  
+                  {/* Back to Store Button */}
+                  <IOSButton
+                    variant="ghost"
+                    size="small"
+                    onClick={() => window.open('/', '_blank')}
+                    className="flex items-center space-x-2 p-3 rounded-2xl hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50 transition-all duration-200"
+                  >
+                    <ArrowLeft className="w-5 h-5 text-blue-400" />
+                    <span className="text-blue-200 font-medium">Back to Store</span>
+                  </IOSButton>
+                </div>
               </div>
             </div>
           </div>          {/* Main Content with larger padding */}

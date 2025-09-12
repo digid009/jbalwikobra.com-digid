@@ -9,7 +9,9 @@ export const defaultStats: AdminStats = {
   totalReviews: 0,
   averageRating: 0,
   pendingOrders: 0,
-  completedOrders: 0
+  completedOrders: 0,
+  totalFlashSales: 0,
+  activeFlashSales: 0
 };
 
 export const formatMetrics = (stats: AdminStats) => ({
@@ -32,6 +34,10 @@ export const formatMetrics = (stats: AdminStats) => ({
   reviews: {
     formatted: stats.totalReviews.toLocaleString(),
     subtitle: stats?.averageRating ? `${stats.averageRating.toFixed(1)}/5 avg rating` : 'No reviews yet'
+  },
+  flashSales: {
+    formatted: stats.totalFlashSales.toLocaleString(),
+    subtitle: `${stats.activeFlashSales} currently active`
   }
 });
 
@@ -41,7 +47,8 @@ export const getMetricAccentColor = (type: string) => {
     orders: 'from-blue-500/30 via-blue-600/20 to-cyan-500/10', 
     users: 'from-pink-500/30 via-pink-600/20 to-fuchsia-600/10',
     products: 'from-violet-500/30 via-purple-600/20 to-indigo-500/10',
-    reviews: 'from-yellow-500/30 via-amber-600/20 to-orange-500/10'
+    reviews: 'from-yellow-500/30 via-amber-600/20 to-orange-500/10',
+    flashSales: 'from-orange-500/30 via-red-600/20 to-pink-500/10'
   };
   return colors[type as keyof typeof colors] || colors.users;
 };

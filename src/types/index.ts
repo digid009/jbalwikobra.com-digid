@@ -116,8 +116,15 @@ export interface WebsiteSettings {
   instagramUrl?: string;
   tiktokUrl?: string;
   youtubeUrl?: string;
+  twitterUrl?: string;
   heroTitle?: string;
   heroSubtitle?: string;
+  companyDescription?: string;
+  supportEmail?: string;
+  businessHours?: string;
+  footerCopyrightText?: string;
+  newsletterEnabled?: boolean;
+  socialMediaEnabled?: boolean;
   updatedAt?: string;
 }
 

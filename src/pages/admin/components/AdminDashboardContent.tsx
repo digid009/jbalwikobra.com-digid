@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, BarChart, Package, TrendingDown } from 'lucide-react';
-import { adminService, AdminNotification, OrderDayStat } from '../../../services/adminService';
+import { adminService, AdminNotification, OrderStatusDayStat } from '../../../services/adminService';
 import { DashboardMetricsOverview } from './DashboardMetricsOverview';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
@@ -16,7 +16,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const [recentNotifications, setRecentNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [series, setSeries] = useState<OrderDayStat[]>([]);
+  const [series, setSeries] = useState<OrderStatusDayStat[]>([]);
   const [range, setRange] = useState<'7d' | '14d' | '30d'>('7d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -39,7 +39,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
       const notifications = await adminService.getNotifications(1, 5);
       setRecentNotifications(notifications);
       const days = range === '7d' ? 7 : range === '14d' ? 14 : 30;
-      const ts = await adminService.getOrdersTimeSeries(customStart && customEnd ? { startDate: customStart, endDate: customEnd } : { days });
+      const ts = await adminService.getOrderStatusTimeSeries(customStart && customEnd ? { startDate: customStart, endDate: customEnd } : { days });
       setSeries(ts);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -100,8 +100,8 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
     }
   };
 
-  const maxCount = useMemo(() => Math.max(1, ...series.map(s => s.count)), [series]);
-  const maxRevenue = useMemo(() => Math.max(1, ...series.map(s => s.revenue)), [series]);
+  const maxCreated = useMemo(() => Math.max(1, ...series.map(s => s.created)), [series]);
+  const maxCompleted = useMemo(() => Math.max(1, ...series.map(s => s.completed)), [series]);
 
   const handleRangeChange = (val: '7d'|'14d'|'30d') => {
     setRange(val); setCustomStart(''); setCustomEnd('');
@@ -112,13 +112,13 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
     <div className="space-y-8">
       <DashboardMetricsOverview onRefresh={onRefreshStats} />
 
-      <DashboardSection title="Analytics Dashboard" subtitle="Track your store performance" dense>
+      <DashboardSection title="" subtitle="" dense>
         <DataPanel>
           {/* Analytics Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/60 dark:bg-white/10 ring-1 ring-white/10">
-                <Calendar className="w-5 h-5 text-pink-500" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30">
+                <Calendar className="w-5 h-5 text-pink-400" />
               </div>
               <span className="typescale-h4">Analytics</span>
             </div>
@@ -135,18 +135,19 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           </div>
 
           {/* Date Range Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-4 grad-surface-sheen rounded-2xl border border-ios-background/50 backdrop-blur-sm">
-            <div className="flex items-center space-x-3">
-              <div className="flex bg-black/70 backdrop-blur-sm rounded-xl border border-gray-600 overflow-hidden shadow-lg shadow-black/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-6 bg-gradient-to-r from-black/40 via-gray-900/50 to-black/40 rounded-2xl border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center space-x-4">
+              <h3 className="text-lg font-bold text-white">Time Range</h3>
+              <div className="flex bg-black/60 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden shadow-lg">
                 {(['7d','14d','30d'] as const).map(opt => (
                   <button 
                     key={opt} 
                     onClick={() => handleRangeChange(opt)} 
                     className={cn(
-                      'px-4 py-2 text-sm font-semibold transition-all duration-200',
+                      'px-5 py-2.5 text-sm font-semibold transition-all duration-300',
                       range === opt 
-                        ? 'bg-ios-primary text-white shadow-lg' 
-                        : 'text-gray-200 hover:bg-black/50 hover:text-white'
+                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-500/25' 
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
                     )}
                   >
                     {opt.replace('d', ' days')}
@@ -155,186 +156,268 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-gray-600">
+              <div className="flex items-center space-x-3 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-gray-600/50">
                 <input 
                   type="date" 
                   value={customStart} 
                   onChange={e=>setCustomStart(e.target.value)} 
-                  className="bg-transparent text-sm text-white focus:outline-none" 
+                  className="bg-transparent text-sm text-white focus:outline-none placeholder:text-gray-400" 
+                  placeholder="Start date"
                 />
-                <span className="text-gray-200 text-sm">to</span>
+                <span className="text-gray-400 text-sm font-medium">to</span>
                 <input 
                   type="date" 
                   value={customEnd} 
                   onChange={e=>setCustomEnd(e.target.value)} 
-                  className="bg-transparent text-sm text-white focus:outline-none" 
+                  className="bg-transparent text-sm text-white focus:outline-none placeholder:text-gray-400" 
+                  placeholder="End date"
                 />
               </div>
-              <IOSButton size="small" onClick={applyCustomRange} disabled={!customStart || !customEnd}>
+              <IOSButton 
+                size="small" 
+                onClick={applyCustomRange} 
+                disabled={!customStart || !customEnd}
+                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50"
+              >
                 Apply
               </IOSButton>
             </div>
           </div>
 
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 gap-6">
-            {/* Revenue Timeline Chart */}
-            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-8 border border-gray-600">
-              <div className="flex items-center space-x-3 mb-8">
-                <div className="w-8 h-8 bg-ios-primary/10 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-ios-primary" />
+          {/* Analytics Chart */}
+          <div className="bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden shadow-2xl shadow-black/20">
+            <div className="p-8 pb-0">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-pink-500/20 to-fuchsia-600/20 rounded-2xl flex items-center justify-center border border-pink-500/30">
+                    <TrendingUp className="w-6 h-6 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xl mb-1">Orders Analytics</h4>
+                    <p className="text-sm text-gray-400 font-medium">Track order creation and completion trends</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg">Total revenue per team - timeline</h4>
-                  <p className="text-sm text-gray-300 font-medium">Track your store performance</p>
+                
+                {/* Legend */}
+                <div className="hidden sm:flex items-center gap-6 bg-black/30 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-r from-emerald-500 to-green-400 shadow-lg shadow-green-500/30"></div>
+                    <span className="text-sm text-white font-semibold">Orders Created</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/30"></div>
+                    <span className="text-sm text-white font-semibold">Orders Completed</span>
+                  </div>
                 </div>
               </div>
+            </div>
               
-              {loading && series.length===0 ? (
-                <div className="h-80 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-ios-primary/20 border-t-ios-primary rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-sm text-white font-medium">Loading analytics...</p>
+            {loading && series.length===0 ? (
+              <div className="h-96 flex items-center justify-center px-8 pb-8">
+                <div className="text-center">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-fuchsia-600 rounded-full animate-spin mx-auto"></div>
                   </div>
+                  <p className="text-lg text-white font-semibold mb-2">Loading Analytics</p>
+                  <p className="text-sm text-gray-400">Fetching your latest data...</p>
                 </div>
-              ) : series.length===0 ? (
-                <div className="h-80 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
-                      <BarChart className="w-6 h-6 text-gray-200" />
-                    </div>
-                    <p className="text-sm text-white font-medium">No data available</p>
+              </div>
+            ) : series.length===0 ? (
+              <div className="h-96 flex items-center justify-center px-8 pb-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-3xl mx-auto mb-6 flex items-center justify-center border border-gray-600/30">
+                    <BarChart className="w-10 h-10 text-gray-400" />
                   </div>
+                  <h3 className="text-xl font-bold text-white mb-2">No Data Available</h3>
+                  <p className="text-gray-400 max-w-md">No order data found for the selected time range. Try selecting a different period or check back later.</p>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="h-80 relative bg-gradient-to-br from-gray-900/30 to-gray-800/20 rounded-2xl border border-gray-700/30 backdrop-blur-sm p-6">
-                    <svg className="absolute inset-6 w-[calc(100%-48px)] h-[calc(100%-48px)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-                      <defs>
-                        {/* Area gradient for main revenue */}
-                        <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.6"/>
-                          <stop offset="30%" stopColor="#A855F7" stopOpacity="0.4"/>
-                          <stop offset="100%" stopColor="#C084FC" stopOpacity="0.1"/>
-                        </linearGradient>
-                        
-                        {/* Secondary area for contrast */}
-                        <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3"/>
-                          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.1"/>
-                        </linearGradient>
-                      </defs>
+              </div>
+            ) : (
+              <div className="px-8 pb-8">
+                <div className="h-96 relative bg-gradient-to-br from-gray-900/20 via-gray-800/10 to-transparent rounded-2xl border border-white/5 p-6">
+                  <svg className="absolute inset-6 w-[calc(100%-48px)] h-[calc(100%-48px)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                      {/* Enhanced gradients */}
+                      <linearGradient id="createdGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.8"/>
+                        <stop offset="50%" stopColor="#059669" stopOpacity="0.5"/>
+                        <stop offset="100%" stopColor="#047857" stopOpacity="0.1"/>
+                      </linearGradient>
                       
-                      {/* Main revenue area chart */}
-                      <path 
-                        d={`M 0 100 ${series.map((d, i) => {
-                          const x = (i / (series.length - 1)) * 100;
-                          const y = 100 - (d.revenue / maxRevenue) * 85;
-                          return `L ${x} ${y}`;
-                        }).join(' ')} L 100 100 Z`}
-                        fill="url(#areaGradient)"
-                        className="drop-shadow-lg"
-                      />
-                      
-                      {/* Secondary area (ghostbusters simulation) */}
-                      <path 
-                        d={`M 0 100 ${series.map((d, i) => {
-                          const x = (i / (series.length - 1)) * 100;
-                          const y = 100 - (d.count * 100 / maxCount) * 75; // Different scale
-                          return `L ${x} ${y}`;
-                        }).join(' ')} L 100 100 Z`}
-                        fill="url(#secondaryGradient)"
-                        className="drop-shadow-md"
-                      />
-                      
-                      {/* Main revenue line (A-team) */}
-                      <path 
-                        d={`M ${series.map((d, i) => {
-                          const x = (i / (series.length - 1)) * 100;
-                          const y = 100 - (d.revenue / maxRevenue) * 85;
-                          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-                        }).join(' ')}`}
-                        fill="none"
-                        stroke="#7C3AED"
-                        strokeWidth="3"
-                        className="drop-shadow-lg"
-                      />
-                      
-                      {/* Secondary line (Ghostbusters) */}
-                      <path 
-                        d={`M ${series.map((d, i) => {
-                          const x = (i / (series.length - 1)) * 100;
-                          const y = 100 - (d.count * 100 / maxCount) * 75;
-                          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-                        }).join(' ')}`}
-                        fill="none"
-                        stroke="#8B5CF6"
-                        strokeWidth="2"
-                        strokeOpacity="0.8"
-                        className="drop-shadow-md"
-                      />
-                      
-                      {/* Data points for main line */}
-                      {series.map((d, i) => {
+                      <linearGradient id="completedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8"/>
+                        <stop offset="50%" stopColor="#2563EB" stopOpacity="0.5"/>
+                        <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.1"/>
+                      </linearGradient>
+
+                      {/* Glow filters */}
+                      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge> 
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    
+                    {/* Orders created area chart */}
+                    <path 
+                      d={`M 0 100 ${series.map((d, i) => {
                         const x = (i / (series.length - 1)) * 100;
-                        const y = 100 - (d.revenue / maxRevenue) * 85;
-                        return (
+                        const y = 100 - (d.created / maxCreated) * 85;
+                        return `L ${x} ${y}`;
+                      }).join(' ')} L 100 100 Z`}
+                      fill="url(#createdGradient)"
+                      className="drop-shadow-lg"
+                    />
+                    
+                    {/* Orders completed area chart */}
+                    <path 
+                      d={`M 0 100 ${series.map((d, i) => {
+                        const x = (i / (series.length - 1)) * 100;
+                        const y = 100 - (d.completed / maxCompleted) * 75;
+                        return `L ${x} ${y}`;
+                      }).join(' ')} L 100 100 Z`}
+                      fill="url(#completedGradient)"
+                      className="drop-shadow-lg"
+                    />
+                    
+                    {/* Orders created line with glow */}
+                    <path 
+                      d={`M ${series.map((d, i) => {
+                        const x = (i / (series.length - 1)) * 100;
+                        const y = 100 - (d.created / maxCreated) * 85;
+                        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                      }).join(' ')}`}
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="3"
+                      filter="url(#glow)"
+                      className="drop-shadow-lg"
+                    />
+                    
+                    {/* Orders completed line with glow */}
+                    <path 
+                      d={`M ${series.map((d, i) => {
+                        const x = (i / (series.length - 1)) * 100;
+                        const y = 100 - (d.completed / maxCompleted) * 75;
+                        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                      }).join(' ')}`}
+                      fill="none"
+                      stroke="#3B82F6"
+                      strokeWidth="3"
+                      filter="url(#glow)"
+                      className="drop-shadow-lg"
+                    />
+                    
+                    {/* Enhanced data points for orders created */}
+                    {series.map((d, i) => {
+                      const x = (i / (series.length - 1)) * 100;
+                      const y = 100 - (d.created / maxCreated) * 85;
+                      return (
+                        <g key={`created-${i}`}>
                           <circle
-                            key={`main-${i}`}
                             cx={x}
                             cy={y}
-                            r="4"
-                            fill="#7C3AED"
+                            r="1"
+                            fill="#10B981"
                             stroke="#FFFFFF"
-                            strokeWidth="2"
+                            strokeWidth="0.5"
+                            className="drop-shadow-lg"
+                            filter="url(#glow)"
+                          />
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="0"
+                            fill="#FFFFFF"
                             className="drop-shadow-md"
                           />
-                        );
-                      })}
-                    </svg>
-                    
-                    {/* Chart Legend */}
-                    <div className="absolute top-6 right-6 flex flex-col gap-3 bg-black/40 backdrop-blur-md rounded-xl p-4 border border-gray-600/40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-600 to-purple-400"></div>
-                        <span className="text-sm text-gray-200 font-medium">A-team</span>
+                        </g>
+                      );
+                    })}
+
+                    {/* Enhanced data points for orders completed */}
+                    {series.map((d, i) => {
+                      const x = (i / (series.length - 1)) * 100;
+                      const y = 100 - (d.completed / maxCompleted) * 75;
+                      return (
+                        <g key={`completed-${i}`}>
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="1"
+                            fill="#3B82F6"
+                            stroke="#FFFFFF"
+                            strokeWidth="0.5"
+                            className="drop-shadow-lg"
+                            filter="url(#glow)"
+                          />
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="0"
+                            fill="#FFFFFF"
+                            className="drop-shadow-md"
+                          />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  
+                  {/* Mobile Legend */}
+                  <div className="sm:hidden absolute top-6 left-6 right-6">
+                    <div className="flex items-center justify-center gap-6 bg-black/60 backdrop-blur-md rounded-xl p-3 border border-white/10">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-400"></div>
+                        <span className="text-xs text-white font-medium">Created</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-300 opacity-70"></div>
-                        <span className="text-sm text-gray-300 font-medium">Ghostbusters</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+                        <span className="text-xs text-white font-medium">Completed</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                        <span className="text-sm text-gray-400 font-medium">Little rascals</span>
-                      </div>
-                    </div>
-                    
-                    {/* Y-axis labels */}
-                    <div className="absolute left-2 top-6 bottom-12 flex flex-col justify-between text-right">
-                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.001).toLocaleString()}K</span>
-                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0008).toLocaleString()}K</span>
-                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0006).toLocaleString()}K</span>
-                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0004).toLocaleString()}K</span>
-                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0002).toLocaleString()}K</span>
-                      <span className="text-xs text-gray-400 font-medium">€0</span>
-                    </div>
-                    
-                    {/* X-axis labels */}
-                    <div className="absolute bottom-2 left-12 right-6 flex justify-between">
-                      {series.map((d, i) => {
-                        if (i % Math.max(1, Math.ceil(series.length / 8)) !== 0 && i !== series.length - 1) return null;
-                        const date = new Date(d.date);
-                        return (
-                          <span key={d.date} className="text-xs text-gray-400 font-medium">
-                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        );
-                      })}
                     </div>
                   </div>
+                  
+                  {/* Enhanced Y-axis labels */}
+                  <div className="absolute left-0 top-6 bottom-16 flex flex-col justify-between text-right pr-2">
+                    <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">{maxCreated}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.8)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.6)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.4)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.2)}</span>
+                    <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">0</span>
+                  </div>
+                  
+                  {/* Enhanced X-axis labels */}
+                  <div className="absolute bottom-2 left-12 right-6 flex justify-between">
+                    {series.map((d, i) => {
+                      if (i % Math.max(1, Math.ceil(series.length / 6)) !== 0 && i !== series.length - 1) return null;
+                      const date = new Date(d.date);
+                      return (
+                        <div key={d.date} className="text-center">
+                          <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">
+                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Grid lines */}
+                  <div className="absolute inset-6 pointer-events-none">
+                    {[0.2, 0.4, 0.6, 0.8].map(percentage => (
+                      <div
+                        key={percentage}
+                        className="absolute left-0 right-0 border-t border-white/5"
+                        style={{ top: `${(1 - percentage) * 85}%` }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </DataPanel>
       </DashboardSection>

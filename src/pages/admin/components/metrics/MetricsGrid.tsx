@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Users, Package, Star, Clock } from 'lucide-react';
+import { TrendingUp, Users, Package, Star, Clock, Zap } from 'lucide-react';
 import { AdminStats } from '../../../../services/adminService';
 import { MetricCard } from './MetricCard';
 import { formatMetrics, getMetricAccentColor } from './metricsUtils';
@@ -63,6 +63,14 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ stats, loading, classN
         sub={metrics.products.subtitle}
         icon={<Package className="w-6 h-6" />}
         accent={getMetricAccentColor('products')}
+      />
+      
+      <MetricCard
+        label="Flash Sales"
+        value={metrics.flashSales?.formatted || "0"}
+        sub={metrics.flashSales?.subtitle || "active sales"}
+        icon={<Zap className="w-6 h-6" />}
+        accent={getMetricAccentColor('flashSales')}
       />
       
       <MetricCard

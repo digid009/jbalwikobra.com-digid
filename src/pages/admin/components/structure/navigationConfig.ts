@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart, Users, Package, MessageSquare, Image, Zap, Star, Bell } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Users, Package, MessageSquare, Image, Zap, Star, Bell, Settings } from 'lucide-react';
 import { AdminTab } from './adminTypes';
 
 export interface NavigationItem {
@@ -8,7 +8,7 @@ export interface NavigationItem {
 }
 
 export const navigationItems: NavigationItem[] = [
-  { id: 'dashboard', label: 'Analytics', icon: LayoutDashboard },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'products', label: 'Products', icon: Package },
@@ -17,4 +17,5 @@ export const navigationItems: NavigationItem[] = [
   { id: 'flash-sales', label: 'Flash Sales', icon: Zap },
   { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];

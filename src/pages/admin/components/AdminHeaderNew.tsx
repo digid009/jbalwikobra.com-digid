@@ -9,10 +9,11 @@ import {
   Image as ImageIcon, 
   Zap,
   Menu,
-  X
+  X,
+  ArrowLeft,
+  Store
 } from 'lucide-react';
 import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
-import { ThemeToggle } from '../../../components/ios/ThemeToggle';
 import { AdminStats } from '../../../services/adminService';
 import { cn } from '../../../styles/standardClasses';
 
@@ -60,6 +61,17 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Update time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const [dispatchOpenEvent] = useState(() => () => {
     window.dispatchEvent(new CustomEvent('open-command-palette'));
   });
@@ -88,24 +100,24 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   return (
     <>
-      {/* Header */}
-  <header className="sticky top-0 z-50 dashboard-header">
+      {/* Header - Fixed positioning */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-gray-700/50">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Logo & Title */}
+            {/* Left: Logo & Back to Store */}
             <div className="flex items-center space-x-4">
               <div className="text-xl font-bold text-pink-600 dark:text-pink-400 tracking-tight">
                 JB Admin
               </div>
-              <button
-                type="button"
-                onClick={dispatchOpenEvent}
-                className="command-button hidden md:inline-flex"
-                aria-label="Open command palette"
+              <IOSButton
+                variant="ghost"
+                size="small"
+                onClick={() => window.open('/', '_blank')}
+                className="hidden md:inline-flex items-center space-x-2 text-gray-300 hover:text-white"
               >
-                <span className="text-xs">Search / Command</span>
-                <kbd>⌘K</kbd>
-              </button>
+                <Store size={16} />
+                <span className="text-sm">Back to Store</span>
+              </IOSButton>
             </div>
 
             {/* Center: Desktop Navigation */}
@@ -144,9 +156,25 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               })}
             </nav>
 
-            {/* Right: Theme Toggle & Mobile Menu */}
+            {/* Right: Current Time & Mobile Menu */}
             <div className="flex items-center space-x-3">
-              <ThemeToggle size="small" className="!h-8 !w-8" />
+              {/* Current Date & Time */}
+              <div className="hidden md:flex flex-col items-end text-right">
+                <div className="text-sm text-white font-medium">
+                  {currentTime.toLocaleDateString('id-ID', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {currentTime.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })} WIB
+                </div>
+              </div>
               
               {/* Mobile menu button */}
               <IOSButton
@@ -169,6 +197,34 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-700 bg-black/95 backdrop-blur-md">
             <div className="px-4 py-2 space-y-1">
+              {/* Mobile Back to Store Button */}
+              <IOSButton
+                variant="ghost"
+                size="medium"
+                onClick={() => window.open('/', '_blank')}
+                className="w-full justify-start text-sm font-medium text-gray-300 hover:text-white mb-2"
+              >
+                <Store size={18} className="mr-3" />
+                Back to Store
+              </IOSButton>
+              
+              {/* Mobile Date & Time */}
+              <div className="py-2 px-3 mb-2 text-center border border-gray-700 rounded-lg">
+                <div className="text-sm text-white font-medium">
+                  {currentTime.toLocaleDateString('id-ID', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {currentTime.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })} WIB
+                </div>
+              </div>
+              
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;

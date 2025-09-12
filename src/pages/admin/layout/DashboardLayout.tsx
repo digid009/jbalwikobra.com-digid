@@ -18,8 +18,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ header, childr
   return (
     <div className={cn('w-full min-h-screen', className)}>
       {header}
-      <main className="dashboard-shell">
-  <div className={cn('dashboard-container', fullWidth && 'max-w-none')}>        
+      <main className="dashboard-shell pt-16">
+        <div className={cn('dashboard-container', fullWidth && 'max-w-none')}>        
           {children}
         </div>
       </main>

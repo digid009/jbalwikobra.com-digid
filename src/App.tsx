@@ -2,10 +2,10 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import Header from './components/Header';
-import MobileBottomNav from './components/MobileBottomNav';
+import ModernHeader from './components/ModernHeader';
+import ModernMobileNavigation from './components/ModernMobileNavigation';
 import ScrollToTop from './components/ScrollToTop';
-import Footer from './components/Footer';
+import ModernFooter from './components/ModernFooter';
 import './App.css';
 import './styles/mobile-first.css';
 import './styles/navigation-fixes.css';
@@ -43,6 +43,7 @@ const OrderHistoryPage = React.lazy(() => import('./pages/OrderHistoryPage'));
 const TermsPage = React.lazy(() => import('./pages/TermsPage'));
 const FeedPage = React.lazy(() => import('./pages/FeedPage'));
 const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 
 // Lazy load admin pages (biggest performance impact)
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
@@ -171,7 +172,7 @@ function App() {
                 {/* Public routes with global layout */}
                 <Route path="*" element={
                   <div className="App min-h-screen flex flex-col bg-black text-white relative">
-                    <Header />
+                    <ModernHeader />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />
                     <main className="flex-1 pt-[75px] pb-[85px] lg:pt-20 lg:pb-6 overflow-x-hidden min-h-screen">
@@ -210,16 +211,13 @@ function App() {
                           <Route path="/orders" element={<OrderHistoryPage />} />
                           {/* Hidden design system showcase - not linked in navigation */}
                           <Route path="/internal/design-system" element={<DesignSystemShowcase />} />
-                          <Route path="*" element={
-                            <div className="min-h-screen flex items-center justify-center">
-                              <p className="text-gray-600">Halaman tidak ditemukan</p>
-                            </div>
-                          } />
+                          {/* 404 Not Found - Catch all routes */}
+                          <Route path="*" element={<NotFoundPage />} />
                         </Routes>
                       </Suspense>
                     </main>
-                    <Footer />
-                    <MobileBottomNav />
+                    <ModernFooter />
+                    <ModernMobileNavigation />
                   </div>
                 } />
               </Routes>

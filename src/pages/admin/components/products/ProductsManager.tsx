@@ -25,6 +25,11 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [paginatedProducts, setPaginatedProducts] = useState<Product[]>([]);
+
   const [showFilters, setShowFilters] = useState(false);
 
   // Load products
@@ -101,6 +106,18 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
 
     setFilteredProducts(filtered);
   }, [products, searchTerm, statusFilter, categoryFilter, sortBy, sortOrder]);
+
+  // Apply pagination
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, categoryFilter, sortBy, sortOrder]);
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -231,12 +248,97 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
 
       {/* Products Grid */}
       <ProductsGrid
-        products={filteredProducts}
+        products={paginatedProducts}
         loading={loading}
         onProductView={handleViewProduct}
         onProductEdit={handleEditProduct}
         onProductDelete={handleDeleteProduct}
       />
+
+      {/* Pagination */}
+      {filteredProducts.length > 0 && (
+        <div className="flex items-center justify-between pt-6">
+          <div className="flex items-center gap-2 text-sm text-gray-300">
+            <span>Show</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="bg-black/50 border border-gray-500/30 rounded-lg px-2 py-1 text-white focus:border-pink-500/50 focus:outline-none"
+            >
+              <option value={8}>8</option>
+              <option value={12}>12</option>
+              <option value={16}>16</option>
+              <option value={24}>24</option>
+            </select>
+            <span>per page</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-300">
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} results
+            </span>
+
+            <div className="flex items-center gap-2">
+              <IOSButton
+                variant="ghost"
+                size="small"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </IOSButton>
+
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+                  const pages = [];
+                  const maxVisiblePages = 5;
+                  
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  
+                  // Adjust start if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+                  
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <IOSButton
+                        key={i}
+                        variant={i === currentPage ? "primary" : "ghost"}
+                        size="small"
+                        onClick={() => setCurrentPage(i)}
+                        className={cn(
+                          "px-3",
+                          i === currentPage 
+                            ? "bg-gradient-to-r from-pink-500 to-fuchsia-600" 
+                            : "hover:bg-pink-500/20"
+                        )}
+                      >
+                        {i}
+                      </IOSButton>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+              </div>
+
+              <IOSButton
+                variant="ghost"
+                size="small"
+                disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </IOSButton>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Empty State */}
       {!loading && filteredProducts.length === 0 && (

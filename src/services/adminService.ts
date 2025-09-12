@@ -19,6 +19,8 @@ export interface AdminStats {
   averageRating: number;
   pendingOrders: number;
   completedOrders: number;
+  totalFlashSales: number;
+  activeFlashSales: number;
 }
 
 export interface Order {
@@ -152,6 +154,13 @@ export interface OrderDayStat {
   count: number;
   revenue: number;
 }
+
+export interface OrderStatusDayStat {
+  date: string; // YYYY-MM-DD
+  created: number;
+  completed: number;
+}
+
 export interface TopProductStat {
   product_id: string | null;
   product_name: string;
@@ -191,6 +200,25 @@ class AdminService {
         // fallback silently
       }
 
+      // Get flash sales data
+      let totalFlashSales = 0;
+      let activeFlashSales = 0;
+      try {
+        const { count: totalFlashSalesCount } = await supabase
+          .from('flash_sales')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: activeFlashSalesCount } = await supabase
+          .from('flash_sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+          
+        totalFlashSales = totalFlashSalesCount || 0;
+        activeFlashSales = activeFlashSalesCount || 0;
+      } catch (e) {
+        // fallback silently
+      }
+
       return {
         totalOrders: orderStats.totalOrders,
         totalRevenue: orderStats.totalRevenue,
@@ -199,7 +227,9 @@ class AdminService {
         totalReviews,
         averageRating: Math.round(averageRating * 10) / 10,
         pendingOrders: orderStats.pendingOrders,
-        completedOrders: orderStats.completedOrders
+        completedOrders: orderStats.completedOrders,
+        totalFlashSales,
+        activeFlashSales
       };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -211,7 +241,9 @@ class AdminService {
         totalReviews: 0,
         averageRating: 0,
         pendingOrders: 0,
-        completedOrders: 0
+        completedOrders: 0,
+        totalFlashSales: 0,
+        activeFlashSales: 0
       };
     }
   }
@@ -641,9 +673,37 @@ export const adminService = {
           // Silent fallback if reviews table missing
         }
 
-        // Calculate revenue
-        const totalRevenue = ordersWithAmounts.data?.reduce((sum, order) => 
-          sum + (Number(order.amount) || 0), 0) || 0;
+        // Calculate revenue - only from paid and completed orders
+        let totalRevenue = 0;
+        if (ordersWithAmounts.data) {
+          const { data: ordersWithStatus, error: statusError } = await supabase
+            .from('orders')
+            .select('amount, status')
+            .in('status', ['paid', 'completed']);
+          
+          if (!statusError && ordersWithStatus) {
+            totalRevenue = ordersWithStatus.reduce((sum, order) => 
+              sum + (Number(order.amount) || 0), 0);
+          }
+        }
+
+        // Get flash sales data
+        let totalFlashSales = 0;
+        let activeFlashSales = 0;
+        try {
+          const [
+            { count: totalFlashSalesCount },
+            { count: activeFlashSalesCount }
+          ] = await Promise.all([
+            supabase.from('flash_sales').select('id', { count: 'exact', head: true }),
+            supabase.from('flash_sales').select('id', { count: 'exact', head: true }).eq('is_active', true)
+          ]);
+          
+          totalFlashSales = totalFlashSalesCount || 0;
+          activeFlashSales = activeFlashSalesCount || 0;
+        } catch (flashSalesError) {
+          // Silent fallback if flash_sales table missing
+        }
 
         return {
           totalOrders: totalOrders || 0,
@@ -653,7 +713,9 @@ export const adminService = {
           totalReviews,
           averageRating: Math.round(averageRating * 10) / 10,
           pendingOrders: pendingOrders || 0,
-          completedOrders: completedOrders || 0
+          completedOrders: completedOrders || 0,
+          totalFlashSales,
+          activeFlashSales
         };
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -665,7 +727,9 @@ export const adminService = {
           totalReviews: 0,
           averageRating: 0,
           pendingOrders: 0,
-          completedOrders: 0
+          completedOrders: 0,
+          totalFlashSales: 0,
+          activeFlashSales: 0
         };
       }
     });
@@ -993,6 +1057,87 @@ export const adminService = {
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const key = d.toISOString().slice(0, 10);
         buckets.push({ date: key, count: 0, revenue: 0 });
+      }
+      return buckets;
+    }
+  },
+
+  // Get order created vs completed analytics
+  async getOrderStatusTimeSeries(params?: { startDate?: string; endDate?: string; days?: number }): Promise<OrderStatusDayStat[]> {
+    try {
+      const days = params?.days || 7;
+      const end = params?.endDate ? new Date(params.endDate) : new Date();
+      const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      
+      const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
+      const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1).toISOString();
+
+      // Get all orders within date range
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('created_at, updated_at, status')
+        .gte('created_at', startISO)
+        .lt('created_at', endISO);
+
+      if (error) {
+        console.warn('getOrderStatusTimeSeries error', error);
+        // Return empty buckets on error
+        const buckets: OrderStatusDayStat[] = [];
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const key = d.toISOString().slice(0, 10);
+          buckets.push({ date: key, created: 0, completed: 0 });
+        }
+        return buckets;
+      }
+
+      // Group by date
+      const dailyStats: Record<string, { created: number; completed: number }> = {};
+      
+      // Initialize all days with zero values
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        dailyStats[key] = { created: 0, completed: 0 };
+      }
+
+      // Process orders
+      (orders || []).forEach(order => {
+        const createdDate = new Date(order.created_at);
+        const createdDateKey = createdDate.toISOString().slice(0, 10);
+        
+        // Count all orders as "created" on their creation date
+        if (dailyStats[createdDateKey]) {
+          dailyStats[createdDateKey].created += 1;
+        }
+        
+        // Count completed orders on their completion date (if completed)
+        if (order.status === 'completed' && order.updated_at) {
+          const updatedDate = new Date(order.updated_at);
+          const updatedDateKey = updatedDate.toISOString().slice(0, 10);
+          
+          if (dailyStats[updatedDateKey]) {
+            dailyStats[updatedDateKey].completed += 1;
+          }
+        }
+      });
+
+      return Object.entries(dailyStats)
+        .map(([date, stats]) => ({
+          date,
+          created: stats.created,
+          completed: stats.completed
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    } catch (error) {
+      console.error('Error in getOrderStatusTimeSeries:', error);
+      // Return empty buckets on error
+      const days = params?.days || 7;
+      const end = params?.endDate ? new Date(params.endDate) : new Date();
+      const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      
+      const buckets: OrderStatusDayStat[] = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        buckets.push({ date: key, created: 0, completed: 0 });
       }
       return buckets;
     }

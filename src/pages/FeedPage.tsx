@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter, Users } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter, Users, Sparkles, Calendar, Clock } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
 import { reviewService, type UserReview } from '../services/reviewService';
-import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero } from '../components/ios/IOSDesignSystem';
+import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero, IOSBadge } from '../components/ios/IOSDesignSystem';
 import { ConsistentLayout, PageWrapper, ContentSection } from '../components/layout/ConsistentLayout';
+import { ModernFeedCard } from '../components/ModernFeedCard';
 import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
@@ -26,28 +27,25 @@ interface TabProps {
   count?: number;
 }
 
+// Modern Tab component with glassmorphism design
 const Tab: React.FC<TabProps> = ({ label, isActive, onClick, count }) => (
   <button
     onClick={onClick}
-    className={`
-      px-4 py-3 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 flex-1 text-sm sm:text-base
-      ${isActive 
-        ? 'bg-pink-500 text-white shadow-lg' 
-        : 'bg-black text-white-secondary hover:bg-black/80 hover:text-white'
-      }
-    `}
+    className={cn(
+      'relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 flex-1 text-sm backdrop-blur-xl border',
+      isActive 
+        ? 'bg-gradient-to-r from-pink-500/30 to-fuchsia-500/30 text-pink-100 border-pink-500/30 shadow-lg shadow-pink-500/10' 
+        : 'bg-black/40 text-white/70 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+    )}
   >
     <span className="truncate">{label}</span>
     {count !== undefined && (
-      <span className={`
-        px-2 py-0.5 rounded-full text-xs font-bold
-        ${isActive 
-          ? 'bg-gray-900/30 text-white' 
-          : 'bg-ios-text-secondary/20 text-white-secondary'
-        }
-      `}>
+      <IOSBadge 
+        variant={isActive ? "primary" : "secondary"} 
+        className="text-xs px-2 py-0.5"
+      >
         {count}
-      </span>
+      </IOSBadge>
     )}
   </button>
 );
@@ -362,50 +360,75 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ios-background text-white">
-      {/* Hero Section */}
-      <IOSHero
-        title="Feed Komunitas"
-        subtitle="Bergabunglah dalam diskusi, bagikan pengalaman, dan dapatkan update terbaru dari komunitas gamer"
-        icon={Users}
-        backgroundGradient="from-green-500 via-emerald-500 to-teal-500"
-      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Modern Hero Section with Glass Effect */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-fuchsia-500/20 to-purple-500/20"></div>
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="relative backdrop-blur-xl border-b border-white/10">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 rounded-2xl flex items-center justify-center border border-pink-500/30">
+                <Sparkles className="w-6 h-6 text-pink-400" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+                  Feed Komunitas
+                </h1>
+                <p className="text-gray-400 mt-1">Bergabung dalam diskusi dan dapatkan update terbaru</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <IOSContainer maxWidth="md" className="pt-6 pb-24 with-bottom-nav">
-        {/* Mobile-First Tab Navigation */}
-        <div className="flex gap-1 mb-6 p-1 bg-ios-bg-secondary rounded-xl overflow-x-auto">
-          <Tab
-            label="Semua"
-            isActive={activeFilter === 'semua'}
-            onClick={() => handleFilterChange('semua')}
-            count={totalCounts.semua}
-          />
-          <Tab
-            label="Pengumuman"
-            isActive={activeFilter === 'pengumuman'}
-            onClick={() => handleFilterChange('pengumuman')}
-            count={totalCounts.pengumuman}
-          />
-          <Tab
-            label="Review"
-            isActive={activeFilter === 'review'}
-            onClick={() => handleFilterChange('review')}
-            count={totalCounts.review}
-          />
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Modern Tab Navigation with Glass Effect */}
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl mb-8">
+          <div className="flex gap-3">
+            <Tab
+              label="Semua"
+              isActive={activeFilter === 'semua'}
+              onClick={() => handleFilterChange('semua')}
+              count={totalCounts.semua}
+            />
+            <Tab
+              label="Pengumuman"
+              isActive={activeFilter === 'pengumuman'}
+              onClick={() => handleFilterChange('pengumuman')}
+              count={totalCounts.pengumuman}
+            />
+            <Tab
+              label="Review"
+              isActive={activeFilter === 'review'}
+              onClick={() => handleFilterChange('review')}
+              count={totalCounts.review}
+            />
+          </div>
         </div>
 
         {/* Login Notice for Guests */}
         {!user && (
-          <IOSCard padding="medium" className="mb-6 border border-pink-200 bg-pink-50">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-pink-800">
-                <strong>Info:</strong> Anda sebagai guest. Masuk untuk like, komentar, dan review.
-              </p>
-              <IOSButton size="small" variant="primary" onClick={() => navigate('/auth')}>
+          <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 backdrop-blur-xl rounded-2xl p-6 border border-amber-500/30 shadow-xl mb-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-amber-100 font-semibold">Login Required</p>
+                  <p className="text-amber-200/70 text-sm">Masuk untuk like, komentar, dan memberikan review</p>
+                </div>
+              </div>
+              <IOSButton 
+                size="small" 
+                onClick={() => navigate('/auth')}
+                className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-amber-500/30 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-100"
+              >
                 Masuk
               </IOSButton>
             </div>
-          </IOSCard>
+          </div>
         )}
 
         {/* Loading State */}
@@ -413,102 +436,55 @@ export default function FeedPage() {
 
         {/* Error State */}
         {error && !isLoading && (
-          <IOSCard padding="medium" className="border border-gray-700 mb-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-white-secondary">{error}</p>
-              <IOSButton variant="secondary" size="small" onClick={loadInitialData}>Coba lagi</IOSButton>
+          <div className="bg-gradient-to-r from-red-500/20 to-pink-500/20 backdrop-blur-xl rounded-2xl p-6 border border-red-500/30 shadow-xl mb-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
+                  <X className="w-5 h-5 text-red-400" />
+                </div>
+                <p className="text-red-100">{error}</p>
+              </div>
+              <IOSButton 
+                onClick={loadInitialData}
+                className="bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/30 hover:from-red-500/30 hover:to-pink-500/30 text-red-100"
+              >
+                Coba Lagi
+              </IOSButton>
             </div>
-          </IOSCard>
+          </div>
         )}
 
         {/* Posts Section */}
         {!isLoading && (activeFilter === 'semua' || activeFilter === 'pengumuman') && feedPosts.length > 0 && (
           <div className="space-y-6 mb-8">
-            <h2 className="text-lg font-semibold">
-              {activeFilter === 'semua' ? 'Postingan & Pengumuman' : 'Pengumuman'}
-            </h2>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-blue-400" />
+              </div>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                {activeFilter === 'semua' ? 'Pengumuman' : 'Pengumuman'}
+              </h2>
+            </div>
             
             {feedPosts.map((post) => (
-              <IOSCard key={post.id} padding="medium" className="hover:shadow-md transition-shadow">
-                {/* User row */}
-                <div className={standardClasses.flex.between}>
-                  <div className={standardClasses.flex.rowGap3}>
-                    {post.authorAvatarUrl ? (
-                      <img
-                        src={post.authorAvatarUrl}
-                        alt={post.authorName || 'User'}
-                        className="w-9 h-9 rounded-full object-cover border border-gray-700"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={cn(standardClasses.flex.center, 'w-9 h-9 rounded-full bg-gradient-to-br from-ios-accent to-pink-600 text-xs font-bold text-white')}>
-                        {(post.authorName || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div>
-                      <div className="text-sm font-medium">{post.authorName || 'Postingan'}</div>
-                      <div className="text-xs text-white-secondary">{timeAgo(post.created_at)}</div>
-                    </div>
-                  </div>
-                  <button className="text-white-secondary hover:text-white" aria-label="More">
-                    <MoreHorizontal size={18} />
-                  </button>
-                </div>
-
-                {/* Content */}
-                {post.content && (
-                  <div className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">
-                    <LinkifyText text={post.content} />
-                  </div>
-                )}
-
-                {/* Media grid */}
-                {post.media && post.media.length > 0 && (
-                  <div className={`mt-3 grid gap-2 ${post.media.length > 1 ? 'grid-cols-2' : ''}`}>
-                    {post.media.map((m) => (
-                      <div key={m.id} className="overflow-hidden rounded-lg border border-gray-700">
-                        {m.type === 'image' ? (
-                          <img src={m.url} alt={`media`} className="w-full h-60 object-cover" loading="lazy" />
-                        ) : (
-                          <video src={m.url} className="w-full h-60 object-cover" controls />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <IOSButton
-                    variant="ghost"
-                    size="small"
-                    onClick={() => toggleLike(post.id)}
-                    aria-label="Suka"
-                  >
-                    <div className="inline-flex items-center gap-2">
-                      <Heart size={16} className="text-pink-500" />
-                      <span className="text-white-secondary">{post.counts.likes}</span>
-                    </div>
-                  </IOSButton>
-                  <IOSButton
-                    variant="ghost"
-                    size="small"
-                    onClick={() => addComment(post.id)}
-                    aria-label="Komentar"
-                  >
-                    <div className="inline-flex items-center gap-2">
-                      <MessageCircle size={16} />
-                      <span className="text-white-secondary">{post.counts.comments}</span>
-                    </div>
-                  </IOSButton>
-                  <IOSButton variant="ghost" size="small" aria-label="Bagikan">
-                    <div className="inline-flex items-center gap-2">
-                      <Share2 size={16} />
-                      <span className="text-white-secondary">Bagikan</span>
-                    </div>
-                  </IOSButton>
-                </div>
-              </IOSCard>
+              <ModernFeedCard
+                key={post.id}
+                post={{
+                  id: post.id,
+                  title: post.title || 'Pengumuman',
+                  content: post.content || '',
+                  author: post.authorName || 'Admin',
+                  created_at: post.created_at,
+                  type: 'announcement',
+                  media: post.media?.map(m => m.url) || [],
+                  counts: post.counts,
+                  isLiked: (post as any).isLiked || false
+                }}
+                onLike={toggleLike}
+                onComment={addComment}
+                onImageClick={setImagePreview}
+                canInteract={!!user}
+              />
             ))}
           </div>
         )}
@@ -666,16 +642,20 @@ export default function FeedPage() {
 
         {/* Refresh Button */}
         <div className="flex justify-center pt-4">
-          <IOSButton variant="secondary" onClick={loadInitialData} disabled={isLoading}>
+          <IOSButton 
+            onClick={loadInitialData} 
+            disabled={isLoading}
+            className="bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30"
+          >
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border border-gray-700 border-t-ios-accent" />
+                <span className="animate-spin rounded-full h-4 w-4 border border-pink-400 border-t-transparent" />
                 Memuat…
               </span>
             ) : 'Muat ulang'}
           </IOSButton>
         </div>
-      </IOSContainer>
+      </div>
     </div>
   );
 }

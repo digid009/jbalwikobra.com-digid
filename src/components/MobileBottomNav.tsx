@@ -29,7 +29,7 @@ const MobileBottomNav: React.FC = () => {
     },
     {
       path: '/products',
-      label: 'Produk',
+      label: 'Cari',
       icon: Search,
       activeIcon: Search,
     },
@@ -56,48 +56,68 @@ const MobileBottomNav: React.FC = () => {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-  <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-gray-700">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navigationItems.map((item) => {
-            const isActive = isActiveTab(item.path);
-            const IconComponent = isActive ? item.activeIcon : item.icon;
+      <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div className="relative bg-gradient-to-t from-black/95 via-black/90 to-black/80 backdrop-blur-xl border-t border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-t from-pink-500/5 to-transparent"></div>
+          
+          <div className="relative flex items-center justify-around px-4 py-3">
+            {navigationItems.map((item) => {
+              const isActive = isActiveTab(item.path);
+              const IconComponent = isActive ? item.activeIcon : item.icon;
 
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-200 ${
-                  item.isSpecial
-                    ? 'bg-pink-500 text-white scale-110 shadow-lg'
-                    : isActive
-                    ? 'bg-pink-500/10 text-pink-500'
-                    : 'text-white-secondary hover:text-white'
-                } min-w-[60px] transform active:scale-95`}
-              >
-                <div className={`relative ${item.isSpecial ? 'mb-1' : 'mb-1.5'}`}>
-                  <IconComponent 
-                    className={`w-5 h-5 ${item.isSpecial ? 'w-6 h-6' : ''}`} 
-                    strokeWidth={isActive && !item.isSpecial ? 2.5 : 2}
-                  />
-                </div>
-                
-                <span className={`text-xs font-medium ${
-                  item.isSpecial ? 'text-white' : ''
-                } leading-none`}>
-                  {item.label}
-                </span>
-                
-                {/* Active Indicator */}
-                {isActive && !item.isSpecial && (
-                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-pink-500 rounded-full"></div>
-                )}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all duration-300 transform ${
+                    item.isSpecial
+                      ? 'bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white scale-110 shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50'
+                      : isActive
+                      ? 'bg-white/10 backdrop-blur-sm text-pink-400 border border-pink-500/30'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  } min-w-[64px] active:scale-95 group`}
+                >
+                  <div className={`relative ${item.isSpecial ? 'mb-1' : 'mb-1.5'} transition-transform duration-300 ${
+                    item.isSpecial ? '' : 'group-hover:scale-110'
+                  }`}>
+                    <IconComponent 
+                      className={`${item.isSpecial ? 'w-7 h-7' : 'w-6 h-6'} transition-all duration-300`}
+                      strokeWidth={isActive && !item.isSpecial ? 2.5 : 2}
+                    />
+                    
+                    {/* Glow effect for special button */}
+                    {item.isSpecial && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-fuchsia-500 rounded-full blur-sm opacity-50 -z-10"></div>
+                    )}
+                  </div>
+                  
+                  <span className={`text-xs font-medium leading-none transition-colors duration-300 ${
+                    item.isSpecial 
+                      ? 'text-white' 
+                      : isActive 
+                        ? 'text-pink-400' 
+                        : 'text-gray-400 group-hover:text-white'
+                  }`}>
+                    {item.label}
+                  </span>
+                  
+                  {/* Active Indicator */}
+                  {isActive && !item.isSpecial && (
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-gradient-to-r from-pink-500 to-fuchsia-500 rounded-full shadow-sm"></div>
+                  )}
+                  
+                  {/* Hover glow effect */}
+                  {!item.isSpecial && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-pink-500/0 to-pink-500/0 group-hover:from-pink-500/10 group-hover:to-fuchsia-500/10 rounded-2xl transition-all duration-300 -z-10"></div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Safe Area for iOS */}
+          <div className="h-safe-area-inset-bottom bg-gradient-to-t from-black to-transparent"></div>
         </div>
-
-        {/* Safe Area for iOS */}
-        <div className="h-safe-area-inset-bottom bg-ios-background"></div>
       </nav>
 
       {/* Spacer for content */}
