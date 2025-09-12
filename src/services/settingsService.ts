@@ -75,14 +75,14 @@ export class SettingsService {
         hero_subtitle: input.heroSubtitle ?? current.heroSubtitle ?? null,
       };
       if (input.logoFile instanceof File) {
-        const url = await uploadFile(input.logoFile, 'settings');
-        if (url) payload.logo_url = url;
+        const result = await uploadFile(input.logoFile, 'settings');
+        if (result.url) payload.logo_url = result.url;
       } else if (input.logoUrl) {
         payload.logo_url = input.logoUrl;
       }
       if (input.faviconFile instanceof File) {
-        const url = await uploadFile(input.faviconFile, 'settings');
-        if (url) payload.favicon_url = url;
+        const result = await uploadFile(input.faviconFile, 'settings');
+        if (result.url) payload.favicon_url = result.url;
       } else if (input.faviconUrl) {
         payload.favicon_url = input.faviconUrl;
       }

@@ -7,4 +7,5 @@ export type AdminTab =
   | 'feed'
   | 'banners'
   | 'flash-sales'
-  | 'reviews';
+  | 'reviews'
+  | 'notifications';

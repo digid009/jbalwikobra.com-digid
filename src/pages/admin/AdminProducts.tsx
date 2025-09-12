@@ -665,7 +665,10 @@ const AdminProducts: React.FC = () => {
               <ImageUploader
                 images={form.images}
                 onChange={(imgs)=>setForm({...form, images: imgs})}
-                onUpload={(files, onProgress)=>uploadFiles(files, 'products', onProgress)}
+                onUpload={async (files, onProgress) => {
+                  const results = await uploadFiles(files, 'products', onProgress);
+                  return results.map(result => result.url).filter(Boolean);
+                }}
                 max={15}
               />
               <p className="text-xs text-gray-500">Urutkan dengan drag & drop. Gambar pertama menjadi cover.</p>

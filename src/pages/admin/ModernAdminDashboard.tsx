@@ -10,6 +10,7 @@ import { AdminFeedManagement } from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
+import { AdminNotificationsPage } from './components/AdminNotificationsPage';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { IOSButton } from '../../components/ios/IOSDesignSystem';
@@ -31,6 +32,25 @@ const ModernAdminDashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasStatsError, setHasStatsError] = useState(false);
   const [statsErrorMessage, setStatsErrorMessage] = useState('');
+
+  // Update main content margin when sidebar state changes
+  useEffect(() => {
+    const updateMainContentMargin = () => {
+      const mainContent = document.querySelector('[data-main-content]') as HTMLElement;
+      if (mainContent) {
+        if (window.innerWidth >= 1024) { // lg breakpoint
+          const margin = sidebarCollapsed ? '80px' : '256px'; // Updated collapsed width
+          mainContent.style.marginLeft = margin;
+        } else {
+          mainContent.style.marginLeft = '0px'; // No margin on mobile
+        }
+      }
+    };
+
+    updateMainContentMargin();
+    window.addEventListener('resize', updateMainContentMargin);
+    return () => window.removeEventListener('resize', updateMainContentMargin);
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     loadStats();
@@ -60,12 +80,7 @@ const ModernAdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <>
-            <DashboardMetricsOverview onRefresh={loadStats} />
-            <AdminDashboardContent onRefreshStats={loadStats} />
-          </>
-        );
+        return <AdminDashboardContent onRefreshStats={loadStats} />;
       case 'orders':
         return <AdminOrdersManagement />;
       case 'users':
@@ -80,8 +95,10 @@ const ModernAdminDashboard: React.FC = () => {
         return <AdminFlashSalesManagement />;
       case 'reviews':
         return <AdminReviewsManagement />;
+      case 'notifications':
+        return <AdminNotificationsPage />;
       default:
-        return <DashboardMetricsOverview onRefresh={loadStats} />;
+        return <AdminDashboardContent onRefreshStats={loadStats} />;
     }
   };
 
@@ -94,7 +111,7 @@ const ModernAdminDashboard: React.FC = () => {
       />
       <AdminMobileHeader onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
-      <div className="flex">;
+      <div className="flex">
         <AdminSidebar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -109,10 +126,14 @@ const ModernAdminDashboard: React.FC = () => {
           onSelect={setActiveTab}
         />
 
-        {/* Enhanced Main Content Area */}
-        <div className="flex-1 min-w-0 bg-gradient-to-br from-black via-gray-950 to-black">
+        {/* Enhanced Main Content Area with proper spacing for fixed sidebar */}
+        <div 
+          data-main-content
+          className="flex-1 min-w-0 bg-gradient-to-br from-black via-gray-950 to-black transition-all duration-300 pt-20 lg:pt-0"
+          style={{ marginLeft: '256px' }} // Default desktop margin
+        >
           {/* Enhanced Sticky Content Header */}
-          <div className="hidden lg:block sticky top-0 z-10 bg-gradient-to-r from-black/95 via-gray-950/95 to-black/95 backdrop-blur-md border-b border-pink-500/20 shadow-xl shadow-pink-500/10">
+          <div className="hidden lg:block sticky top-0 z-30 bg-gradient-to-r from-black/95 via-gray-950/95 to-black/95 backdrop-blur-md border-b border-pink-500/20 shadow-xl shadow-pink-500/10">
             <div className="px-8 py-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -126,7 +147,13 @@ const ModernAdminDashboard: React.FC = () => {
                 <IOSButton
                   variant="ghost"
                   size="small"
-                  className="p-3 rounded-2xl hover:bg-pink-500/20 border border-pink-500/30 hover:border-pink-500/50 transition-all duration-200"
+                  onClick={() => setActiveTab('notifications')}
+                  className={cn(
+                    'p-3 rounded-2xl border transition-all duration-200',
+                    activeTab === 'notifications' 
+                      ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
+                      : 'hover:bg-pink-500/20 border-pink-500/30 hover:border-pink-500/50 text-pink-500'
+                  )}
                 >
                   <Bell className="w-6 h-6 text-pink-500" />
                 </IOSButton>

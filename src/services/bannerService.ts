@@ -76,8 +76,8 @@ export class BannerService {
       const caps = await ensureBannerCapabilities();
       let image_url = input.imageUrl;
       if (input.file instanceof File) {
-        const url = await uploadFile(input.file, 'banners');
-        if (url) image_url = url;
+        const result = await uploadFile(input.file, 'banners');
+        if (result.url) image_url = result.url;
       }
       const payload: any = {
         title: input.title,
@@ -130,8 +130,8 @@ export class BannerService {
       };
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
       if (updates.file instanceof File) {
-        const url = await uploadFile(updates.file, 'banners');
-        if (url) payload.image_url = url;
+        const result = await uploadFile(updates.file, 'banners');
+        if (result.url) payload.image_url = result.url;
       }
       const { data, error } = await (supabase as any)
         .from('banners')

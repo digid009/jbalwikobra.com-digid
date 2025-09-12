@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, BarChart, Package, TrendingDown } from 'lucide-react';
-import { adminService, AdminNotification, OrderDayStat, TopProductStat } from '../../../services/adminService';
+import { adminService, AdminNotification, OrderDayStat } from '../../../services/adminService';
 import { DashboardMetricsOverview } from './DashboardMetricsOverview';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
@@ -17,7 +17,6 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [series, setSeries] = useState<OrderDayStat[]>([]);
-  const [topProducts, setTopProducts] = useState<TopProductStat[]>([]);
   const [range, setRange] = useState<'7d' | '14d' | '30d'>('7d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -42,8 +41,6 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
       const days = range === '7d' ? 7 : range === '14d' ? 14 : 30;
       const ts = await adminService.getOrdersTimeSeries(customStart && customEnd ? { startDate: customStart, endDate: customEnd } : { days });
       setSeries(ts);
-      const tp = await adminService.getTopProducts(customStart && customEnd ? { startDate: customStart, endDate: customEnd } : {});
-      setTopProducts(tp);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -114,100 +111,27 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   return (
     <div className="space-y-8">
       <DashboardMetricsOverview onRefresh={onRefreshStats} />
-      <DashboardSection title="Recent Activity" subtitle="Latest updates from your store" dense>
+
+      <DashboardSection title="Analytics Dashboard" subtitle="Track your store performance" dense>
         <DataPanel>
-          <div className="flex items-center justify-between mb-6">
+          {/* Analytics Header */}
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/60 dark:bg-white/10 ring-1 ring-white/10">
-                <Bell className="w-5 h-5 text-pink-500" />
+                <Calendar className="w-5 h-5 text-pink-500" />
               </div>
-              <span className="typescale-h4">Recent Activity</span>
+              <span className="typescale-h4">Analytics</span>
             </div>
             <IOSButton 
               size="small" 
               variant="ghost" 
               onClick={handleRefresh} 
-              disabled={refreshing}
-              className="flex items-center space-x-2 hover:bg-ios-background/50 rounded-xl"
+              disabled={refreshing || loading}
+              className="flex items-center space-x-2 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl"
             >
-              <RotateCcw className={cn('w-4 h-4', refreshing && 'animate-spin')} /> 
-              <span className="hidden sm:inline">Refresh</span>
+              <RotateCcw className={cn('w-4 h-4 text-pink-500', (refreshing || loading) && 'animate-spin')} /> 
+              <span className="hidden sm:inline text-pink-300">Refresh</span>
             </IOSButton>
-          </div>
-
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse flex space-x-4 p-4 rounded-2xl bg-ios-background/30">
-                  <div className="w-12 h-12 bg-ios-background/50 rounded-2xl"></div>
-                  <div className="flex-1 space-y-3 py-2">
-                    <div className="h-4 bg-ios-background/50 rounded-full w-3/4"></div>
-                    <div className="h-3 bg-ios-background/50 rounded-full w-1/2"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : recentNotifications.length > 0 ? (
-            <div className="space-y-3">
-              {recentNotifications.map((notification, index) => (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    'notification-card p-4 rounded-2xl border transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5',
-                    getNotificationColor(notification.type),
-                    'bg-gradient-to-r from-transparent to-white/5 gradient-overlay'
-                  )}
-                  style={{ 
-                    animationDelay: `${index * 100}ms`,
-                    animation: 'fadeInUp 0.5s ease-out forwards'
-                  }}
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-black/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-gray-600 shadow-lg shadow-black/50">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
-                        <h4 className="font-bold text-white truncate pr-2">{notification.title}</h4>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-black/90 text-white border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-lg shadow-black/50">
-                          {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-white leading-relaxed font-medium">
-                        {notification.message}
-                      </p>
-                      {notification.amount && (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-ios-success/10 border border-ios-success/20 text-xs font-bold text-ios-success">
-                            Rp {notification.amount.toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-ios-background/30 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-                <Activity className="w-8 h-8 text-gray-200" />
-              </div>
-              <p className="text-gray-200 font-medium">No recent activity</p>
-              <p className="text-gray-200/60 text-sm mt-1">New updates will appear here</p>
-            </div>
-          )}
-        </DataPanel>
-      </DashboardSection>
-
-      <DashboardSection title="Analytics Dashboard" subtitle="Track your store performance" dense>
-        <DataPanel>
-          {/* Analytics Header */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/60 dark:bg-white/10 ring-1 ring-white/10">
-              <Calendar className="w-5 h-5 text-pink-500" />
-            </div>
-            <span className="typescale-h4">Analytics</span>
           </div>
 
           {/* Date Range Filters */}
@@ -253,28 +177,28 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           </div>
 
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Orders & Revenue Chart */}
-            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-gray-600">
-              <div className="flex items-center space-x-3 mb-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Revenue Timeline Chart */}
+            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-8 border border-gray-600">
+              <div className="flex items-center space-x-3 mb-8">
                 <div className="w-8 h-8 bg-ios-primary/10 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-ios-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white">Orders & Revenue</h4>
-                  <p className="text-xs text-white font-medium">Daily performance metrics</p>
+                  <h4 className="font-bold text-white text-lg">Total revenue per team - timeline</h4>
+                  <p className="text-sm text-gray-300 font-medium">Track your store performance</p>
                 </div>
               </div>
               
               {loading && series.length===0 ? (
-                <div className="h-48 flex items-center justify-center">
+                <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-12 h-12 border-4 border-ios-primary/20 border-t-ios-primary rounded-full animate-spin mx-auto mb-3"></div>
                     <p className="text-sm text-white font-medium">Loading analytics...</p>
                   </div>
                 </div>
               ) : series.length===0 ? (
-                <div className="h-48 flex items-center justify-center">
+                <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                       <BarChart className="w-6 h-6 text-gray-200" />
@@ -284,147 +208,130 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="h-48 relative bg-gradient-to-t from-ios-background/10 to-transparent rounded-xl">
-                    <svg className="absolute inset-0 w-full h-full overflow-visible p-2" preserveAspectRatio="none">
-                      {/* Revenue bars */}
-                      {series.map((d,i)=>{ 
-                        const x=(i/(series.length-1))*100; 
-                        const h=(d.revenue/maxRevenue)*100; 
-                        const y=100-h; 
-                        return (
-                          <rect 
-                            key={d.date+'r'} 
-                            x={`calc(${x}% - 3px)`} 
-                            y={y+'%'} 
-                            width={6} 
-                            height={h+'%'} 
-                            fill="url(#revenueGradient)" 
-                            className="drop-shadow-lg shadow-black/50"
-                          />
-                        );
-                      })}
-                      {/* Order line */}
-                      {series.map((d,i)=>{ 
-                        if(i===0) return null; 
-                        const prev=series[i-1]; 
-                        const x1=((i-1)/(series.length-1))*100; 
-                        const x2=(i/(series.length-1))*100; 
-                        const y1=100-(prev.count/maxCount)*100; 
-                        const y2=100-(d.count/maxCount)*100; 
-                        return (
-                          <line 
-                            key={d.date+'l'} 
-                            x1={x1+'%'} 
-                            y1={y1+'%'} 
-                            x2={x2+'%'} 
-                            y2={y2+'%'} 
-                            stroke="#007AFF" 
-                            strokeWidth={3}
-                            className="drop-shadow-lg shadow-black/50"
-                          />
-                        );
-                      })}
-                      {/* Order points */}
-                      {series.map((d,i)=>{ 
-                        const x=(i/(series.length-1))*100; 
-                        const y=100-(d.count/maxCount)*100; 
-                        return (
-                          <circle 
-                            key={d.date+'c'} 
-                            cx={x+'%'} 
-                            cy={y+'%'} 
-                            r={4} 
-                            fill="#007AFF" 
-                            className="drop-shadow-lg shadow-black/50"
-                          />
-                        );
-                      })}
+                  <div className="h-80 relative bg-gradient-to-br from-gray-900/30 to-gray-800/20 rounded-2xl border border-gray-700/30 backdrop-blur-sm p-6">
+                    <svg className="absolute inset-6 w-[calc(100%-48px)] h-[calc(100%-48px)] overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
                       <defs>
-                        <linearGradient id="revenueGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                          <stop offset="0%" stopColor="#34C759" stopOpacity="0.8"/>
-                          <stop offset="100%" stopColor="#34C759" stopOpacity="0.3"/>
+                        {/* Area gradient for main revenue */}
+                        <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.6"/>
+                          <stop offset="30%" stopColor="#A855F7" stopOpacity="0.4"/>
+                          <stop offset="100%" stopColor="#C084FC" stopOpacity="0.1"/>
+                        </linearGradient>
+                        
+                        {/* Secondary area for contrast */}
+                        <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3"/>
+                          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.1"/>
                         </linearGradient>
                       </defs>
+                      
+                      {/* Main revenue area chart */}
+                      <path 
+                        d={`M 0 100 ${series.map((d, i) => {
+                          const x = (i / (series.length - 1)) * 100;
+                          const y = 100 - (d.revenue / maxRevenue) * 85;
+                          return `L ${x} ${y}`;
+                        }).join(' ')} L 100 100 Z`}
+                        fill="url(#areaGradient)"
+                        className="drop-shadow-lg"
+                      />
+                      
+                      {/* Secondary area (ghostbusters simulation) */}
+                      <path 
+                        d={`M 0 100 ${series.map((d, i) => {
+                          const x = (i / (series.length - 1)) * 100;
+                          const y = 100 - (d.count * 100 / maxCount) * 75; // Different scale
+                          return `L ${x} ${y}`;
+                        }).join(' ')} L 100 100 Z`}
+                        fill="url(#secondaryGradient)"
+                        className="drop-shadow-md"
+                      />
+                      
+                      {/* Main revenue line (A-team) */}
+                      <path 
+                        d={`M ${series.map((d, i) => {
+                          const x = (i / (series.length - 1)) * 100;
+                          const y = 100 - (d.revenue / maxRevenue) * 85;
+                          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                        }).join(' ')}`}
+                        fill="none"
+                        stroke="#7C3AED"
+                        strokeWidth="3"
+                        className="drop-shadow-lg"
+                      />
+                      
+                      {/* Secondary line (Ghostbusters) */}
+                      <path 
+                        d={`M ${series.map((d, i) => {
+                          const x = (i / (series.length - 1)) * 100;
+                          const y = 100 - (d.count * 100 / maxCount) * 75;
+                          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                        }).join(' ')}`}
+                        fill="none"
+                        stroke="#8B5CF6"
+                        strokeWidth="2"
+                        strokeOpacity="0.8"
+                        className="drop-shadow-md"
+                      />
+                      
+                      {/* Data points for main line */}
+                      {series.map((d, i) => {
+                        const x = (i / (series.length - 1)) * 100;
+                        const y = 100 - (d.revenue / maxRevenue) * 85;
+                        return (
+                          <circle
+                            key={`main-${i}`}
+                            cx={x}
+                            cy={y}
+                            r="4"
+                            fill="#7C3AED"
+                            stroke="#FFFFFF"
+                            strokeWidth="2"
+                            className="drop-shadow-md"
+                          />
+                        );
+                      })}
                     </svg>
-                  </div>
-                  <div className="flex justify-center gap-6">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-ios-primary rounded-full shadow-lg shadow-black/50"></div>
-                      <span className="text-sm font-medium text-white">Orders</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-3 bg-gradient-to-t from-ios-success to-ios-success/50 rounded-sm shadow-lg shadow-black/50"></div>
-                      <span className="text-sm font-medium text-white">Revenue</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Top Products */}
-            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-gray-600">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-8 h-8 bg-ios-success/10 rounded-xl flex items-center justify-center">
-                  <Package className="w-4 h-4 text-ios-success" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">Top Products</h4>
-                  <p className="text-xs text-white font-medium">Best performing items</p>
-                </div>
-              </div>
-              
-              {loading && topProducts.length===0 ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_,i)=>(
-                    <div key={i} className="flex items-center justify-between animate-pulse">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-ios-background/30 rounded-xl"></div>
-                        <div className="space-y-2">
-                          <div className="h-3 bg-ios-background/30 rounded w-24"></div>
-                          <div className="h-2 bg-ios-background/30 rounded w-16"></div>
-                        </div>
+                    
+                    {/* Chart Legend */}
+                    <div className="absolute top-6 right-6 flex flex-col gap-3 bg-black/40 backdrop-blur-md rounded-xl p-4 border border-gray-600/40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-600 to-purple-400"></div>
+                        <span className="text-sm text-gray-200 font-medium">A-team</span>
                       </div>
-                      <div className="h-4 bg-ios-background/30 rounded w-20"></div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-300 opacity-70"></div>
+                        <span className="text-sm text-gray-300 font-medium">Ghostbusters</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span className="text-sm text-gray-400 font-medium">Little rascals</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ) : topProducts.length===0 ? (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
-                    <Package className="w-6 h-6 text-gray-200" />
-                  </div>
-                  <p className="text-sm text-gray-200">No product data available</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {topProducts.map((p, index) => (
-                    <div key={p.product_id} className="group" 
-                         style={{ 
-                           animationDelay: `${index * 150}ms`,
-                           animation: 'slideInLeft 0.6s ease-out forwards'
-                         }}>
-                      <div className="product-card gradient-overlay flex items-center justify-between p-3 rounded-xl transition-all duration-200">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-ios-primary/10 to-ios-primary/5 rounded-xl flex items-center justify-center border border-ios-primary/10 text-sm font-bold text-ios-primary">
-                            #{index + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-white group-hover:text-ios-primary transition-colors">
-                              {p.product_name}
-                            </p>
-                            <p className="text-xs text-white font-medium">
-                              {p.count} orders sold
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-ios-success">
-                            Rp {p.revenue.toLocaleString()}
+                    
+                    {/* Y-axis labels */}
+                    <div className="absolute left-2 top-6 bottom-12 flex flex-col justify-between text-right">
+                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.001).toLocaleString()}K</span>
+                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0008).toLocaleString()}K</span>
+                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0006).toLocaleString()}K</span>
+                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0004).toLocaleString()}K</span>
+                      <span className="text-xs text-gray-400 font-medium">€{Math.round(maxRevenue * 0.0002).toLocaleString()}K</span>
+                      <span className="text-xs text-gray-400 font-medium">€0</span>
+                    </div>
+                    
+                    {/* X-axis labels */}
+                    <div className="absolute bottom-2 left-12 right-6 flex justify-between">
+                      {series.map((d, i) => {
+                        if (i % Math.max(1, Math.ceil(series.length / 8)) !== 0 && i !== series.length - 1) return null;
+                        const date = new Date(d.date);
+                        return (
+                          <span key={d.date} className="text-xs text-gray-400 font-medium">
+                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>

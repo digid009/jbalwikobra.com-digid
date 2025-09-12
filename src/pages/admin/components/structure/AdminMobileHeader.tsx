@@ -7,7 +7,7 @@ interface AdminMobileHeaderProps {
 }
 
 export const AdminMobileHeader: React.FC<AdminMobileHeaderProps> = ({ onOpenMenu }) => (
-  <div className="lg:hidden bg-gradient-to-r from-black via-gray-950 to-black backdrop-blur-md border-b border-pink-500/30 sticky top-0 z-50 shadow-2xl shadow-pink-500/10">
+  <div className="lg:hidden bg-gradient-to-r from-black via-gray-950 to-black backdrop-blur-md border-b border-pink-500/30 fixed top-0 left-0 right-0 z-50 shadow-2xl shadow-pink-500/10">
     <div className="flex items-center justify-between p-4">
       <div className="flex items-center space-x-3">
         <IOSButton

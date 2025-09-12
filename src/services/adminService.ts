@@ -927,59 +927,133 @@ export const adminService = {
 
   // ----- Dashboard Analytics -----
   async getOrdersTimeSeries(params?: { startDate?: string; endDate?: string; days?: number }): Promise<OrderDayStat[]> {
-    // Since orders table is empty, return empty time series
-    console.log('[adminService.getOrdersTimeSeries] orders table empty, returning empty series');
-    const days = params?.days || 7;
-    const end = params?.endDate ? new Date(params.endDate) : new Date();
-    const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+    try {
+      const days = params?.days || 7;
+      const end = params?.endDate ? new Date(params.endDate) : new Date();
+      const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
+      const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).toISOString();
 
-    // Return empty buckets for charting
-    const buckets: OrderDayStat[] = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = d.toISOString().slice(0, 10);
-      buckets.push({ date: key, count: 0, revenue: 0 });
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('created_at, amount, status')
+        .gte('created_at', startISO)
+        .lte('created_at', endISO);
+
+      if (error) {
+        console.warn('getOrdersTimeSeries error', error);
+        // Return empty buckets on error
+        const buckets: OrderDayStat[] = [];
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const key = d.toISOString().slice(0, 10);
+          buckets.push({ date: key, count: 0, revenue: 0 });
+        }
+        return buckets;
+      }
+
+      // Group by date
+      const dailyStats: Record<string, { count: number; revenue: number }> = {};
+      
+      // Initialize all days with zero values
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        dailyStats[key] = { count: 0, revenue: 0 };
+      }
+
+      // Process orders - only count paid and completed for revenue
+      (orders || []).forEach(order => {
+        const orderDate = new Date(order.created_at);
+        const dateKey = orderDate.toISOString().slice(0, 10);
+        
+        if (dailyStats[dateKey]) {
+          dailyStats[dateKey].count += 1;
+          
+          // Only include revenue for paid and completed orders
+          if (order.status === 'paid' || order.status === 'completed') {
+            dailyStats[dateKey].revenue += Number(order.amount) || 0;
+          }
+        }
+      });
+
+      return Object.entries(dailyStats)
+        .map(([date, stats]) => ({
+          date,
+          count: stats.count,
+          revenue: stats.revenue
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    } catch (error) {
+      console.error('Error in getOrdersTimeSeries:', error);
+      // Return empty buckets on error
+      const days = params?.days || 7;
+      const end = params?.endDate ? new Date(params.endDate) : new Date();
+      const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+      
+      const buckets: OrderDayStat[] = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        buckets.push({ date: key, count: 0, revenue: 0 });
+      }
+      return buckets;
     }
-    return buckets;
   },
 
   async getTopProducts(params?: { startDate?: string; endDate?: string; limit?: number }): Promise<TopProductStat[]> {
-    // Since orders table is empty, return empty array instead of causing 400 error
-    console.log('[adminService.getTopProducts] orders table empty, returning empty array');
-    return [];
-    
-    /* Original implementation - disabled until orders table has data
-    const limit = params?.limit || 5;
-    const end = params?.endDate ? new Date(params.endDate) : new Date();
-    const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
-    const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
-    const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).toISOString();
+    try {
+      const limit = params?.limit || 5;
+      const end = params?.endDate ? new Date(params.endDate) : new Date();
+      const start = params?.startDate ? new Date(params.startDate) : new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
+      const startISO = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString();
+      const endISO = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).toISOString();
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('product_id, product_name, amount')
-      .gte('created_at', startISO)
-      .lte('created_at', endISO);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('product_id, amount, status')
+        .gte('created_at', startISO)
+        .lte('created_at', endISO);
 
-    if (error) {
-      console.warn('getTopProducts error', error);
+      if (error) {
+        console.warn('getTopProducts error', error);
+        return [];
+      }
+
+      // First get product names for the found product IDs
+      const productIds = [...new Set((data || []).map(o => o.product_id).filter(Boolean))];
+      const productNamesMap: Record<string, string> = {};
+      
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', productIds);
+        
+        (products || []).forEach(p => {
+          productNamesMap[p.id] = p.name;
+        });
+      }
+
+      const agg: Record<string, TopProductStat> = {};
+      (data || []).forEach(order => {
+        const pid = order.product_id || 'unknown';
+        const name = productNamesMap[pid] || 'Unknown Product';
+        if (!agg[pid]) {
+          agg[pid] = { product_id: pid, product_name: name, count: 0, revenue: 0 };
+        }
+        agg[pid].count += 1;
+        
+        // Only include revenue for paid and completed orders
+        if (order.status === 'paid' || order.status === 'completed') {
+          agg[pid].revenue += Number(order.amount) || 0;
+        }
+      });
+
+      return Object.values(agg)
+        .sort((a, b) => b.revenue - a.revenue) // Sort by revenue instead of count
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error in getTopProducts:', error);
       return [];
     }
-
-    const agg: Record<string, TopProductStat> = {};
-    (data || []).forEach(o => {
-      const pid = (o as any).product_id || 'unknown';
-      const name = (o as any).product_name || 'Unknown Product';
-      if (!agg[pid]) {
-        agg[pid] = { product_id: pid, product_name: name, count: 0, revenue: 0 };
-      }
-      agg[pid].count += 1;
-      agg[pid].revenue += Number((o as any).amount) || 0;
-    });
-
-    return Object.values(agg)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-    */
   },
 
   async getNotifications(page: number = 1, limit: number = 20): Promise<AdminNotification[]> {

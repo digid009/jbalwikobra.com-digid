@@ -17,11 +17,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle,
   return (
     <div className={cn(
       'hidden lg:flex flex-col transition-all duration-300 ease-in-out',
-      collapsed ? 'w-16' : 'w-64',
-      'bg-gradient-to-b from-black via-gray-950 to-black border-r border-pink-500/20 sticky top-0 h-screen overflow-y-auto shadow-2xl shadow-pink-500/10'
+      collapsed ? 'w-20' : 'w-64',
+      'bg-gradient-to-b from-black via-gray-950 to-black border-r border-pink-500/20 fixed left-0 top-0 h-screen overflow-y-auto shadow-2xl shadow-pink-500/10 z-40'
     )}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-8">
+      <div className={cn(
+        'transition-all duration-300',
+        collapsed ? 'p-4' : 'p-6'
+      )}>
+        <div className={cn(
+          'flex items-center mb-8 transition-all duration-300',
+          collapsed ? 'justify-center' : 'justify-between'
+        )}>
           {!collapsed && (
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 via-pink-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-pink-500/30">
@@ -35,11 +41,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle,
               </div>
             </div>
           )}
+          {collapsed && (
+            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 via-pink-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-pink-500/30">
+              <LayoutDashboard className="w-6 h-6 text-white" />
+            </div>
+          )}
           <IOSButton
             variant="ghost"
             size="small"
             onClick={onToggle}
-            className="p-3 rounded-full hover:bg-pink-500/20 border border-pink-500/30 hover:border-pink-500/50 transition-all duration-200"
+            className={cn(
+              'p-3 rounded-full hover:bg-pink-500/20 border border-pink-500/30 hover:border-pink-500/50 transition-all duration-200',
+              collapsed && 'mt-4'
+            )}
           >
             {collapsed ? (
               <ChevronRight className="w-5 h-5 text-pink-500" />
@@ -57,11 +71,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle,
                 key={item.id}
                 onClick={() => onChangeTab(item.id)}
                 className={cn(
-                  'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-semibold text-base relative group',
+                  'w-full flex items-center transition-all duration-300 font-semibold text-base relative group rounded-2xl',
+                  collapsed ? 'justify-center p-3 aspect-square' : 'gap-4 px-5 py-4',
                   isActive
                     ? 'bg-gradient-to-r from-pink-500 via-pink-600 to-fuchsia-600 text-white shadow-lg shadow-pink-500/40 ring-2 ring-pink-500/50 scale-[1.02]'
-                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-pink-600/20 hover:text-pink-300 hover:scale-[1.01] hover:shadow-md hover:ring-1 hover:ring-pink-500/30',
-                  collapsed && 'justify-center px-4'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-pink-500/20 hover:to-pink-600/20 hover:text-pink-300 hover:scale-[1.01] hover:shadow-md hover:ring-1 hover:ring-pink-500/30'
                 )}
               >
                 <Icon className={cn(
