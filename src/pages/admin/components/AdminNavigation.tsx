@@ -84,7 +84,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
     <div className="w-full">
       <IOSCard className="sticky top-20">
         <div className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-white mb-4">
             Admin Panel
           </h2>
           
@@ -121,22 +121,22 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
           {/* Quick Stats */}
           {stats && (
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-600 mb-3">Quick Stats</h3>
+              <h3 className="text-sm font-medium text-gray-200 mb-3">Quick Stats</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Users:</span>
+                  <span className="text-gray-200">Total Users:</span>
                   <span className="font-medium">{stats.totalUsers}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Orders:</span>
+                  <span className="text-gray-200">Total Orders:</span>
                   <span className="font-medium">{stats.totalOrders}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Revenue:</span>
+                  <span className="text-gray-200">Revenue:</span>
                   <span className="font-medium">Rp {stats.totalRevenue.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Products:</span>
+                  <span className="text-gray-200">Products:</span>
                   <span className="font-medium">{stats.totalProducts}</span>
                 </div>
               </div>

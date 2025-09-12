@@ -170,7 +170,7 @@ function App() {
                 
                 {/* Public routes with global layout */}
                 <Route path="*" element={
-                  <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200 relative">
+                  <div className="App min-h-screen flex flex-col bg-black text-white relative">
                     <Header />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />

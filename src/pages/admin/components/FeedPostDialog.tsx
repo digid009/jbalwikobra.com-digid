@@ -115,11 +115,11 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
               value={formData.content || ''}
               onChange={(e) => handleInputChange('content', e.target.value)}
               rows={8}
-              className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none resize-none"
+              className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none resize-none"
               placeholder="Write your post content here..."
               required
             />
-            <div className="mt-2 text-sm text-ios-text-secondary">
+            <div className="mt-2 text-sm text-gray-200">
               {formData.content?.length || 0} characters
             </div>
           </div>
@@ -130,14 +130,14 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
               <label className="block text-sm font-medium text-ios-text mb-2">
                 Preview
               </label>
-              <div className="p-4 border border-ios-separator rounded-lg bg-ios-surface-secondary">
+              <div className="p-4 border border-ios-separator rounded-2xl bg-ios-surface-secondary">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 bg-ios-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
                     A
                   </div>
                   <div>
                     <p className="font-medium text-ios-text">Administrator</p>
-                    <p className="text-xs text-ios-text-secondary">Just now</p>
+                    <p className="text-xs text-gray-200">Just now</p>
                   </div>
                   {formData.type === 'announcement' && (
                     <span className="ml-auto bg-ios-warning text-white text-xs px-2 py-1 rounded">

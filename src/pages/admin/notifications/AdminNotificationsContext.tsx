@@ -1,127 +1,148 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { adminService, Order } from '../../../services/adminService';
-
-export type AdminNotificationKind = 'new_order' | 'status_paid' | 'status_cancelled';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Order } from '../../../services/adminService';
 
 export interface AdminNotification {
-  id: string; // internal notification id
+  id: string;
   orderId: string;
-  kind: AdminNotificationKind;
-  amount: number;
-  status: string;
-  createdAt: string; // ISO
+  type: 'new_order' | 'status_change' | 'payment_received';
+  title: string;
+  message: string;
+  timestamp: Date;
   read: boolean;
 }
 
-interface AdminNotificationsContextValue {
+interface AdminNotificationsContextType {
   notifications: AdminNotification[];
   unreadCount: number;
-  markRead: (id: string) => void;
-  dismiss: (id: string) => void;
-  markAllRead: () => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  addNotification: (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => void;
 }
 
-const AdminNotificationsContext = createContext<AdminNotificationsContextValue | null>(null);
+const AdminNotificationsContext = createContext<AdminNotificationsContextType | undefined>(undefined);
 
-// Poll interval ms
-const POLL_INTERVAL = 20000; // 20s
+export const useAdminNotifications = () => {
+  const context = useContext(AdminNotificationsContext);
+  if (!context) {
+    throw new Error('useAdminNotifications must be used within AdminNotificationsProvider');
+  }
+  return context;
+};
 
-export const AdminNotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AdminNotificationsProviderProps {
+  children: ReactNode;
+}
+
+export const AdminNotificationsProvider: React.FC<AdminNotificationsProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
-  const lastSnapshotRef = useRef<Record<string, Order>>({});
-  const pollingRef = useRef<number | null>(null);
+  const [processedOrders, setProcessedOrders] = useState<Set<string>>(new Set());
 
-  const snapshotOrders = (orders: Order[]) => {
-    const map: Record<string, Order> = {};
-    for (const o of orders) map[o.id] = o as Order;
-    return map;
-  };
+  // Create notifications from order changes
+  const processOrderUpdates = (orders: Order[]) => {
+    const newNotifs: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>[] = [];
 
-  const generateNotifications = (orders: Order[]) => {
-    const prev = lastSnapshotRef.current;
-    const nextMap = snapshotOrders(orders);
-    const newNotifs: AdminNotification[] = [];
-
-    for (const o of orders) {
-      const existed = prev[o.id];
-      if (!existed) {
-        newNotifs.push({
-          id: `notif-${o.id}-new-${Date.now()}`,
-            orderId: o.id,
-          kind: 'new_order',
-          amount: (o as any).amount || 0,
-          status: (o as any).status || 'pending',
-          createdAt: new Date().toISOString(),
-          read: false
-        });
-      } else if (existed.status !== o.status) {
-        if (o.status === 'paid') {
+    orders.forEach(order => {
+      const orderKey = `${order.id}-${order.status}`;
+      
+      if (!processedOrders.has(orderKey)) {
+        // New order notification
+        if (!processedOrders.has(order.id)) {
           newNotifs.push({
-            id: `notif-${o.id}-paid-${Date.now()}`,
-            orderId: o.id,
-            kind: 'status_paid',
-            amount: (o as any).amount || 0,
-            status: o.status,
-            createdAt: new Date().toISOString(),
-            read: false
-          });
-        } else if (o.status === 'cancelled') {
-          newNotifs.push({
-            id: `notif-${o.id}-cancel-${Date.now()}`,
-            orderId: o.id,
-            kind: 'status_cancelled',
-            amount: (o as any).amount || 0,
-            status: o.status,
-            createdAt: new Date().toISOString(),
-            read: false
+            orderId: order.id,
+            type: 'new_order',
+            title: 'New Order Received',
+            message: `Order from ${order.customer_name} for ${formatCurrency(order.amount)}`
           });
         }
+
+        // Status change notifications
+        if (order.status === 'completed') {
+          newNotifs.push({
+            orderId: order.id,
+            type: 'payment_received',
+            title: 'Order Completed',
+            message: `Order from ${order.customer_name} for ${formatCurrency(order.amount)} has been completed`
+          });
+        } else if (order.status === 'cancelled') {
+          newNotifs.push({
+            orderId: order.id,
+            type: 'status_change',
+            title: 'Order Cancelled',
+            message: `Order from ${order.customer_name} has been cancelled`
+          });
+        } else if (order.status === 'processing') {
+          newNotifs.push({
+            orderId: order.id,
+            type: 'status_change',
+            title: 'Order Processing',
+            message: `Order from ${order.customer_name} is now being processed`
+          });
+        }
+
+        setProcessedOrders(prev => new Set(prev).add(orderKey));
       }
-    }
+    });
 
-    lastSnapshotRef.current = nextMap;
-    if (newNotifs.length) {
-      setNotifications(prev => [...newNotifs, ...prev].slice(0, 100));
-    }
-  };
-
-  const poll = async () => {
-    try {
-      // page 1, limit 15 to capture recent changes
-      const { data } = await adminService.getOrders(1, 15, undefined as any);
-      generateNotifications(data || []);
-    } catch (e) {
-      // silent
+    if (newNotifs.length > 0) {
+      setNotifications(prev => [
+        ...newNotifs.map(notif => ({
+          ...notif,
+          id: `${notif.orderId}-${Date.now()}-${Math.random()}`,
+          timestamp: new Date(),
+          read: false
+        })),
+        ...prev
+      ]);
     }
   };
 
-  useEffect(() => {
-    poll(); // initial
-    pollingRef.current = window.setInterval(poll, POLL_INTERVAL);
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, []);
+  const markAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+  };
 
-  const markRead = (id: string) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const dismiss = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id));
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(notif => ({ ...notif, read: true }))
+    );
+  };
 
-  const value: AdminNotificationsContextValue = {
-    notifications,
-    unreadCount: notifications.filter(n => !n.read).length,
-    markRead,
-    dismiss,
-    markAllRead
+  const addNotification = (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => {
+    setNotifications(prev => [
+      {
+        ...notification,
+        id: `${notification.orderId}-${Date.now()}-${Math.random()}`,
+        timestamp: new Date(),
+        read: false
+      },
+      ...prev
+    ]);
+  };
+
+  const unreadCount = notifications.filter(notif => !notif.read).length;
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   return (
-    <AdminNotificationsContext.Provider value={value}>
+    <AdminNotificationsContext.Provider value={{
+      notifications,
+      unreadCount,
+      markAsRead,
+      markAllAsRead,
+      addNotification
+    }}>
       {children}
     </AdminNotificationsContext.Provider>
   );
-};
-
-export const useAdminNotifications = () => {
-  const ctx = useContext(AdminNotificationsContext);
-  if (!ctx) throw new Error('useAdminNotifications must be used within AdminNotificationsProvider');
-  return ctx;
 };

@@ -125,8 +125,8 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
             placeholder="Search banners by title or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-ios-background border border-ios-border rounded-xl 
-                       focus:ring-2 focus:ring-ios-primary focus:border-transparent 
+            className="w-full pl-10 pr-4 py-3 bg-ios-background border border-gray-700 rounded-xl 
+                       focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
                        transition-colors duration-200 text-ios-text placeholder-ios-text/60"
           />
         </div>
@@ -143,7 +143,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-ios-background/50 border-b border-ios-border">
+                <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
                       Banner
@@ -188,8 +188,8 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
                           <img
                             src={banner.image_url}
                             alt={banner.title}
-                            className="w-16 h-10 rounded-lg object-cover cursor-pointer hover:opacity-80 
-                                       transition-all duration-200 border border-ios-border/30
+                            className="w-16 h-10 rounded-2xl object-cover cursor-pointer hover:opacity-80 
+                                       transition-all duration-200 border border-gray-700/30
                                        hover:border-ios-primary/50"
                             onClick={() => setSelectedImage(banner.image_url)}
                             onError={(e) => {
@@ -264,7 +264,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-ios-border/30 bg-ios-background/50">
+              <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
                 <IOSPagination
                   currentPage={currentPage}
                   totalPages={totalPages}

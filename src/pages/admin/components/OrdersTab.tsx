@@ -58,7 +58,7 @@ const OrdersTab: React.FC = () => {
         <div className="text-ios-destructive mb-4">
           <ShoppingCart className="w-12 h-12 mx-auto mb-2" />
           <p className="font-medium">Failed to load orders</p>
-          <p className="text-sm text-ios-text-secondary">{error}</p>
+          <p className="text-sm text-gray-200">{error}</p>
         </div>
       </IOSCard>
     );
@@ -69,7 +69,7 @@ const OrdersTab: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-ios-text">Orders Management</h2>
-        <div className="text-sm text-ios-text-secondary">
+        <div className="text-sm text-gray-200">
           {orders.length} orders found
         </div>
       </div>
@@ -77,9 +77,9 @@ const OrdersTab: React.FC = () => {
       {/* Orders List */}
       {orders.length === 0 ? (
         <IOSCard className="p-8 text-center">
-          <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-ios-text-secondary" />
+          <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-200" />
           <h3 className="text-lg font-medium text-ios-text mb-2">No orders found</h3>
-          <p className="text-ios-text-secondary">Orders will appear here when customers make purchases</p>
+          <p className="text-gray-200">Orders will appear here when customers make purchases</p>
         </IOSCard>
       ) : (
         <div className="space-y-4">
@@ -94,7 +94,7 @@ const OrdersTab: React.FC = () => {
                     {getStatusBadge(order.status)}
                   </div>
                   
-                  <div className="text-sm text-ios-text-secondary space-y-1">
+                  <div className="text-sm text-gray-200 space-y-1">
                     <p>Customer: {order.customer_name || 'N/A'}</p>
                     <p>Email: {order.customer_email || 'N/A'}</p>
                     <p>Phone: {order.customer_phone || 'N/A'}</p>
@@ -124,12 +124,12 @@ const OrdersTab: React.FC = () => {
                       <img
                         src={order.products.image}
                         alt={order.products.name}
-                        className="w-12 h-12 object-cover rounded-lg bg-ios-surface-secondary"
+                        className="w-12 h-12 object-cover rounded-2xl bg-ios-surface-secondary"
                       />
                     )}
                     <div className="flex-1">
                       <p className="font-medium text-ios-text">{order.products.name}</p>
-                      <p className="text-sm text-ios-text-secondary">Product ID: {order.product_id}</p>
+                      <p className="text-sm text-gray-200">Product ID: {order.product_id}</p>
                     </div>
                   </div>
                 </div>
@@ -138,7 +138,7 @@ const OrdersTab: React.FC = () => {
               {/* Admin Notes */}
               {order.admin_notes && (
                 <div className="pt-4 border-t border-ios-separator">
-                  <p className="text-sm text-ios-text-secondary">
+                  <p className="text-sm text-gray-200">
                     <strong>Admin Notes:</strong> {order.admin_notes}
                   </p>
                 </div>

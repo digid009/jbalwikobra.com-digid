@@ -69,7 +69,7 @@ export const AdminUsersManagement: React.FC = () => {
 
       <IOSCard variant="elevated" padding="medium">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
           <input
             type="text"
             placeholder="Search users..."
@@ -77,8 +77,8 @@ export const AdminUsersManagement: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className={cn(
               'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-              'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
-              'focus:ring-2 focus:ring-ios-accent focus:border-transparent'
+              'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+              'focus:ring-2 focus:ring-ios-accent focus:border-pink-500'
             )}
           />
         </div>
@@ -88,28 +88,28 @@ export const AdminUsersManagement: React.FC = () => {
         {loading ? (
           <div className="p-12 text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
-            <p className="text-ios-text-secondary font-medium">Loading users...</p>
+            <p className="text-gray-200 font-medium">Loading users...</p>
           </div>
         ) : filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-ios-border'
+                'bg-ios-surface border-b border-gray-700'
               )}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Phone
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -122,7 +122,7 @@ export const AdminUsersManagement: React.FC = () => {
                         <IOSAvatar user={user} size="medium" />
                         <div className="ml-4">
                           <div className="text-sm font-medium text-ios-text">{user.name}</div>
-                          <div className="text-sm text-ios-text-secondary">ID: {user.id.slice(-8)}</div>
+                          <div className="text-sm text-gray-200">ID: {user.id.slice(-8)}</div>
                         </div>
                       </div>
                     </td>
@@ -133,7 +133,7 @@ export const AdminUsersManagement: React.FC = () => {
                       <span className="text-sm text-ios-text">{user.phone || 'Not provided'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text-secondary">
+                      <span className="text-sm text-gray-200">
                         {new Date(user.created_at).toLocaleDateString()}
                       </span>
                     </td>
@@ -150,10 +150,10 @@ export const AdminUsersManagement: React.FC = () => {
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
-              <UsersIcon className="w-8 h-8 text-ios-text-secondary" />
+              <UsersIcon className="w-8 h-8 text-gray-200" />
             </div>
-            <p className="text-ios-text-secondary font-medium">No users found</p>
-            <p className="text-ios-text-secondary/70 text-sm">Try adjusting your search criteria</p>
+            <p className="text-gray-200 font-medium">No users found</p>
+            <p className="text-gray-200/70 text-sm">Try adjusting your search criteria</p>
           </div>
         )}
 

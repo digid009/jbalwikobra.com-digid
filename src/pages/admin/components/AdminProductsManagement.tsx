@@ -340,7 +340,7 @@ export const AdminProductsManagement: React.FC = () => {
         <div className="space-y-4">
           {/* First Row - Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
             <input
               type="text"
               placeholder="Search products by name, description, or category..."
@@ -348,8 +348,8 @@ export const AdminProductsManagement: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
-                'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
               )}
             />
           </div>
@@ -358,13 +358,13 @@ export const AdminProductsManagement: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Category Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <Filter className="w-4 h-4 text-gray-200" />
               <select
                 value={tierFilter}
                 onChange={(e) => setTierFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -382,13 +382,13 @@ export const AdminProductsManagement: React.FC = () => {
 
             {/* Status Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <span className="text-sm font-medium text-ios-text-secondary">Status:</span>
+              <span className="text-sm font-medium text-gray-200">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -400,13 +400,13 @@ export const AdminProductsManagement: React.FC = () => {
 
             {/* Price Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <span className="text-sm font-medium text-ios-text-secondary">Price:</span>
+              <span className="text-sm font-medium text-gray-200">Price:</span>
               <select
                 value={priceFilter}
                 onChange={(e) => setPriceFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -441,15 +441,15 @@ export const AdminProductsManagement: React.FC = () => {
           {loading ? (
             <div className="p-12 text-center">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
-              <p className="text-ios-text-secondary font-medium">Loading products...</p>
+              <p className="text-gray-200 font-medium">Loading products...</p>
             </div>
           ) : filteredProducts.length > 0 ? (
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-ios-border'
+                'bg-ios-surface border-b border-gray-700'
               )}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
@@ -464,10 +464,10 @@ export const AdminProductsManagement: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -477,12 +477,12 @@ export const AdminProductsManagement: React.FC = () => {
                   <tr key={product.id} className="hover:bg-ios-surface transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-ios-text/10 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-ios-text/10 rounded-2xl flex items-center justify-center">
                           {product.image ? (
                             <img 
                               src={product.image} 
                               alt={product.name}
-                              className="w-10 h-10 rounded-lg object-cover"
+                              className="w-10 h-10 rounded-2xl object-cover"
                             />
                           ) : (
                             <PackageIcon className="w-5 h-5 text-ios-text/60" />
@@ -490,7 +490,7 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-ios-text">{product.name}</div>
-                          <div className="text-sm text-ios-text-secondary">
+                          <div className="text-sm text-gray-200">
                             {getGameTitleName(product.game_title)} • {product.description.substring(0, 40)}...
                           </div>
                         </div>
@@ -519,7 +519,7 @@ export const AdminProductsManagement: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text-secondary">
+                      <span className="text-sm text-gray-200">
                         {new Date(product.created_at).toLocaleDateString()}
                       </span>
                     </td>
@@ -571,9 +571,9 @@ export const AdminProductsManagement: React.FC = () => {
           ) : (
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-ios-surface/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PackageIcon className="w-8 h-8 text-ios-text-secondary" />
+                <PackageIcon className="w-8 h-8 text-gray-200" />
               </div>
-              <p className="text-ios-text-secondary font-medium">No products found</p>
+              <p className="text-gray-200 font-medium">No products found</p>
             </div>
           )}
         </div>
@@ -592,7 +592,7 @@ export const AdminProductsManagement: React.FC = () => {
                   variant="ghost"
                   size="small"
                   onClick={cancelForm}
-                  className="text-ios-text-secondary hover:bg-ios-surface"
+                  className="text-gray-200 hover:bg-ios-surface"
                 >
                   <X className="w-5 h-5" />
                 </IOSButton>
@@ -606,7 +606,7 @@ export const AdminProductsManagement: React.FC = () => {
                   <div className="space-y-6">
                     {/* Basic Information Section */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Basic Information</h3>
+                      <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Basic Information</h3>
                   
                   <div>
                     <label className="block text-sm font-medium text-ios-text mb-2">Product Name *</label>
@@ -615,9 +615,9 @@ export const AdminProductsManagement: React.FC = () => {
                       value={form.name}
                       onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                         'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="Enter product name"
                     />
@@ -630,9 +630,9 @@ export const AdminProductsManagement: React.FC = () => {
                       onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                       rows={4}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                         'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="Enter product description"
                     />
@@ -646,9 +646,9 @@ export const AdminProductsManagement: React.FC = () => {
                         value={form.price}
                         onChange={(e) => setForm(prev => ({ ...prev, price: Number(e.target.value) }))}
                         className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                          'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                           'text-ios-text placeholder-ios-text-secondary',
-                          'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                          'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                         )}
                         placeholder="0"
                       />
@@ -661,9 +661,9 @@ export const AdminProductsManagement: React.FC = () => {
                         value={form.original_price}
                         onChange={(e) => setForm(prev => ({ ...prev, original_price: Number(e.target.value) }))}
                         className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                          'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                           'text-ios-text placeholder-ios-text-secondary',
-                          'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                          'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                         )}
                         placeholder="0"
                       />
@@ -677,9 +677,9 @@ export const AdminProductsManagement: React.FC = () => {
                       value={form.stock}
                       onChange={(e) => setForm(prev => ({ ...prev, stock: Math.max(0, Number(e.target.value)) }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                         'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="1"
                       min="0"
@@ -689,7 +689,7 @@ export const AdminProductsManagement: React.FC = () => {
 
                     {/* Tier & Game Section */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Tier & Game</h3>
+                      <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Tier & Game</h3>
                   
                   <div>
                     <label className="block text-sm font-medium text-ios-text mb-2">Tier *</label>
@@ -697,8 +697,8 @@ export const AdminProductsManagement: React.FC = () => {
                       value={form.tier_id}
                       onChange={(e) => setForm(prev => ({ ...prev, tier_id: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       disabled={tiersLoading}
                     >
@@ -717,8 +717,8 @@ export const AdminProductsManagement: React.FC = () => {
                       value={form.game_title}
                       onChange={(e) => setForm(prev => ({ ...prev, game_title: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       disabled={gameTitlesLoading}
                     >
@@ -740,9 +740,9 @@ export const AdminProductsManagement: React.FC = () => {
                       value={form.account_level}
                       onChange={(e) => setForm(prev => ({ ...prev, account_level: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                         'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="e.g., Level 50, Master Rank, Diamond"
                     />
@@ -755,9 +755,9 @@ export const AdminProductsManagement: React.FC = () => {
                       onChange={(e) => setForm(prev => ({ ...prev, account_details: e.target.value }))}
                       rows={4}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
                         'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="Additional account information, items included, etc."
                     />
@@ -767,7 +767,7 @@ export const AdminProductsManagement: React.FC = () => {
 
                   {/* Column 2: Product Images */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Product Images</h3>
+                    <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Product Images</h3>
                     <IOSImageUploader
                       images={form.images}
                       onChange={(images) => setForm(prev => ({ ...prev, images }))}
@@ -787,7 +787,7 @@ export const AdminProductsManagement: React.FC = () => {
 
                   {/* Column 3: Settings & Rental Options */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Settings & Options</h3>
+                    <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Settings & Options</h3>
                     
                     {/* Toggle Switches */}
                     <div className="space-y-4">
@@ -812,10 +812,10 @@ export const AdminProductsManagement: React.FC = () => {
                         <h4 className="text-sm font-semibold text-ios-text">Rental Variations</h4>
                         
                         {/* Variation 1 */}
-                        <div className="p-4 bg-ios-surface rounded-xl border border-ios-border space-y-3">
+                        <div className="p-4 bg-ios-surface rounded-xl border border-gray-700 space-y-3">
                           <div className="flex items-center justify-between">
                             <h5 className="text-sm font-medium text-ios-text">Variation 1</h5>
-                            <span className="text-xs text-ios-text-secondary">Primary</span>
+                            <span className="text-xs text-gray-200">Primary</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
@@ -824,7 +824,7 @@ export const AdminProductsManagement: React.FC = () => {
                                 type="number"
                                 value={form.rental_duration_hours}
                                 onChange={(e) => setForm(prev => ({ ...prev, rental_duration_hours: Number(e.target.value) }))}
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
                                 placeholder="1"
                                 min="1"
                               />
@@ -834,7 +834,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <select
                                 value={form.rental_unit || 'Hours'}
                                 onChange={(e) => setForm(prev => ({ ...prev, rental_unit: e.target.value }))}
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
                               >
                                 <option value="Hours">Hours</option>
                                 <option value="Day">Day</option>
@@ -848,7 +848,7 @@ export const AdminProductsManagement: React.FC = () => {
                                 type="number"
                                 value={form.rental_price_per_hour}
                                 onChange={(e) => setForm(prev => ({ ...prev, rental_price_per_hour: Number(e.target.value) }))}
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
                                 placeholder="0"
                                 min="0"
                               />
@@ -857,7 +857,7 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 2 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
                             <h5 className="text-sm font-medium text-ios-text">Variation 2</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
@@ -868,7 +868,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -876,7 +876,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
                               <select
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                               >
                                 <option value="">--</option>
                               </select>
@@ -886,7 +886,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -894,7 +894,7 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 3 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
                             <h5 className="text-sm font-medium text-ios-text">Variation 3</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
@@ -905,7 +905,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -913,7 +913,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
                               <select
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                               >
                                 <option value="">--</option>
                               </select>
@@ -923,7 +923,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -931,7 +931,7 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 4 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
                             <h5 className="text-sm font-medium text-ios-text">Variation 4</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
@@ -942,7 +942,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -950,7 +950,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
                               <select
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                               >
                                 <option value="">--</option>
                               </select>
@@ -960,7 +960,7 @@ export const AdminProductsManagement: React.FC = () => {
                               <input
                                 type="number"
                                 disabled
-                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
                                 placeholder="--"
                               />
                             </div>
@@ -973,12 +973,12 @@ export const AdminProductsManagement: React.FC = () => {
               </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-4 mt-6 pt-6 border-t border-ios-border">
+              <div className="flex items-center justify-end space-x-4 mt-6 pt-6 border-t border-gray-700">
                 <IOSButton
                   variant="ghost"
                   onClick={cancelForm}
                   disabled={saving}
-                  className="text-ios-text-secondary border-ios-border"
+                  className="text-gray-200 border-gray-700"
                 >
                   Cancel
                 </IOSButton>

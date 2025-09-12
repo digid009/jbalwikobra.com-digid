@@ -62,7 +62,7 @@ export const AdminFeedManagement: React.FC = () => {
       case 'video':
         return 'bg-purple-500/10 text-purple-500 border-purple-500/30';
       default:
-        return 'bg-ios-background/50 text-ios-text border-ios-border/30';
+        return 'bg-ios-background/50 text-ios-text border-gray-700/30';
     }
   };
 
@@ -120,8 +120,8 @@ export const AdminFeedManagement: React.FC = () => {
             placeholder="Search feed posts by title, author, or content..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-ios-background border border-ios-border rounded-xl 
-                       focus:ring-2 focus:ring-ios-primary focus:border-transparent 
+            className="w-full pl-10 pr-4 py-3 bg-ios-background border border-gray-700 rounded-xl 
+                       focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
                        transition-colors duration-200 text-ios-text placeholder-ios-text/60"
           />
         </div>
@@ -138,7 +138,7 @@ export const AdminFeedManagement: React.FC = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-ios-background/50 border-b border-ios-border">
+                <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
                       Post
@@ -193,7 +193,7 @@ export const AdminFeedManagement: React.FC = () => {
                             <img
                               src={post.image}
                               alt="Post preview"
-                              className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border border-ios-border/30"
+                              className="w-12 h-12 rounded-2xl object-cover cursor-pointer hover:opacity-80 transition-opacity border border-gray-700/30"
                               onClick={() => setSelectedImage(post.image!)}
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
@@ -250,7 +250,7 @@ export const AdminFeedManagement: React.FC = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-ios-border/30 bg-ios-background/50">
+              <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
                 <IOSPagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -286,7 +286,7 @@ export const AdminFeedManagement: React.FC = () => {
             <img
               src={selectedImage}
               alt="Full size preview"
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
               onClick={() => setSelectedImage(null)}
             />
           </div>

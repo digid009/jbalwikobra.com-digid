@@ -277,7 +277,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <img
                   src={user.avatarUrl}
                   alt={user.name || 'Profile'}
-                  className="w-8 h-8 rounded-full object-cover border border-gray-700 shadow-lg shadow-black/50"
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-lg shadow-black/50"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
@@ -299,9 +299,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search..."
-                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-ios-surface text-ios-text placeholder-ios-text-secondary"
+                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
                 />
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                 <IOSButton
                   type="submit"
                   size="small"

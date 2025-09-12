@@ -80,7 +80,7 @@ const UsersTab: React.FC = () => {
         <div className="text-ios-destructive mb-4">
           <Users className="w-12 h-12 mx-auto mb-2" />
           <p className="font-medium">Failed to load users</p>
-          <p className="text-sm text-ios-text-secondary">{error}</p>
+          <p className="text-sm text-gray-200">{error}</p>
         </div>
       </IOSCard>
     );
@@ -91,7 +91,7 @@ const UsersTab: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-ios-text">Users Management</h2>
-        <div className="text-sm text-ios-text-secondary">
+        <div className="text-sm text-gray-200">
           {users.length} users found
         </div>
       </div>
@@ -99,9 +99,9 @@ const UsersTab: React.FC = () => {
       {/* Users List */}
       {users.length === 0 ? (
         <IOSCard className="p-8 text-center">
-          <Users className="w-16 h-16 mx-auto mb-4 text-ios-text-secondary" />
+          <Users className="w-16 h-16 mx-auto mb-4 text-gray-200" />
           <h3 className="text-lg font-medium text-ios-text mb-2">No users found</h3>
-          <p className="text-ios-text-secondary">Registered users will appear here</p>
+          <p className="text-gray-200">Registered users will appear here</p>
         </IOSCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -117,7 +117,7 @@ const UsersTab: React.FC = () => {
                     <h3 className="font-medium text-ios-text">
                       {user.name || 'Anonymous User'}
                     </h3>
-                    <p className="text-sm text-ios-text-secondary">
+                    <p className="text-sm text-gray-200">
                       ID: {user.id.slice(-8)}
                     </p>
                   </div>
@@ -132,20 +132,20 @@ const UsersTab: React.FC = () => {
               {/* User Info */}
               <div className="space-y-3">
                 {user.email && (
-                  <div className="flex items-center gap-2 text-sm text-ios-text-secondary">
+                  <div className="flex items-center gap-2 text-sm text-gray-200">
                     <Mail className="w-4 h-4" />
                     <span className="truncate">{user.email}</span>
                   </div>
                 )}
                 
                 {user.phone && (
-                  <div className="flex items-center gap-2 text-sm text-ios-text-secondary">
+                  <div className="flex items-center gap-2 text-sm text-gray-200">
                     <Phone className="w-4 h-4" />
                     <span>{user.phone}</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-2 text-sm text-ios-text-secondary">
+                <div className="flex items-center gap-2 text-sm text-gray-200">
                   <Calendar className="w-4 h-4" />
                   <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
                 </div>
@@ -156,11 +156,11 @@ const UsersTab: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <p className="text-lg font-semibold text-ios-text">0</p>
-                    <p className="text-xs text-ios-text-secondary">Orders</p>
+                    <p className="text-xs text-gray-200">Orders</p>
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-ios-text">₹0</p>
-                    <p className="text-xs text-ios-text-secondary">Spent</p>
+                    <p className="text-xs text-gray-200">Spent</p>
                   </div>
                 </div>
               </div>

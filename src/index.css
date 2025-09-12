@@ -9,6 +9,25 @@
 @import './styles/ios-compatibility.css';
 @import './styles/android-compatibility.css';
 
+/* Dark mode support - Black & Pink Theme */
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #374151;
+  --ios-pink: #ec4899;
+}
+
+.dark-theme {
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #374151;
+  --ios-pink: #f472b6;
+}
+
 /* Mobile-first font sizing - like native apps */
 html {
   font-size: 14px; /* Smaller base font for mobile */
@@ -51,6 +70,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   text-rendering: optimizeSpeed;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 /* Code font family */

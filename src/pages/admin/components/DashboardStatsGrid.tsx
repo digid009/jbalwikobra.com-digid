@@ -29,10 +29,10 @@ const StatCard: React.FC<StatCardProps> = ({
     <IOSCard className="p-6 hover:shadow-lg transition-all duration-200">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-ios-text-secondary text-sm font-medium mb-2">{label}</p>
+          <p className="text-gray-200 text-sm font-medium mb-2">{label}</p>
           <p className="text-3xl font-bold text-ios-text mb-1">{value}</p>
           {trend && (
-            <p className="text-xs text-ios-text-secondary flex items-center">
+            <p className="text-xs text-gray-200 flex items-center">
               <TrendingUp className="w-3 h-3 mr-1" />
               {trend}
             </p>

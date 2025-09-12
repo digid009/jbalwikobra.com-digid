@@ -24,20 +24,44 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   const itemsPerPage = 10;
 
   // Products data for selection
-  const [products, setProducts] = useState<Array<{id: string, name: string, price: number}>>([]);
+  const [products, setProducts] = useState<Array<{id: string, name: string, price: number, stock?: number}>>([]);
   const [productsLoading, setProductsLoading] = useState(false);
 
   // Flash Sale Form state
   const [formData, setFormData] = useState({
     product_id: '',
     discount_type: 'percentage', // 'percentage' or 'fixed'
-    discount_value: 0, // percentage (0-100) or fixed amount
+    discount_percentage: 0, // percentage (0-100)
+    discount_amount: 0, // fixed amount
     start_date: '',
     start_time: '',
     end_date: '',
     end_time: ''
   });
   const [saving, setSaving] = useState(false);
+
+  // Helper functions for automatic calculation
+  const calculateSalePriceFromPercentage = (originalPrice: number, percentage: number): number => {
+    return originalPrice * (1 - percentage / 100);
+  };
+
+  const calculatePercentageFromSalePrice = (originalPrice: number, salePrice: number): number => {
+    if (originalPrice <= 0) return 0;
+    return ((originalPrice - salePrice) / originalPrice) * 100;
+  };
+
+  const calculateDiscountAmount = (originalPrice: number, salePrice: number): number => {
+    return originalPrice - salePrice;
+  };
+
+  const getCurrentDiscountValue = () => {
+    return formData.discount_type === 'percentage' ? formData.discount_percentage : formData.discount_amount;
+  };
+
+  const isValidDiscount = () => {
+    const value = getCurrentDiscountValue();
+    return value > 0 && (formData.discount_type === 'percentage' ? value <= 100 : true);
+  };
 
   useEffect(() => {
     loadFlashSales();
@@ -49,7 +73,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       setProductsLoading(true);
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price')
+        .select('id, name, price, stock')
         .eq('is_active', true)
         .order('name');
       
@@ -89,7 +113,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       return;
     }
 
-    if (formData.discount_value <= 0) {
+    if (!isValidDiscount()) {
       setError('Discount value must be greater than 0');
       return;
     }
@@ -109,11 +133,11 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       let discountPercentage = 0;
 
       if (formData.discount_type === 'percentage') {
-        discountPercentage = formData.discount_value;
-        salePrice = selectedProduct.price * (1 - formData.discount_value / 100);
+        discountPercentage = formData.discount_percentage;
+        salePrice = calculateSalePriceFromPercentage(selectedProduct.price, formData.discount_percentage);
       } else {
-        salePrice = selectedProduct.price - formData.discount_value;
-        discountPercentage = (formData.discount_value / selectedProduct.price) * 100;
+        salePrice = selectedProduct.price - formData.discount_amount;
+        discountPercentage = calculatePercentageFromSalePrice(selectedProduct.price, salePrice);
       }
 
       // Combine date and time
@@ -124,10 +148,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         product_id: formData.product_id,
         original_price: selectedProduct.price,
         sale_price: Math.round(salePrice),
-        discount_percentage: Math.round(discountPercentage),
         start_time: startDateTime,
         end_time: endDateTime,
-        is_active: true
+        is_active: true,
+        stock: selectedProduct.stock || 10 // Default stock if not available
       };
 
       await adminService.createFlashSale(flashSaleData);
@@ -136,7 +160,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       setFormData({
         product_id: '',
         discount_type: 'percentage',
-        discount_value: 0,
+        discount_percentage: 0,
+        discount_amount: 0,
         start_date: '',
         start_time: '',
         end_date: '',
@@ -158,7 +183,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
     setFormData({
       product_id: '',
       discount_type: 'percentage',
-      discount_value: 0,
+      discount_percentage: 0,
+      discount_amount: 0,
       start_date: '',
       start_time: '',
       end_date: '',
@@ -248,7 +274,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         <div className="space-y-4">
           {/* First Row - Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
             <input
               type="text"
               placeholder="Search flash sales by product name or ID..."
@@ -256,8 +282,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
-                'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
               )}
             />
           </div>
@@ -266,13 +292,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Status Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <Filter className="w-4 h-4 text-gray-200" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -286,13 +312,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
             {/* Discount Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <span className="text-sm font-medium text-ios-text-secondary">Discount:</span>
+              <span className="text-sm font-medium text-gray-200">Discount:</span>
               <select
                 value={discountFilter}
                 onChange={(e) => setDiscountFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -360,8 +386,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     }));
                   }}
                   className={cn(
-                    'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                    'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                    'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                    'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                   )}
                   disabled={productsLoading}
                 >
@@ -380,13 +406,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               {formData.product_id && (
                 <div>
                   <label className="block text-sm font-medium text-ios-text mb-2">Current Price</label>
-                  <div className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface/50 text-ios-text">
+                  <div className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface/50 text-ios-text">
                     Rp {products.find(p => p.id === formData.product_id)?.price.toLocaleString() || '0'}
                   </div>
                 </div>
               )}
 
-              {/* Discount Type Toggle & Value */}
+              {/* Discount Type Toggle & Dual Inputs */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-ios-text mb-2">
@@ -395,56 +421,145 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                   <div className="flex space-x-2">
                     <IOSButton
                       variant={formData.discount_type === 'percentage' ? 'primary' : 'ghost'}
-                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'percentage', discount_value: 0 }))}
+                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'percentage' }))}
                       className="flex-1"
                     >
                       Percentage
                     </IOSButton>
                     <IOSButton
                       variant={formData.discount_type === 'fixed' ? 'primary' : 'ghost'}
-                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'fixed', discount_value: 0 }))}
+                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'fixed' }))}
                       className="flex-1"
                     >
-                      Fixed Price
+                      Fixed Amount
                     </IOSButton>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
-                    {formData.discount_type === 'percentage' ? 'Discount Percentage' : 'Discount Amount'} <span className="text-ios-error">*</span>
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      value={formData.discount_value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, discount_value: Number(e.target.value) }))}
-                      placeholder="0"
-                      min="0"
-                      max={formData.discount_type === 'percentage' ? 100 : undefined}
-                      className={cn(
-                        'flex-1 px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent'
-                      )}
-                    />
-                    <span className="text-ios-text-secondary px-2">
-                      {formData.discount_type === 'percentage' ? '%' : 'IDR'}
-                    </span>
+                {/* Dual Inputs with Auto-Calculation */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Percentage Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">
+                      Discount Percentage <span className="text-ios-error">*</span>
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        value={formData.discount_percentage}
+                        onChange={(e) => {
+                          const percentage = Number(e.target.value);
+                          const selectedProduct = products.find(p => p.id === formData.product_id);
+                          if (selectedProduct && percentage >= 0 && percentage <= 100) {
+                            const newAmount = (selectedProduct.price * percentage) / 100;
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              discount_percentage: percentage,
+                              discount_amount: Math.round(newAmount),
+                              discount_type: 'percentage'
+                            }));
+                          } else if (selectedProduct) {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              discount_percentage: percentage
+                            }));
+                          }
+                        }}
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        className={cn(
+                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                          'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          formData.discount_type === 'percentage' ? 'ring-2 ring-ios-primary' : ''
+                        )}
+                      />
+                      <span className="text-gray-200 px-2">%</span>
+                    </div>
                   </div>
-                  {formData.product_id && formData.discount_value > 0 && (
-                    <p className="mt-2 text-sm text-ios-text-secondary">
-                      Final Price: Rp {
-                        (() => {
-                          const originalPrice = products.find(p => p.id === formData.product_id)?.price || 0;
-                          const finalPrice = formData.discount_type === 'percentage' 
-                            ? originalPrice * (1 - formData.discount_value / 100)
-                            : originalPrice - formData.discount_value;
-                          return Math.max(0, finalPrice).toLocaleString();
-                        })()
-                      }
-                    </p>
-                  )}
+
+                  {/* Fixed Amount Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">
+                      Discount Amount <span className="text-ios-error">*</span>
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        value={formData.discount_amount}
+                        onChange={(e) => {
+                          const amount = Number(e.target.value);
+                          const selectedProduct = products.find(p => p.id === formData.product_id);
+                          if (selectedProduct && amount >= 0 && amount <= selectedProduct.price) {
+                            const newPercentage = (amount / selectedProduct.price) * 100;
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              discount_amount: amount,
+                              discount_percentage: Math.round(newPercentage * 100) / 100,
+                              discount_type: 'fixed'
+                            }));
+                          } else if (selectedProduct) {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              discount_amount: amount
+                            }));
+                          }
+                        }}
+                        placeholder="0"
+                        min="0"
+                        className={cn(
+                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                          'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          formData.discount_type === 'fixed' ? 'ring-2 ring-ios-primary' : ''
+                        )}
+                      />
+                      <span className="text-gray-200 px-2">IDR</span>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Final Price Preview */}
+                {formData.product_id && (formData.discount_percentage > 0 || formData.discount_amount > 0) && (
+                  <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700">
+                    <h4 className="text-sm font-semibold text-ios-text mb-2">Price Summary</h4>
+                    <div className="space-y-1 text-sm">
+                      {(() => {
+                        const selectedProduct = products.find(p => p.id === formData.product_id);
+                        if (!selectedProduct) return null;
+                        
+                        const originalPrice = selectedProduct.price;
+                        let finalPrice = 0;
+                        
+                        if (formData.discount_type === 'percentage') {
+                          finalPrice = originalPrice - (originalPrice * formData.discount_percentage / 100);
+                        } else {
+                          finalPrice = originalPrice - formData.discount_amount;
+                        }
+                        
+                        finalPrice = Math.max(0, finalPrice);
+                        const savings = originalPrice - finalPrice;
+                        const savingsPercentage = (savings / originalPrice) * 100;
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-gray-200">Original Price:</span>
+                              <span className="text-ios-text">Rp {originalPrice.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-200">Discount:</span>
+                              <span className="text-ios-error">-Rp {savings.toLocaleString()} ({Math.round(savingsPercentage * 100) / 100}%)</span>
+                            </div>
+                            <div className="flex justify-between font-semibold text-lg border-t border-gray-700 pt-2">
+                              <span className="text-ios-text">Final Price:</span>
+                              <span className="text-ios-primary">Rp {finalPrice.toLocaleString()}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Start Date & Time */}
@@ -458,8 +573,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
@@ -472,8 +587,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.start_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
@@ -490,8 +605,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
@@ -504,19 +619,19 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.end_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
               </div>
 
               {/* Save Button */}
-              <div className="flex space-x-3 pt-4 border-t border-ios-border">
+              <div className="flex space-x-3 pt-4 border-t border-gray-700">
                 <IOSButton
                   variant="primary"
                   onClick={handleCreateFlashSale}
-                  disabled={saving || !formData.product_id || !formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time || formData.discount_value <= 0}
+                  disabled={saving || !formData.product_id || !formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time || !isValidDiscount()}
                   className="flex-1"
                 >
                   {saving ? 'Saving...' : 'Save'}
@@ -548,7 +663,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-ios-background/50 border-b border-ios-border">
+                <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
                       Product
@@ -584,7 +699,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                               <img
                                 src={sale.product.image}
                                 alt={sale.product.name}
-                                className="w-12 h-12 rounded-lg object-cover border border-ios-border/30"
+                                className="w-12 h-12 rounded-2xl object-cover border border-gray-700/30"
                               />
                             )}
                             <div>
@@ -662,7 +777,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-ios-border/30 bg-ios-background/50">
+              <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
                 <IOSPagination
                   currentPage={currentPage}
                   totalPages={totalPages}

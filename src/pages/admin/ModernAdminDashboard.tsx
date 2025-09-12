@@ -12,7 +12,8 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  Bell
+  Bell,
+  Home
 } from 'lucide-react';
 import { AdminStats, adminService } from '../../services/adminService';
 import { AdminStatsOverview } from './components/AdminStatsOverview';
@@ -24,6 +25,7 @@ import { AdminFeedManagement } from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
+import { AdminOverview } from './components/AdminOverview';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../components/ios/IOSDesignSystem';
@@ -31,6 +33,7 @@ import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner'
 import { cn } from '../../styles/standardClasses';
 
 export type AdminTab = 
+  | 'overview'
   | 'dashboard' 
   | 'orders' 
   | 'users' 
@@ -49,8 +52,14 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   {
+    id: 'overview',
+    label: 'Overview',
+    icon: Home,
+    badge: null,
+  },
+  {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Analytics',
     icon: LayoutDashboard,
     badge: null,
   },
@@ -139,6 +148,8 @@ const ModernAdminDashboard: React.FC = () => {
     }
 
     switch (activeTab) {
+      case 'overview':
+        return <AdminOverview onNavigate={(section) => setActiveTab(section as AdminTab)} />;
       case 'dashboard':
         return (
           <>
@@ -161,7 +172,7 @@ const ModernAdminDashboard: React.FC = () => {
       case 'reviews':
         return <AdminReviewsManagement />;
       default:
-        return <AdminStatsOverview stats={stats} loading={loading} />;
+        return <AdminOverview onNavigate={(section) => setActiveTab(section as AdminTab)} />;
     }
   };
 

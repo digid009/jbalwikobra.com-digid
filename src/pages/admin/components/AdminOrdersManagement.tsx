@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, RefreshCw, X } from 'lucide-react';
-import { ordersService, Order } from '../../../services/ordersService';
-import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { Search, Filter, RefreshCw, X, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { adminService, Order } from '../../../services/adminService';
+import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
+import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
 import { cn } from '../../../styles/standardClasses';
 
 export const AdminOrdersManagement: React.FC = () => {
@@ -27,15 +28,14 @@ export const AdminOrdersManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await ordersService.getOrders({
-        page: currentPage,
-        limit: itemsPerPage,
-        search: searchTerm,
-        status: statusFilter === 'all' ? '' : statusFilter
-      });
-      setOrders(result.orders);
-      setTotalCount(result.totalCount);
-      setTotalPages(result.totalPages);
+      const result = await adminService.getOrders(
+        currentPage, 
+        itemsPerPage, 
+        statusFilter === 'all' ? undefined : statusFilter
+      );
+      setOrders(result.data);
+      setTotalCount(result.count);
+      setTotalPages(Math.ceil(result.count / itemsPerPage));
     } catch (error) {
       console.error('Error loading orders:', error);
       setError(error instanceof Error ? error.message : 'Failed to load orders');
@@ -103,7 +103,7 @@ export const AdminOrdersManagement: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
               <input
                 type="text"
                 placeholder="Search orders by customer name, email, or order ID..."
@@ -111,21 +111,21 @@ export const AdminOrdersManagement: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                  'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                  'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                 )}
               />
             </div>
 
             {/* Status Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <Filter className="w-4 h-4 text-ios-text-secondary" />
+              <Filter className="w-4 h-4 text-gray-200" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-3 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-3 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -142,13 +142,13 @@ export const AdminOrdersManagement: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Date Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <span className="text-sm font-medium text-ios-text-secondary">Date:</span>
+              <span className="text-sm font-medium text-gray-200">Date:</span>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -162,13 +162,13 @@ export const AdminOrdersManagement: React.FC = () => {
 
             {/* Amount Filter */}
             <div className="flex items-center space-x-3 min-w-[140px]">
-              <span className="text-sm font-medium text-ios-text-secondary">Amount:</span>
+              <span className="text-sm font-medium text-gray-200">Amount:</span>
               <select
                 value={amountFilter}
                 onChange={(e) => setAmountFilter(e.target.value)}
                 className={cn(
-                  'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                   'transition-colors duration-200 text-ios-text'
                 )}
               >
@@ -204,28 +204,28 @@ export const AdminOrdersManagement: React.FC = () => {
         {loading ? (
           <div className="p-12 text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
-            <p className="text-ios-text-secondary font-medium">Loading orders...</p>
+            <p className="text-gray-200 font-medium">Loading orders...</p>
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-ios-border'
+                'bg-ios-surface border-b border-gray-700'
               )}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Order ID
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
@@ -235,7 +235,7 @@ export const AdminOrdersManagement: React.FC = () => {
                   <tr key={order.id} className="hover:bg-ios-surface transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-sm font-mono font-medium text-ios-primary bg-ios-primary/10 px-2 py-1 rounded-lg">
+                        <span className="text-sm font-mono font-medium text-ios-primary bg-ios-primary/10 px-2 py-1 rounded-2xl">
                           #{order.id.slice(-8)}
                         </span>
                       </div>
@@ -244,7 +244,7 @@ export const AdminOrdersManagement: React.FC = () => {
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-ios-text">{order.customer_name}</span>
                         {order.customer_email && (
-                          <span className="text-xs text-ios-text-secondary">{order.customer_email}</span>
+                          <span className="text-xs text-gray-200">{order.customer_email}</span>
                         )}
                       </div>
                     </td>
@@ -263,7 +263,7 @@ export const AdminOrdersManagement: React.FC = () => {
                         <span className="text-sm text-ios-text">
                           {new Date(order.created_at).toLocaleDateString()}
                         </span>
-                        <span className="text-xs text-ios-text-secondary">
+                        <span className="text-xs text-gray-200">
                           {new Date(order.created_at).toLocaleTimeString()}
                         </span>
                       </div>
@@ -276,16 +276,16 @@ export const AdminOrdersManagement: React.FC = () => {
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-ios-surface/50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-ios-text-secondary" />
+              <Search className="w-8 h-8 text-gray-200" />
             </div>
-            <p className="text-ios-text-secondary font-medium">No orders found</p>
+            <p className="text-gray-200 font-medium">No orders found</p>
             <p className="text-ios-text/50 text-sm">Try adjusting your search or filter criteria</p>
           </div>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-ios-border/30 bg-ios-background/50">
+          <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
             <IOSPagination
               currentPage={currentPage}
               totalPages={totalPages}

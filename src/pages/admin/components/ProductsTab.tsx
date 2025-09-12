@@ -244,10 +244,10 @@ const ProductsTab: React.FC = () => {
         {[1, 2, 3].map((i) => (
           <IOSCard key={i} className="p-6 animate-pulse">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+              <div className="w-16 h-16 bg-gray-900 rounded-2xl"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-900 rounded mb-2"></div>
+                <div className="h-3 bg-gray-900 rounded w-2/3"></div>
               </div>
             </div>
           </IOSCard>
@@ -261,8 +261,8 @@ const ProductsTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Products Management</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-white">Products Management</h2>
+          <p className="text-gray-200">
             Manage your product catalog ({totalCount} total products)
           </p>
         </div>
@@ -300,13 +300,13 @@ const ProductsTab: React.FC = () => {
           <div className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-100 mb-1">
                   Category
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -315,13 +315,13 @@ const ProductsTab: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-100 mb-1">
                   Status
                 </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
                 >
                   <option value="">All Status</option>
                   <option value="active">Active</option>
@@ -329,7 +329,7 @@ const ProductsTab: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-100 mb-1">
                   Search
                 </label>
                 <div className="relative">
@@ -339,7 +339,7 @@ const ProductsTab: React.FC = () => {
                     placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
                   />
                 </div>
               </div>
@@ -351,9 +351,9 @@ const ProductsTab: React.FC = () => {
       {/* Bulk Actions */}
       {selectedIds.length > 0 && (
         <IOSCard>
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-gray-900 border border-pink-500/20 rounded-2xl">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-800">
+              <span className="text-sm text-pink-300">
                 {selectedIds.length} products selected
               </span>
               <div className="flex items-center space-x-2">
@@ -398,7 +398,7 @@ const ProductsTab: React.FC = () => {
       {/* Error Display */}
       {error && (
         <IOSCard>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
             <div className="flex items-center justify-between">
               <span className="text-sm text-red-800">{error}</span>
               <button
@@ -417,8 +417,8 @@ const ProductsTab: React.FC = () => {
         {products.length === 0 ? (
           <div className="p-8 text-center">
             <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-500 mb-4">Start by creating your first product</p>
+            <h3 className="text-lg font-medium text-white mb-2">No products found</h3>
+            <p className="text-gray-300 mb-4">Start by creating your first product</p>
             <IOSButton onClick={handleAddProduct} variant="primary">
               <Plus className="w-4 h-4 mr-2" />
               Create Product
@@ -428,14 +428,14 @@ const ProductsTab: React.FC = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product: Product) => (
-                <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                <div key={product.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl shadow-black/50 transition-shadow">
                   {/* Product Image */}
-                  <div className="relative h-48 bg-gray-100">
+                  <div className="relative h-48 bg-gray-900">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(product.id)}
                       onChange={() => handleSelectProduct(product.id)}
-                      className="absolute top-3 left-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500 z-10"
+                      className="absolute top-3 left-3 rounded border-gray-700 text-pink-500 focus:ring-pink-500 focus:ring-2 focus:ring-2 z-10"
                     />
                     {product.image ? (
                       <img
@@ -475,26 +475,26 @@ const ProductsTab: React.FC = () => {
                   {/* Product Info */}
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 line-clamp-2">{product.name}</h3>
+                      <h3 className="font-medium text-white line-clamp-2">{product.name}</h3>
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-sm text-gray-200 mb-3 line-clamp-2">
                       {product.description}
                     </p>
 
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-semibold text-blue-600">
+                        <span className="text-lg font-semibold text-pink-500">
                           {formatPrice(product.price)}
                         </span>
                         {product.original_price && product.original_price > product.price && (
-                          <span className="text-sm text-gray-500 line-through">
+                          <span className="text-sm text-gray-300 line-through">
                             {formatPrice(product.original_price)}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-1">
                           <Tag className="w-4 h-4" />
                           {product.category}
@@ -505,7 +505,7 @@ const ProductsTab: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="flex items-center gap-1 text-xs text-gray-300">
                         <Calendar className="w-3 h-3" />
                         {formatDate(product.created_at)}
                       </div>
@@ -549,7 +549,7 @@ const ProductsTab: React.FC = () => {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-gray-100">
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, totalCount)} of {totalCount} results
                 </div>
                 <div className="flex items-center space-x-2">
@@ -562,7 +562,7 @@ const ProductsTab: React.FC = () => {
                     <ChevronLeft className="w-4 h-4" />
                     Previous
                   </IOSButton>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-gray-100">
                     Page {pagination.page} of {totalPages}
                   </span>
                   <IOSButton

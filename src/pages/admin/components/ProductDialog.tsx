@@ -117,7 +117,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg bg-ios-surface-secondary"
+                    className="w-full h-48 object-cover rounded-2xl bg-ios-surface-secondary"
                   />
                   <IOSButton
                     type="button"
@@ -133,9 +133,9 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                   </IOSButton>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-ios-separator rounded-lg p-8 text-center">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-ios-text-secondary" />
-                  <p className="text-ios-text-secondary mb-4">Upload product image</p>
+                <div className="border-2 border-dashed border-ios-separator rounded-2xl p-8 text-center">
+                  <Camera className="w-12 h-12 mx-auto mb-4 text-gray-200" />
+                  <p className="text-gray-200 mb-4">Upload product image</p>
                   <label className="cursor-pointer">
                     <input
                       type="file"
@@ -163,7 +163,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
+                className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none"
                 placeholder="Enter product name"
                 required
               />
@@ -176,7 +176,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               <select
                 value={formData.category || ''}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
+                className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none"
               >
                 <option value="">Select category</option>
                 {categories.map((category) => (
@@ -197,7 +197,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               value={formData.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={4}
-              className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none resize-none"
+              className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none resize-none"
               placeholder="Enter product description"
               required
             />
@@ -213,7 +213,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 type="number"
                 value={formData.price || 0}
                 onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-                className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
+                className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none"
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -229,7 +229,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 type="number"
                 value={formData.original_price || 0}
                 onChange={(e) => handleInputChange('original_price', parseFloat(e.target.value) || 0)}
-                className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
+                className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none"
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -244,7 +244,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 type="number"
                 value={formData.stock || 0}
                 onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 0)}
-                className="w-full p-3 border border-ios-separator rounded-lg bg-ios-surface focus:border-ios-primary focus:outline-none"
+                className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none"
                 placeholder="0"
                 min="0"
               />

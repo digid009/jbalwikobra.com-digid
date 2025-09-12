@@ -78,7 +78,7 @@ const FeedTab: React.FC = () => {
         <div className="text-ios-destructive mb-4">
           <MessageSquare className="w-12 h-12 mx-auto mb-2" />
           <p className="font-medium">Failed to load feed posts</p>
-          <p className="text-sm text-ios-text-secondary">{error}</p>
+          <p className="text-sm text-gray-200">{error}</p>
         </div>
       </IOSCard>
     );
@@ -122,9 +122,9 @@ const FeedTab: React.FC = () => {
       {/* Posts List */}
       {feedPosts.length === 0 ? (
         <IOSCard className="p-8 text-center">
-          <MessageSquare className="w-16 h-16 mx-auto mb-4 text-ios-text-secondary" />
+          <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-200" />
           <h3 className="text-lg font-medium text-ios-text mb-2">No posts found</h3>
-          <p className="text-ios-text-secondary mb-4">Start by creating your first feed post</p>
+          <p className="text-gray-200 mb-4">Start by creating your first feed post</p>
           <IOSButton variant="primary" onClick={handleAddPost}>
             Add Post
           </IOSButton>
@@ -141,7 +141,7 @@ const FeedTab: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-ios-text">{post.author_name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-ios-text-secondary">
+                    <div className="flex items-center gap-2 text-sm text-gray-200">
                       <Calendar className="w-3 h-3" />
                       {new Date(post.created_at).toLocaleDateString()}
                     </div>

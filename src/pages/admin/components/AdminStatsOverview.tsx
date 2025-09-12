@@ -58,7 +58,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
               <TrendingUp className="w-8 h-8 text-ios-error" />
             </div>
             <p className="text-ios-text font-medium mb-2">Unable to load statistics</p>
-            <p className="text-ios-text-secondary text-sm">Please check your connection and try again</p>
+            <p className="text-gray-200 text-sm">Please check your connection and try again</p>
           </div>
         </IOSCard>
       </div>
@@ -164,7 +164,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
               variant="elevated" 
               className={cn(
                 'group hover:shadow-xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1',
-                'border border-transparent hover:border-ios-border/20'
+                'border border-transparent hover:border-gray-700/20'
               )}
             >
               <div className="p-6">
@@ -181,14 +181,14 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
                     'px-2 py-1 rounded-full text-xs font-bold transition-all duration-300',
                     card.changeType === 'positive' 
                       ? 'text-ios-success bg-ios-success/10' 
-                      : 'text-ios-text-secondary bg-ios-background'
+                      : 'text-gray-200 bg-ios-background'
                   )}>
                     {card.change}
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-ios-text-secondary mb-2 transition-colors duration-300 group-hover:text-ios-text">
+                  <h3 className="text-sm font-medium text-gray-200 mb-2 transition-colors duration-300 group-hover:text-ios-text">
                     {card.title}
                   </h3>
                   <p className="text-2xl font-bold text-ios-text transition-all duration-300 group-hover:scale-105">

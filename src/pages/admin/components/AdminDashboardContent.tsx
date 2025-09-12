@@ -164,13 +164,13 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   }}
                 >
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-white/30 shadow-sm">
+                    <div className="w-10 h-10 bg-black/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-white/30 shadow-lg shadow-black/50">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
                         <h4 className="font-bold text-ios-text truncate pr-2">{notification.title}</h4>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/90 text-ios-text border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-sm">
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-black/90 text-ios-text border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-lg shadow-black/50">
                           {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -192,10 +192,10 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           ) : (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-ios-background/30 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-                <Activity className="w-8 h-8 text-ios-text-secondary" />
+                <Activity className="w-8 h-8 text-gray-200" />
               </div>
-              <p className="text-ios-text-secondary font-medium">No recent activity</p>
-              <p className="text-ios-text-secondary/60 text-sm mt-1">New updates will appear here</p>
+              <p className="text-gray-200 font-medium">No recent activity</p>
+              <p className="text-gray-200/60 text-sm mt-1">New updates will appear here</p>
             </div>
           )}
         </div>
@@ -220,7 +220,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           {/* Date Range Filters */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-4 bg-gradient-to-r from-ios-background/50 to-white/20 rounded-2xl border border-ios-background/50 backdrop-blur-sm">
             <div className="flex items-center space-x-3">
-              <div className="flex bg-white/70 backdrop-blur-sm rounded-xl border border-white/30 overflow-hidden shadow-sm">
+              <div className="flex bg-black/70 backdrop-blur-sm rounded-xl border border-white/30 overflow-hidden shadow-lg shadow-black/50">
                 {(['7d','14d','30d'] as const).map(opt => (
                   <button 
                     key={opt} 
@@ -229,7 +229,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                       'px-4 py-2 text-sm font-semibold transition-all duration-200',
                       range === opt 
                         ? 'bg-ios-primary text-white shadow-lg' 
-                        : 'text-ios-text-secondary hover:bg-white/50 hover:text-ios-text'
+                        : 'text-gray-200 hover:bg-black/50 hover:text-ios-text'
                     )}
                   >
                     {opt.replace('d', ' days')}
@@ -238,14 +238,14 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 bg-white/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+              <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
                 <input 
                   type="date" 
                   value={customStart} 
                   onChange={e=>setCustomStart(e.target.value)} 
                   className="bg-transparent text-sm text-ios-text focus:outline-none" 
                 />
-                <span className="text-ios-text-secondary text-sm">to</span>
+                <span className="text-gray-200 text-sm">to</span>
                 <input 
                   type="date" 
                   value={customEnd} 
@@ -284,7 +284,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 <div className="h-48 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
-                      <BarChart className="w-6 h-6 text-ios-text-secondary" />
+                      <BarChart className="w-6 h-6 text-gray-200" />
                     </div>
                     <p className="text-sm text-ios-text font-medium">No data available</p>
                   </div>
@@ -306,7 +306,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                             width={6} 
                             height={h+'%'} 
                             fill="url(#revenueGradient)" 
-                            className="drop-shadow-sm"
+                            className="drop-shadow-lg shadow-black/50"
                           />
                         );
                       })}
@@ -327,7 +327,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                             y2={y2+'%'} 
                             stroke="#007AFF" 
                             strokeWidth={3}
-                            className="drop-shadow-sm"
+                            className="drop-shadow-lg shadow-black/50"
                           />
                         );
                       })}
@@ -342,7 +342,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                             cy={y+'%'} 
                             r={4} 
                             fill="#007AFF" 
-                            className="drop-shadow-sm"
+                            className="drop-shadow-lg shadow-black/50"
                           />
                         );
                       })}
@@ -356,11 +356,11 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   </div>
                   <div className="flex justify-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-ios-primary rounded-full shadow-sm"></div>
+                      <div className="w-4 h-4 bg-ios-primary rounded-full shadow-lg shadow-black/50"></div>
                       <span className="text-sm font-medium text-ios-text">Orders</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-3 bg-gradient-to-t from-ios-success to-ios-success/50 rounded-sm shadow-sm"></div>
+                      <div className="w-4 h-3 bg-gradient-to-t from-ios-success to-ios-success/50 rounded-sm shadow-lg shadow-black/50"></div>
                       <span className="text-sm font-medium text-ios-text">Revenue</span>
                     </div>
                   </div>
@@ -398,9 +398,9 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               ) : topProducts.length===0 ? (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
-                    <Package className="w-6 h-6 text-ios-text-secondary" />
+                    <Package className="w-6 h-6 text-gray-200" />
                   </div>
-                  <p className="text-sm text-ios-text-secondary">No product data available</p>
+                  <p className="text-sm text-gray-200">No product data available</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -410,7 +410,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                            animationDelay: `${index * 150}ms`,
                            animation: 'slideInLeft 0.6s ease-out forwards'
                          }}>
-                      <div className="product-card flex items-center justify-between p-3 rounded-xl hover:bg-white/30 transition-all duration-200 gradient-overlay">
+                      <div className="product-card flex items-center justify-between p-3 rounded-xl hover:bg-black/30 transition-all duration-200 gradient-overlay">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-ios-primary/10 to-ios-primary/5 rounded-xl flex items-center justify-center border border-ios-primary/10 text-sm font-bold text-ios-primary">
                             #{index + 1}

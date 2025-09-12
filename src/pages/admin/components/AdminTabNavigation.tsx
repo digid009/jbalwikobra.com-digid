@@ -46,7 +46,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
           className={`flex items-center gap-2 transition-all duration-200 ${
             activeTab === tab.id 
               ? 'bg-ios-primary text-white shadow-lg' 
-              : 'bg-transparent text-ios-text-secondary hover:bg-ios-surface-tertiary'
+              : 'bg-transparent text-gray-200 hover:bg-ios-surface-tertiary'
           }`}
         >
           {tab.icon}

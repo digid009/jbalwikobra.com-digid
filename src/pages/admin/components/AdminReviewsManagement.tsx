@@ -116,7 +116,7 @@ export const AdminReviewsManagement: React.FC = () => {
             <AlertCircle className="w-5 h-5 text-ios-warning flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-ios-warning mb-1">Setup Required</h3>
-              <p className="text-sm text-ios-text-secondary">{error}</p>
+              <p className="text-sm text-gray-200">{error}</p>
             </div>
           </div>
         </IOSCard>
@@ -128,7 +128,7 @@ export const AdminReviewsManagement: React.FC = () => {
           <div className="space-y-4">
             {/* First Row - Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text-secondary" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
               <input
                 type="text"
                 placeholder="Search reviews by customer name, product name, or review text..."
@@ -136,8 +136,8 @@ export const AdminReviewsManagement: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                  'bg-ios-surface border border-ios-border text-ios-text placeholder-ios-text-secondary',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                  'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                 )}
               />
             </div>
@@ -146,13 +146,13 @@ export const AdminReviewsManagement: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Rating Filter */}
               <div className="flex items-center space-x-3 min-w-[140px]">
-                <Filter className="w-4 h-4 text-ios-text-secondary" />
+                <Filter className="w-4 h-4 text-gray-200" />
                 <select
                   value={ratingFilter}
                   onChange={(e) => setRatingFilter(e.target.value)}
                   className={cn(
-                    'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                    'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                    'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                    'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                     'transition-colors duration-200 text-ios-text'
                   )}
                 >
@@ -169,13 +169,13 @@ export const AdminReviewsManagement: React.FC = () => {
 
               {/* Date Filter */}
               <div className="flex items-center space-x-3 min-w-[140px]">
-                <span className="text-sm font-medium text-ios-text-secondary">Date:</span>
+                <span className="text-sm font-medium text-gray-200">Date:</span>
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
                   className={cn(
-                    'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
-                    'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
+                    'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                    'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                     'transition-colors duration-200 text-ios-text'
                   )}
                 >
@@ -209,31 +209,31 @@ export const AdminReviewsManagement: React.FC = () => {
         {loading ? (
           <div className="p-12 text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
-            <p className="text-ios-text-secondary font-medium">Loading reviews...</p>
+            <p className="text-gray-200 font-medium">Loading reviews...</p>
           </div>
         ) : reviews.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-ios-border'
+                'bg-ios-surface border-b border-gray-700'
               )}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Rating
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Review
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -247,11 +247,11 @@ export const AdminReviewsManagement: React.FC = () => {
                           {review.user_name || 'Anonymous'}
                         </div>
                         {review.user_id ? (
-                          <div className="text-sm text-ios-text-secondary">
+                          <div className="text-sm text-gray-200">
                             ID: {review.user_id.slice(-8)}
                           </div>
                         ) : (
-                          <div className="text-sm text-ios-text-secondary italic">No User ID</div>
+                          <div className="text-sm text-gray-200 italic">No User ID</div>
                         )}
                       </div>
                     </td>
@@ -261,11 +261,11 @@ export const AdminReviewsManagement: React.FC = () => {
                           {review.product_name || 'Unknown Product'}
                         </div>
                         {review.product_id ? (
-                          <div className="text-sm text-ios-text-secondary">
+                          <div className="text-sm text-gray-200">
                             ID: {review.product_id.slice(-8)}
                           </div>
                         ) : (
-                          <div className="text-sm text-ios-text-secondary italic">No Product ID</div>
+                          <div className="text-sm text-gray-200 italic">No Product ID</div>
                         )}
                       </div>
                     </td>
@@ -292,12 +292,12 @@ export const AdminReviewsManagement: React.FC = () => {
                             }
                           </p>
                         ) : (
-                          <span className="text-ios-text-secondary italic">No comment</span>
+                          <span className="text-gray-200 italic">No comment</span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text-secondary">
+                      <span className="text-sm text-gray-200">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                     </td>
@@ -319,10 +319,10 @@ export const AdminReviewsManagement: React.FC = () => {
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="w-8 h-8 text-ios-text-secondary" />
+              <Star className="w-8 h-8 text-gray-200" />
             </div>
-            <p className="text-ios-text-secondary font-medium">No reviews found</p>
-            <p className="text-ios-text-secondary/70 text-sm">Reviews will appear here once customers leave feedback</p>
+            <p className="text-gray-200 font-medium">No reviews found</p>
+            <p className="text-gray-200/70 text-sm">Reviews will appear here once customers leave feedback</p>
           </div>
         )}
 
