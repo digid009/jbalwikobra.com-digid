@@ -60,7 +60,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
       <IOSCard className="w-full max-w-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-ios-separator">
-          <h2 className="text-xl font-semibold text-ios-text">
+          <h2 className="text-xl font-semibold text-white">
             {post ? 'Edit Post' : 'Create New Post'}
           </h2>
           <IOSButton
@@ -77,7 +77,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Post Type */}
           <div>
-            <label className="block text-sm font-medium text-ios-text mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               Post Type
             </label>
             <div className="flex gap-4">
@@ -90,7 +90,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                   onChange={(e) => handleInputChange('type', e.target.value as 'post' | 'announcement')}
                   className="mr-2 text-ios-primary"
                 />
-                <span className="text-ios-text">Regular Post</span>
+                <span className="text-white">Regular Post</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -101,21 +101,21 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                   onChange={(e) => handleInputChange('type', e.target.value as 'post' | 'announcement')}
                   className="mr-2 text-ios-primary"
                 />
-                <span className="text-ios-text">Announcement</span>
+                <span className="text-white">Announcement</span>
               </label>
             </div>
           </div>
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-ios-text mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               Content *
             </label>
             <textarea
               value={formData.content || ''}
               onChange={(e) => handleInputChange('content', e.target.value)}
               rows={8}
-              className="w-full p-3 border border-ios-separator rounded-2xl bg-ios-surface focus:border-ios-primary focus:outline-none resize-none"
+              className="w-full p-3 border border-ios-separator rounded-2xl bg-black focus:border-ios-primary focus:outline-none resize-none"
               placeholder="Write your post content here..."
               required
             />
@@ -127,16 +127,16 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
           {/* Preview */}
           {formData.content && (
             <div>
-              <label className="block text-sm font-medium text-ios-text mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Preview
               </label>
-              <div className="p-4 border border-ios-separator rounded-2xl bg-ios-surface-secondary">
+              <div className="p-4 border border-ios-separator rounded-2xl bg-black-secondary">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 bg-ios-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
                     A
                   </div>
                   <div>
-                    <p className="font-medium text-ios-text">Administrator</p>
+                    <p className="font-medium text-white">Administrator</p>
                     <p className="text-xs text-gray-200">Just now</p>
                   </div>
                   {formData.type === 'announcement' && (
@@ -145,7 +145,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                     </span>
                   )}
                 </div>
-                <p className="text-ios-text whitespace-pre-wrap">
+                <p className="text-white whitespace-pre-wrap">
                   {formData.content}
                 </p>
               </div>

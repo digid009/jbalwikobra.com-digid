@@ -135,7 +135,7 @@ const FloatingNotifications: React.FC = () => {
   return (
     <div className="fixed top-6 right-6 z-[9999] space-y-4 max-w-md">
       {items.slice(0, 5).map((n) => (
-        <div key={n.id} className="bg-white rounded-2xl shadow-2xl border border-pink-100 transition-all duration-300 hover:shadow-3xl hover:scale-105">
+        <div key={n.id} className="bg-black rounded-2xl shadow-2xl border border-pink-100 transition-all duration-300 hover:shadow-3xl hover:scale-105">
           <div className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-4 flex-1">
@@ -144,7 +144,7 @@ const FloatingNotifications: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-lg text-gray-900">{n.title}</h4>
+                    <h4 className="font-bold text-lg text-white">{n.title}</h4>
                   </div>
                   <p className="text-base text-gray-700 line-clamp-2 mt-2 leading-relaxed">{n.body || n.title}</p>
                   <p className="text-sm text-pink-600 mt-3 font-semibold">
@@ -157,14 +157,14 @@ const FloatingNotifications: React.FC = () => {
               </div>
               <button 
                 onClick={() => dismissNotification(n.id)} 
-                className="h-8 w-8 shrink-0 rounded-xl hover:bg-pink-50 flex items-center justify-center transition-colors duration-200"
+                className="h-8 w-8 shrink-0 rounded-xl hover:bg-pink-600/20 flex items-center justify-center transition-colors duration-200"
               >
                 <X className="h-5 w-5 text-pink-500" />
               </button>
             </div>
             <button 
               onClick={() => markAsRead(n.id)} 
-              className="w-full mt-4 py-3 text-base rounded-xl hover:bg-pink-50 text-pink-600 font-semibold border-2 border-pink-200 transition-all duration-200 hover:border-pink-300"
+              className="w-full mt-4 py-3 text-base rounded-xl hover:bg-pink-600/20 text-pink-600 font-semibold border-2 border-pink-200 transition-all duration-200 hover:border-pink-300"
             >
               Mark as Read
             </button>

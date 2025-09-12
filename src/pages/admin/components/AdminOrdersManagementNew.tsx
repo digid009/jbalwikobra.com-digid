@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { adminInputWithLeftIcon, adminInputBase } from './ui/InputStyles';
 import { Search, Filter, RefreshCw, AlertCircle, CheckCircle, Clock, XCircle, Package, User, Mail, Phone } from 'lucide-react';
 import { adminService, Order } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
+import AdminOrdersTable from './AdminOrdersTable';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
 import { cn } from '../../../styles/standardClasses';
@@ -48,6 +50,11 @@ export const AdminOrdersManagement: React.FC = () => {
     loadOrders();
   };
 
+  const handleComplete = async (order: Order) => {
+    await adminService.completeOrder(order.id);
+    loadOrders();
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
@@ -64,17 +71,18 @@ export const AdminOrdersManagement: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
+    // Unified Black & Pink design system badges
     switch (status) {
       case 'pending':
-        return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700';
+        return 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/30';
       case 'processing':
-        return 'bg-gray-900 dark:bg-blue-900/20 text-pink-300 dark:text-blue-200 border-pink-500/20 dark:border-blue-700';
+        return 'bg-pink-500/15 text-pink-300 border border-pink-500/30';
       case 'completed':
-        return 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700';
+        return 'bg-green-500/15 text-green-300 border border-green-500/30';
       case 'cancelled':
-        return 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700';
+        return 'bg-red-500/15 text-red-300 border border-red-500/30';
       default:
-        return 'bg-gray-900 dark:bg-gray-900/20 text-gray-100 dark:text-gray-200 border-gray-200 dark:border-gray-700';
+        return 'bg-gray-500/15 text-gray-300 border border-gray-500/30';
     }
   };
 
@@ -106,14 +114,14 @@ export const AdminOrdersManagement: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-10 pr-4 py-2 border border-gray-700 border-gray-600 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:border-pink-500 bg-black dark:bg-gray-900 text-white text-white"
+                className={adminInputWithLeftIcon}
               />
             </div>
             
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-700 border-gray-600 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:border-pink-500 bg-black dark:bg-gray-900 text-white text-white"
+              className={adminInputBase}
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -147,122 +155,13 @@ export const AdminOrdersManagement: React.FC = () => {
         </div>
       </IOSCard>
 
-      {/* Orders List */}
-      {loading ? (
-        <IOSCard className="p-8">
-          <div className="text-center">
-            <RefreshCw className="animate-spin mx-auto mb-4" size={24} />
-            <p className="text-gray-200 dark:text-gray-400">Loading orders...</p>
-          </div>
-        </IOSCard>
-      ) : error ? (
-        <IOSCard className="p-8">
-          <div className="text-center text-red-600 dark:text-red-400">
-            <AlertCircle className="mx-auto mb-4" size={24} />
-            <p className="font-medium mb-2">Error Loading Orders</p>
-            <p className="text-sm">{error}</p>
-            <IOSButton
-              variant="primary"
-              size="medium"
-              onClick={handleRefresh}
-              className="mt-4"
-            >
-              Try Again
-            </IOSButton>
-          </div>
-        </IOSCard>
-      ) : orders.length === 0 ? (
-        <IOSCard className="p-8">
-          <div className="text-center">
-            <Package className="mx-auto mb-4 text-gray-400" size={48} />
-            <p className="text-gray-200 dark:text-gray-400 mb-2">No orders found</p>
-            <p className="text-sm text-gray-300 dark:text-gray-300">
-              {statusFilter !== 'all' 
-                ? `No orders with status "${statusFilter}"`
-                : 'Orders will appear here once customers place them'
-              }
-            </p>
-          </div>
-        </IOSCard>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <IOSCard key={order.id} className="p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-white text-white">
-                        Order #{order.id.slice(-8)}
-                      </h3>
-                      <p className="text-sm text-gray-200 dark:text-gray-400">
-                        {formatShortDate(order.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <IOSBadge
-                        variant={order.status === 'completed' ? 'success' : 
-                                order.status === 'cancelled' ? 'destructive' : 'warning'}
-                        className={cn('px-3 py-1 rounded-full border', getStatusColor(order.status))}
-                      >
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(order.status)}
-                          <span className="capitalize">{order.status}</span>
-                        </div>
-                      </IOSBadge>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User size={16} className="text-gray-400" />
-                      <span className="text-white text-white">
-                        {order.customer_name || 'Unknown Customer'}
-                      </span>
-                    </div>
-                    
-                    {order.customer_email && (
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} className="text-gray-400" />
-                        <span className="text-gray-200 dark:text-gray-400">
-                          {order.customer_email}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {order.customer_phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone size={16} className="text-gray-400" />
-                        <span className="text-gray-200 dark:text-gray-400">
-                          {order.customer_phone}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {order.order_type && (
-                      <div className="flex items-center gap-2">
-                        <Package size={16} className="text-gray-400" />
-                        <span className="text-gray-200 dark:text-gray-400 capitalize">
-                          {order.order_type}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {formatCurrencyIDR(order.amount)}
-                  </div>
-                  <p className="text-sm text-gray-300 dark:text-gray-400">
-                    Total Amount
-                  </p>
-                </div>
-              </div>
-            </IOSCard>
-          ))}
-        </div>
-      )}
+      <AdminOrdersTable
+        orders={orders}
+        loading={loading}
+        onComplete={handleComplete}
+        getStatusColor={getStatusColor}
+        getStatusIcon={getStatusIcon}
+      />
 
       {/* Simple Pagination */}
       {totalPages > 1 && (

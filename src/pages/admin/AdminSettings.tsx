@@ -58,7 +58,7 @@ const AdminSettings: React.FC = () => {
   if (loading) {
     return (
       <IOSContainer className="py-6">
-        <div className="flex items-center justify-center gap-2 text-ios-text-secondary">
+        <div className="flex items-center justify-center gap-2 text-white-secondary">
           <Loader2 className="animate-spin" size={18} /> 
           Memuat pengaturan...
         </div>
@@ -69,42 +69,42 @@ const AdminSettings: React.FC = () => {
   return (
     <IOSContainer maxWidth="full" className="py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ios-text">Pengaturan Website</h1>
-        <p className="text-ios-text-secondary">Kelola informasi dan konfigurasi website</p>
+        <h1 className="text-2xl font-bold text-white">Pengaturan Website</h1>
+        <p className="text-white-secondary">Kelola informasi dan konfigurasi website</p>
       </div>
 
       <div className="space-y-6">
         {/* Site Information */}
         <IOSCard padding="large">
-          <h2 className="text-lg font-semibold text-ios-text mb-4">Informasi Situs</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Informasi Situs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Nama Situs
               </label>
               <input 
                 value={form.siteName} 
                 onChange={e => setForm((p: any) => ({...p, siteName: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="Nama website Anda"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Email Kontak
               </label>
               <input 
                 type="email"
                 value={form.contactEmail} 
                 onChange={e => setForm((p: any) => ({...p, contactEmail: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="admin@example.com"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 WhatsApp
               </label>
               <PhoneInput
@@ -112,18 +112,18 @@ const AdminSettings: React.FC = () => {
                 onChange={(value) => setForm((p: any) => ({...p, whatsappNumber: value}))}
                 onValidationChange={(isValid) => setPhoneValidation(prev => ({...prev, whatsapp: isValid}))}
                 placeholder="Masukkan Nomor WhatsApp"
-                className="bg-ios-surface border-ios-border text-ios-text"
+                className="bg-black border-gray-700 text-white"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Alamat
               </label>
               <textarea 
                 value={form.address} 
                 onChange={e => setForm((p: any) => ({...p, address: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 rows={3}
                 placeholder="Alamat lengkap"
               />
@@ -133,28 +133,28 @@ const AdminSettings: React.FC = () => {
 
         {/* Hero Section */}
         <IOSCard padding="large">
-          <h2 className="text-lg font-semibold text-ios-text mb-4">Hero Section</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Hero Section</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Hero Title
               </label>
               <input 
                 value={form.heroTitle} 
                 onChange={e => setForm((p: any) => ({...p, heroTitle: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="Judul utama halaman"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Hero Subtitle
               </label>
               <input 
                 value={form.heroSubtitle} 
                 onChange={e => setForm((p: any) => ({...p, heroSubtitle: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="Deskripsi singkat"
               />
             </div>
@@ -163,56 +163,56 @@ const AdminSettings: React.FC = () => {
 
         {/* Social Media */}
         <IOSCard padding="large">
-          <h2 className="text-lg font-semibold text-ios-text mb-4">Media Sosial</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Media Sosial</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Facebook URL
               </label>
               <input 
                 type="url"
                 value={form.facebookUrl} 
                 onChange={e => setForm((p: any) => ({...p, facebookUrl: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="https://facebook.com/username"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Instagram URL
               </label>
               <input 
                 type="url"
                 value={form.instagramUrl} 
                 onChange={e => setForm((p: any) => ({...p, instagramUrl: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="https://instagram.com/username"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 TikTok URL
               </label>
               <input 
                 type="url"
                 value={form.tiktokUrl} 
                 onChange={e => setForm((p: any) => ({...p, tiktokUrl: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="https://tiktok.com/@username"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 YouTube URL
               </label>
               <input 
                 type="url"
                 value={form.youtubeUrl} 
                 onChange={e => setForm((p: any) => ({...p, youtubeUrl: e.target.value}))} 
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent" 
                 placeholder="https://youtube.com/channel/..."
               />
             </div>
@@ -221,15 +221,15 @@ const AdminSettings: React.FC = () => {
 
         {/* Brand Assets */}
         <IOSCard padding="large">
-          <h2 className="text-lg font-semibold text-ios-text mb-4">Brand Assets</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Brand Assets</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Logo Website
               </label>
               <div className="flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 px-4 py-2 border border-ios-border rounded-lg hover:bg-ios-surface cursor-pointer transition-colors">
-                  <ImageIcon size={16} className="text-ios-text-secondary" /> 
+                <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg hover:bg-black cursor-pointer transition-colors">
+                  <ImageIcon size={16} className="text-white-secondary" /> 
                   Pilih Logo
                   <input 
                     type="file" 
@@ -246,19 +246,19 @@ const AdminSettings: React.FC = () => {
                   <img 
                     src={logoPreview || settings?.logoUrl || ''} 
                     alt="logo preview" 
-                    className="h-12 w-auto rounded border border-ios-border object-contain bg-white" 
+                    className="h-12 w-auto rounded border border-gray-700 object-contain bg-black" 
                   />
                 )}
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Favicon
               </label>
               <div className="flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 px-4 py-2 border border-ios-border rounded-lg hover:bg-ios-surface cursor-pointer transition-colors">
-                  <ImageIcon size={16} className="text-ios-text-secondary" /> 
+                <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg hover:bg-black cursor-pointer transition-colors">
+                  <ImageIcon size={16} className="text-white-secondary" /> 
                   Pilih Favicon
                   <input 
                     type="file" 
@@ -275,7 +275,7 @@ const AdminSettings: React.FC = () => {
                   <img 
                     src={faviconPreview || settings?.faviconUrl || ''} 
                     alt="favicon preview" 
-                    className="h-8 w-8 rounded border border-ios-border object-contain bg-white" 
+                    className="h-8 w-8 rounded border border-gray-700 object-contain bg-black" 
                   />
                 )}
               </div>

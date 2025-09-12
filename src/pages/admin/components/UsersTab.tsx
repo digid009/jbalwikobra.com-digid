@@ -62,10 +62,10 @@ const UsersTab: React.FC = () => {
         {[1, 2, 3].map((i) => (
           <IOSCard key={i} className="p-6 animate-pulse">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-ios-surface-secondary rounded-full"></div>
+              <div className="w-12 h-12 bg-black-secondary rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-ios-surface-secondary rounded mb-2"></div>
-                <div className="h-3 bg-ios-surface-secondary rounded w-2/3"></div>
+                <div className="h-4 bg-black-secondary rounded mb-2"></div>
+                <div className="h-3 bg-black-secondary rounded w-2/3"></div>
               </div>
             </div>
           </IOSCard>
@@ -90,7 +90,7 @@ const UsersTab: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-ios-text">Users Management</h2>
+        <h2 className="text-xl font-semibold text-white">Users Management</h2>
         <div className="text-sm text-gray-200">
           {users.length} users found
         </div>
@@ -100,7 +100,7 @@ const UsersTab: React.FC = () => {
       {users.length === 0 ? (
         <IOSCard className="p-8 text-center">
           <Users className="w-16 h-16 mx-auto mb-4 text-gray-200" />
-          <h3 className="text-lg font-medium text-ios-text mb-2">No users found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No users found</h3>
           <p className="text-gray-200">Registered users will appear here</p>
         </IOSCard>
       ) : (
@@ -114,7 +114,7 @@ const UsersTab: React.FC = () => {
                     {getInitials(user.name, user.email)}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-ios-text">
+                    <h3 className="font-medium text-white">
                       {user.name || 'Anonymous User'}
                     </h3>
                     <p className="text-sm text-gray-200">
@@ -155,11 +155,11 @@ const UsersTab: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-ios-separator">
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <p className="text-lg font-semibold text-ios-text">0</p>
+                    <p className="text-lg font-semibold text-white">0</p>
                     <p className="text-xs text-gray-200">Orders</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-ios-text">₹0</p>
+                    <p className="text-lg font-semibold text-white">₹0</p>
                     <p className="text-xs text-gray-200">Spent</p>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { adminInputBase, adminInputWithLeftIcon, adminCheckboxBase } from './ui/InputStyles';
 import {
   Package,
   Plus,
@@ -306,7 +307,7 @@ const ProductsTab: React.FC = () => {
                 <select
                   value={selectedCategory}
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
+                  className={adminInputBase}
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -321,7 +322,7 @@ const ProductsTab: React.FC = () => {
                 <select
                   value={selectedStatus}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
+                  className={adminInputBase}
                 >
                   <option value="">All Status</option>
                   <option value="active">Active</option>
@@ -339,7 +340,7 @@ const ProductsTab: React.FC = () => {
                     placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
+                    className={adminInputWithLeftIcon}
                   />
                 </div>
               </div>
@@ -428,14 +429,14 @@ const ProductsTab: React.FC = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product: Product) => (
-                <div key={product.id} className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl shadow-black/50 transition-shadow">
+                <div key={product.id} className="border border-gray-700 rounded-2xl overflow-hidden hover:shadow-xl shadow-black/50 transition-shadow">
                   {/* Product Image */}
                   <div className="relative h-48 bg-gray-900">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(product.id)}
                       onChange={() => handleSelectProduct(product.id)}
-                      className="absolute top-3 left-3 rounded border-gray-700 text-pink-500 focus:ring-pink-500 focus:ring-2 focus:ring-2 z-10"
+                      className="absolute top-3 left-3 rounded border-gray-700 text-pink-500 focus:ring-pink-500 focus:ring-2 z-10"
                     />
                     {product.image ? (
                       <img
@@ -548,7 +549,7 @@ const ProductsTab: React.FC = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+              <div className="mt-6 flex items-center justify-between border-t border-gray-700 pt-4">
                 <div className="text-sm text-gray-100">
                   Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, totalCount)} of {totalCount} results
                 </div>

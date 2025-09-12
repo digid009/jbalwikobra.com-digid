@@ -26,7 +26,8 @@ export interface Order {
   customer_name: string;
   product_name?: string; // Derived from product_id lookup
   amount: number;
-  status: 'pending' | 'completed' | 'cancelled' | 'processing';
+  // Expanded status union to align with broader system usage (paid & processing etc.)
+  status: 'pending' | 'paid' | 'processing' | 'completed' | 'cancelled' | 'refunded';
   order_type: string; // 'purchase' etc.
   created_at: string;
   updated_at: string;
@@ -174,25 +175,20 @@ class AdminService {
   supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true)
       ]);
 
-      // Try to get reviews (might not exist)
+      // Updated business rule: totalReviews represents count of paid + completed orders
       let totalReviews = 0;
-      let averageRating = 0;
-      
+      let averageRating = 0; // Keep averageRating legacy computation if reviews table exists
       try {
-        const [
-          { count: reviewCount },
-          reviewsWithRating
-        ] = await Promise.all([
-          supabase.from('reviews').select('id', { count: 'exact', head: true }),
+        const [paidCompletedOrders, reviewsWithRating] = await Promise.all([
+          supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['paid', 'completed']),
           supabase.from('reviews').select('rating')
         ]);
-        
-        totalReviews = reviewCount || 0;
-        averageRating = reviewsWithRating.data?.length > 0
-          ? reviewsWithRating.data.reduce((sum, review) => sum + review.rating, 0) / reviewsWithRating.data.length
-          : 0;
-      } catch (reviewError) {
-        // Silent fallback if reviews table not present
+        totalReviews = paidCompletedOrders.count || 0;
+        if (reviewsWithRating.data?.length) {
+          averageRating = reviewsWithRating.data.reduce((sum, r) => sum + (r as any).rating, 0) / reviewsWithRating.data.length;
+        }
+      } catch (e) {
+        // fallback silently
       }
 
       return {
@@ -242,10 +238,17 @@ class AdminService {
       }
 
       // Map to Order interface with actual data
+      const productIds = Array.from(new Set((data||[]).map((d:any)=>d.product_id).filter(Boolean)));
+      let productsMap: Record<string,string> = {};
+      if (productIds.length) {
+        const { data: prodData } = await supabase.from('products').select('id,name').in('id', productIds);
+        productsMap = (prodData||[]).reduce((acc:any,p:any)=>{acc[p.id]=p.name;return acc;},{});
+      }
+
       const orders: Order[] = (data || []).map((item: any) => ({
         id: item.id,
         customer_name: item.customer_name || 'Unknown Customer',
-        product_name: undefined, // Will be populated via product lookup if needed
+        product_name: item.product_id ? productsMap[item.product_id] : undefined,
         amount: item.amount || 0,
         status: item.status || 'pending',
         order_type: item.order_type || 'purchase',
@@ -263,6 +266,17 @@ class AdminService {
     } catch (error) {
       console.error('Error fetching orders:', error);
       return { data: [], count: 0 };
+    }
+  }
+
+  async completeOrder(orderId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.from('orders').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', orderId);
+      if (error) throw error;
+      return true;
+    } catch(e) {
+      console.error('completeOrder error', e);
+      return false;
     }
   }
 
@@ -585,6 +599,10 @@ export interface UserItem {
 }
 
 export const adminService = {
+  async completeOrder(orderId: string) {
+    const service = new AdminService();
+    return service.completeOrder(orderId);
+  },
   async getAdminStats(): Promise<AdminStats> {
     return adminCache.getOrFetch('admin:stats', async () => {
       try {

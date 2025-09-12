@@ -221,7 +221,7 @@ const FlashSalesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-ios-text')}>
+      <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-white')}>
         <section className={cn(standardClasses.spacing.padding.large, 'py-10')}>
           <IOSContainer>
             <div className="ios-skeleton h-10 w-56 mb-8"></div>
@@ -245,12 +245,12 @@ const FlashSalesPage: React.FC = () => {
   }
 
   return (
-    <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-ios-text')}>
+    <div className={cn(standardClasses.layout.fullHeight, 'bg-ios-background text-white')}>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 py-12 lg:py-16">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-gray-700">
               <Zap className="text-white" size={32} />
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white">
@@ -264,7 +264,7 @@ const FlashSalesPage: React.FC = () => {
       </section>
 
       {/* Flash Sale Stats */}
-      <section className="py-6 bg-ios-surface border-b border-ios-border">
+      <section className="py-6 bg-black border-b border-gray-700">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center">
             <div className="grid grid-cols-2 gap-8 lg:gap-12">
@@ -273,14 +273,14 @@ const FlashSalesPage: React.FC = () => {
                   <Flame size={20} />
                   <span className="text-2xl font-bold">{flashSaleProducts.length}</span>
                 </div>
-                <p className="text-sm text-ios-text-secondary">Total Produk</p>
+                <p className="text-sm text-white-secondary">Total Produk</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1 text-green-400 mb-2">
                   <TrendingUp size={20} />
                   <span className="text-2xl font-bold">70%</span>
                 </div>
-                <p className="text-sm text-ios-text-secondary">Diskon Maksimal</p>
+                <p className="text-sm text-white-secondary">Diskon Maksimal</p>
               </div>
             </div>
           </div>
@@ -288,25 +288,25 @@ const FlashSalesPage: React.FC = () => {
       </section>
 
       {/* Filters and Search */}
-      <section className="py-6 bg-ios-surface/60 border-b border-ios-border">
+      <section className="py-6 bg-black/60 border-b border-gray-700">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-ios-text-secondary" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-secondary" size={20} />
               <input
                 type="text"
                 placeholder="Cari produk flash sale..."
                 value={filters.searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 bg-ios-surface border border-ios-border rounded-lg text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-transparent min-h-[44px]"
+                className="w-full pl-10 pr-4 bg-black border border-gray-700 rounded-lg text-white placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-transparent min-h-[44px]"
               />
             </div>
 
             {/* Mobile-First Filters and Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Grid Layout Toggle - Hidden on Mobile */}
-              <div className="hidden lg:flex items-center space-x-1 bg-ios-surface rounded-lg p-1 border border-ios-border">
+              <div className="hidden lg:flex items-center space-x-1 bg-black rounded-lg p-1 border border-gray-700">
                 {(['2', '3', '4', '6'] as GridLayout[]).map((layout) => (
                   <button
                     key={layout}
@@ -314,7 +314,7 @@ const FlashSalesPage: React.FC = () => {
                     className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                       gridLayout === layout
                         ? 'bg-pink-600 text-white'
-                        : 'text-ios-text-secondary hover:text-ios-text'
+                        : 'text-white-secondary hover:text-white'
                     }`}
                   >
                     {layout}
@@ -328,7 +328,7 @@ const FlashSalesPage: React.FC = () => {
                 <select
                   value={filters.sortBy}
                   onChange={handleSortChange}
-                  className="flex-1 sm:flex-none px-3 bg-ios-surface border border-ios-border rounded-lg text-sm text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
+                  className="flex-1 sm:flex-none px-3 bg-black border border-gray-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                 >
                   <option value="discount-desc">Diskon Terbesar</option>
                   <option value="price-asc">Harga Terendah</option>
@@ -342,7 +342,7 @@ const FlashSalesPage: React.FC = () => {
                   className={`sm:hidden flex items-center justify-center px-3 py-2 rounded-lg border transition-colors ${
                     showFilters
                       ? 'bg-pink-600 border-pink-600 text-white'
-          : 'bg-ios-surface border-ios-border text-ios-text hover:bg-ios-surface/80'
+          : 'bg-black border-gray-700 text-white hover:bg-black/80'
                   }`}
                 >
                   <SlidersHorizontal size={16} />
@@ -350,7 +350,7 @@ const FlashSalesPage: React.FC = () => {
               </div>
 
               {/* Results Info */}
-              <div className="text-sm text-ios-text-secondary whitespace-nowrap">
+              <div className="text-sm text-white-secondary whitespace-nowrap">
                 {paginationInfo.totalItems} produk
               </div>
             </div>
@@ -366,8 +366,8 @@ const FlashSalesPage: React.FC = () => {
                     onClick={() => setFilters(prev => ({ ...prev, gameFilter: game }))}
                     className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
                       active
-                        ? 'bg-ios-accent text-white shadow-lg'
-                        : 'bg-ios-surface text-ios-text-secondary hover:bg-ios-surface/80 hover:text-ios-text'
+                        ? 'bg-pink-500 text-white shadow-lg'
+                        : 'bg-black text-white-secondary hover:bg-black/80 hover:text-white'
                     }`}
                   >
                     {idx === 0 ? 'Semua' : game}
@@ -380,16 +380,16 @@ const FlashSalesPage: React.FC = () => {
 
           {/* Desktop Expanded Filters */}
           {showFilters && (
-            <div className="hidden sm:block mt-4 p-4 bg-ios-surface rounded-lg border border-ios-border">
+            <div className="hidden sm:block mt-4 p-4 bg-black rounded-lg border border-gray-700">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                  <label className="block text-sm font-medium text-white-secondary mb-2">
                     Game
                   </label>
                   <select
                     value={filters.gameFilter}
                     onChange={handleGameFilterChange}
-                    className="w-full px-3 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
+                    className="w-full px-3 bg-black border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                   >
                     <option value="">Semua Game</option>
                     {gameOptions.map((game) => (
@@ -400,13 +400,13 @@ const FlashSalesPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                  <label className="block text-sm font-medium text-white-secondary mb-2">
                     Urutkan
                   </label>
                   <select
                     value={filters.sortBy}
                     onChange={handleSortChange}
-                    className="w-full px-3 bg-ios-surface border border-ios-border rounded-lg text-ios-text focus:ring-2 focus:ring-ios-accent min-h-[44px]"
+                    className="w-full px-3 bg-black border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent min-h-[44px]"
                   >
                     <option value="discount-desc">Diskon Terbesar</option>
                     <option value="price-asc">Harga Terendah</option>
@@ -522,7 +522,7 @@ const FlashSalesPage: React.FC = () => {
               {/* Pagination */}
               {paginationInfo.totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8">
-                  <div className="text-sm text-ios-text-secondary">
+                  <div className="text-sm text-white-secondary">
                     Menampilkan {paginationInfo.startIndex + 1}-{paginationInfo.endIndex} dari {paginationInfo.totalItems} produk
                   </div>
                   
@@ -531,7 +531,7 @@ const FlashSalesPage: React.FC = () => {
                     <button
                       onClick={handlePreviousPage}
                       disabled={currentPage === 1}
-                      className="flex items-center space-x-1 px-4 bg-ios-surface border border-ios-border rounded-xl text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+                      className="flex items-center space-x-1 px-4 bg-black border border-gray-700 rounded-xl text-white hover:bg-black/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
                     >
                       <ChevronLeft size={16} />
                       <span className="hidden sm:inline">Previous</span>
@@ -558,7 +558,7 @@ const FlashSalesPage: React.FC = () => {
                             className={`w-11 h-11 rounded-xl font-medium transition-colors ${
                               pageNum === currentPage
                                 ? 'bg-pink-600 text-white'
-                                : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80 border border-ios-border'
+                                : 'bg-black text-white hover:bg-black/80 border border-gray-700'
                             }`}
                           >
                             {pageNum}
@@ -571,7 +571,7 @@ const FlashSalesPage: React.FC = () => {
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === paginationInfo.totalPages}
-                      className="flex items-center space-x-1 px-4 bg-ios-surface border border-ios-border rounded-xl text-ios-text hover:bg-ios-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+                      className="flex items-center space-x-1 px-4 bg-black border border-gray-700 rounded-xl text-white hover:bg-black/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
                     >
                       <span className="hidden sm:inline">Next</span>
                       <ChevronRight size={16} />
@@ -680,7 +680,7 @@ const FlashSalesPage: React.FC = () => {
           <div className="flex justify-center">
             <Link 
               to="/sell"
-              className="bg-white/20 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/30 transition-colors inline-flex items-center space-x-2 shadow-lg"
+              className="bg-gray-900/30 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-gray-900/30 transition-colors inline-flex items-center space-x-2 shadow-lg"
             >
               <span>Mulai Jual Akun</span>
               <ArrowUpRight size={20} />

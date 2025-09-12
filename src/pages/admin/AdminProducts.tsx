@@ -701,7 +701,7 @@ const AdminProducts: React.FC = () => {
                   }} />
                 </div>
               ))}
-              <button className="text-white border border-white/20 rounded px-2 py-1 hover:bg-white/10" onClick={()=>setForm({...form, rentals:[...(form.rentals||[]), { duration:'', price:0 }]})}>Tambah Rental</button>
+              <button className="text-pink-300 border border-pink-500/40 rounded px-2 py-1 hover:bg-pink-600/20 transition-colors" onClick={()=>setForm({...form, rentals:[...(form.rentals||[]), { duration:'', price:0 }]})}>Tambah Rental</button>
             </div>
           </div>
 

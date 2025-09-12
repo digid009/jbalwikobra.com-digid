@@ -54,7 +54,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
   const getProductStatusColor = (product: Product) => {
     if (!product.is_active) return 'bg-ios-danger/10 text-ios-danger border-ios-danger/20';
     if (product.stock <= 0) return 'bg-ios-warning/10 text-ios-warning border-ios-warning/20';
-    if (product.is_flash_sale) return 'bg-ios-accent/10 text-ios-accent border-ios-accent/20';
+    if (product.is_flash_sale) return 'bg-pink-500/10 text-pink-500 border-ios-accent/20';
     return 'bg-ios-success/10 text-ios-success border-ios-success/20';
   };
 
@@ -84,7 +84,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
       title: 'Total Users',
       value: stats.totalUsers,
       icon: Users,
-      color: 'text-ios-accent bg-ios-accent/10',
+      color: 'text-pink-500 bg-pink-500/10',
       onClick: () => onNavigate('users')
     },
     {
@@ -100,13 +100,13 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
     return (
       <div className="space-y-6 p-6 bg-ios-background min-h-screen">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-ios-surface rounded"></div>
+          <div className="h-8 bg-black rounded"></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-ios-surface rounded-xl"></div>
+              <div key={i} className="h-24 bg-black rounded-xl"></div>
             ))}
           </div>
-          <div className="h-64 bg-ios-surface rounded-xl"></div>
+          <div className="h-64 bg-black rounded-xl"></div>
         </div>
       </div>
     );
@@ -152,7 +152,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
               </div>
               <div>
                 <p className="text-sm text-gray-200">{stat.title}</p>
-                <p className="text-2xl font-bold text-ios-text">{stat.value}</p>
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
               </div>
             </div>
           </IOSCard>
@@ -163,7 +163,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
       <IOSCard variant="elevated" padding="none">
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-ios-text">Recent Products</h3>
+            <h3 className="text-lg font-semibold text-white">Recent Products</h3>
             <IOSButton 
               variant="ghost" 
               onClick={() => onNavigate('products')}
@@ -177,24 +177,24 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
         <div className="divide-y divide-ios-border">
           {recentProducts.length > 0 ? (
             recentProducts.map((product) => (
-              <div key={product.id} className="p-6 hover:bg-ios-surface/50 transition-colors">
+              <div key={product.id} className="p-6 hover:bg-black/50 transition-colors">
                 <div className="flex items-center space-x-4">
                   {product.image && (
                     <img 
                       src={product.image} 
                       alt={product.name}
-                      className="w-12 h-12 rounded-2xl object-cover bg-ios-surface"
+                      className="w-12 h-12 rounded-2xl object-cover bg-black"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-ios-text truncate">{product.name}</h4>
+                    <h4 className="font-medium text-white truncate">{product.name}</h4>
                     <p className="text-sm text-gray-200 truncate">{product.game_title || product.category}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-ios-text">{formatCurrencyIDR(product.price)}</p>
+                    <p className="font-semibold text-white">{formatCurrencyIDR(product.price)}</p>
                     <IOSBadge 
                       className={cn('text-xs border', getProductStatusColor(product))}
                     >
@@ -224,7 +224,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
       <IOSCard variant="elevated" padding="none">
         <div className="p-6 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-ios-text">Recent Orders</h3>
+            <h3 className="text-lg font-semibold text-white">Recent Orders</h3>
             <IOSButton 
               variant="ghost" 
               onClick={() => onNavigate('orders')}
@@ -238,14 +238,14 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onNavigate }) => {
         <div className="divide-y divide-ios-border">
           {recentOrders.length > 0 ? (
             recentOrders.map((order) => (
-              <div key={order.id} className="p-6 hover:bg-ios-surface/50 transition-colors">
+              <div key={order.id} className="p-6 hover:bg-black/50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-ios-text">{order.customer_name}</h4>
+                    <h4 className="font-medium text-white">{order.customer_name}</h4>
                     <p className="text-sm text-gray-200">{order.product_name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-ios-text">{formatCurrencyIDR(order.amount)}</p>
+                    <p className="font-semibold text-white">{formatCurrencyIDR(order.amount)}</p>
                     <p className="text-xs text-gray-200">{formatShortDate(order.created_at)}</p>
                   </div>
                 </div>

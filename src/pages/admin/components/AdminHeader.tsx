@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { adminInputWithLeftIcon } from './ui/InputStyles';
 import { 
   BarChart3, 
   Package, 
@@ -99,7 +100,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-primary/80 rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-sm">JB</span>
               </div>
-              <h1 className="hidden sm:block text-xl font-semibold text-ios-text">
+              <h1 className="hidden sm:block text-xl font-semibold text-white">
                 Admin Panel
               </h1>
             </div>
@@ -121,7 +122,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                         'relative px-3 py-2 text-sm font-medium transition-all duration-200',
                         isActive 
                           ? 'bg-ios-primary text-white shadow-xl shadow-black/50' 
-                          : 'text-gray-200 hover:text-ios-text hover:bg-ios-surface/50'
+                          : 'text-gray-200 hover:text-white hover:bg-black/50'
                       )}
                     >
                       <IconComponent size={16} className="mr-2" />
@@ -200,7 +201,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Search orders, users, products..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-ios-surface text-ios-text placeholder-ios-text-secondary"
+                    className={adminInputWithLeftIcon + ' placeholder-ios-text-secondary'}
                   />
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
                   <IOSButton
@@ -243,19 +244,19 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {showNotifications && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-ios-background rounded-2xl shadow-lg border border-gray-700 z-50">
                   <div className="p-4 border-b border-gray-700">
-                    <h3 className="font-semibold text-ios-text">Notifications</h3>
+                    <h3 className="font-semibold text-white">Notifications</h3>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    <div className="p-4 hover:bg-ios-surface/50 border-b border-gray-700/50">
-                      <p className="text-sm text-ios-text">New order received</p>
+                    <div className="p-4 hover:bg-black/50 border-b border-gray-700/50">
+                      <p className="text-sm text-white">New order received</p>
                       <p className="text-xs text-gray-200 mt-1">2 minutes ago</p>
                     </div>
-                    <div className="p-4 hover:bg-ios-surface/50 border-b border-gray-700/50">
-                      <p className="text-sm text-ios-text">Product inventory low</p>
+                    <div className="p-4 hover:bg-black/50 border-b border-gray-700/50">
+                      <p className="text-sm text-white">Product inventory low</p>
                       <p className="text-xs text-gray-200 mt-1">1 hour ago</p>
                     </div>
-                    <div className="p-4 hover:bg-ios-surface/50">
-                      <p className="text-sm text-ios-text">New user registered</p>
+                    <div className="p-4 hover:bg-black/50">
+                      <p className="text-sm text-white">New user registered</p>
                       <p className="text-xs text-gray-200 mt-1">3 hours ago</p>
                     </div>
                   </div>
@@ -299,7 +300,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search..."
-                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-ios-surface text-ios-text placeholder-ios-text-secondary"
+                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-black text-white placeholder-ios-text-secondary"
                 />
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
                 <IOSButton

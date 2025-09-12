@@ -197,8 +197,8 @@ const BannerCarousel: React.FC<Props> = ({ slides }) => {
               onClick={() => setIndex(i)}
               className={`h-2 sm:h-2.5 rounded-full transition-all duration-200 ios-touch-target ${
                 i === index 
-                  ? 'w-4 sm:w-6 bg-white shadow-lg' 
-                  : 'w-2 sm:w-2.5 bg-white/70 hover:bg-white/90'
+                  ? 'w-4 sm:w-6 bg-black shadow-lg' 
+                  : 'w-2 sm:w-2.5 bg-gray-900/70 hover:bg-gray-900/90'
               }`}
             />
           ))}

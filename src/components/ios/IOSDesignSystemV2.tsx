@@ -482,7 +482,7 @@ export const IOSToast: React.FC<IOSToastProps> = ({
     success: 'bg-green-900/90 border-green-500/50 text-green-100',
     error: 'bg-red-900/90 border-red-500/50 text-red-100',
     warning: 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100',
-    info: 'bg-blue-900/90 border-blue-500/50 text-blue-100'
+    info: 'bg-blue-900/90 border-pink-500/50 text-blue-100'
   };
 
   return (

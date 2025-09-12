@@ -341,7 +341,7 @@ const HomePage: React.FC = () => {
             
             <Link to="/sell">
               <button 
-                className="w-full bg-white text-black hover:bg-zinc-100 font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-colors duration-200"
+                className="w-full bg-black text-white hover:bg-gray-800 font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-colors duration-200"
                 style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
               >
                 <TrendingUp size={18} />
@@ -458,7 +458,7 @@ const HomePage: React.FC = () => {
             <div className="space-y-3 max-w-xs mx-auto">
               <Link to="/products" className="block">
                 <button 
-                  className="w-full bg-white text-pink-600 hover:bg-pink-50 font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
+                  className="w-full bg-black text-pink-600 hover:bg-pink-600/20 font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
                   style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
                 >
                   Mulai Belanja Sekarang
@@ -467,7 +467,7 @@ const HomePage: React.FC = () => {
               
               <Link to="/sell" className="block">
                 <button 
-                  className="w-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 font-medium py-3 px-6 rounded-xl border border-white/30 transition-all duration-200"
+                  className="w-full bg-gray-900/30 backdrop-blur-sm text-white hover:bg-gray-900/30 font-medium py-3 px-6 rounded-xl border border-gray-600 transition-all duration-200"
                   style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
                 >
                   Jual Akun Anda

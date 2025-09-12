@@ -192,23 +192,23 @@ const ModernAdminDashboard: React.FC = () => {
       />
 
       {/* Enhanced Sticky Mobile Header */}
-      <div className="lg:hidden bg-ios-surface/95 backdrop-blur-md border-b border-ios-border/30 sticky top-0 z-50 shadow-lg">
+      <div className="lg:hidden bg-black/95 backdrop-blur-md border-b border-gray-700/30 sticky top-0 z-50 shadow-lg">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <IOSButton
               variant="ghost"
               size="small"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-3 rounded-full hover:bg-pink-50"
+              className="p-3 rounded-full hover:bg-pink-600/20"
             >
               <Menu className="w-6 h-6 text-pink-600" />
             </IOSButton>
-            <h1 className="text-xl font-bold text-ios-text">Admin Dashboard</h1>
+            <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
           </div>
           <IOSButton
             variant="ghost"
             size="small"
-            className="p-3 rounded-full hover:bg-pink-50"
+            className="p-3 rounded-full hover:bg-pink-600/20"
           >
             <Bell className="w-6 h-6 text-pink-600" />
           </IOSButton>
@@ -220,7 +220,7 @@ const ModernAdminDashboard: React.FC = () => {
         <div className={cn(
           'hidden lg:flex flex-col transition-all duration-300 ease-in-out',
           sidebarWidth,
-          'bg-ios-surface/95 backdrop-blur-md border-r border-ios-border/30 sticky top-0 h-screen overflow-y-auto shadow-xl'
+          'bg-black/95 backdrop-blur-md border-r border-gray-700/30 sticky top-0 h-screen overflow-y-auto shadow-xl'
         )}>
           <div className="p-6">
             {/* Enhanced Logo/Title with larger fonts */}
@@ -231,8 +231,8 @@ const ModernAdminDashboard: React.FC = () => {
                     <LayoutDashboard className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-ios-text">JB Alwikobra</h1>
-                    <p className="text-sm font-medium text-ios-text-secondary">Admin Panel</p>
+                    <h1 className="text-2xl font-bold text-white">JB Alwikobra</h1>
+                    <p className="text-sm font-medium text-white-secondary">Admin Panel</p>
                   </div>
                 </div>
               )}
@@ -240,7 +240,7 @@ const ModernAdminDashboard: React.FC = () => {
                 variant="ghost"
                 size="small"
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-3 rounded-full hover:bg-pink-50"
+                className="p-3 rounded-full hover:bg-pink-600/20"
               >
                 {sidebarCollapsed ? (
                   <ChevronRight className="w-5 h-5 text-pink-600" />
@@ -265,7 +265,7 @@ const ModernAdminDashboard: React.FC = () => {
                       'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
                       isActive
                         ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/25 transform scale-[1.02]'
-                        : 'text-ios-text hover:bg-pink-50 hover:text-pink-600 hover:transform hover:scale-[1.01] hover:shadow-md',
+                        : 'text-white hover:bg-pink-600/20 hover:text-pink-600 hover:transform hover:scale-[1.01] hover:shadow-md',
                       sidebarCollapsed && 'justify-center px-4'
                     )}
                   >
@@ -280,7 +280,7 @@ const ModernAdminDashboard: React.FC = () => {
                           <span className={cn(
                             'ml-auto px-3 py-1 text-sm font-bold rounded-full',
                             isActive 
-                              ? 'bg-white/20 text-white' 
+                              ? 'bg-gray-900/30 text-white' 
                               : 'bg-pink-500 text-white'
                           )}>
                             {badgeValue > 99 ? '99+' : badgeValue}
@@ -295,8 +295,8 @@ const ModernAdminDashboard: React.FC = () => {
 
             {/* Sidebar Footer with larger text */}
             {!sidebarCollapsed && (
-              <div className="mt-8 pt-6 border-t border-ios-border/30">
-                <div className="text-sm font-medium text-ios-text-secondary text-center">
+              <div className="mt-8 pt-6 border-t border-gray-700/30">
+                <div className="text-sm font-medium text-white-secondary text-center">
                   Version 2.1.9
                 </div>
               </div>
@@ -311,7 +311,7 @@ const ModernAdminDashboard: React.FC = () => {
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <div className="absolute left-0 top-0 bottom-0 w-80 bg-ios-surface/95 backdrop-blur-md shadow-2xl border-r border-ios-border/30">
+            <div className="absolute left-0 top-0 bottom-0 w-80 bg-black/95 backdrop-blur-md shadow-2xl border-r border-gray-700/30">
               <div className="p-4">
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -320,8 +320,8 @@ const ModernAdminDashboard: React.FC = () => {
                       <LayoutDashboard className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold text-ios-text">JB Alwikobra</h1>
-                      <p className="text-sm font-medium text-ios-text-secondary">Admin Panel</p>
+                      <h1 className="text-xl font-bold text-white">JB Alwikobra</h1>
+                      <p className="text-sm font-medium text-white-secondary">Admin Panel</p>
                     </div>
                   </div>
                   <IOSButton
@@ -330,7 +330,7 @@ const ModernAdminDashboard: React.FC = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 rounded-full"
                   >
-                    <X className="w-5 h-5 text-ios-text-secondary" />
+                    <X className="w-5 h-5 text-white-secondary" />
                   </IOSButton>
                 </div>
 
@@ -352,7 +352,7 @@ const ModernAdminDashboard: React.FC = () => {
                           'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
                           isActive
                             ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg'
-                            : 'text-ios-text hover:bg-pink-50 hover:text-pink-600 hover:shadow-md'
+                            : 'text-white hover:bg-pink-600/20 hover:text-pink-600 hover:shadow-md'
                         )}
                       >
                         <Icon className="w-6 h-6 text-pink-500" />
@@ -361,7 +361,7 @@ const ModernAdminDashboard: React.FC = () => {
                           <span className={cn(
                             'ml-auto px-3 py-1 text-sm font-bold rounded-full',
                             isActive 
-                              ? 'bg-white/20 text-white' 
+                              ? 'bg-gray-900/30 text-white' 
                               : 'bg-pink-500 text-white'
                           )}>
                             {badgeValue > 99 ? '99+' : badgeValue}
@@ -373,8 +373,8 @@ const ModernAdminDashboard: React.FC = () => {
                 </nav>
 
                 {/* Mobile Footer */}
-                <div className="mt-8 pt-6 border-t border-ios-border/30">
-                  <div className="text-sm font-medium text-ios-text-secondary text-center">
+                <div className="mt-8 pt-6 border-t border-gray-700/30">
+                  <div className="text-sm font-medium text-white-secondary text-center">
                     Version 2.1.9
                   </div>
                 </div>
@@ -386,21 +386,21 @@ const ModernAdminDashboard: React.FC = () => {
         {/* Enhanced Main Content Area */}
         <div className="flex-1 min-w-0 bg-ios-background">
           {/* Enhanced Sticky Content Header */}
-          <div className="hidden lg:block sticky top-0 z-10 bg-ios-background/95 backdrop-blur-md border-b border-ios-border/20 shadow-sm">
+          <div className="hidden lg:block sticky top-0 z-10 bg-ios-background/95 backdrop-blur-md border-b border-gray-700/20 shadow-sm">
             <div className="px-8 py-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-ios-text">
+                  <h1 className="text-3xl font-bold text-white">
                     {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                   </h1>
-                  <p className="text-lg text-ios-text-secondary mt-2 font-medium">
+                  <p className="text-lg text-white-secondary mt-2 font-medium">
                     Manage your {activeTab === 'dashboard' ? 'business overview' : activeTab.replace('-', ' ')}
                   </p>
                 </div>
                 <IOSButton
                   variant="ghost"
                   size="small"
-                  className="p-3 rounded-full hover:bg-pink-50"
+                  className="p-3 rounded-full hover:bg-pink-600/20"
                 >
                   <Bell className="w-6 h-6 text-pink-600" />
                 </IOSButton>

@@ -78,7 +78,7 @@ const WhatsAppTestPage: React.FC = () => {
 
             <div>
               <label className="block text-sm text-gray-400 mb-2">Service Provider</label>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800">
+              <div className="bg-gray-900 border border-pink-500/30 rounded-lg p-3 text-pink-400">
                 <p className="font-medium">🌐 Multi-Provider Support</p>
                 <p className="text-sm mt-1">• Woo-wa (NotifAPI): https://notifapi.com</p>
                 <p className="text-sm">• Fonnte: https://api.fonnte.com</p>

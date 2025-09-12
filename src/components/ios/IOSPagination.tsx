@@ -70,24 +70,24 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
   return (
     <div className={cn(
       'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4',
-      'px-6 py-4 bg-ios-surface border-t border-ios-border',
+      'px-6 py-4 bg-black border-t border-gray-700',
       className
     )}>
       {/* Items info and per-page selector */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="text-sm text-ios-text-secondary font-medium">
+        <div className="text-sm text-white-secondary font-medium">
           Showing {startItem.toLocaleString()} to {endItem.toLocaleString()} of {totalItems.toLocaleString()} results
         </div>
         
         {showItemsPerPageSelector && onItemsPerPageChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-ios-text-secondary">Show:</span>
+            <span className="text-sm text-white-secondary">Show:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
               className={cn(
                 'px-3 py-1.5 text-sm rounded-lg border',
-                'bg-ios-surface text-ios-text border-ios-border',
+                'bg-black text-white border-gray-700',
                 'focus:ring-2 focus:ring-ios-accent focus:border-transparent',
                 'transition-colors duration-200'
               )}
@@ -96,7 +96,7 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
-            <span className="text-sm text-ios-text-secondary">per page</span>
+            <span className="text-sm text-white-secondary">per page</span>
           </div>
         )}
       </div>
@@ -119,15 +119,15 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
             {getVisiblePages().map((page, index) => (
               <React.Fragment key={index}>
                 {page === '...' ? (
-                  <span className="px-3 py-2 text-ios-text-secondary text-sm">...</span>
+                  <span className="px-3 py-2 text-white-secondary text-sm">...</span>
                 ) : (
                   <button
                     onClick={() => onPageChange(page as number)}
                     className={cn(
                       'px-3 py-2 text-sm rounded-lg transition-all duration-200',
                       currentPage === page
-                        ? 'bg-ios-accent text-white shadow-lg'
-                        : 'text-ios-text hover:bg-ios-surface-secondary active:scale-95'
+                        ? 'bg-pink-500 text-white shadow-lg'
+                        : 'text-white hover:bg-black-secondary active:scale-95'
                     )}
                   >
                     {page}

@@ -32,8 +32,8 @@ const Tab: React.FC<TabProps> = ({ label, isActive, onClick, count }) => (
     className={`
       px-4 py-3 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 flex-1 text-sm sm:text-base
       ${isActive 
-        ? 'bg-ios-accent text-white shadow-lg' 
-        : 'bg-ios-surface text-ios-text-secondary hover:bg-ios-surface/80 hover:text-ios-text'
+        ? 'bg-pink-500 text-white shadow-lg' 
+        : 'bg-black text-white-secondary hover:bg-black/80 hover:text-white'
       }
     `}
   >
@@ -42,8 +42,8 @@ const Tab: React.FC<TabProps> = ({ label, isActive, onClick, count }) => (
       <span className={`
         px-2 py-0.5 rounded-full text-xs font-bold
         ${isActive 
-          ? 'bg-white/20 text-white' 
-          : 'bg-ios-text-secondary/20 text-ios-text-secondary'
+          ? 'bg-gray-900/30 text-white' 
+          : 'bg-ios-text-secondary/20 text-white-secondary'
         }
       `}>
         {count}
@@ -98,8 +98,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
           standardClasses.flex.center,
           `min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg transition-all duration-200`,
           currentPage === 1 || loading 
-            ? 'bg-ios-surface/50 text-ios-text-secondary/50 cursor-not-allowed' 
-            : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80'
+            ? 'bg-black/50 text-white-secondary/50 cursor-not-allowed' 
+            : 'bg-black text-white hover:bg-black/80'
         )}
       >
         <ChevronLeft size={20} />
@@ -114,10 +114,10 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             className={`
               min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base
               ${pageNum === currentPage
-                ? 'bg-ios-accent text-white shadow-lg'
+                ? 'bg-pink-500 text-white shadow-lg'
                 : pageNum === '...'
-                ? 'text-ios-text-secondary cursor-default bg-transparent'
-                : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80 disabled:opacity-50'
+                ? 'text-white-secondary cursor-default bg-transparent'
+                : 'bg-black text-white hover:bg-black/80 disabled:opacity-50'
               }
             `}
           >
@@ -132,8 +132,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
         className={`
           min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg flex items-center justify-center transition-all duration-200
           ${currentPage === totalPages || loading 
-            ? 'bg-ios-surface/50 text-ios-text-secondary/50 cursor-not-allowed' 
-            : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80'
+            ? 'bg-black/50 text-white-secondary/50 cursor-not-allowed' 
+            : 'bg-black text-white hover:bg-black/80'
           }
         `}
       >
@@ -362,7 +362,7 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
+    <div className="min-h-screen bg-ios-background text-white">
       {/* Hero Section */}
       <IOSHero
         title="Feed Komunitas"
@@ -413,9 +413,9 @@ export default function FeedPage() {
 
         {/* Error State */}
         {error && !isLoading && (
-          <IOSCard padding="medium" className="border border-ios-border mb-4">
+          <IOSCard padding="medium" className="border border-gray-700 mb-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-ios-text-secondary">{error}</p>
+              <p className="text-sm text-white-secondary">{error}</p>
               <IOSButton variant="secondary" size="small" onClick={loadInitialData}>Coba lagi</IOSButton>
             </div>
           </IOSCard>
@@ -437,7 +437,7 @@ export default function FeedPage() {
                       <img
                         src={post.authorAvatarUrl}
                         alt={post.authorName || 'User'}
-                        className="w-9 h-9 rounded-full object-cover border border-ios-border"
+                        className="w-9 h-9 rounded-full object-cover border border-gray-700"
                         loading="lazy"
                       />
                     ) : (
@@ -447,10 +447,10 @@ export default function FeedPage() {
                     )}
                     <div>
                       <div className="text-sm font-medium">{post.authorName || 'Postingan'}</div>
-                      <div className="text-xs text-ios-text-secondary">{timeAgo(post.created_at)}</div>
+                      <div className="text-xs text-white-secondary">{timeAgo(post.created_at)}</div>
                     </div>
                   </div>
-                  <button className="text-ios-text-secondary hover:text-ios-text" aria-label="More">
+                  <button className="text-white-secondary hover:text-white" aria-label="More">
                     <MoreHorizontal size={18} />
                   </button>
                 </div>
@@ -466,7 +466,7 @@ export default function FeedPage() {
                 {post.media && post.media.length > 0 && (
                   <div className={`mt-3 grid gap-2 ${post.media.length > 1 ? 'grid-cols-2' : ''}`}>
                     {post.media.map((m) => (
-                      <div key={m.id} className="overflow-hidden rounded-lg border border-ios-border">
+                      <div key={m.id} className="overflow-hidden rounded-lg border border-gray-700">
                         {m.type === 'image' ? (
                           <img src={m.url} alt={`media`} className="w-full h-60 object-cover" loading="lazy" />
                         ) : (
@@ -486,8 +486,8 @@ export default function FeedPage() {
                     aria-label="Suka"
                   >
                     <div className="inline-flex items-center gap-2">
-                      <Heart size={16} className="text-ios-accent" />
-                      <span className="text-ios-text-secondary">{post.counts.likes}</span>
+                      <Heart size={16} className="text-pink-500" />
+                      <span className="text-white-secondary">{post.counts.likes}</span>
                     </div>
                   </IOSButton>
                   <IOSButton
@@ -498,13 +498,13 @@ export default function FeedPage() {
                   >
                     <div className="inline-flex items-center gap-2">
                       <MessageCircle size={16} />
-                      <span className="text-ios-text-secondary">{post.counts.comments}</span>
+                      <span className="text-white-secondary">{post.counts.comments}</span>
                     </div>
                   </IOSButton>
                   <IOSButton variant="ghost" size="small" aria-label="Bagikan">
                     <div className="inline-flex items-center gap-2">
                       <Share2 size={16} />
-                      <span className="text-ios-text-secondary">Bagikan</span>
+                      <span className="text-white-secondary">Bagikan</span>
                     </div>
                   </IOSButton>
                 </div>
@@ -528,7 +528,7 @@ export default function FeedPage() {
                       <img
                         src={review.user_avatar}
                         alt={review.user_name || 'User'}
-                        className="w-9 h-9 rounded-full object-cover border border-ios-border"
+                        className="w-9 h-9 rounded-full object-cover border border-gray-700"
                         loading="lazy"
                       />
                     ) : (
@@ -540,12 +540,12 @@ export default function FeedPage() {
                       <div className="text-sm font-medium">{review.user_name || 'Anonymous'}</div>
                       <div className="flex items-center gap-2">
                         <div className="flex">{renderStars(review.rating)}</div>
-                        <span className="text-xs text-ios-text-secondary">
+                        <span className="text-xs text-white-secondary">
                           {getTimeAgo(review.created_at)}
                         </span>
                       </div>
                       {review.product_name && (
-                        <div className="text-xs text-ios-text-secondary mt-1">
+                        <div className="text-xs text-white-secondary mt-1">
                           Review untuk: {review.product_name}
                         </div>
                       )}
@@ -577,12 +577,12 @@ export default function FeedPage() {
                         <img
                           src={review.product_image}
                           alt={review.product_name || 'Product'}
-                          className="w-full max-w-[120px] h-auto rounded-xl object-cover border border-ios-border"
+                          className="w-full max-w-[120px] h-auto rounded-xl object-cover border border-gray-700"
                           loading="lazy"
                         />
                       </button>
                     ) : (
-                      <div className="w-[120px] h-[90px] rounded-xl bg-ios-surface-secondary border border-ios-border" />
+                      <div className="w-[120px] h-[90px] rounded-xl bg-black-secondary border border-gray-700" />
                     )}
                   </div>
                   <div>
@@ -592,7 +592,7 @@ export default function FeedPage() {
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       placeholder="Tulis review Anda..."
-                      className="w-full min-h-[100px] p-3 border border-ios-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ios-accent"
+                      className="w-full min-h-[100px] p-3 border border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ios-accent"
                     />
                     <div className="flex gap-2">
                       <IOSButton
@@ -618,7 +618,7 @@ export default function FeedPage() {
                       <p className="text-base leading-relaxed">{review.comment}</p>
                     )}
                     {review.canEdit && editingReview !== review.id && (
-                      <p className="text-xs text-ios-text-secondary mt-2">Review dapat diedit dalam 5 menit</p>
+                      <p className="text-xs text-white-secondary mt-2">Review dapat diedit dalam 5 menit</p>
                     )}
                   </div>
                 </div>
@@ -630,7 +630,7 @@ export default function FeedPage() {
         {/* Fullscreen image modal */}
         {imagePreview && (
           <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center" onClick={() => setImagePreview(null)}>
-            <img src={imagePreview} alt="Preview" className="max-w-[90vw] max-h-[90vh] rounded-2xl border border-ios-border" />
+            <img src={imagePreview} alt="Preview" className="max-w-[90vw] max-h-[90vh] rounded-2xl border border-gray-700" />
           </div>
         )}
 
@@ -649,13 +649,13 @@ export default function FeedPage() {
         {/* Empty State */}
         {!isLoading && feedPosts.length === 0 && userReviews.length === 0 && (
           <div className="text-center py-12">
-            <MessageCircle className="h-12 w-12 text-ios-text-secondary mx-auto mb-4" />
+            <MessageCircle className="h-12 w-12 text-white-secondary mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">
               {activeFilter === 'semua' ? 'Belum ada postingan' : 
                activeFilter === 'pengumuman' ? 'Belum ada pengumuman' : 
                'Belum ada review'}
             </h3>
-            <p className="text-ios-text-secondary">
+            <p className="text-white-secondary">
               {activeFilter === 'review' 
                 ? 'Belum ada review untuk ditampilkan'
                 : 'Jadilah yang pertama untuk berbagi di komunitas ini!'
@@ -669,7 +669,7 @@ export default function FeedPage() {
           <IOSButton variant="secondary" onClick={loadInitialData} disabled={isLoading}>
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border border-ios-border border-t-ios-accent" />
+                <span className="animate-spin rounded-full h-4 w-4 border border-gray-700 border-t-ios-accent" />
                 Memuat…
               </span>
             ) : 'Muat ulang'}

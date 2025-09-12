@@ -11,6 +11,9 @@ import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagemen
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import { AdminOverview } from './components/AdminOverview';
 import { AdminHeader, AdminTab } from './components/AdminHeaderNew';
+import DashboardLayout from './layout/DashboardLayout';
+import { DashboardSection } from './layout/DashboardPrimitives';
+import '../../styles/dashboard.css';
 import { ThemeProvider } from '../../contexts/ThemeContext';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
@@ -81,34 +84,30 @@ const ModernAdminDashboard: React.FC = () => {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-        {/* Global RLS Diagnostics */}
-        <RLSDiagnosticsBanner 
-          hasErrors={hasStatsError}
-          errorMessage={statsErrorMessage}
-          statsLoaded={!loading}
-        />
-
-        {/* Header with Navigation */}
-        <AdminHeader
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          stats={stats}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-          onRefreshStats={loadStats}
-        />
-
-        {/* Main Content */}
-        <main className="pt-4 pb-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            {renderContent()}
-          </div>
-        </main>
-
-        {/* Floating Notifications */}
+      <DashboardLayout
+        header={
+          <>
+            <RLSDiagnosticsBanner 
+              hasErrors={hasStatsError}
+              errorMessage={statsErrorMessage}
+              statsLoaded={!loading}
+            />
+            <AdminHeader
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              stats={stats}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              onRefreshStats={loadStats}
+            />
+          </>
+        }
+      >
+        <DashboardSection dense>
+          {renderContent()}
+        </DashboardSection>
         <FloatingNotifications />
-      </div>
+      </DashboardLayout>
     </ThemeProvider>
   );
 };

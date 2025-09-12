@@ -60,8 +60,8 @@ const FeatureCard = React.memo(({ icon: Icon, title, description }: {
     <div className="w-12 h-12 bg-gradient-to-r from-ios-accent to-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
       <Icon className="text-white" size={24} />
     </div>
-    <h3 className="text-lg font-semibold text-ios-text mb-2">{title}</h3>
-    <p className="text-ios-text-secondary text-sm leading-relaxed">{description}</p>
+    <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+    <p className="text-white-secondary text-sm leading-relaxed">{description}</p>
   </IOSCard>
 ));
 
@@ -203,8 +203,8 @@ const HomePage: React.FC = () => {
       <IOSContainer className="min-h-screen flex items-center justify-center">
         <IOSCard className="text-center max-w-md mx-auto">
           <div className="text-6xl mb-4">😔</div>
-          <h2 className="text-2xl font-bold text-ios-text mb-2">Oops! Terjadi Kesalahan</h2>
-          <p className="text-ios-text-secondary mb-6">{state.error}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Oops! Terjadi Kesalahan</h2>
+          <p className="text-white-secondary mb-6">{state.error}</p>
           <IOSButton variant="primary" onClick={handleRetry}>
             Coba Lagi
           </IOSButton>
@@ -247,7 +247,7 @@ const HomePage: React.FC = () => {
             </IOSButton>
           </Link>
           <Link to="/sell" aria-label="Jual akun game Anda">
-            <IOSButton variant="ghost" icon={TrendingUp} size="large" className="bg-white text-black hover:bg-gray-100 border-2 border-white">
+            <IOSButton variant="ghost" icon={TrendingUp} size="large" className="bg-black text-white hover:bg-gray-700 border-2 border-white">
               Jual Akun Game Anda
             </IOSButton>
           </Link>
@@ -329,10 +329,10 @@ const HomePage: React.FC = () => {
                       <TrendingUp className="text-white" size={32} />
                     )}
                   </div>
-                  <h3 className="font-semibold text-ios-text mb-1 group-hover:text-ios-accent transition-colors text-base">
+                  <h3 className="font-semibold text-white mb-1 group-hover:text-pink-500 transition-colors text-base">
                     {game.name}
                   </h3>
-                  <p className="text-sm text-ios-text-secondary">{game.count} akun</p>
+                  <p className="text-sm text-white-secondary">{game.count} akun</p>
                 </IOSCard>
               </Link>
             ))}
@@ -348,12 +348,12 @@ const HomePage: React.FC = () => {
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/products">
-            <IOSButton variant="secondary" size="large" className="bg-black/80 text-white border border-white/30 hover:bg-black/60">
+            <IOSButton variant="secondary" size="large" className="bg-black/80 text-white border border-gray-600 hover:bg-black/60">
               Mulai Belanja Sekarang
             </IOSButton>
           </Link>
           <Link to="/sell">
-            <IOSButton variant="ghost" size="large" className="bg-white/20 backdrop-blur-sm border-2 border-white text-white hover:bg-white/30 shadow-lg">
+            <IOSButton variant="ghost" size="large" className="bg-gray-900/30 backdrop-blur-sm border-2 border-white text-white hover:bg-gray-900/30 shadow-lg">
               Jual Akun Anda
             </IOSButton>
           </Link>

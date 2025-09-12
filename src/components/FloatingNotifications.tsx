@@ -91,13 +91,13 @@ const FloatingNotifications: React.FC = () => {
   return (
     <div className="fixed top-4 right-4 z-[1000] space-y-2 max-w-sm">
       {items.map((n) => (
-        <div key={n._ts} className="bg-white text-gray-900 rounded-lg shadow-lg border-l-4 border-pink-500 overflow-hidden">
+        <div key={n._ts} className="bg-black text-white rounded-lg shadow-lg border-l-4 border-pink-500 overflow-hidden">
           <div className="p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2 flex-1 min-w-0">
                 <div className="p-1 rounded-full text-white bg-pink-500">
                   {/* simple dot/icon */}
-                  <span className="block w-3 h-3 rounded-full bg-white/90" />
+                  <span className="block w-3 h-3 rounded-full bg-gray-900/90" />
                 </div>
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onClick(n)}>
                   <div className="flex items-center gap-2 mb-1">
@@ -112,7 +112,7 @@ const FloatingNotifications: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button onClick={() => dismiss(n._ts)} className="h-6 w-6 shrink-0 rounded hover:bg-gray-100 flex items-center justify-center">
+              <button onClick={() => dismiss(n._ts)} className="h-6 w-6 shrink-0 rounded hover:bg-gray-700 flex items-center justify-center">
                 <X className="h-3 w-3" />
               </button>
             </div>
@@ -120,7 +120,7 @@ const FloatingNotifications: React.FC = () => {
         </div>
       ))}
       {items.length > 5 && (
-        <div className="bg-white text-gray-900 rounded-lg shadow-lg">
+        <div className="bg-black text-white rounded-lg shadow-lg">
           <div className="p-2 text-center">
             <p className="text-xs text-gray-600">+{items.length - 5} notifikasi lainnya</p>
           </div>

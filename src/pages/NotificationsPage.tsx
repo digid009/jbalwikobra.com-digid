@@ -169,7 +169,7 @@ const NotificationsPage: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-ios-text flex items-center">
+              <h1 className="text-2xl font-bold text-white flex items-center">
                 <Bell className="w-6 h-6 mr-3" />
                 Notifikasi
                 {unreadCount > 0 && (
@@ -178,7 +178,7 @@ const NotificationsPage: React.FC = () => {
                   </span>
                 )}
               </h1>
-              <p className="text-ios-text-secondary mt-1">
+              <p className="text-white-secondary mt-1">
                 Kelola semua notifikasi Anda di sini
               </p>
             </div>
@@ -208,8 +208,8 @@ const NotificationsPage: React.FC = () => {
                 onClick={() => setFilter(tab.key as typeof filter)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === tab.key
-                    ? 'bg-ios-accent text-white'
-                    : 'bg-ios-surface text-ios-text hover:bg-ios-surface-secondary'
+                    ? 'bg-pink-500 text-white'
+                    : 'bg-black text-white hover:bg-black-secondary'
                 }`}
               >
                 {tab.label}
@@ -227,11 +227,11 @@ const NotificationsPage: React.FC = () => {
             {filteredNotifications.length === 0 ? (
               <IOSCard>
                 <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 mx-auto text-ios-text-secondary mb-3" />
-                  <h3 className="text-lg font-medium text-ios-text mb-2">
+                  <Bell className="w-12 h-12 mx-auto text-white-secondary mb-3" />
+                  <h3 className="text-lg font-medium text-white mb-2">
                     Tidak ada notifikasi
                   </h3>
-                  <p className="text-ios-text-secondary">
+                  <p className="text-white-secondary">
                     {filter === 'unread' 
                       ? 'Semua notifikasi sudah dibaca'
                       : 'Belum ada notifikasi untuk kategori ini'
@@ -242,7 +242,7 @@ const NotificationsPage: React.FC = () => {
             ) : (
               filteredNotifications.map((notification) => (
                 <IOSCard key={notification.id} className={`border-l-4 ${getNotificationColor(notification.type)}`}>
-                  <div className={`p-4 ${!notification.isRead ? 'bg-ios-surface/50' : ''}`}>
+                  <div className={`p-4 ${!notification.isRead ? 'bg-black/50' : ''}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3 flex-1">
                         <div className="text-2xl">
@@ -250,17 +250,17 @@ const NotificationsPage: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className={`font-semibold ${!notification.isRead ? 'text-ios-text' : 'text-ios-text-secondary'}`}>
+                            <h3 className={`font-semibold ${!notification.isRead ? 'text-white' : 'text-white-secondary'}`}>
                               {notification.title}
                             </h3>
                             {!notification.isRead && (
-                              <div className="w-2 h-2 bg-ios-accent rounded-full"></div>
+                              <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
                             )}
                           </div>
-                          <p className="text-ios-text-secondary text-sm mb-2 leading-relaxed">
+                          <p className="text-white-secondary text-sm mb-2 leading-relaxed">
                             {notification.message}
                           </p>
-                          <div className="flex items-center space-x-4 text-xs text-ios-text-secondary">
+                          <div className="flex items-center space-x-4 text-xs text-white-secondary">
                             <span className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
                               {formatTimestamp(notification.timestamp)}
@@ -268,7 +268,7 @@ const NotificationsPage: React.FC = () => {
                             {notification.actionUrl && (
                               <a
                                 href={notification.actionUrl}
-                                className="text-ios-accent hover:text-ios-accent/80 font-medium"
+                                className="text-pink-500 hover:text-pink-500/80 font-medium"
                               >
                                 Lihat Detail →
                               </a>
@@ -280,7 +280,7 @@ const NotificationsPage: React.FC = () => {
                         {!notification.isRead && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="p-1 text-ios-text-secondary hover:text-ios-accent transition-colors"
+                            className="p-1 text-white-secondary hover:text-pink-500 transition-colors"
                             title="Tandai sudah dibaca"
                           >
                             <Check className="w-4 h-4" />
@@ -288,7 +288,7 @@ const NotificationsPage: React.FC = () => {
                         )}
                         <button
                           onClick={() => deleteNotification(notification.id)}
-                          className="p-1 text-ios-text-secondary hover:text-ios-destructive transition-colors"
+                          className="p-1 text-white-secondary hover:text-ios-destructive transition-colors"
                           title="Hapus notifikasi"
                         >
                           <X className="w-4 h-4" />
@@ -306,8 +306,8 @@ const NotificationsPage: React.FC = () => {
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-ios-text">Pengaturan Notifikasi</h3>
-                  <p className="text-sm text-ios-text-secondary">
+                  <h3 className="font-medium text-white">Pengaturan Notifikasi</h3>
+                  <p className="text-sm text-white-secondary">
                     Kelola preferensi notifikasi Anda
                   </p>
                 </div>

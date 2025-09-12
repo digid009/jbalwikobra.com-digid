@@ -189,18 +189,18 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text flex items-center justify-center px-4 py-8 with-bottom-nav">
+    <div className="min-h-screen bg-ios-background text-white flex items-center justify-center px-4 py-8 with-bottom-nav">
       <div className="max-w-md w-full">
-        <div className="bg-ios-surface border border-ios-border rounded-2xl p-8 shadow-lg">
+        <div className="bg-black border border-gray-700 rounded-2xl p-8 shadow-lg">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-ios-text mb-2">
+            <h1 className="text-2xl font-bold text-white mb-2">
               {mode === 'login' && 'Masuk ke Akun'}
               {mode === 'signup' && 'Daftar Akun Baru'}
               {mode === 'verify' && 'Verifikasi WhatsApp'}
               {mode === 'complete' && 'Lengkapi Profil'}
             </h1>
-            <p className="text-ios-text-secondary text-sm">
+            <p className="text-white-secondary text-sm">
               {mode === 'login' && 'Pilih metode masuk yang Anda inginkan'}
               {mode === 'signup' && 'Buat akun dengan nomor WhatsApp'}
               {mode === 'verify' && 'Masukkan kode yang dikirim ke WhatsApp'}
@@ -212,14 +212,14 @@ const AuthPage: React.FC = () => {
           {mode === 'login' && (
             <div className="space-y-6">
               {/* Login Tabs */}
-        <div className="flex bg-ios-surface rounded-xl p-1 border border-ios-border">
+        <div className="flex bg-black rounded-xl p-1 border border-gray-700">
                 <button
                   type="button"
                   onClick={() => setLoginTab('email')}
                   className={`flex-1 py-3 px-4 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg text-sm font-medium transition-all ${
                     loginTab === 'email'
-                      ? 'bg-ios-accent text-white shadow-sm'
-                      : 'text-ios-text-secondary hover:bg-white/5'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'text-white-secondary hover:bg-black/5'
                   }`}
                 >
                   Email
@@ -229,8 +229,8 @@ const AuthPage: React.FC = () => {
                   onClick={() => setLoginTab('phone')}
                   className={`flex-1 py-3 px-4 min-h-[${MIN_TOUCH_TARGET}px] rounded-lg text-sm font-medium transition-all ${
                     loginTab === 'phone'
-                      ? 'bg-ios-accent text-white shadow-sm'
-                      : 'text-ios-text-secondary hover:bg-white/5'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'text-white-secondary hover:bg-black/5'
                   }`}
                 >
                   Nomor HP
@@ -243,14 +243,14 @@ const AuthPage: React.FC = () => {
                 {loginTab === 'email' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                      <label className="block text-sm font-medium text-white-secondary mb-2">
                         Email
                       </label>
                       <input
                         type="email"
                         value={emailLoginData.email}
                         onChange={(e) => setEmailLoginData({ ...emailLoginData, email: e.target.value })}
-                        className="w-full px-4 py-3 min-h-[44px] bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-base"
+                        className="w-full px-4 py-3 min-h-[44px] bg-black border border-gray-700 rounded-xl text-white placeholder:text-white-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-base"
                         placeholder="email@example.com"
                         required
                       />
@@ -271,7 +271,7 @@ const AuthPage: React.FC = () => {
                 {loginTab === 'phone' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                      <label className="block text-sm font-medium text-white-secondary mb-2">
                         Nomor HP
                       </label>
                       <PhoneInput
@@ -299,7 +299,7 @@ const AuthPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setMode('signup')}
-                    className="text-ios-accent hover:opacity-90 text-sm font-medium"
+                    className="text-pink-500 hover:opacity-90 text-sm font-medium"
                   >
                     Belum punya akun? Daftar di sini
                   </button>
@@ -312,7 +312,7 @@ const AuthPage: React.FC = () => {
           {mode === 'signup' && (
             <form onSubmit={handleSignup} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Nomor WhatsApp
                 </label>
                 <PhoneInput
@@ -324,7 +324,7 @@ const AuthPage: React.FC = () => {
                   placeholder="Masukkan Nomor WhatsApp"
                   required
                 />
-                <p className="text-xs text-ios-text-secondary mt-1">
+                <p className="text-xs text-white-secondary mt-1">
                   Verification code will be sent to this number (Supports Asian countries)
                 </p>
               </div>
@@ -352,7 +352,7 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setMode('login')}
-                  className="text-ios-accent hover:opacity-90 text-sm font-medium"
+                  className="text-pink-500 hover:opacity-90 text-sm font-medium"
                 >
                   Sudah punya akun? Masuk di sini
                 </button>
@@ -364,18 +364,18 @@ const AuthPage: React.FC = () => {
           {mode === 'verify' && (
             <form onSubmit={handleVerification} className="space-y-6">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-ios-surface border border-ios-border rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-black border border-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className="text-ios-text-secondary text-sm">
+                <p className="text-white-secondary text-sm">
                   Kode verifikasi telah dikirim ke WhatsApp Anda
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Kode Verifikasi (6 digit)
                 </label>
                 <input
@@ -385,7 +385,7 @@ const AuthPage: React.FC = () => {
                     ...verificationData, 
                     code: e.target.value.replace(/\D/g, '').slice(0, 6)
                   })}
-                  className="w-full px-4 py-3 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-center text-2xl tracking-widest"
+                  className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-white-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-center text-2xl tracking-widest"
                   placeholder="123456"
                   maxLength={6}
                   required
@@ -400,7 +400,7 @@ const AuthPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setMode('signup')}
-                  className="text-ios-accent hover:opacity-90 text-sm font-medium"
+                  className="text-pink-500 hover:opacity-90 text-sm font-medium"
                 >
                   Kembali ke pendaftaran
                 </button>
@@ -412,39 +412,39 @@ const AuthPage: React.FC = () => {
           {mode === 'complete' && (
             <form onSubmit={handleProfileCompletion} className="space-y-6">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-ios-surface border border-ios-border rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-black border border-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <p className="text-ios-text-secondary text-sm">
+                <p className="text-white-secondary text-sm">
                   Lengkapi profil Anda untuk menyelesaikan pendaftaran
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Email
                 </label>
                 <input
                   type="email"
                   value={profileData.email}
                   onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                  className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-white-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
                   placeholder="email@example.com"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Nama Lengkap
                 </label>
                 <input
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                  className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-white-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
                   placeholder="Nama lengkap Anda"
                   required
                 />

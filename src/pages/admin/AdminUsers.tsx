@@ -155,12 +155,12 @@ const AdminUsers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-ios-text">Users & Roles</h1>
-          <p className="text-ios-text-secondary mt-2">Kelola pengguna dan peran dalam sistem</p>
+          <h1 className="text-3xl font-bold text-white">Users & Roles</h1>
+          <p className="text-white-secondary mt-2">Kelola pengguna dan peran dalam sistem</p>
         </div>
         <button
           onClick={load}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ios-accent text-white hover:bg-ios-accent/90 font-medium transition-all duration-200"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pink-500 text-white hover:bg-pink-500/90 font-medium transition-all duration-200"
         >
           <RefreshCw size={16} />
           Refresh
@@ -239,7 +239,7 @@ const AdminUsers: React.FC = () => {
           </div>
         ) : (
           filteredRows.map((r) => (
-            <div key={r.id} className="grid grid-cols-12 items-center px-4 py-4 border-b border-pink-500/10 hover:bg-white/5">
+            <div key={r.id} className="grid grid-cols-12 items-center px-4 py-4 border-b border-pink-500/10 hover:bg-black/5">
               {/* User Info */}
               <div className="col-span-3">
                 <div className="flex items-center gap-3">
@@ -305,7 +305,7 @@ const AdminUsers: React.FC = () => {
                 <select
                   value={r.role}
                   onChange={(e)=>updateRole(r.id, e.target.value)}
-                  className="bg-black border border-white/20 rounded px-2 py-1 text-white text-sm hover:bg-white/5"
+                  className="bg-black border border-gray-700 rounded px-2 py-1 text-white text-sm hover:bg-black/5"
                   title="Change user role"
                 >
                   <option value="user">user</option>

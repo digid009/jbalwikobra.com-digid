@@ -77,7 +77,7 @@ export const AdminUsersManagement: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className={cn(
               'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-              'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+              'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
               'focus:ring-2 focus:ring-ios-accent focus:border-pink-500'
             )}
           />
@@ -87,14 +87,14 @@ export const AdminUsersManagement: React.FC = () => {
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
             <p className="text-gray-200 font-medium">Loading users...</p>
           </div>
         ) : filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-gray-700'
+                'bg-black border-b border-gray-700'
               )}>
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
@@ -116,21 +116,21 @@ export const AdminUsersManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-ios-border">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-ios-surface transition-colors duration-200">
+                  <tr key={user.id} className="hover:bg-black transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <IOSAvatar user={user} size="medium" />
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-ios-text">{user.name}</div>
+                          <div className="text-sm font-medium text-white">{user.name}</div>
                           <div className="text-sm text-gray-200">ID: {user.id.slice(-8)}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text">{user.email}</span>
+                      <span className="text-sm text-white">{user.email}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text">{user.phone || 'Not provided'}</span>
+                      <span className="text-sm text-white">{user.phone || 'Not provided'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-200">
@@ -149,7 +149,7 @@ export const AdminUsersManagement: React.FC = () => {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
               <UsersIcon className="w-8 h-8 text-gray-200" />
             </div>
             <p className="text-gray-200 font-medium">No users found</p>

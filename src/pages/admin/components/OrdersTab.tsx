@@ -39,12 +39,12 @@ const OrdersTab: React.FC = () => {
         {[1, 2, 3].map((i) => (
           <IOSCard key={i} className="p-6 animate-pulse">
             <div className="flex items-center justify-between mb-4">
-              <div className="h-4 bg-ios-surface-secondary rounded w-1/4"></div>
-              <div className="h-6 bg-ios-surface-secondary rounded w-20"></div>
+              <div className="h-4 bg-black-secondary rounded w-1/4"></div>
+              <div className="h-6 bg-black-secondary rounded w-20"></div>
             </div>
             <div className="space-y-2">
-              <div className="h-3 bg-ios-surface-secondary rounded w-3/4"></div>
-              <div className="h-3 bg-ios-surface-secondary rounded w-1/2"></div>
+              <div className="h-3 bg-black-secondary rounded w-3/4"></div>
+              <div className="h-3 bg-black-secondary rounded w-1/2"></div>
             </div>
           </IOSCard>
         ))}
@@ -68,7 +68,7 @@ const OrdersTab: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-ios-text">Orders Management</h2>
+        <h2 className="text-xl font-semibold text-white">Orders Management</h2>
         <div className="text-sm text-gray-200">
           {orders.length} orders found
         </div>
@@ -78,7 +78,7 @@ const OrdersTab: React.FC = () => {
       {orders.length === 0 ? (
         <IOSCard className="p-8 text-center">
           <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-200" />
-          <h3 className="text-lg font-medium text-ios-text mb-2">No orders found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No orders found</h3>
           <p className="text-gray-200">Orders will appear here when customers make purchases</p>
         </IOSCard>
       ) : (
@@ -88,7 +88,7 @@ const OrdersTab: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-medium text-ios-text">
+                    <h3 className="font-medium text-white">
                       Order #{order.id.slice(-8)}
                     </h3>
                     {getStatusBadge(order.status)}
@@ -124,11 +124,11 @@ const OrdersTab: React.FC = () => {
                       <img
                         src={order.products.image}
                         alt={order.products.name}
-                        className="w-12 h-12 object-cover rounded-2xl bg-ios-surface-secondary"
+                        className="w-12 h-12 object-cover rounded-2xl bg-black-secondary"
                       />
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-ios-text">{order.products.name}</p>
+                      <p className="font-medium text-white">{order.products.name}</p>
                       <p className="text-sm text-gray-200">Product ID: {order.product_id}</p>
                     </div>
                   </div>

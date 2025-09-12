@@ -55,7 +55,7 @@ export const IOSToggle: React.FC<IOSToggleProps> = ({
       >
         <span
           className={cn(
-            'inline-block rounded-full bg-white shadow-lg transform transition-transform duration-200 ease-in-out',
+            'inline-block rounded-full bg-black shadow-lg transform transition-transform duration-200 ease-in-out',
             currentSize.thumb,
             checked ? currentSize.translate : 'translate-x-1'
           )}
@@ -65,13 +65,13 @@ export const IOSToggle: React.FC<IOSToggleProps> = ({
       {(label || description) && (
         <div className="flex-1 min-w-0">
           {label && (
-            <label className="block text-sm font-medium text-ios-text cursor-pointer"
+            <label className="block text-sm font-medium text-white cursor-pointer"
                    onClick={() => !disabled && onChange(!checked)}>
               {label}
             </label>
           )}
           {description && (
-            <p className="text-xs text-ios-text-secondary mt-1">
+            <p className="text-xs text-white-secondary mt-1">
               {description}
             </p>
           )}

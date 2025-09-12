@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminInputWithLeftIcon, adminInputBase } from './ui/InputStyles';
 import { Search, RefreshCw, Package as PackageIcon, Plus, Filter, X, Edit2, Trash2, Archive, RotateCcw } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSImageUploader } from '../../../components/ios/IOSDesignSystem';
@@ -346,11 +347,7 @@ export const AdminProductsManagement: React.FC = () => {
               placeholder="Search products by name, description, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={cn(
-                'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
-                'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-              )}
+              className={adminInputWithLeftIcon.replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
             />
           </div>
 
@@ -362,11 +359,7 @@ export const AdminProductsManagement: React.FC = () => {
               <select
                 value={tierFilter}
                 onChange={(e) => setTierFilter(e.target.value)}
-                className={cn(
-                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                  'transition-colors duration-200 text-ios-text'
-                )}
+                className={adminInputBase.replace('rounded-2xl','rounded-xl').replace('px-3','px-4')}
               >
                 <option value="all">All Categories</option>
                 <option value="electronics">Electronics</option>
@@ -386,11 +379,7 @@ export const AdminProductsManagement: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className={cn(
-                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                  'transition-colors duration-200 text-ios-text'
-                )}
+                className={adminInputBase.replace('rounded-2xl','rounded-xl').replace('px-3','px-4')}
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -404,11 +393,7 @@ export const AdminProductsManagement: React.FC = () => {
               <select
                 value={priceFilter}
                 onChange={(e) => setPriceFilter(e.target.value)}
-                className={cn(
-                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                  'transition-colors duration-200 text-ios-text'
-                )}
+                className={adminInputBase.replace('rounded-2xl','rounded-xl').replace('px-3','px-4')}
               >
                 <option value="all">All Prices</option>
                 <option value="low">Under Rp 50,000</option>
@@ -440,28 +425,28 @@ export const AdminProductsManagement: React.FC = () => {
         <div className="overflow-x-auto">
           {loading ? (
             <div className="p-12 text-center">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
               <p className="text-gray-200 font-medium">Loading products...</p>
             </div>
           ) : filteredProducts.length > 0 ? (
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-gray-700'
+                'bg-black border-b border-gray-700'
               )}>
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Tier
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Stock
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
@@ -474,7 +459,7 @@ export const AdminProductsManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-ios-border">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-ios-surface transition-colors duration-200">
+                  <tr key={product.id} className="hover:bg-black transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-ios-text/10 rounded-2xl flex items-center justify-center">
@@ -485,11 +470,11 @@ export const AdminProductsManagement: React.FC = () => {
                               className="w-10 h-10 rounded-2xl object-cover"
                             />
                           ) : (
-                            <PackageIcon className="w-5 h-5 text-ios-text/60" />
+                            <PackageIcon className="w-5 h-5 text-white/60" />
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-ios-text">{product.name}</div>
+                          <div className="text-sm font-medium text-white">{product.name}</div>
                           <div className="text-sm text-gray-200">
                             {getGameTitleName(product.game_title)} • {product.description.substring(0, 40)}...
                           </div>
@@ -497,10 +482,10 @@ export const AdminProductsManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text">{getTierName(product.tier_id || product.category)}</span>
+                      <span className="text-sm text-white">{getTierName(product.tier_id || product.category)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-ios-text">
+                      <span className="text-sm font-medium text-white">
                         Rp {product.price.toLocaleString()}
                       </span>
                     </td>
@@ -570,7 +555,7 @@ export const AdminProductsManagement: React.FC = () => {
             </table>
           ) : (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-ios-surface/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <PackageIcon className="w-8 h-8 text-gray-200" />
               </div>
               <p className="text-gray-200 font-medium">No products found</p>
@@ -585,14 +570,14 @@ export const AdminProductsManagement: React.FC = () => {
           <IOSCard className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-ios-text">
+                <h2 className="text-xl font-semibold text-white">
                   {editingProduct ? 'Edit Product' : 'Add New Product'}
                 </h2>
                 <IOSButton
                   variant="ghost"
                   size="small"
                   onClick={cancelForm}
-                  className="text-gray-200 hover:bg-ios-surface"
+                  className="text-gray-200 hover:bg-black"
                 >
                   <X className="w-5 h-5" />
                 </IOSButton>
@@ -606,79 +591,63 @@ export const AdminProductsManagement: React.FC = () => {
                   <div className="space-y-6">
                     {/* Basic Information Section */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Basic Information</h3>
+                      <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Basic Information</h3>
                   
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Product Name *</label>
+                    <label className="block text-sm font-medium text-white mb-2">Product Name *</label>
                     <input
                       type="text"
                       value={form.name}
                       onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
+                      className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
                       placeholder="Enter product name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Description *</label>
+                    <label className="block text-sm font-medium text-white mb-2">Description *</label>
                     <textarea
                       value={form.description}
                       onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                       rows={4}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
+                      className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
                       placeholder="Enter product description"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-ios-text mb-2">Price *</label>
+                      <label className="block text-sm font-medium text-white mb-2">Price *</label>
                       <input
                         type="number"
                         value={form.price}
                         onChange={(e) => setForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                        className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                          'text-ios-text placeholder-ios-text-secondary',
-                          'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                        )}
+                        className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
                         placeholder="0"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-ios-text mb-2">Original Price</label>
+                      <label className="block text-sm font-medium text-white mb-2">Original Price</label>
                       <input
                         type="number"
                         value={form.original_price}
                         onChange={(e) => setForm(prev => ({ ...prev, original_price: Number(e.target.value) }))}
-                        className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                          'text-ios-text placeholder-ios-text-secondary',
-                          'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                        )}
+                        className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
                         placeholder="0"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Stock Quantity *</label>
+                    <label className="block text-sm font-medium text-white mb-2">Stock Quantity *</label>
                     <input
                       type="number"
                       value={form.stock}
                       onChange={(e) => setForm(prev => ({ ...prev, stock: Math.max(0, Number(e.target.value)) }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                        'text-white placeholder-ios-text-secondary',
                         'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="1"
@@ -689,16 +658,16 @@ export const AdminProductsManagement: React.FC = () => {
 
                     {/* Tier & Game Section */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Tier & Game</h3>
+                      <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Tier & Game</h3>
                   
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Tier *</label>
+                    <label className="block text-sm font-medium text-white mb-2">Tier *</label>
                     <select
                       value={form.tier_id}
                       onChange={(e) => setForm(prev => ({ ...prev, tier_id: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                        'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       disabled={tiersLoading}
                     >
@@ -712,13 +681,13 @@ export const AdminProductsManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Game Title</label>
+                    <label className="block text-sm font-medium text-white mb-2">Game Title</label>
                     <select
                       value={form.game_title}
                       onChange={(e) => setForm(prev => ({ ...prev, game_title: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                        'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       disabled={gameTitlesLoading}
                     >
@@ -734,14 +703,14 @@ export const AdminProductsManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Account Level</label>
+                    <label className="block text-sm font-medium text-white mb-2">Account Level</label>
                     <input
                       type="text"
                       value={form.account_level}
                       onChange={(e) => setForm(prev => ({ ...prev, account_level: e.target.value }))}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                        'text-white placeholder-ios-text-secondary',
                         'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="e.g., Level 50, Master Rank, Diamond"
@@ -749,14 +718,14 @@ export const AdminProductsManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Account Details</label>
+                    <label className="block text-sm font-medium text-white mb-2">Account Details</label>
                     <textarea
                       value={form.account_details}
                       onChange={(e) => setForm(prev => ({ ...prev, account_details: e.target.value }))}
                       rows={4}
                       className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
+                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                        'text-white placeholder-ios-text-secondary',
                         'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                       )}
                       placeholder="Additional account information, items included, etc."
@@ -767,7 +736,7 @@ export const AdminProductsManagement: React.FC = () => {
 
                   {/* Column 2: Product Images */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Product Images</h3>
+                    <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Product Images</h3>
                     <IOSImageUploader
                       images={form.images}
                       onChange={(images) => setForm(prev => ({ ...prev, images }))}
@@ -787,7 +756,7 @@ export const AdminProductsManagement: React.FC = () => {
 
                   {/* Column 3: Settings & Rental Options */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-ios-text border-b border-gray-700 pb-2">Settings & Options</h3>
+                    <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Settings & Options</h3>
                     
                     {/* Toggle Switches */}
                     <div className="space-y-4">
@@ -809,17 +778,17 @@ export const AdminProductsManagement: React.FC = () => {
                     {/* Rental Variations - 4 Rows */}
                     {form.is_rental && (
                       <div className="space-y-3 mt-6">
-                        <h4 className="text-sm font-semibold text-ios-text">Rental Variations</h4>
+                        <h4 className="text-sm font-semibold text-white">Rental Variations</h4>
                         
                         {/* Variation 1 */}
-                        <div className="p-4 bg-ios-surface rounded-xl border border-gray-700 space-y-3">
+                        <div className="p-4 bg-black rounded-xl border border-gray-700 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-ios-text">Variation 1</h5>
+                            <h5 className="text-sm font-medium text-white">Variation 1</h5>
                             <span className="text-xs text-gray-200">Primary</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
                               <input
                                 type="number"
                                 value={form.rental_duration_hours}
@@ -830,7 +799,7 @@ export const AdminProductsManagement: React.FC = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
                               <select
                                 value={form.rental_unit || 'Hours'}
                                 onChange={(e) => setForm(prev => ({ ...prev, rental_unit: e.target.value }))}
@@ -843,7 +812,7 @@ export const AdminProductsManagement: React.FC = () => {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <label className="block text-xs font-medium text-white mb-1">Price</label>
                               <input
                                 type="number"
                                 value={form.rental_price_per_hour}
@@ -857,14 +826,14 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 2 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-ios-text">Variation 2</h5>
+                            <h5 className="text-sm font-medium text-white">Variation 2</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
                               <input
                                 type="number"
                                 disabled
@@ -873,7 +842,7 @@ export const AdminProductsManagement: React.FC = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
                               <select
                                 disabled
                                 className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
@@ -882,7 +851,7 @@ export const AdminProductsManagement: React.FC = () => {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <label className="block text-xs font-medium text-white mb-1">Price</label>
                               <input
                                 type="number"
                                 disabled
@@ -894,14 +863,14 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 3 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-ios-text">Variation 3</h5>
+                            <h5 className="text-sm font-medium text-white">Variation 3</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
                               <input
                                 type="number"
                                 disabled
@@ -910,7 +879,7 @@ export const AdminProductsManagement: React.FC = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
                               <select
                                 disabled
                                 className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
@@ -919,7 +888,7 @@ export const AdminProductsManagement: React.FC = () => {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <label className="block text-xs font-medium text-white mb-1">Price</label>
                               <input
                                 type="number"
                                 disabled
@@ -931,14 +900,14 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
 
                         {/* Variation 4 */}
-                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
+                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-ios-text">Variation 4</h5>
+                            <h5 className="text-sm font-medium text-white">Variation 4</h5>
                             <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
                               <input
                                 type="number"
                                 disabled
@@ -947,7 +916,7 @@ export const AdminProductsManagement: React.FC = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
                               <select
                                 disabled
                                 className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
@@ -956,7 +925,7 @@ export const AdminProductsManagement: React.FC = () => {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <label className="block text-xs font-medium text-white mb-1">Price</label>
                               <input
                                 type="number"
                                 disabled

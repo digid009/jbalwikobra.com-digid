@@ -49,7 +49,7 @@ const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
 
 // Optimized loading component for better perceived performance (iOS skeleton)
 const PageLoader = () => (
-  <div className="min-h-screen bg-ios-background text-ios-text flex items-center justify-center px-6">
+  <div className="min-h-screen bg-ios-background text-white flex items-center justify-center px-6">
     <div className="w-full max-w-md">
       <div className="ios-skeleton h-6 w-40 mb-4"></div>
       <div className="ios-skeleton h-4 w-full mb-2"></div>

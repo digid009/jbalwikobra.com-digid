@@ -56,7 +56,7 @@ const MobileBottomNav: React.FC = () => {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-  <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
+  <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-gray-700">
         <div className="flex items-center justify-around px-2 py-2">
           {navigationItems.map((item) => {
             const isActive = isActiveTab(item.path);
@@ -68,10 +68,10 @@ const MobileBottomNav: React.FC = () => {
                 to={item.path}
                 className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-200 ${
                   item.isSpecial
-                    ? 'bg-ios-accent text-white scale-110 shadow-lg'
+                    ? 'bg-pink-500 text-white scale-110 shadow-lg'
                     : isActive
-                    ? 'bg-ios-accent/10 text-ios-accent'
-                    : 'text-ios-text-secondary hover:text-ios-text'
+                    ? 'bg-pink-500/10 text-pink-500'
+                    : 'text-white-secondary hover:text-white'
                 } min-w-[60px] transform active:scale-95`}
               >
                 <div className={`relative ${item.isSpecial ? 'mb-1' : 'mb-1.5'}`}>
@@ -89,7 +89,7 @@ const MobileBottomNav: React.FC = () => {
                 
                 {/* Active Indicator */}
                 {isActive && !item.isSpecial && (
-                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-ios-accent rounded-full"></div>
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-pink-500 rounded-full"></div>
                 )}
               </Link>
             );

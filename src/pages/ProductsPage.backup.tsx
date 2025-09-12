@@ -231,12 +231,12 @@ const ProductsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ios-background text-ios-text">
+      <div className="min-h-screen bg-ios-background text-white">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="ios-skeleton h-8 w-48 mb-6"></div>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-ios-surface rounded-2xl border border-ios-border p-3">
+              <div key={i} className="bg-black rounded-2xl border border-gray-700 p-3">
                 <div className="ios-skeleton h-36 w-full mb-3 rounded-xl"></div>
                 <div className="ios-skeleton h-4 w-3/4 mb-2"></div>
                 <div className="ios-skeleton h-4 w-1/2 mb-3"></div>
@@ -253,7 +253,7 @@ const ProductsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
+    <div className="min-h-screen bg-ios-background text-white">
       <IOSContainer maxWidth="xl" className="py-4 sm:py-6 lg:py-8">
         {/* Header */}
         <IOSSectionHeader title="Katalog Produk" className="mb-4 sm:mb-6 lg:mb-8" />
@@ -264,16 +264,16 @@ const ProductsPage: React.FC = () => {
       <IOSCard padding="large" className="sticky top-24">
               {/* Search */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Cari Produk
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-ios-text-secondary" size={20} />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-secondary" size={20} />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-700 bg-black text-white placeholder-ios-text-secondary rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
                     placeholder="Nama akun, game..."
                   />
                 </div>
@@ -281,13 +281,13 @@ const ProductsPage: React.FC = () => {
 
               {/* Game Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Game
                 </label>
                 <select
                   value={selectedGame}
                   onChange={(e) => setSelectedGame(e.target.value)}
-                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  className="w-full p-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
                 >
                   <option value="">Semua Game</option>
                   {gameTitles.map(game => (
@@ -298,11 +298,11 @@ const ProductsPage: React.FC = () => {
 
               {/* Tier Filter */}
               <div className="mb-2">
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">Kategori</label>
+                <label className="block text-sm font-medium text-white-secondary mb-2">Kategori</label>
                 <select
                   value={selectedTier}
                   onChange={(e) => setSelectedTier(e.target.value)}
-                  className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                  className="w-full p-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-transparent"
                 >
                   <option value="">Semua Kategori</option>
                   {tiers.map(tier => (
@@ -337,13 +337,13 @@ const ProductsPage: React.FC = () => {
                   const getTierColor = (tierSlug: string) => {
                     switch (tierSlug) {
                       case 'pelajar':
-                        return 'bg-blue-500 text-white shadow-lg'; // Pelajar Blue
+                        return 'bg-gray-9000 text-white shadow-lg'; // Pelajar Blue
                       case 'reguler':
                         return 'bg-gray-400 text-white shadow-lg'; // Reguler Silver
                       case 'premium':
                         return 'bg-yellow-500 text-white shadow-lg'; // Premium Gold
                       default:
-                        return 'bg-ios-accent text-white shadow-lg'; // Default for "Semua"
+                        return 'bg-pink-500 text-white shadow-lg'; // Default for "Semua"
                     }
                   };
                   
@@ -354,7 +354,7 @@ const ProductsPage: React.FC = () => {
                       className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
                         active
                           ? getTierColor(tier.slug || '')
-                          : 'bg-ios-surface text-ios-text-secondary hover:bg-ios-surface/80 hover:text-ios-text'
+                          : 'bg-black text-white-secondary hover:bg-black/80 hover:text-white'
                       }`}
                     >
                       {tier.name}
@@ -368,7 +368,7 @@ const ProductsPage: React.FC = () => {
       <div className="lg:hidden mb-4">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-        className="w-full flex items-center justify-center space-x-2 bg-ios-surface border border-ios-border rounded-lg px-4 py-2 text-ios-text"
+        className="w-full flex items-center justify-center space-x-2 bg-black border border-gray-700 rounded-lg px-4 py-2 text-white"
               >
                 <SlidersHorizontal size={20} />
                 <span>Filter Lainnya</span>
@@ -380,21 +380,21 @@ const ProductsPage: React.FC = () => {
               <IOSCard padding="medium" className="lg:hidden mb-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Cari</label>
+                    <label className="block text-sm font-medium text-white-secondary mb-1">Cari</label>
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                      className="w-full p-2 border border-gray-700 bg-black text-white rounded-lg"
                       placeholder="Nama akun..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Game</label>
+                    <label className="block text-sm font-medium text-white-secondary mb-1">Game</label>
                     <select
                       value={selectedGame}
                       onChange={(e) => setSelectedGame(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                      className="w-full p-2 border border-gray-700 bg-black text-white rounded-lg"
                     >
                       <option value="">Semua Game</option>
                       {gameTitles.map(game => (
@@ -403,11 +403,11 @@ const ProductsPage: React.FC = () => {
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-1">Urutkan</label>
+                    <label className="block text-sm font-medium text-white-secondary mb-1">Urutkan</label>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="w-full p-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg"
+                      className="w-full p-2 border border-gray-700 bg-black text-white rounded-lg"
                     >
                       {sortOptions.map(option => (
                         <option key={option.value} value={option.value}>{option.label}</option>
@@ -425,10 +425,10 @@ const ProductsPage: React.FC = () => {
             {/* Toolbar */}
       <IOSCard padding="medium" className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
               <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-        <span className="text-sm text-ios-text-secondary">
+        <span className="text-sm text-white-secondary">
                   Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} dari {filteredProducts.length} produk
                   {totalPages > 1 && (
-                    <span className="ml-2 text-ios-text-secondary">
+                    <span className="ml-2 text-white-secondary">
                       (Halaman {currentPage} dari {totalPages})
                     </span>
                   )}
@@ -438,11 +438,11 @@ const ProductsPage: React.FC = () => {
               <div className="flex items-center space-x-4">
                 {/* Sort - Desktop */}
                 <div className="hidden lg:flex items-center space-x-2">
-                  <label className="text-sm text-ios-text-secondary">Urutkan:</label>
+                  <label className="text-sm text-white-secondary">Urutkan:</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-ios-border bg-ios-surface text-ios-text rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                    className="border border-gray-700 bg-black text-white rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-ios-accent focus:border-transparent"
                   >
                     {sortOptions.map(option => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -477,8 +477,8 @@ const ProductsPage: React.FC = () => {
                       disabled={currentPage === 1}
                       className={`flex items-center px-3 sm:px-4 py-3 rounded-xl transition-colors text-sm ${
                         currentPage === 1
-                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
-                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                          ? 'bg-black text-white-secondary opacity-50 cursor-not-allowed'
+                          : 'bg-black border border-gray-700 text-white hover:bg-black/80'
                       }`}
                     >
                       <ChevronLeft size={18} className="mr-1" />
@@ -514,7 +514,7 @@ const ProductsPage: React.FC = () => {
                             className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl transition-colors text-sm font-medium ${
                               currentPage === page
                                 ? 'bg-pink-600 text-white'
-                                : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                                : 'bg-black border border-gray-700 text-white hover:bg-black/80'
                             }`}
                           >
                             {page}
@@ -529,8 +529,8 @@ const ProductsPage: React.FC = () => {
                       disabled={currentPage === totalPages}
                       className={`flex items-center px-3 sm:px-4 py-3 rounded-xl transition-colors text-sm ${
                         currentPage === totalPages
-                          ? 'bg-ios-surface text-ios-text-secondary opacity-50 cursor-not-allowed'
-                          : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-ios-surface/80'
+                          ? 'bg-black text-white-secondary opacity-50 cursor-not-allowed'
+                          : 'bg-black border border-gray-700 text-white hover:bg-black/80'
                       }`}
                     >
                       <span className="hidden sm:inline">Selanjutnya</span>
@@ -545,10 +545,10 @@ const ProductsPage: React.FC = () => {
                 <div className="w-24 h-24 bg-black border border-pink-500/40 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="text-pink-400" size={32} />
                 </div>
-                <h3 className="text-lg font-semibold text-ios-text mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   Tidak ada produk ditemukan
                 </h3>
-                <p className="text-ios-text-secondary mb-4">
+                <p className="text-white-secondary mb-4">
                   Coba ubah kata kunci pencarian atau filter Anda
                 </p>
                 <IOSButton onClick={clearFilters}>Reset Filter</IOSButton>

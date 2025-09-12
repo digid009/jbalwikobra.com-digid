@@ -148,7 +148,7 @@ const HelpPage: React.FC = () => {
           <input 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-white placeholder:text-white/80 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20 text-sm sm:text-base" 
+            className="w-full bg-gray-900/30 backdrop-blur-sm border border-gray-600 rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-white placeholder:text-white/80 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-gray-700 text-sm sm:text-base" 
             placeholder="Cari: pembelian, pembayaran, keamanan..." 
           />
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80" />
@@ -161,45 +161,45 @@ const HelpPage: React.FC = () => {
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-12">
           <button 
             onClick={() => setSelectedCategory('Akun & Registrasi')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <User className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Akun</p>
+            <User className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Akun</p>
           </button>
           <button 
             onClick={() => setSelectedCategory('Pembelian')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <ShoppingBag className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Pembelian</p>
+            <ShoppingBag className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Pembelian</p>
           </button>
           <button 
             onClick={() => setSelectedCategory('Pembayaran')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <CreditCard className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Pembayaran</p>
+            <CreditCard className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Pembayaran</p>
           </button>
           <button 
             onClick={() => setSelectedCategory('Keamanan')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <ShieldCheck className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Keamanan</p>
+            <ShieldCheck className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Keamanan</p>
           </button>
           <button 
             onClick={() => setSelectedCategory('Fitur')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <Heart className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Wishlist</p>
+            <Heart className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Wishlist</p>
           </button>
           <button 
             onClick={() => setSelectedCategory('Fitur')}
-            className="min-h-[80px] p-3 bg-ios-surface border border-ios-border rounded-xl text-center hover:border-ios-accent/50 transition-colors"
+            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
           >
-            <Zap className="mx-auto text-ios-accent mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-ios-text">Flash Sale</p>
+            <Zap className="mx-auto text-pink-500 mb-2" size={24} />
+            <p className="text-xs sm:text-sm font-medium text-white">Flash Sale</p>
           </button>
         </div>
 
@@ -213,8 +213,8 @@ const HelpPage: React.FC = () => {
                 className={`
                   px-3 sm:px-4 py-2 min-h-[44px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base whitespace-nowrap
                   ${selectedCategory === category 
-                    ? 'bg-ios-accent text-white shadow-lg' 
-                    : 'bg-ios-surface text-ios-text hover:bg-ios-surface/80'
+                    ? 'bg-pink-500 text-white shadow-lg' 
+                    : 'bg-black text-white hover:bg-black/80'
                   }
                 `}
               >
@@ -227,8 +227,8 @@ const HelpPage: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* FAQ Section */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold text-ios-text mb-6 flex items-center gap-3">
-              <MessageSquare className="text-ios-accent" />
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <MessageSquare className="text-pink-500" />
               Pertanyaan Umum
             </h2>
             
@@ -241,19 +241,19 @@ const HelpPage: React.FC = () => {
                   >
                     <div className="flex items-start justify-between w-full gap-3">
                       <div className="flex-1">
-                        <span className="inline-block px-2 py-1 bg-ios-accent/20 text-ios-accent text-xs rounded-full mb-2">
+                        <span className="inline-block px-2 py-1 bg-pink-500/20 text-pink-500 text-xs rounded-full mb-2">
                           {item.category}
                         </span>
-                        <h3 className="font-semibold text-ios-text text-base sm:text-lg pr-2">{item.q}</h3>
+                        <h3 className="font-semibold text-white text-base sm:text-lg pr-2">{item.q}</h3>
                       </div>
                       <ChevronDown 
-                        className={`transition-transform text-ios-accent flex-shrink-0 mt-1 ${open === idx ? 'rotate-180' : ''}`} 
+                        className={`transition-transform text-pink-500 flex-shrink-0 mt-1 ${open === idx ? 'rotate-180' : ''}`} 
                         size={20}
                       />
                     </div>
                   </button>
                   {open === idx && (
-                    <div className="mt-4 text-ios-text-secondary leading-relaxed text-sm sm:text-base">
+                    <div className="mt-4 text-white-secondary leading-relaxed text-sm sm:text-base">
                       {item.a}
                     </div>
                   )}
@@ -263,9 +263,9 @@ const HelpPage: React.FC = () => {
 
             {filteredFaqs.length === 0 && (
               <IOSCard padding="large" className="text-center">
-                <Search className="mx-auto text-ios-text-secondary mb-4" size={48} />
-                <p className="text-ios-text-secondary">Tidak ada FAQ yang cocok dengan pencarian Anda.</p>
-                <p className="text-ios-text-secondary text-sm mt-2">Coba gunakan kata kunci lain atau hubungi support.</p>
+                <Search className="mx-auto text-white-secondary mb-4" size={48} />
+                <p className="text-white-secondary">Tidak ada FAQ yang cocok dengan pencarian Anda.</p>
+                <p className="text-white-secondary text-sm mt-2">Coba gunakan kata kunci lain atau hubungi support.</p>
               </IOSCard>
             )}
           </div>
@@ -274,11 +274,11 @@ const HelpPage: React.FC = () => {
           <div className="space-y-6">
             {/* Quick Contact */}
             <IOSCard padding="large">
-              <h3 className="text-xl font-bold text-ios-text mb-4 flex items-center gap-2">
-                <MessageSquare className="text-ios-accent" />
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <MessageSquare className="text-pink-500" />
                 Butuh Bantuan Cepat?
               </h3>
-              <p className="text-ios-text-secondary mb-4">
+              <p className="text-white-secondary mb-4">
                 Tim support kami siap membantu Anda 24/7 melalui WhatsApp.
               </p>
               <a
@@ -292,13 +292,13 @@ const HelpPage: React.FC = () => {
                   Chat WhatsApp Support
                 </IOSButton>
               </a>
-              <div className="mt-4 space-y-2 text-sm text-ios-text-secondary">
+              <div className="mt-4 space-y-2 text-sm text-white-secondary">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-400" />
                   <span>Respon dalam 5 menit</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-blue-400" />
+                  <Clock size={16} className="text-pink-400" />
                   <span>Online: 09:00 - 21:00 WIB</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -310,34 +310,34 @@ const HelpPage: React.FC = () => {
 
             {/* System Status */}
             <IOSCard padding="large">
-              <h3 className="text-lg font-bold text-ios-text mb-4 flex items-center gap-2">
-                <Settings className="text-ios-accent" />
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Settings className="text-pink-500" />
                 Status Sistem
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-ios-text-secondary">Website</span>
+                  <span className="text-white-secondary">Website</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Online</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-ios-text-secondary">Pembayaran</span>
+                  <span className="text-white-secondary">Pembayaran</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Normal</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-ios-text-secondary">Database</span>
+                  <span className="text-white-secondary">Database</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Optimal</span>
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-ios-text-secondary mt-4">
+              <p className="text-xs text-white-secondary mt-4">
                 Terakhir update: {new Date().toLocaleString('id-ID')}
               </p>
             </IOSCard>
@@ -346,22 +346,22 @@ const HelpPage: React.FC = () => {
 
         {/* Guides Section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-ios-text mb-6 flex items-center gap-3">
-            <Sparkles className="text-ios-accent" />
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <Sparkles className="text-pink-500" />
             Panduan Lengkap
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             {guides.map((guide, idx) => (
               <IOSCard key={idx} padding="large">
-                <h3 className="text-xl font-semibold text-ios-text mb-4">{guide.title}</h3>
+                <h3 className="text-xl font-semibold text-white mb-4">{guide.title}</h3>
                 <div className="space-y-3">
                   {guide.steps.map((step, stepIdx) => (
                     <div key={stepIdx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 bg-ios-accent text-white rounded-full flex items-center justify-center text-sm font-bold">
+                      <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
                         {stepIdx + 1}
                       </div>
-                      <p className="text-ios-text-secondary">{step}</p>
+                      <p className="text-white-secondary">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -374,8 +374,8 @@ const HelpPage: React.FC = () => {
         <div className="mt-12">
           <IOSCard padding="large" className="text-center bg-gradient-to-r from-ios-accent/10 to-ios-accent/5">
             <AlertTriangle className="mx-auto text-yellow-400 mb-4" size={48} />
-            <h3 className="text-2xl font-bold text-ios-text mb-4">Masih Belum Menemukan Jawaban?</h3>
-            <p className="text-ios-text-secondary mb-6 max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold text-white mb-4">Masih Belum Menemukan Jawaban?</h3>
+            <p className="text-white-secondary mb-6 max-w-2xl mx-auto">
               Tim support kami siap membantu menyelesaikan masalah spesifik Anda. Jangan ragu untuk menghubungi kami kapan saja.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

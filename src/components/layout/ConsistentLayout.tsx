@@ -37,7 +37,7 @@ export const PageWrapper: React.FC<{ children: React.ReactNode; className?: stri
   children,
   className = ''
 }) => (
-  <div className={`min-h-screen bg-ios-background text-ios-text ${className}`}>
+  <div className={`min-h-screen bg-ios-background text-white ${className}`}>
     {children}
   </div>
 );
@@ -56,7 +56,7 @@ export const ContentSection: React.FC<{
 }) => {
   const bgClasses = {
     default: '',
-    surface: 'bg-ios-surface border-b border-ios-border',
+    surface: 'bg-black border-b border-gray-700',
     gradient: 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500'
   };
 

@@ -159,7 +159,7 @@ const AdminPosts: React.FC = () => {
   return (
     <IOSContainer maxWidth="full" className="py-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-ios-text">Feed Management</h1>
+        <h1 className="text-2xl font-bold text-white">Feed Management</h1>
         <IOSButton 
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="flex items-center gap-2"
@@ -171,7 +171,7 @@ const AdminPosts: React.FC = () => {
 
       {message && (
         <IOSCard padding="medium" className="mb-4 border-l-4 border-l-ios-accent">
-          <p className="text-sm text-ios-text">{message}</p>
+          <p className="text-sm text-white">{message}</p>
         </IOSCard>
       )}
 
@@ -182,13 +182,13 @@ const AdminPosts: React.FC = () => {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Tipe Post
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent"
+                  className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent"
                   required
                 >
                   <option value="announcement">Pengumuman</option>
@@ -199,27 +199,27 @@ const AdminPosts: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Judul (Opsional)
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent"
+                  className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent"
                   placeholder="Judul post..."
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+              <label className="block text-sm font-medium text-white-secondary mb-2">
                 Konten *
               </label>
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent"
+                className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent"
                 rows={4}
                 placeholder="Tulis konten post..."
                 required
@@ -228,14 +228,14 @@ const AdminPosts: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   URL Gambar (Opsional)
                 </label>
                 <input
                   type="url"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent mb-2"
+                  className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent mb-2"
                   placeholder="https://..."
                 />
                 {/* Image Preview */}
@@ -244,7 +244,7 @@ const AdminPosts: React.FC = () => {
                     <img
                       src={formData.image_url}
                       alt="Image preview"
-                      className="w-24 h-24 object-cover rounded-lg border border-ios-border"
+                      className="w-24 h-24 object-cover rounded-lg border border-gray-700"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -255,7 +255,7 @@ const AdminPosts: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+                <label className="block text-sm font-medium text-white-secondary mb-2">
                   Rating (1-5, Opsional)
                 </label>
                 <input
@@ -264,7 +264,7 @@ const AdminPosts: React.FC = () => {
                   max="5"
                   value={formData.rating || ''}
                   onChange={(e) => setFormData({ ...formData, rating: e.target.value ? parseInt(e.target.value) : null })}
-                  className="w-full px-3 py-2 border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent"
+                  className="w-full px-3 py-2 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent"
                   placeholder="1-5"
                 />
               </div>
@@ -276,9 +276,9 @@ const AdminPosts: React.FC = () => {
                 id="is_pinned"
                 checked={formData.is_pinned}
                 onChange={(e) => setFormData({ ...formData, is_pinned: e.target.checked })}
-                className="rounded border-ios-border"
+                className="rounded border-gray-700"
               />
-              <label htmlFor="is_pinned" className="text-sm text-ios-text">
+              <label htmlFor="is_pinned" className="text-sm text-white">
                 Pin post di atas
               </label>
             </div>
@@ -301,9 +301,9 @@ const AdminPosts: React.FC = () => {
 
       {/* Posts List */}
       <IOSCard padding="none">
-        <div className="p-4 border-b border-ios-border">
-          <h2 className="font-semibold text-ios-text">Semua Feed Posts</h2>
-          <p className="text-sm text-ios-text-secondary">
+        <div className="p-4 border-b border-gray-700">
+          <h2 className="font-semibold text-white">Semua Feed Posts</h2>
+          <p className="text-sm text-white-secondary">
             {posts.filter(p => !p.is_deleted).length} posts aktif
           </p>
         </div>
@@ -312,14 +312,14 @@ const AdminPosts: React.FC = () => {
           <div className="p-4">
             <div className="animate-pulse space-y-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-20 bg-ios-surface rounded"></div>
+                <div key={i} className="h-20 bg-black rounded"></div>
               ))}
             </div>
           </div>
         ) : (
           <div className="divide-y divide-ios-border">
             {posts.filter(p => !p.is_deleted).map((post) => (
-              <div key={post.id} className="p-4 hover:bg-ios-surface/50 transition-colors">
+              <div key={post.id} className="p-4 hover:bg-black/50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex gap-4 flex-1">
                     {/* Image Preview */}
@@ -328,7 +328,7 @@ const AdminPosts: React.FC = () => {
                         <img
                           src={post.image_url}
                           alt={post.title || 'Post image'}
-                          className="w-16 h-16 object-cover rounded-lg border border-ios-border"
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-700"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
@@ -339,7 +339,7 @@ const AdminPosts: React.FC = () => {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs px-2 py-1 bg-ios-accent/20 text-ios-accent rounded-full">
+                        <span className="text-xs px-2 py-1 bg-pink-500/20 text-pink-500 rounded-full">
                           {post.type}
                         </span>
                         {post.is_pinned && (
@@ -349,21 +349,21 @@ const AdminPosts: React.FC = () => {
                           </span>
                         )}
                         {post.title && (
-                          <span className="font-medium text-ios-text">{post.title}</span>
+                          <span className="font-medium text-white">{post.title}</span>
                         )}
                       </div>
                       
-                      <p className="text-sm text-ios-text-secondary mb-2 line-clamp-2">
+                      <p className="text-sm text-white-secondary mb-2 line-clamp-2">
                         {post.content}
                       </p>
                       
-                      <div className="flex items-center gap-4 text-xs text-ios-text-secondary">
+                      <div className="flex items-center gap-4 text-xs text-white-secondary">
                         <span>{formatDate(post.created_at)}</span>
                         <span>{post.counts.likes} likes</span>
                         <span>{post.counts.comments} comments</span>
                         {post.rating && <span>⭐ {post.rating}/5</span>}
                         {post.image_url && (
-                          <span className="text-blue-500">📷 Has Image</span>
+                          <span className="text-pink-400">📷 Has Image</span>
                         )}
                       </div>
                     </div>
@@ -374,7 +374,7 @@ const AdminPosts: React.FC = () => {
                       variant="ghost"
                       size="small"
                       onClick={() => togglePin(post.id, post.is_pinned || false)}
-                      className="text-ios-text-secondary hover:text-ios-text"
+                      className="text-white-secondary hover:text-white"
                     >
                       {post.is_pinned ? <PinOff size={16} /> : <Pin size={16} />}
                     </IOSButton>
@@ -383,7 +383,7 @@ const AdminPosts: React.FC = () => {
                       variant="ghost"
                       size="small"
                       onClick={() => window.open(`/feed`, '_blank')}
-                      className="text-ios-text-secondary hover:text-ios-text"
+                      className="text-white-secondary hover:text-white"
                     >
                       <Eye size={16} />
                     </IOSButton>
@@ -402,7 +402,7 @@ const AdminPosts: React.FC = () => {
             ))}
             
             {posts.filter(p => !p.is_deleted).length === 0 && (
-              <div className="p-8 text-center text-ios-text-secondary">
+              <div className="p-8 text-center text-white-secondary">
                 <p>Belum ada posts. Buat post pertama!</p>
               </div>
             )}

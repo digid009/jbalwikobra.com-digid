@@ -114,10 +114,10 @@ export const IOSButton: React.FC<IOSButtonProps> = ({
   `;
 
   const variantClasses = {
-    primary: 'bg-ios-accent text-white border border-transparent',
-    secondary: 'bg-ios-surface text-ios-text border border-ios-border',
+    primary: 'bg-pink-500 text-white border border-transparent',
+    secondary: 'bg-black text-white border border-gray-700',
     destructive: 'bg-ios-error text-white border border-transparent',
-    ghost: 'bg-transparent text-ios-accent border border-transparent'
+    ghost: 'bg-transparent text-pink-500 border border-transparent'
   };
 
   const sizeClasses = {
@@ -161,10 +161,10 @@ export const IOSBadge: React.FC<IOSBadgeProps> = ({
   children
 }) => {
   const variantClasses = {
-    primary: 'bg-ios-accent text-white',
-    secondary: 'bg-ios-surface text-ios-text border border-ios-border',
+    primary: 'bg-pink-500 text-white',
+    secondary: 'bg-black text-white border border-gray-700',
     success: 'bg-green-500 text-white',
-    warning: 'bg-yellow-500 text-black',
+    warning: 'bg-yellow-500 text-white',
     destructive: 'bg-red-500 text-white'
   };
 
@@ -202,19 +202,25 @@ export const IOSCard: React.FC<IOSCardProps> = ({
   children,
   onClick
 }) => {
+  // Adaptive surface tokens (light/dark) with subtle depth & pink accent potential
   const baseClasses = `
-    ios-card
-    bg-ios-surface
+    ios-card relative overflow-hidden group
     rounded-2xl
-    border border-ios-border
-    transition-all duration-300 ease-out
-    ${onClick ? 'cursor-pointer hover:border-ios-accent/30 active:scale-[0.99]' : ''}
+    transition-all duration-400 ease-out
+    backdrop-blur-sm
+    bg-gradient-to-br from-white/70 to-white/30 dark:from-[#161618] dark:via-[#121214] dark:to-[#0b0b0c]
+    ring-1 ring-black/10 dark:ring-white/5
+    shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_4px_18px_-6px_rgba(0,0,0,0.25)]
+    dark:shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_4px_24px_-4px_rgba(0,0,0,0.55)]
+    ${onClick ? 'cursor-pointer active:scale-[0.985]' : ''}
+    hover:shadow-[0_0_0_1px_rgba(236,72,153,0.25),0_6px_28px_-6px_rgba(236,72,153,0.35)]
+    hover:ring-pink-500/40
   `;
 
   const variantClasses = {
     default: '',
-    elevated: 'shadow-lg',
-    outlined: 'border-2'
+    elevated: 'shadow-lg dark:shadow-[0_8px_40px_-10px_rgba(0,0,0,0.8)]',
+    outlined: 'ring-1 ring-pink-500/30 dark:ring-pink-500/20'
   };
 
   const paddingClasses = {
@@ -229,6 +235,11 @@ export const IOSCard: React.FC<IOSCardProps> = ({
       className={`${baseClasses} ${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}
       onClick={onClick}
     >
+      {/* Accent shimmer overlay */}
+      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(236,72,153,0.08),transparent_60%)]" />
+        <div className="absolute -inset-px rounded-[inherit] ring-1 ring-inset ring-white/10 dark:ring-white/5 mix-blend-overlay" />
+      </div>
       {children}
     </div>
   );
@@ -288,9 +299,9 @@ export const IOSSectionHeader: React.FC<IOSSectionHeaderProps> = ({
 }) => (
   <div className={`flex items-center justify-between mb-6 ${className}`}>
     <div>
-      <h2 className="text-2xl font-bold text-ios-text mb-1">{title}</h2>
+      <h2 className="text-2xl font-bold text-white mb-1">{title}</h2>
       {subtitle && (
-        <p className="text-ios-textSecondary text-sm">{subtitle}</p>
+        <p className="text-whiteSecondary text-sm">{subtitle}</p>
       )}
     </div>
     {action && (
@@ -327,7 +338,7 @@ export const IOSHero: React.FC<IOSHeroProps> = ({
     <div className={cn(standardClasses.container.boxed, 'text-center')}>
       {Icon && (
         <div className="flex items-center justify-center space-x-3 mb-6">
-          <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-white/20">
+          <div className="w-12 h-12 lg:w-16 lg:h-16 bg-black/20 rounded-xl flex items-center justify-center border border-gray-700">
             <Icon className="text-white" size={32} />
           </div>
         </div>

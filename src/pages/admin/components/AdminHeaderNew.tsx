@@ -72,14 +72,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   return (
     <>
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+  <header className="sticky top-0 z-50 dashboard-header">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo & Title */}
             <div className="flex items-center space-x-4">
-              <div className="text-xl font-bold text-pink-600 dark:text-pink-400">
+              <div className="text-xl font-bold text-pink-600 dark:text-pink-400 tracking-tight">
                 JB Admin
               </div>
+              <button
+                type="button"
+                className="command-button hidden md:inline-flex"
+                aria-label="Open command palette"
+              >
+                <span className="text-xs">Search / Command</span>
+                <kbd>⌘K</kbd>
+              </button>
             </div>
 
             {/* Center: Desktop Navigation */}
@@ -141,7 +149,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-black/95 dark:bg-gray-900/95 backdrop-blur-md">
+          <div className="lg:hidden border-t border-gray-700 bg-black/95 backdrop-blur-md">
             <div className="px-4 py-2 space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;

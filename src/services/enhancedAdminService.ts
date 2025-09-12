@@ -297,12 +297,14 @@ class EnhancedAdminService {
         ? reviewsData.data.reduce((sum, review) => sum + review.rating, 0) / reviewsData.data.length
         : 0;
 
+      // Reinterpret totalReviews as count of all orders that are paid or completed (business request)
+      const paidCompletedCount = ordersWithAmounts.data?.length || 0;
       const stats: AdminStats = {
         totalOrders: totalOrders || 0,
         totalRevenue,
         totalUsers: totalUsers || 0,
         totalProducts: totalProducts || 0,
-        totalReviews: reviewsData.data?.length || 0,
+        totalReviews: paidCompletedCount, // updated logic per requirement
         averageRating: Math.round(averageRating * 10) / 10,
         pendingOrders: pendingOrders || 0,
         completedOrders: completedOrders || 0,

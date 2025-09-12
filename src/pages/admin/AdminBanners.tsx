@@ -79,27 +79,27 @@ const AdminBanners: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-3">
           <div>
             <label className="text-sm text-gray-400">Judul</label>
-            <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
+            <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} className="w-full mt-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2" />
           </div>
           <div>
             <label className="text-sm text-gray-400">Subjudul</label>
-            <input value={form.subtitle||''} onChange={e=>setForm(p=>({...p,subtitle:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
+            <input value={form.subtitle||''} onChange={e=>setForm(p=>({...p,subtitle:e.target.value}))} className="w-full mt-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2" />
           </div>
           <div>
             <label className="text-sm text-gray-400">CTA Text (opsional)</label>
-            <input value={form.ctaText||''} onChange={e=>setForm(p=>({...p,ctaText:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" placeholder="Contoh: Lihat, Beli Sekarang, Pelajari" />
+            <input value={form.ctaText||''} onChange={e=>setForm(p=>({...p,ctaText:e.target.value}))} className="w-full mt-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2" placeholder="Contoh: Lihat, Beli Sekarang, Pelajari" />
           </div>
           <div>
             <label className="text-sm text-gray-400">Link</label>
             <div className="flex items-center gap-2 mt-1">
               <LinkIcon size={16} className="text-gray-400" />
-              <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2" placeholder="/flash-sales atau https://..." />
+              <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} className="w-full bg-black/60 border border-gray-800 rounded-lg px-3 py-2" placeholder="/flash-sales atau https://..." />
             </div>
           </div>
           <div className="grid grid-cols-[1fr_auto] items-end gap-2">
             <div>
               <label className="text-sm text-gray-400">Urutan</label>
-              <input type="number" value={form.sortOrder} onChange={e=>setForm(p=>({...p,sortOrder:parseInt(e.target.value||'1',10)}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
+              <input type="number" value={form.sortOrder} onChange={e=>setForm(p=>({...p,sortOrder:parseInt(e.target.value||'1',10)}))} className="w-full mt-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2" />
             </div>
             <div className="flex items-center gap-2">
               <input id="isActive" type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))} />
@@ -109,13 +109,13 @@ const AdminBanners: React.FC = () => {
           <div className="md:col-span-2">
             <label className="text-sm text-gray-400">Gambar</label>
             <div className="mt-1 flex items-center gap-3">
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer">
+              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-800 hover:bg-black/5 cursor-pointer">
                 <ImageIcon size={16} /> Pilih File
                 <input type="file" className="hidden" accept="image/*" onChange={onFile} />
               </label>
               <span className="text-xs text-gray-400">{form.file?.name || (editing ? 'Biarkan kosong jika tidak diubah' : 'Belum ada file')}</span>
               {previewUrl && (
-                <img src={previewUrl} alt="preview" className="h-14 rounded border border-white/10" />
+                <img src={previewUrl} alt="preview" className="h-14 rounded border border-gray-800" />
               )}
             </div>
           </div>
@@ -141,7 +141,7 @@ const AdminBanners: React.FC = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {banners.map(b => (
-              <div key={b.id} className="rounded-xl overflow-hidden border border-white/10 bg-white/5">
+              <div key={b.id} className="rounded-xl overflow-hidden border border-gray-800 bg-black/5">
                 <img src={b.imageUrl} alt={b.title} className="w-full h-36 object-cover" />
                 <div className="p-3">
                   <div className="font-semibold">{b.title}</div>
@@ -151,7 +151,7 @@ const AdminBanners: React.FC = () => {
                     <span>{b.isActive ? 'Aktif' : 'Nonaktif'}</span>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button onClick={()=>startEdit(b)} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs"><Edit3 size={14}/> Edit</button>
+                    <button onClick={()=>startEdit(b)} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-900/20 hover:bg-gray-900/30 text-xs"><Edit3 size={14}/> Edit</button>
                     <button onClick={()=>remove(b)} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-rose-600/80 hover:bg-rose-700 text-xs text-white"><Trash2 size={14}/> Hapus</button>
                   </div>
                 </div>

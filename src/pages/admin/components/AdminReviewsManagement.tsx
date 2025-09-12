@@ -136,7 +136,7 @@ export const AdminReviewsManagement: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                  'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                  'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
                   'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                 )}
               />
@@ -151,9 +151,9 @@ export const AdminReviewsManagement: React.FC = () => {
                   value={ratingFilter}
                   onChange={(e) => setRatingFilter(e.target.value)}
                   className={cn(
-                    'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                    'border border-gray-700 rounded-xl px-4 py-2 bg-black',
                     'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                    'transition-colors duration-200 text-ios-text'
+                    'transition-colors duration-200 text-white'
                   )}
                 >
                   <option value="all">All Ratings</option>
@@ -174,9 +174,9 @@ export const AdminReviewsManagement: React.FC = () => {
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
                   className={cn(
-                    'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                    'border border-gray-700 rounded-xl px-4 py-2 bg-black',
                     'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                    'transition-colors duration-200 text-ios-text'
+                    'transition-colors duration-200 text-white'
                   )}
                 >
                   <option value="all">All Time</option>
@@ -208,14 +208,14 @@ export const AdminReviewsManagement: React.FC = () => {
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-accent" />
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
             <p className="text-gray-200 font-medium">Loading reviews...</p>
           </div>
         ) : reviews.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={cn(
-                'bg-ios-surface border-b border-gray-700'
+                'bg-black border-b border-gray-700'
               )}>
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
@@ -240,10 +240,10 @@ export const AdminReviewsManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-ios-border">
                 {reviews.map((review) => (
-                  <tr key={review.id} className="hover:bg-ios-surface transition-colors duration-200">
+                  <tr key={review.id} className="hover:bg-black transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-ios-text">
+                        <div className="text-sm font-medium text-white">
                           {review.user_name || 'Anonymous'}
                         </div>
                         {review.user_id ? (
@@ -257,7 +257,7 @@ export const AdminReviewsManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-ios-text">
+                        <div className="text-sm font-medium text-white">
                           {review.product_name || 'Unknown Product'}
                         </div>
                         {review.product_id ? (
@@ -283,7 +283,7 @@ export const AdminReviewsManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-ios-text max-w-xs">
+                      <div className="text-sm text-white max-w-xs">
                         {review.comment ? (
                           <p className="truncate" title={review.comment}>
                             {review.comment.length > 100 
@@ -318,7 +318,7 @@ export const AdminReviewsManagement: React.FC = () => {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
               <Star className="w-8 h-8 text-gray-200" />
             </div>
             <p className="text-gray-200 font-medium">No reviews found</p>

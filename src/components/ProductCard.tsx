@@ -12,19 +12,13 @@ interface ProductCardProps {
   showFlashSaleTimer?: boolean;
   fromCatalogPage?: boolean;
   className?: string;
-  /**
-   * Controls whether the primary image should be prioritized (eager loaded).
-   * Defaults to true to preserve existing behavior. Pass false to enable lazy loading.
-   */
-  imagePriority?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ 
   product, 
   showFlashSaleTimer = false,
   fromCatalogPage = false,
-  className = '',
-  imagePriority = true
+  className = ''
 }) => {
   const timeRemaining = product.flashSaleEndTime
     ? calculateTimeRemaining(product.flashSaleEndTime)
@@ -39,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   // - Everywhere else (catalog, normal cards): show original/base price
   const displayPrice = (() => {
     const hasValidDiscount = product.originalPrice && product.originalPrice > product.price;
-    if (showFlashSaleTimer && hasValidDiscount) return product.price; // always show sale price on flash sale cards
+    if (isFlashSaleActive && hasValidDiscount) return product.price;
     return product.originalPrice && product.originalPrice > 0 ? product.originalPrice : product.price;
   })();
 
@@ -159,7 +153,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             src={images[0]}
             alt={product.name}
             className="w-full h-full"
-            priority={showFlashSaleTimer && imagePriority}
+            priority={showFlashSaleTimer} // Prioritize flash sale images
             quality={85}
             aspectRatio={4/5}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -174,7 +168,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {/* Game Monogram */}
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-7 sm:w-9 h-7 sm:h-9 rounded-lg sm:rounded-xl bg-white/95 text-gray-900 text-xs font-bold flex items-center justify-center ring-2 ring-white/20 backdrop-blur">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-7 sm:w-9 h-7 sm:h-9 rounded-lg sm:rounded-xl bg-black/70 text-pink-400 text-xs font-bold flex items-center justify-center ring-2 ring-pink-500/30 backdrop-blur">
             {getMonogram()}
           </div>
 
@@ -189,7 +183,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {images.length > 1 && (
             <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 flex items-center gap-1">
               {images.slice(0,3).map((_, i) => (
-                <span key={i} className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/60'}`}></span>
+                <span key={i} className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${i === 0 ? 'bg-pink-500' : 'bg-pink-500/40'}`}></span>
               ))}
               {images.length > 3 && (
                 <span className="text-white/80 text-xs ml-1">+{images.length - 3}</span>
@@ -210,7 +204,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {!showFlashSaleTimer && (
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {/* Game Title */}
-              <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold bg-white/15 text-white border border-white/30 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold bg-pink-500/15 text-pink-300 border border-pink-500/30 backdrop-blur-sm">
                 {gameTitle}
               </span>
 
@@ -263,10 +257,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-end justify-between pt-2">
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-bold text-gray-900 shadow-lg border border-white/20">
+                <span className="inline-flex items-center rounded-lg sm:rounded-xl bg-black/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-bold text-pink-400 shadow-lg border border-pink-500/30">
                   {formatCurrency(displayPrice)}
                 </span>
-                {showFlashSaleTimer && product.originalPrice && product.originalPrice > product.price && (
+                {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
                   <span className="inline-flex items-center text-xs font-semibold px-1.5 sm:px-2 py-1 rounded-md sm:rounded-lg bg-red-500/30 text-white border border-red-400/60 backdrop-blur-sm shadow-sm whitespace-nowrap leading-none">
                     -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                   </span>
@@ -274,7 +268,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </div>
               
               {/* Original Price */}
-              {showFlashSaleTimer && product.originalPrice && product.originalPrice > product.price && (
+              {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-xs line-through text-white/80 mt-1 font-medium" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatCurrency(product.originalPrice)}
                 </span>
@@ -282,11 +276,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
               {/* Flash Sale Timer (under price) */}
               {showFlashSaleTimer && product.flashSaleEndTime && (
-                <div className="pt-2 sm:pt-3">
+        <div className="pt-2 sm:pt-3">
                   <FlashSaleTimer 
                     endTime={product.flashSaleEndTime} 
                     compact={false}
-                    className="bg-white/95 text-red-600 font-bold"
+          className="bg-black/80 text-pink-400 font-bold border border-pink-500/30"
                   />
                 </div>
               )}
@@ -294,7 +288,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
             {/* Action Button - Mobile optimized */}
             <div className="flex-shrink-0 ml-2">
-              <div className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 transition-all duration-200 group-hover:bg-white group-hover:text-gray-900 group-hover:shadow-lg">
+        <div className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/30 text-pink-400 transition-all duration-200 group-hover:bg-pink-600/20 group-hover:text-pink-300 group-hover:shadow-lg">
                 <ArrowUpRight size={14} className="sm:w-[18px] sm:h-[18px]" />
               </div>
             </div>

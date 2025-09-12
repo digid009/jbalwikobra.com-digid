@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { adminInputWithLeftIcon } from './ui/InputStyles';
 import { 
   BarChart3, 
   Package, 
@@ -18,6 +19,7 @@ import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { ThemeToggle } from '../../../components/ios/ThemeToggle';
 import { AdminStats } from '../../../services/adminService';
 import { cn } from '../../../styles/standardClasses';
+import { useAdminNotifications } from '../notifications/AdminNotificationsContext';
 
 export type AdminTab = 
   | 'overview' 
@@ -34,19 +36,18 @@ interface NavigationItem {
   id: AdminTab;
   label: string;
   icon: LucideIcon;
-  badge: keyof AdminStats | null;
 }
 
 const navigationItems: NavigationItem[] = [
-  { id: 'overview', label: 'Overview', icon: BarChart3, badge: null },
-  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, badge: null },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: 'totalOrders' },
-  { id: 'users', label: 'Users', icon: Users, badge: 'totalUsers' },
-  { id: 'products', label: 'Products', icon: Package, badge: 'totalProducts' },
-  { id: 'feed', label: 'Feed', icon: MessageSquare, badge: null },
-  { id: 'banners', label: 'Banners', icon: ImageIcon, badge: null },
-  { id: 'flash-sales', label: 'Flash Sales', icon: Zap, badge: null },
-  { id: 'reviews', label: 'Reviews', icon: Star, badge: 'totalReviews' },
+  { id: 'overview', label: 'Overview', icon: BarChart3 },
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+  { id: 'orders', label: 'Orders', icon: ShoppingCart },
+  { id: 'users', label: 'Users', icon: Users },
+  { id: 'products', label: 'Products', icon: Package },
+  { id: 'feed', label: 'Feed', icon: MessageSquare },
+  { id: 'banners', label: 'Banners', icon: ImageIcon },
+  { id: 'flash-sales', label: 'Flash Sales', icon: Zap },
+  { id: 'reviews', label: 'Reviews', icon: Star },
 ];
 
 interface AdminHeaderProps {
@@ -68,17 +69,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const { notifications, unreadCount, toggleRead, markAllAsRead } = useAdminNotifications();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch();
   };
 
-  const getBadgeValue = (badgeKey: keyof AdminStats | null): number | null => {
-    if (!badgeKey || !stats) return null;
-    const value = stats[badgeKey];
-    return typeof value === 'number' ? value : null;
-  };
+  // Badges removed per new requirement
+  const getBadgeValue = () => null;
 
   // Mock user data
   const user = {
@@ -99,7 +98,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-primary/80 rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-sm">JB</span>
               </div>
-              <h1 className="hidden sm:block text-xl font-semibold text-ios-text">
+              <h1 className="hidden sm:block text-xl font-semibold text-white">
                 Admin Panel
               </h1>
             </div>
@@ -109,7 +108,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {navigationItems.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
-                const badgeValue = getBadgeValue(item.badge);
+                const badgeValue = null;
 
                 return (
                   <div key={item.id} className="relative">
@@ -121,22 +120,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                         'relative px-3 py-2 text-sm font-medium transition-all duration-200',
                         isActive 
                           ? 'bg-ios-primary text-white shadow-xl shadow-black/50' 
-                          : 'text-gray-200 hover:text-ios-text hover:bg-ios-surface/50'
+                          : 'text-gray-200 hover:text-white hover:bg-black/50'
                       )}
                     >
                       <IconComponent size={16} className="mr-2" />
                       {item.label}
                     </IOSButton>
                     
-                    {badgeValue && (
-                      <IOSBadge
-                        variant="warning"
-                        size="small"
-                        className="absolute -top-1 -right-1 min-w-[18px] h-4 text-xs"
-                      >
-                        {badgeValue}
-                      </IOSBadge>
-                    )}
+                    {/* Badges removed */}
                   </div>
                 );
               })}
@@ -148,7 +139,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             {navigationItems.slice(0, 4).map((item) => {
               const IconComponent = item.icon;
               const isActive = activeTab === item.id;
-              const badgeValue = getBadgeValue(item.badge);
+              const badgeValue = null;
 
               return (
                 <div key={item.id} className="relative">
@@ -161,15 +152,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     <IconComponent size={18} />
                   </IOSButton>
                   
-                  {badgeValue && (
-                    <IOSBadge
-                      variant="warning"
-                      size="small"
-                      className="ml-auto min-w-[18px] h-4 text-xs"
-                    >
-                      {badgeValue}
-                    </IOSBadge>
-                  )}
+                  {/* Badges removed */}
                 </div>
               );
             })}
@@ -200,7 +183,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Search orders, users, products..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-ios-surface text-ios-text placeholder-ios-text-secondary"
+                    className={adminInputWithLeftIcon + ' placeholder-ios-text-secondary'}
                   />
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
                   <IOSButton
@@ -234,34 +217,65 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 className="relative overflow-visible"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 min-w-[18px] h-5 px-1 bg-ios-error text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow ring-2 ring-ios-background">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 min-w-[18px] h-5 px-1 bg-ios-error text-white text-[10px] font-semibold rounded-full flex items-center justify-center shadow ring-2 ring-ios-background">
+                    {unreadCount}
+                  </span>
+                )}
               </IOSButton>
 
-              {/* Notifications Dropdown */}
               {showNotifications && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-ios-background rounded-2xl shadow-lg border border-gray-700 z-50">
-                  <div className="p-4 border-b border-gray-700">
-                    <h3 className="font-semibold text-ios-text">Notifications</h3>
+                  <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                    <h3 className="font-semibold text-white">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => markAllAsRead()}
+                        className="text-[10px] uppercase tracking-wide text-pink-400 hover:text-white"
+                      >
+                        Mark all
+                      </button>
+                    )}
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    <div className="p-4 hover:bg-ios-surface/50 border-b border-gray-700/50">
-                      <p className="text-sm text-ios-text">New order received</p>
-                      <p className="text-xs text-gray-200 mt-1">2 minutes ago</p>
-                    </div>
-                    <div className="p-4 hover:bg-ios-surface/50 border-b border-gray-700/50">
-                      <p className="text-sm text-ios-text">Product inventory low</p>
-                      <p className="text-xs text-gray-200 mt-1">1 hour ago</p>
-                    </div>
-                    <div className="p-4 hover:bg-ios-surface/50">
-                      <p className="text-sm text-ios-text">New user registered</p>
-                      <p className="text-xs text-gray-200 mt-1">3 hours ago</p>
-                    </div>
+                  <div className="max-h-96 overflow-y-auto divide-y divide-gray-800">
+                    {notifications.length === 0 && (
+                      <div className="p-6 text-center text-xs text-gray-400">No notifications</div>
+                    )}
+                    {notifications.map(n => {
+                      const ageMs = Date.now() - n.timestamp.getTime();
+                      const minutes = Math.floor(ageMs / 60000);
+                      const hours = Math.floor(minutes / 60);
+                      const timeLabel = minutes < 1
+                        ? 'just now'
+                        : minutes < 60
+                          ? `${minutes}m ago`
+                          : hours < 24
+                            ? `${hours}h ago`
+                            : `${Math.floor(hours/24)}d ago`;
+                      return (
+                        <button
+                          key={n.id}
+                          onClick={() => toggleRead(n.id)}
+                          className={cn('w-full text-left p-4 transition-colors group', n.read ? 'bg-transparent hover:bg-black/40' : 'bg-black/60 hover:bg-black/70')}
+                        >
+                          <p className={cn('text-sm flex items-start gap-2', n.read ? 'text-gray-200' : 'text-white font-medium')}> 
+                            {!n.read && <span className="mt-1 w-2 h-2 rounded-full bg-pink-500 shadow shadow-pink-500/50" />}
+                            <span>{n.title}</span>
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-1 line-clamp-2">{n.message}</p>
+                          <div className="mt-1 flex items-center justify-between">
+                            <span className="text-[10px] uppercase tracking-wide text-gray-500">{timeLabel}</span>
+                            <span className="text-[10px] text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {n.read ? 'Mark unread' : 'Mark read'}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="p-3 border-t border-gray-700">
                     <IOSButton variant="ghost" size="small" className="w-full">
-                      View all notifications
+                      View all
                     </IOSButton>
                   </div>
                 </div>
@@ -277,7 +291,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <img
                   src={user.avatarUrl}
                   alt={user.name || 'Profile'}
-                  className="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-lg shadow-black/50"
+                  className="w-8 h-8 rounded-full object-cover border border-gray-700 shadow-lg shadow-black/50"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
@@ -299,7 +313,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search..."
-                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-pink-500 focus:ring-2 focus:ring-2 focus:ring-2 focus:border-pink-500"
+                  className={adminInputWithLeftIcon.replace('pr-4', 'pr-20')}
                 />
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                 <IOSButton

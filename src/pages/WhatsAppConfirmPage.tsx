@@ -82,7 +82,7 @@ const WhatsAppConfirmPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-ios-background flex items-center justify-center">
         <div className="max-w-md w-full mx-auto p-6">
-          <div className="bg-ios-surface rounded-2xl border border-ios-border p-6">
+          <div className="bg-black rounded-2xl border border-gray-700 p-6">
             <div className="ios-skeleton h-6 w-40 mb-4 rounded"></div>
             <div className="space-y-2 mb-4">
               <div className="ios-skeleton h-4 w-full rounded"></div>
@@ -98,7 +98,7 @@ const WhatsAppConfirmPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-ios-background flex items-center justify-center">
       <div className="max-w-md w-full mx-auto p-6">
-        <div className="bg-ios-surface rounded-2xl border border-ios-border p-6 text-center">
+        <div className="bg-black rounded-2xl border border-gray-700 p-6 text-center">
           {isSuccess ? (
             <div className="text-ios-success">
               <svg className="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,13 +117,13 @@ const WhatsAppConfirmPage: React.FC = () => {
             {isSuccess ? 'Success!' : 'Error'}
           </h2>
 
-          <p className="text-ios-text-secondary mb-6">
+          <p className="text-white-secondary mb-6">
             {message}
           </p>
 
           <button
             onClick={() => navigate('/')}
-            className="w-full bg-ios-accent text-white py-3 px-4 rounded-xl border border-transparent hover:opacity-90 transition-colors"
+            className="w-full bg-pink-500 text-white py-3 px-4 rounded-xl border border-transparent hover:opacity-90 transition-colors"
           >
             Return to Home
           </button>

@@ -150,7 +150,7 @@ const ProfilePage: React.FC = () => {
       label: 'Riwayat Pesanan',
       path: '/orders',
       count: profile.totalOrders,
-      color: 'text-blue-400'
+      color: 'text-pink-400'
     },
     {
       icon: Heart,
@@ -169,10 +169,10 @@ const ProfilePage: React.FC = () => {
 
   return (
     <AuthRequired>
-      <div className="min-h-screen bg-ios-background text-ios-text">
+      <div className="min-h-screen bg-ios-background text-white">
         <IOSContainer maxWidth="lg" className="pt-20 pb-20">
             {/* Profile Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500/15 via-purple-500/15 to-indigo-500/15 border border-ios-border backdrop-blur-sm mb-8">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500/15 via-purple-500/15 to-indigo-500/15 border border-gray-700 backdrop-blur-sm mb-8">
               {/* Background Pattern */}
               <div className="absolute inset-0 opacity-30" style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")`
@@ -194,14 +194,14 @@ const ProfilePage: React.FC = () => {
                     
                     {/* User Details */}
                     <div>
-                      <h1 className="text-3xl font-bold text-ios-text mb-2">
+                      <h1 className="text-3xl font-bold text-white mb-2">
                         {profile.name || 'Pengguna Baru'}
                       </h1>
-                      <p className="text-ios-text-secondary mb-1 flex items-center">
-                        <Mail size={16} className="mr-2 text-ios-text-secondary" />
+                      <p className="text-white-secondary mb-1 flex items-center">
+                        <Mail size={16} className="mr-2 text-white-secondary" />
                         {profile.email}
                       </p>
-                      <p className="text-ios-text-secondary text-sm flex items-center">
+                      <p className="text-white-secondary text-sm flex items-center">
                         <Star size={16} className="mr-2 text-yellow-400" />
                         Member sejak {profile.joinDate}
                       </p>
@@ -214,7 +214,7 @@ const ProfilePage: React.FC = () => {
                     className={`px-6 py-3 rounded-xl font-medium transition-all transform hover:scale-105 flex items-center space-x-2 ${
                       isEditing
                         ? 'bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25'
-                        : 'bg-ios-surface border border-ios-border text-ios-text hover:bg-white/10'
+                        : 'bg-black border border-gray-700 text-white hover:bg-gray-900/20'
                     }`}
                   >
                     {isEditing ? <X size={20} /> : <Edit size={20} />}
@@ -224,50 +224,50 @@ const ProfilePage: React.FC = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-ios-surface rounded-xl p-4 border border-ios-border transition-colors">
+                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                        <Package size={20} className="text-blue-400" />
+                      <div className="w-10 h-10 bg-gray-9000/20 rounded-lg flex items-center justify-center">
+                        <Package size={20} className="text-pink-400" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-ios-text">{profile.totalOrders}</div>
-                        <div className="text-ios-text-secondary text-sm">Pesanan</div>
+                        <div className="text-2xl font-bold text-white">{profile.totalOrders}</div>
+                        <div className="text-white-secondary text-sm">Pesanan</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-ios-surface rounded-xl p-4 border border-ios-border transition-colors">
+                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center">
                         <Heart size={20} className="text-pink-400" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-ios-text">{profile.wishlistCount}</div>
-                        <div className="text-ios-text-secondary text-sm">Wishlist</div>
+                        <div className="text-2xl font-bold text-white">{profile.wishlistCount}</div>
+                        <div className="text-white-secondary text-sm">Wishlist</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-ios-surface rounded-xl p-4 border border-ios-border transition-colors">
+                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
                         <Trophy size={20} className="text-yellow-400" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-ios-text">0</div>
-                        <div className="text-ios-text-secondary text-sm">Poin</div>
+                        <div className="text-2xl font-bold text-white">0</div>
+                        <div className="text-white-secondary text-sm">Poin</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-ios-surface rounded-xl p-4 border border-ios-border transition-colors">
+                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
                         <Crown size={20} className="text-purple-400" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-ios-text">Basic</div>
-                        <div className="text-ios-text-secondary text-sm">Level</div>
+                        <div className="text-2xl font-bold text-white">Basic</div>
+                        <div className="text-white-secondary text-sm">Level</div>
                       </div>
                     </div>
                   </div>
@@ -277,15 +277,15 @@ const ProfilePage: React.FC = () => {
 
             {/* Edit Form Section */}
             {isEditing && (
-              <IOSCard padding="large" className="bg-ios-surface border border-ios-border mb-8">
-                <h2 className="text-xl font-semibold text-ios-text mb-6 flex items-center">
+              <IOSCard padding="large" className="bg-black border border-gray-700 mb-8">
+                <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
                   <Edit size={24} className="mr-3 text-pink-400" />
                   Edit Informasi Profil
                 </h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-3">
+                    <label className="block text-sm font-medium text-white-secondary mb-3">
                       <User size={16} className="inline mr-2" />
                       Nama Lengkap
                     </label>
@@ -293,13 +293,13 @@ const ProfilePage: React.FC = () => {
                       type="text"
                       value={profile.name}
                       onChange={(e) => setProfile({...profile, name: e.target.value})}
-                      className="w-full bg-ios-surface border border-ios-border rounded-xl px-4 py-3 text-ios-text placeholder:text-ios-text-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
                       placeholder="Masukkan nama lengkap"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-3">
+                    <label className="block text-sm font-medium text-white-secondary mb-3">
                       <Mail size={16} className="inline mr-2" />
                       Email
                     </label>
@@ -307,13 +307,13 @@ const ProfilePage: React.FC = () => {
                       type="email"
                       value={profile.email}
                       onChange={(e) => setProfile({...profile, email: e.target.value})}
-                      className="w-full bg-ios-surface border border-ios-border rounded-xl px-4 py-3 text-ios-text placeholder:text-ios-text-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
                       placeholder="Masukkan email"
                     />
                   </div>
 
                   <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-ios-text-secondary mb-3">
+                    <label className="block text-sm font-medium text-white-secondary mb-3">
                       <Phone size={16} className="inline mr-2" />
                       Nomor WhatsApp
                     </label>
@@ -350,7 +350,7 @@ const ProfilePage: React.FC = () => {
                 <Link
                   key={index}
                   to={item.path}
-                  className="group relative overflow-hidden rounded-2xl bg-ios-surface border border-ios-border transition-all transform hover:scale-[1.02] hover:shadow-xl hover:shadow-black/10 hover:border-ios-accent/50"
+                  className="group relative overflow-hidden rounded-2xl bg-black border border-gray-700 transition-all transform hover:scale-[1.02] hover:shadow-xl hover:shadow-black/10 hover:border-ios-accent/50"
                 >
                   {/* Background Gradient */}
                   <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -362,15 +362,15 @@ const ProfilePage: React.FC = () => {
                           <item.icon size={24} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-ios-text group-hover:text-ios-text transition-colors">
+                          <h3 className="text-lg font-semibold text-white group-hover:text-white transition-colors">
                             {item.label}
                           </h3>
                           {item.count !== undefined && (
-                            <p className="text-ios-text-secondary text-sm">{item.count} item</p>
+                            <p className="text-white-secondary text-sm">{item.count} item</p>
                           )}
                         </div>
                       </div>
-                      <ChevronRight size={20} className="text-ios-text-secondary group-hover:text-ios-text transition-colors transform group-hover:translate-x-1" />
+                      <ChevronRight size={20} className="text-white-secondary group-hover:text-white transition-colors transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 </Link>
@@ -382,20 +382,20 @@ const ProfilePage: React.FC = () => {
               {/* Help & Support */}
               <Link
                 to="/help"
-                className="group w-full bg-ios-surface rounded-2xl p-6 border border-ios-border transition-all transform hover:scale-[1.01] flex items-center justify-between hover:border-ios-accent/50"
+                className="group w-full bg-black rounded-2xl p-6 border border-gray-700 transition-all transform hover:scale-[1.01] flex items-center justify-between hover:border-ios-accent/50"
               >
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-xl bg-yellow-500/20 border border-yellow-500/20 flex items-center justify-center">
                     <Shield size={20} className="text-yellow-400" />
                   </div>
                   <div>
-                    <h3 className="text-ios-text font-semibold transition-colors">
+                    <h3 className="text-white font-semibold transition-colors">
                       Bantuan & Dukungan
                     </h3>
-                    <p className="text-ios-text-secondary text-sm">FAQ, Kontak Support, Panduan</p>
+                    <p className="text-white-secondary text-sm">FAQ, Kontak Support, Panduan</p>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-ios-text-secondary transition-colors" />
+                <ChevronRight size={20} className="text-white-secondary transition-colors" />
               </Link>
 
               {/* Logout Button */}

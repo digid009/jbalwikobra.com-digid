@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, BarChart, Package, TrendingDown } from 'lucide-react';
 import { adminService, AdminNotification, OrderDayStat, TopProductStat } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { adminCache } from '../../../services/adminCache';
 import { cn } from '../../../styles/standardClasses';
 import './AdminDashboardContent.css';
@@ -97,7 +98,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
       case 'new_review':
         return 'bg-ios-warning/10 border-ios-warning/20';
       default:
-        return 'bg-ios-surface/50 border-ios-primary/20';
+        return 'bg-black/50 border-ios-primary/20';
     }
   };
 
@@ -111,18 +112,14 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Recent Activity Section */}
-      <IOSCard variant="elevated" className="overflow-hidden">
-        <div className="p-6">
+      <DashboardSection title="Recent Activity" subtitle="Latest updates from your store" dense>
+        <DataPanel>
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-ios-primary/10 to-ios-primary/5 rounded-2xl flex items-center justify-center border border-ios-primary/10">
-                <Bell className="w-5 h-5 text-ios-primary" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/60 dark:bg-white/10 ring-1 ring-white/10">
+                <Bell className="w-5 h-5 text-pink-500" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-ios-text">Recent Activity</h3>
-                <p className="text-sm text-ios-text font-medium">Latest updates from your store</p>
-              </div>
+              <span className="typescale-h4">Recent Activity</span>
             </div>
             <IOSButton 
               size="small" 
@@ -164,17 +161,17 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   }}
                 >
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-black/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-white/30 shadow-lg shadow-black/50">
+                    <div className="w-10 h-10 bg-black/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-gray-600 shadow-lg shadow-black/50">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
-                        <h4 className="font-bold text-ios-text truncate pr-2">{notification.title}</h4>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-black/90 text-ios-text border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-lg shadow-black/50">
+                        <h4 className="font-bold text-white truncate pr-2">{notification.title}</h4>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-black/90 text-white border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-lg shadow-black/50">
                           {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-sm text-ios-text leading-relaxed font-medium">
+                      <p className="text-sm text-white leading-relaxed font-medium">
                         {notification.message}
                       </p>
                       {notification.amount && (
@@ -198,29 +195,23 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               <p className="text-gray-200/60 text-sm mt-1">New updates will appear here</p>
             </div>
           )}
-        </div>
-      </IOSCard>
+        </DataPanel>
+      </DashboardSection>
 
-      {/* Enhanced Analytics Section */}
-      <IOSCard variant="elevated" className="overflow-hidden">
-        <div className="p-6">
+      <DashboardSection title="Analytics Dashboard" subtitle="Track your store performance" dense>
+        <DataPanel>
           {/* Analytics Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-ios-accent/10 to-ios-accent/5 rounded-2xl flex items-center justify-center border border-ios-accent/10">
-                <Calendar className="w-5 h-5 text-ios-accent" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-ios-text">Analytics Dashboard</h3>
-                <p className="text-sm text-ios-text font-medium">Track your store performance</p>
-              </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/60 dark:bg-white/10 ring-1 ring-white/10">
+              <Calendar className="w-5 h-5 text-pink-500" />
             </div>
+            <span className="typescale-h4">Analytics</span>
           </div>
 
           {/* Date Range Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-4 bg-gradient-to-r from-ios-background/50 to-white/20 rounded-2xl border border-ios-background/50 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-4 grad-surface-sheen rounded-2xl border border-ios-background/50 backdrop-blur-sm">
             <div className="flex items-center space-x-3">
-              <div className="flex bg-black/70 backdrop-blur-sm rounded-xl border border-white/30 overflow-hidden shadow-lg shadow-black/50">
+              <div className="flex bg-black/70 backdrop-blur-sm rounded-xl border border-gray-600 overflow-hidden shadow-lg shadow-black/50">
                 {(['7d','14d','30d'] as const).map(opt => (
                   <button 
                     key={opt} 
@@ -229,7 +220,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                       'px-4 py-2 text-sm font-semibold transition-all duration-200',
                       range === opt 
                         ? 'bg-ios-primary text-white shadow-lg' 
-                        : 'text-gray-200 hover:bg-black/50 hover:text-ios-text'
+                        : 'text-gray-200 hover:bg-black/50 hover:text-white'
                     )}
                   >
                     {opt.replace('d', ' days')}
@@ -238,19 +229,19 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+              <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-gray-600">
                 <input 
                   type="date" 
                   value={customStart} 
                   onChange={e=>setCustomStart(e.target.value)} 
-                  className="bg-transparent text-sm text-ios-text focus:outline-none" 
+                  className="bg-transparent text-sm text-white focus:outline-none" 
                 />
                 <span className="text-gray-200 text-sm">to</span>
                 <input 
                   type="date" 
                   value={customEnd} 
                   onChange={e=>setCustomEnd(e.target.value)} 
-                  className="bg-transparent text-sm text-ios-text focus:outline-none" 
+                  className="bg-transparent text-sm text-white focus:outline-none" 
                 />
               </div>
               <IOSButton size="small" onClick={applyCustomRange} disabled={!customStart || !customEnd}>
@@ -262,14 +253,14 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Orders & Revenue Chart */}
-            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
+            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-gray-600">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-8 h-8 bg-ios-primary/10 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-ios-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-ios-text">Orders & Revenue</h4>
-                  <p className="text-xs text-ios-text font-medium">Daily performance metrics</p>
+                  <h4 className="font-bold text-white">Orders & Revenue</h4>
+                  <p className="text-xs text-white font-medium">Daily performance metrics</p>
                 </div>
               </div>
               
@@ -277,7 +268,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 <div className="h-48 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-12 h-12 border-4 border-ios-primary/20 border-t-ios-primary rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-sm text-ios-text font-medium">Loading analytics...</p>
+                    <p className="text-sm text-white font-medium">Loading analytics...</p>
                   </div>
                 </div>
               ) : series.length===0 ? (
@@ -286,7 +277,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                       <BarChart className="w-6 h-6 text-gray-200" />
                     </div>
-                    <p className="text-sm text-ios-text font-medium">No data available</p>
+                    <p className="text-sm text-white font-medium">No data available</p>
                   </div>
                 </div>
               ) : (
@@ -357,11 +348,11 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   <div className="flex justify-center gap-6">
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 bg-ios-primary rounded-full shadow-lg shadow-black/50"></div>
-                      <span className="text-sm font-medium text-ios-text">Orders</span>
+                      <span className="text-sm font-medium text-white">Orders</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-3 bg-gradient-to-t from-ios-success to-ios-success/50 rounded-sm shadow-lg shadow-black/50"></div>
-                      <span className="text-sm font-medium text-ios-text">Revenue</span>
+                      <span className="text-sm font-medium text-white">Revenue</span>
                     </div>
                   </div>
                 </div>
@@ -369,14 +360,14 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
             </div>
 
             {/* Top Products */}
-            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
+            <div className="bg-gradient-to-br from-white/40 via-white/20 to-white/10 backdrop-blur-sm rounded-2xl p-6 border border-gray-600">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-8 h-8 bg-ios-success/10 rounded-xl flex items-center justify-center">
                   <Package className="w-4 h-4 text-ios-success" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-ios-text">Top Products</h4>
-                  <p className="text-xs text-ios-text font-medium">Best performing items</p>
+                  <h4 className="font-bold text-white">Top Products</h4>
+                  <p className="text-xs text-white font-medium">Best performing items</p>
                 </div>
               </div>
               
@@ -416,10 +407,10 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                             #{index + 1}
                           </div>
                           <div>
-                            <p className="font-semibold text-ios-text group-hover:text-ios-primary transition-colors">
+                            <p className="font-semibold text-white group-hover:text-ios-primary transition-colors">
                               {p.product_name}
                             </p>
-                            <p className="text-xs text-ios-text font-medium">
+                            <p className="text-xs text-white font-medium">
                               {p.count} orders sold
                             </p>
                           </div>
@@ -436,8 +427,8 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               )}
             </div>
           </div>
-        </div>
-      </IOSCard>
+        </DataPanel>
+      </DashboardSection>
     </div>
   );
 };

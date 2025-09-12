@@ -120,7 +120,7 @@ export const AdminNavigation: React.FC<AdminNavigationProps> = ({
           
           {/* Quick Stats */}
           {stats && (
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="mt-6 pt-4 border-t border-gray-700">
               <h3 className="text-sm font-medium text-gray-200 mb-3">Quick Stats</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

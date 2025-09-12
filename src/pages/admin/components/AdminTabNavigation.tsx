@@ -36,7 +36,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
   ];
 
   return (
-    <div className="flex flex-wrap gap-2 mb-6 p-1 bg-ios-surface-secondary rounded-xl">
+    <div className="flex flex-wrap gap-2 mb-6 p-1 bg-black-secondary rounded-xl">
       {tabs.map((tab) => (
         <IOSButton
           key={tab.id}
@@ -46,7 +46,7 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
           className={`flex items-center gap-2 transition-all duration-200 ${
             activeTab === tab.id 
               ? 'bg-ios-primary text-white shadow-lg' 
-              : 'bg-transparent text-gray-200 hover:bg-ios-surface-tertiary'
+              : 'bg-transparent text-gray-200 hover:bg-black-tertiary'
           }`}
         >
           {tab.icon}

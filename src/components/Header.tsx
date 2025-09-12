@@ -99,7 +99,7 @@ const Header = () => {
 
   return (
     <>
-      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-ios-border shadow-sm">
+      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-gray-700 shadow-sm">
         <div className={standardClasses.container.boxed}>
           <div className={cn(standardClasses.flex.between, 'h-16 lg:h-18')}>
             {/* Logo Section */}
@@ -117,10 +117,10 @@ const Header = () => {
                 </div>
               )}
               <div className="hidden sm:block">
-                <span className="font-semibold text-ios-text text-lg tracking-tight">
+                <span className="font-semibold text-white text-lg tracking-tight">
                   {settings?.siteName || 'JBalwikobra'}
                 </span>
-                <p className="text-xs text-ios-text-secondary -mt-0.5">Digital Store</p>
+                <p className="text-xs text-white-secondary -mt-0.5">Digital Store</p>
               </div>
             </Link>
 
@@ -130,7 +130,7 @@ const Header = () => {
                 <div className={`relative transition-all duration-300 ${
                   isSearchFocused ? 'transform scale-[1.02]' : ''
                 }`}>
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
                   <input
                     type="text"
                     placeholder="Cari produk, akun game, atau layanan..."
@@ -138,7 +138,7 @@ const Header = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-ios-surface transition-all duration-300 text-sm lg:text-base"
+                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-black transition-all duration-300 text-sm lg:text-base"
                   />
                 </div>
               </form>
@@ -154,8 +154,8 @@ const Header = () => {
                     standardClasses.flex.rowGap2,
                     'px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg transition-all duration-200',
                     location.pathname === item.path
-                      ? 'bg-ios-accent text-white shadow-sm'
-                      : 'text-ios-text hover:bg-ios-surface-secondary'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'text-white hover:bg-black-secondary'
                   )}
                 >
                   <span className="font-medium text-sm lg:text-base">{item.label}</span>
@@ -192,9 +192,9 @@ const Header = () => {
                   )}
                   </IOSButton>
                 {isNotifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-ios-background border border-ios-border rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-ios-border bg-ios-surface/50">
-                      <span className="text-sm font-semibold text-ios-text">Notifikasi</span>
+                  <div className="absolute right-0 mt-2 w-80 bg-ios-background border border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-black/50">
+                      <span className="text-sm font-semibold text-white">Notifikasi</span>
                       <div className="flex items-center gap-2">
                         {user && (
                           <button
@@ -207,20 +207,20 @@ const Header = () => {
                                 setUnreadCount(count);
                               } catch {}
                             }}
-                            className="text-xs text-ios-accent hover:underline"
+                            className="text-xs text-pink-500 hover:underline"
                           >
                             Tandai semua dibaca
                           </button>
                         )}
-                        <button onClick={() => setIsNotifOpen(false)} className="text-ios-text-secondary hover:text-ios-text p-1">
+                        <button onClick={() => setIsNotifOpen(false)} className="text-white-secondary hover:text-white p-1">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="text-sm text-ios-text-secondary px-4 py-8 text-center">
-                          <Bell className="w-8 h-8 text-ios-text-secondary/50 mx-auto mb-2" />
+                        <div className="text-sm text-white-secondary px-4 py-8 text-center">
+                          <Bell className="w-8 h-8 text-white-secondary/50 mx-auto mb-2" />
                           <p>Tidak ada notifikasi</p>
                         </div>
                       ) : (
@@ -240,17 +240,17 @@ const Header = () => {
                                   setIsNotifOpen(false);
                                   if (n.link_url) navigate(n.link_url);
                                 }}
-                                className={`w-full text-left px-4 py-3 hover:bg-ios-surface-secondary transition-colors flex items-start gap-3 ${
-                                  !n.is_read ? 'bg-ios-accent/5' : ''
+                                className={`w-full text-left px-4 py-3 hover:bg-black-secondary transition-colors flex items-start gap-3 ${
+                                  !n.is_read ? 'bg-pink-500/5' : ''
                                 }`}
                               >
                                 <div className="mt-1">
-                                  <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-ios-border' : 'bg-ios-accent'}`} />
+                                  <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-ios-border' : 'bg-pink-500'}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-ios-text truncate">{n.title}</div>
-                                  {n.body && <div className="text-xs text-ios-text-secondary line-clamp-2 mt-1">{n.body}</div>}
-                                  <div className="text-xs text-ios-text-secondary mt-1">{new Date(n.created_at).toLocaleString('id-ID', { 
+                                  <div className="text-sm font-medium text-white truncate">{n.title}</div>
+                                  {n.body && <div className="text-xs text-white-secondary line-clamp-2 mt-1">{n.body}</div>}
+                                  <div className="text-xs text-white-secondary mt-1">{new Date(n.created_at).toLocaleString('id-ID', { 
                                     day: 'numeric', 
                                     month: 'short', 
                                     hour: '2-digit', 
@@ -258,7 +258,7 @@ const Header = () => {
                                   })}</div>
                                 </div>
                                 {n.link_url && (
-                                  <ArrowRight className="w-4 h-4 text-ios-text-secondary" />
+                                  <ArrowRight className="w-4 h-4 text-white-secondary" />
                                 )}
                               </button>
                             </div>
@@ -266,13 +266,13 @@ const Header = () => {
                         </div>
                       )}
                       {notifications.length > 0 && (
-                        <div className="p-3 border-t border-ios-border bg-ios-surface/30">
+                        <div className="p-3 border-t border-gray-700 bg-black/30">
                           <button
                             onClick={() => {
                               setIsNotifOpen(false);
                               navigate('/notifications');
                             }}
-                            className="w-full text-center text-sm text-ios-accent hover:underline"
+                            className="w-full text-center text-sm text-pink-500 hover:underline"
                           >
                             Lihat semua notifikasi
                           </button>
@@ -297,7 +297,7 @@ const Header = () => {
                       <img
                         src={user.avatarUrl}
                         alt={user.name || 'User'}
-                        className="w-8 h-8 rounded-full object-cover shadow-sm border border-ios-border"
+                        className="w-8 h-8 rounded-full object-cover shadow-sm border border-gray-700"
                       />
                     ) : (
                       <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center shadow-sm">
@@ -306,21 +306,21 @@ const Header = () => {
                         </span>
                       </div>
                     )}
-                    <span className="hidden sm:block text-ios-text font-medium max-w-20 truncate">
+                    <span className="hidden sm:block text-white font-medium max-w-20 truncate">
                       {user.email?.split('@')[0] || 'User'}
                     </span>
                   </IOSButton>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-ios-background border border-ios-border rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-ios-background border border-gray-700 rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
                       {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-ios-border">
+                      <div className="px-4 py-3 border-b border-gray-700">
                         <div className="flex items-center space-x-3">
                           {user.avatarUrl ? (
                             <img
                               src={user.avatarUrl}
                               alt={user.name || 'User'}
-                              className="w-10 h-10 rounded-full object-cover border border-ios-border"
+                              className="w-10 h-10 rounded-full object-cover border border-gray-700"
                             />
                           ) : (
                             <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center">
@@ -330,7 +330,7 @@ const Header = () => {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-ios-text truncate">{user.name || user.email}</p>
+                            <p className="text-sm font-semibold text-white truncate">{user.name || user.email}</p>
                             <p className="text-xs text-ios-success flex items-center">
                               <div className="w-2 h-2 bg-ios-success rounded-full mr-1.5"></div>
                               Online
@@ -343,36 +343,36 @@ const Header = () => {
                       <nav className="py-2">
                         <Link
                           to="/profile"
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
+                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
                         >
-                          <User className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <User className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
                           <span className="font-medium">Profil Saya</span>
                         </Link>
                         <Link
                           to="/wishlist"
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
+                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
                         >
-                          <Heart className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-destructive transition-colors" />
+                          <Heart className="w-4 h-4 text-white-secondary group-hover:text-ios-destructive transition-colors" />
                           <span className="font-medium">Wishlist</span>
                         </Link>
                         <Link
                           to="/orders"
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
+                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
                         >
-                          <ShoppingBag className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <ShoppingBag className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
                           <span className="font-medium">Riwayat Pembelian</span>
                         </Link>
                         <Link
                           to="/settings"
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-text hover:bg-ios-surface-secondary transition-colors group"
+                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
                         >
-                          <Settings className="w-4 h-4 text-ios-text-secondary group-hover:text-ios-accent transition-colors" />
+                          <Settings className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
                           <span className="font-medium">Pengaturan</span>
                         </Link>
-                        <div className="my-2 border-t border-ios-border"></div>
+                        <div className="my-2 border-t border-gray-700"></div>
                         <button
                           onClick={handleLogout}
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-destructive hover:bg-ios-surface-secondary transition-colors w-full text-left group"
+                          className="flex items-center space-x-3 px-4 py-3 text-ios-destructive hover:bg-black-secondary transition-colors w-full text-left group"
                         >
                           <LogOut className="w-4 h-4" />
                           <span className="font-medium">Keluar</span>
@@ -411,22 +411,22 @@ const Header = () => {
 
         {/* Mobile Search Modal */}
         {isSearchFocused && (
-          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-ios-surface border-b border-ios-border shadow-lg">
+          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-black border-b border-gray-700 shadow-lg">
             <div className="p-4">
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
                 <input
                   type="text"
                   placeholder="Cari produk, akun game, atau layanan..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-12 pr-12 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
+                  className="w-full pl-12 pr-12 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
                 />
                 <button
                   type="button"
                   onClick={() => setIsSearchFocused(false)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-ios-text-secondary hover:text-ios-text"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-white-secondary hover:text-white"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -437,18 +437,18 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-ios-border">
+          <div className="lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-gray-700">
             <div className="px-4 py-4 space-y-4">
               {/* Mobile Search */}
               <form onSubmit={handleSearch}>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ios-text-secondary" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
                   <input
                     type="text"
                     placeholder="Cari produk atau layanan..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-ios-surface-secondary border border-ios-border rounded-2xl text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                    className="w-full pl-12 pr-4 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
                   />
                 </div>
               </form>
@@ -461,8 +461,8 @@ const Header = () => {
                     to={item.path}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                       location.pathname === item.path
-                        ? 'bg-ios-accent text-white shadow-sm'
-                        : 'text-ios-text hover:bg-ios-surface-secondary'
+                        ? 'bg-pink-500 text-white shadow-sm'
+                        : 'text-white hover:bg-black-secondary'
                     }`}
                   >
                     <span className="font-medium">{item.label}</span>
@@ -472,7 +472,7 @@ const Header = () => {
 
               {/* Auth Section */}
               {!user && (
-                <div className="pt-4 border-t border-ios-border">
+                <div className="pt-4 border-t border-gray-700">
                   <IOSButton
                     onClick={() => navigate('/auth')}
                     variant="primary"

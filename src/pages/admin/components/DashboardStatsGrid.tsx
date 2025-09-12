@@ -30,7 +30,7 @@ const StatCard: React.FC<StatCardProps> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-gray-200 text-sm font-medium mb-2">{label}</p>
-          <p className="text-3xl font-bold text-ios-text mb-1">{value}</p>
+          <p className="text-3xl font-bold text-white mb-1">{value}</p>
           {trend && (
             <p className="text-xs text-gray-200 flex items-center">
               <TrendingUp className="w-3 h-3 mr-1" />
@@ -39,7 +39,7 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         {icon && (
-          <div className={`${colorClasses[color]} bg-ios-surface-secondary p-3 rounded-xl`}>
+          <div className={`${colorClasses[color]} bg-black-secondary p-3 rounded-xl`}>
             {icon}
           </div>
         )}
@@ -59,9 +59,9 @@ const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({ stats, loading 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[1, 2, 3, 4].map((i) => (
           <IOSCard key={i} className="p-6 animate-pulse">
-            <div className="h-4 bg-ios-surface-secondary rounded mb-4"></div>
-            <div className="h-8 bg-ios-surface-secondary rounded mb-2"></div>
-            <div className="h-3 bg-ios-surface-secondary rounded w-2/3"></div>
+            <div className="h-4 bg-black-secondary rounded mb-4"></div>
+            <div className="h-8 bg-black-secondary rounded mb-2"></div>
+            <div className="h-3 bg-black-secondary rounded w-2/3"></div>
           </IOSCard>
         ))}
       </div>

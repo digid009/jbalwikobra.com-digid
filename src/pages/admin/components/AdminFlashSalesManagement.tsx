@@ -282,7 +282,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                'bg-ios-surface border border-gray-700 text-ios-text placeholder-ios-text-secondary',
+                'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
                 'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
               )}
             />
@@ -297,9 +297,9 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={cn(
-                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-black',
                   'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                  'transition-colors duration-200 text-ios-text'
+                  'transition-colors duration-200 text-white'
                 )}
               >
                 <option value="all">All Status</option>
@@ -317,9 +317,9 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                 value={discountFilter}
                 onChange={(e) => setDiscountFilter(e.target.value)}
                 className={cn(
-                  'border border-gray-700 rounded-xl px-4 py-2 bg-ios-surface',
+                  'border border-gray-700 rounded-xl px-4 py-2 bg-black',
                   'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                  'transition-colors duration-200 text-ios-text'
+                  'transition-colors duration-200 text-white'
                 )}
               >
                 <option value="all">All Discounts</option>
@@ -352,7 +352,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <IOSCard variant="elevated" padding="large" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-ios-text">Create New Flash Sale</h3>
+              <h3 className="text-xl font-semibold text-white">Create New Flash Sale</h3>
               <IOSButton
                 variant="ghost"
                 size="small"
@@ -374,7 +374,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
             <div className="space-y-6">
               {/* Product Selection */}
               <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Active Product <span className="text-ios-error">*</span>
                 </label>
                 <select
@@ -386,8 +386,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     }));
                   }}
                   className={cn(
-                    'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                    'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                    'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                    'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                   )}
                   disabled={productsLoading}
                 >
@@ -405,8 +405,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               {/* Current Price (View Only) */}
               {formData.product_id && (
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">Current Price</label>
-                  <div className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface/50 text-ios-text">
+                  <label className="block text-sm font-medium text-white mb-2">Current Price</label>
+                  <div className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-black/50 text-white">
                     Rp {products.find(p => p.id === formData.product_id)?.price.toLocaleString() || '0'}
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               {/* Discount Type Toggle & Dual Inputs */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Discount Type <span className="text-ios-error">*</span>
                   </label>
                   <div className="flex space-x-2">
@@ -440,7 +440,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Percentage Input */}
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Discount Percentage <span className="text-ios-error">*</span>
                     </label>
                     <div className="flex items-center space-x-2">
@@ -469,8 +469,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                         min="0"
                         max="100"
                         className={cn(
-                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                          'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                          'text-white placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                           formData.discount_type === 'percentage' ? 'ring-2 ring-ios-primary' : ''
                         )}
                       />
@@ -480,7 +480,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
                   {/* Fixed Amount Input */}
                   <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">
+                    <label className="block text-sm font-medium text-white mb-2">
                       Discount Amount <span className="text-ios-error">*</span>
                     </label>
                     <div className="flex items-center space-x-2">
@@ -508,8 +508,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                         placeholder="0"
                         min="0"
                         className={cn(
-                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                          'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                          'text-white placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
                           formData.discount_type === 'fixed' ? 'ring-2 ring-ios-primary' : ''
                         )}
                       />
@@ -520,8 +520,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
                 {/* Final Price Preview */}
                 {formData.product_id && (formData.discount_percentage > 0 || formData.discount_amount > 0) && (
-                  <div className="p-4 bg-ios-surface/50 rounded-xl border border-gray-700">
-                    <h4 className="text-sm font-semibold text-ios-text mb-2">Price Summary</h4>
+                  <div className="p-4 bg-black/50 rounded-xl border border-gray-700">
+                    <h4 className="text-sm font-semibold text-white mb-2">Price Summary</h4>
                     <div className="space-y-1 text-sm">
                       {(() => {
                         const selectedProduct = products.find(p => p.id === formData.product_id);
@@ -544,14 +544,14 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                           <>
                             <div className="flex justify-between">
                               <span className="text-gray-200">Original Price:</span>
-                              <span className="text-ios-text">Rp {originalPrice.toLocaleString()}</span>
+                              <span className="text-white">Rp {originalPrice.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-200">Discount:</span>
                               <span className="text-ios-error">-Rp {savings.toLocaleString()} ({Math.round(savingsPercentage * 100) / 100}%)</span>
                             </div>
                             <div className="flex justify-between font-semibold text-lg border-t border-gray-700 pt-2">
-                              <span className="text-ios-text">Final Price:</span>
+                              <span className="text-white">Final Price:</span>
                               <span className="text-ios-primary">Rp {finalPrice.toLocaleString()}</span>
                             </div>
                           </>
@@ -565,7 +565,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               {/* Start Date & Time */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Start Date <span className="text-ios-error">*</span>
                   </label>
                   <input
@@ -573,13 +573,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                      'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Start Time <span className="text-ios-error">*</span>
                   </label>
                   <input
@@ -587,8 +587,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.start_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                      'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
@@ -597,7 +597,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               {/* End Date & Time */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     End Date <span className="text-ios-error">*</span>
                   </label>
                   <input
@@ -605,13 +605,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                      'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-ios-text mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     End Time <span className="text-ios-error">*</span>
                   </label>
                   <input
@@ -619,8 +619,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     value={formData.end_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
                     className={cn(
-                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-ios-surface',
-                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
+                      'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
+                      'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                     )}
                   />
                 </div>
@@ -656,8 +656,8 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-text/60" />
-            <p className="text-ios-text/60 font-medium">Loading flash sales...</p>
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-white/60" />
+            <p className="text-white/60 font-medium">Loading flash sales...</p>
           </div>
         ) : paginatedSales.length > 0 ? (
           <>
@@ -665,22 +665,22 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               <table className="w-full">
                 <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Product
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Discount
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Duration
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -703,10 +703,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                               />
                             )}
                             <div>
-                              <div className="text-sm font-semibold text-ios-text">
+                              <div className="text-sm font-semibold text-white">
                                 {sale.product?.name || 'Unknown Product'}
                               </div>
-                              <div className="text-sm text-ios-text/70">
+                              <div className="text-sm text-white/70">
                                 ID: {sale.product_id.slice(-8)}
                               </div>
                             </div>
@@ -718,20 +718,20 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                                            bg-ios-success/10 text-ios-success border border-ios-success/20">
                               -{discount}% OFF
                             </div>
-                            <div className="text-sm text-ios-text/60">
+                            <div className="text-sm text-white/60">
                               <span className="line-through">Rp {sale.original_price.toLocaleString()}</span>
                             </div>
-                            <div className="text-sm font-semibold text-ios-text">
+                            <div className="text-sm font-semibold text-white">
                               Rp {sale.sale_price.toLocaleString()}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-ios-text space-y-1">
+                          <div className="text-sm text-white space-y-1">
                             <div className="font-medium">
                               {new Date(sale.start_time).toLocaleDateString()}
                             </div>
-                            <div className="text-ios-text/60 text-xs">to</div>
+                            <div className="text-white/60 text-xs">to</div>
                             <div className="font-medium">
                               {new Date(sale.end_time).toLocaleDateString()}
                             </div>
@@ -758,10 +758,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <IOSButton variant="ghost" size="small" className="p-2">
-                              <Eye className="w-4 h-4 text-ios-text/70" />
+                              <Eye className="w-4 h-4 text-white/70" />
                             </IOSButton>
                             <IOSButton variant="ghost" size="small" className="p-2">
-                              <Edit className="w-4 h-4 text-ios-text/70" />
+                              <Edit className="w-4 h-4 text-white/70" />
                             </IOSButton>
                             <IOSButton variant="ghost" size="small" className="p-2">
                               <Trash2 className="w-4 h-4 text-ios-error hover:text-ios-error/80" />
@@ -791,10 +791,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-ios-background flex items-center justify-center">
-              <Zap className="w-8 h-8 text-ios-text/40" />
+              <Zap className="w-8 h-8 text-white/40" />
             </div>
-            <p className="text-ios-text/60 font-medium mb-1">No flash sales found</p>
-            <p className="text-ios-text/40 text-sm">Try adjusting your search or create your first flash sale</p>
+            <p className="text-white/60 font-medium mb-1">No flash sales found</p>
+            <p className="text-white/40 text-sm">Try adjusting your search or create your first flash sale</p>
           </div>
         )}
       </IOSCard>

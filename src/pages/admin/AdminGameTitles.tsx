@@ -253,7 +253,7 @@ const AdminGameTitles: React.FC = () => {
           <p className="text-gray-400">Kelola daftar game yang tampil di katalog, jual akun, dan filter.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-sm"><RefreshCw size={16}/> Refresh</button>
+          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-800 hover:bg-black/5 text-sm"><RefreshCw size={16}/> Refresh</button>
           <button onClick={startCreate} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-sm"><Plus size={16}/> Tambah</button>
         </div>
       </div>
@@ -277,7 +277,7 @@ const AdminGameTitles: React.FC = () => {
                 {gt.logoUrl ? (
                   <img src={gt.logoUrl} alt={gt.name} className="w-6 h-6 rounded"/>
                 ) : (
-                  <div className="w-6 h-6 rounded bg-white/10 border border-white/20" />
+                  <div className="w-6 h-6 rounded bg-gray-900/20 border border-gray-700" />
                 )}
                 <span>{gt.name}</span>
               </div>
@@ -286,7 +286,7 @@ const AdminGameTitles: React.FC = () => {
             <div className="col-span-3 text-gray-300">{gt.slug}</div>
             <div className="col-span-2 text-gray-300">{gt.isActive ? 'Aktif' : 'Nonaktif'}</div>
             <div className="col-span-3 text-right">
-              <button className="inline-flex items-center gap-1 text-xs px-2 py-1 border border-white/20 rounded text-white hover:bg-white/5 mr-2" onClick={()=>startEdit(gt)}><Pencil size={14}/> Edit</button>
+              <button className="inline-flex items-center gap-1 text-xs px-2 py-1 border border-gray-700 rounded text-white hover:bg-black/5 mr-2" onClick={()=>startEdit(gt)}><Pencil size={14}/> Edit</button>
               <button className="inline-flex items-center gap-1 text-xs px-2 py-1 border border-red-500/40 text-red-300 rounded hover:bg-red-500/10" onClick={()=>remove(gt.id)}><Trash2 size={14}/> Hapus</button>
             </div>
           </div>
@@ -300,35 +300,35 @@ const AdminGameTitles: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Nama</label>
-              <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" placeholder="Mobile Legends"/>
+              <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Mobile Legends"/>
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Slug</label>
-              <input value={form.slug} onChange={e=>setForm({...form, slug: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" placeholder="mobile-legends"/>
+              <input value={form.slug} onChange={e=>setForm({...form, slug: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="mobile-legends"/>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm text-gray-400 mb-1">Deskripsi</label>
-              <input value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" placeholder="Deskripsi singkat"/>
+              <input value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Deskripsi singkat"/>
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Icon (lucide)</label>
-              <input value={form.icon} onChange={e=>setForm({...form, icon: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" placeholder="Zap"/>
+              <input value={form.icon} onChange={e=>setForm({...form, icon: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Zap"/>
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Warna</label>
-              <input value={form.color} onChange={e=>setForm({...form, color: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" placeholder="#f472b6"/>
+              <input value={form.color} onChange={e=>setForm({...form, color: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="#f472b6"/>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm text-gray-400 mb-1">Logo Game</label>
               
               {/* Current Logo Display */}
               {(form.logo_preview || form.logo_url) && (
-                <div className="mb-3 p-2 border border-white/20 rounded bg-black/40">
+                <div className="mb-3 p-2 border border-gray-700 rounded bg-black/40">
                   <div className="flex items-center gap-3">
                     <img 
                       src={form.logo_preview || form.logo_url} 
                       alt="Logo preview" 
-                      className="w-12 h-12 object-cover rounded border border-white/20"
+                      className="w-12 h-12 object-cover rounded border border-gray-700"
                     />
                     <div className="flex-1">
                       <p className="text-sm text-white">
@@ -360,7 +360,7 @@ const AdminGameTitles: React.FC = () => {
                 />
                 <label
                   htmlFor="logo-upload"
-                  className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-pink-500/50 hover:bg-pink-500/5 transition-colors"
+                  className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer hover:border-pink-500/50 hover:bg-pink-600/200/5 transition-colors"
                 >
                   <Upload size={20} className="text-gray-400" />
                   <span className="text-sm text-gray-400">
@@ -378,18 +378,18 @@ const AdminGameTitles: React.FC = () => {
                 <input 
                   value={form.logo_url} 
                   onChange={e=>setForm({...form, logo_url: e.target.value, logo_file: null, logo_preview: ''})} 
-                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white text-sm" 
+                  className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white text-sm" 
                   placeholder="https://example.com/logo.png"
                 />
               </div>
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Urutan</label>
-              <input type="number" value={form.sort_order} onChange={e=>setForm({...form, sort_order: Number(e.target.value)})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"/>
+              <input type="number" value={form.sort_order} onChange={e=>setForm({...form, sort_order: Number(e.target.value)})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white"/>
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Status</label>
-              <select value={form.is_active ? '1' : '0'} onChange={e=>setForm({...form, is_active: e.target.value==='1'})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white">
+              <select value={form.is_active ? '1' : '0'} onChange={e=>setForm({...form, is_active: e.target.value==='1'})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white">
                 <option value="1">Aktif</option>
                 <option value="0">Nonaktif</option>
               </select>
@@ -397,7 +397,7 @@ const AdminGameTitles: React.FC = () => {
           </div>
 
           <div className="mt-4 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10">Batal</button>
+            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-gray-700 text-white hover:bg-gray-900/20">Batal</button>
             <button 
               onClick={save} 
               disabled={saving || uploading} 

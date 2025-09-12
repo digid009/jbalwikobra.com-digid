@@ -20,7 +20,7 @@ export const IOSAvatar: React.FC<AvatarProps> = ({
 
   const baseClasses = cn(
     'rounded-full flex items-center justify-center overflow-hidden',
-    'bg-ios-surface-secondary border border-ios-border',
+    'bg-black-secondary border border-gray-700',
     'transition-all duration-200',
     sizeClasses,
     className
@@ -39,7 +39,7 @@ export const IOSAvatar: React.FC<AvatarProps> = ({
             target.style.display = 'none';
             const parent = target.parentElement;
             if (parent) {
-              parent.innerHTML = `<span class="text-ios-text-secondary font-medium">${initials}</span>`;
+              parent.innerHTML = `<span class="text-white-secondary font-medium">${initials}</span>`;
             }
           }}
         />
@@ -51,7 +51,7 @@ export const IOSAvatar: React.FC<AvatarProps> = ({
   if (user && initials && initials !== 'AN') {
     return (
       <div className={cn(baseClasses, 'bg-gradient-to-br from-ios-accent/20 to-ios-secondary/20')}>
-        <span className="text-ios-text font-semibold">
+        <span className="text-white font-semibold">
           {initials}
         </span>
       </div>
@@ -61,7 +61,7 @@ export const IOSAvatar: React.FC<AvatarProps> = ({
   // Fallback icon
   return (
     <div className={baseClasses}>
-      <FallbackIcon className="w-1/2 h-1/2 text-ios-text-secondary" />
+      <FallbackIcon className="w-1/2 h-1/2 text-white-secondary" />
     </div>
   );
 };

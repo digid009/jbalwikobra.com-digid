@@ -203,13 +203,13 @@ const AdminOrders: React.FC = () => {
                 setStatusFilter('all');
                 setOrderTypeFilter('all');
               }}
-              className="px-3 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10 text-sm"
+              className="px-3 py-2 rounded-lg border border-gray-700 text-white hover:bg-gray-900/20 text-sm"
             >
               Reset Filter
             </button>
             <button 
               onClick={load} 
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-sm"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-800 hover:bg-black/5 text-sm"
             >
               <RefreshCw size={16} /> Refresh
             </button>
@@ -264,7 +264,7 @@ const AdminOrders: React.FC = () => {
             <div className="col-span-2 text-gray-300">Rp {Number(r.amount||0).toLocaleString('id-ID')}</div>
             <div className="col-span-2 text-gray-300">{r.status}</div>
             <div className="col-span-3 text-right">
-              <select value={r.status} onChange={(e)=>updateStatus(r.id, e.target.value as any)} className="bg-black border border-white/20 rounded px-2 py-1 text-white">
+              <select value={r.status} onChange={(e)=>updateStatus(r.id, e.target.value as any)} className="bg-black border border-gray-700 rounded px-2 py-1 text-white">
                 <option value="pending">pending</option>
                 <option value="paid">paid</option>
                 <option value="completed">completed</option>

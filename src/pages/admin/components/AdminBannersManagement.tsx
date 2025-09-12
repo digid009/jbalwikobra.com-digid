@@ -119,7 +119,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
       {/* Search */}
       <IOSCard variant="elevated" padding="medium">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text/60" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
           <input
             type="text"
             placeholder="Search banners by title or description..."
@@ -127,7 +127,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-ios-background border border-gray-700 rounded-xl 
                        focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                       transition-colors duration-200 text-ios-text placeholder-ios-text/60"
+                       transition-colors duration-200 text-white placeholder-ios-text/60"
           />
         </div>
       </IOSCard>
@@ -136,8 +136,8 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-text/60" />
-            <p className="text-ios-text/60 font-medium">Loading banners...</p>
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-white/60" />
+            <p className="text-white/60 font-medium">Loading banners...</p>
           </div>
         ) : paginatedBanners.length > 0 ? (
           <>
@@ -145,22 +145,22 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
               <table className="w-full">
                 <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Banner
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Preview
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Order
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -170,10 +170,10 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
                     <tr key={banner.id} className="hover:bg-ios-background/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <div className="text-sm font-semibold text-ios-text">
+                          <div className="text-sm font-semibold text-white">
                             {banner.title}
                           </div>
-                          <div className="text-sm text-ios-text/70">
+                          <div className="text-sm text-white/70">
                             {banner.description}
                           </div>
                           {banner.link_url && (
@@ -221,7 +221,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
                             {banner.is_active ? (
                               <ToggleRight className="w-5 h-5 text-ios-success" />
                             ) : (
-                              <ToggleLeft className="w-5 h-5 text-ios-text/40" />
+                              <ToggleLeft className="w-5 h-5 text-white/40" />
                             )}
                           </button>
                           <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${
@@ -234,17 +234,17 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-ios-text/70">
+                        <span className="text-sm text-white/70">
                           {new Date(banner.created_at).toLocaleDateString()}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <IOSButton variant="ghost" size="small" className="p-2">
-                            <Eye className="w-4 h-4 text-ios-text/70" />
+                            <Eye className="w-4 h-4 text-white/70" />
                           </IOSButton>
                           <IOSButton variant="ghost" size="small" className="p-2">
-                            <Edit className="w-4 h-4 text-ios-text/70" />
+                            <Edit className="w-4 h-4 text-white/70" />
                           </IOSButton>
                           <IOSButton 
                             variant="ghost" 
@@ -278,10 +278,10 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-ios-background flex items-center justify-center">
-              <Image className="w-8 h-8 text-ios-text/40" />
+              <Image className="w-8 h-8 text-white/40" />
             </div>
-            <p className="text-ios-text/60 font-medium mb-1">No banners found</p>
-            <p className="text-ios-text/40 text-sm">Try adjusting your search or add your first banner</p>
+            <p className="text-white/60 font-medium mb-1">No banners found</p>
+            <p className="text-white/40 text-sm">Try adjusting your search or add your first banner</p>
           </div>
         )}
       </IOSCard>

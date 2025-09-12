@@ -98,22 +98,22 @@ const SettingsPage: React.FC = () => {
                 <SettingsIcon size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-ios-text">Pengaturan</h1>
-                <p className="text-ios-text-secondary">Kelola preferensi aplikasi Anda</p>
+                <h1 className="text-3xl font-bold text-white">Pengaturan</h1>
+                <p className="text-white-secondary">Kelola preferensi aplikasi Anda</p>
               </div>
             </div>
 
             <div className="space-y-6">
               {/* Theme Settings */}
-              <div className="bg-ios-surface backdrop-blur rounded-2xl p-6 border border-ios-border">
-                <h2 className="text-xl font-semibold text-ios-text mb-6 flex items-center">
-                  <Moon size={20} className="mr-3 text-ios-accent" />
+              <div className="bg-black backdrop-blur rounded-2xl p-6 border border-gray-700">
+                <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+                  <Moon size={20} className="mr-3 text-pink-500" />
                   Tampilan
                 </h2>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-ios-text">Tema</span>
+                    <span className="text-white">Tema</span>
                     <select
                       value={settings.theme}
                       onChange={(e) => {
@@ -121,7 +121,7 @@ const SettingsPage: React.FC = () => {
                         setSettings((prev) => ({ ...prev, theme: next }));
                         setMode(next);
                       }}
-                      className="bg-ios-surface border border-ios-border rounded-lg px-3 py-2 text-ios-text focus:outline-none focus:ring-2 focus:ring-ios-accent/40 focus:border-ios-accent"
+                      className="bg-black border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-ios-accent/40 focus:border-ios-accent"
                     >
                       <option value="dark">Gelap</option>
                       <option value="light">Terang</option>
@@ -130,7 +130,7 @@ const SettingsPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-ios-text">Bahasa</span>
+                    <span className="text-white">Bahasa</span>
                     <select
                       value={settings.language}
                       onChange={(e) =>
@@ -139,7 +139,7 @@ const SettingsPage: React.FC = () => {
                           language: e.target.value as AppSettings['language'],
                         }))
                       }
-                      className="bg-ios-surface border border-ios-border rounded-lg px-3 py-2 text-ios-text focus:outline-none focus:ring-2 focus:ring-ios-accent/40 focus:border-ios-accent"
+                      className="bg-black border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-ios-accent/40 focus:border-ios-accent"
                     >
                       <option value="id">Indonesia</option>
                       <option value="en">English</option>
@@ -149,8 +149,8 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {/* Notification Settings */}
-              <div className="bg-ios-surface backdrop-blur rounded-xl p-6 border border-ios-border">
-                <h2 className="text-lg font-semibold text-ios-text mb-4 flex items-center">
+              <div className="bg-black backdrop-blur rounded-xl p-6 border border-gray-700">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                   <Bell size={20} className="mr-2" />
                   Notifikasi
                 </h2>
@@ -158,8 +158,8 @@ const SettingsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">Email</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">Email</div>
+                      <div className="text-white-secondary text-sm">
                         Notifikasi pesanan dan promo via email
                       </div>
                     </div>
@@ -172,14 +172,14 @@ const SettingsPage: React.FC = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">WhatsApp</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">WhatsApp</div>
+                      <div className="text-white-secondary text-sm">
                         Konfirmasi pesanan via WhatsApp
                       </div>
                     </div>
@@ -192,14 +192,14 @@ const SettingsPage: React.FC = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">Push Notification</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">Push Notification</div>
+                      <div className="text-white-secondary text-sm">
                         Notifikasi browser (coming soon)
                       </div>
                     </div>
@@ -213,15 +213,15 @@ const SettingsPage: React.FC = () => {
                         className="sr-only peer"
                         disabled
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent opacity-50"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500 opacity-50"></div>
                     </label>
                   </div>
                 </div>
               </div>
 
               {/* Privacy Settings */}
-              <div className="bg-ios-surface backdrop-blur rounded-xl p-6 border border-ios-border">
-                <h2 className="text-lg font-semibold text-ios-text mb-4 flex items-center">
+              <div className="bg-black backdrop-blur rounded-xl p-6 border border-gray-700">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                   <Shield size={20} className="mr-2" />
                   Privasi
                 </h2>
@@ -229,8 +229,8 @@ const SettingsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">Profil Publik</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">Profil Publik</div>
+                      <div className="text-white-secondary text-sm">
                         Tampilkan profil di leaderboard
                       </div>
                     </div>
@@ -243,14 +243,14 @@ const SettingsPage: React.FC = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">Riwayat Pesanan</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">Riwayat Pesanan</div>
+                      <div className="text-white-secondary text-sm">
                         Sembunyikan riwayat pesanan dari publik
                       </div>
                     </div>
@@ -263,14 +263,14 @@ const SettingsPage: React.FC = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-ios-text">Email Marketing</div>
-                      <div className="text-ios-text-secondary text-sm">
+                      <div className="text-white">Email Marketing</div>
+                      <div className="text-white-secondary text-sm">
                         Terima email promo dan penawaran
                       </div>
                     </div>
@@ -283,7 +283,7 @@ const SettingsPage: React.FC = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-ios-surface border border-ios-border relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ios-accent"></div>
+                      <div className="w-11 h-6 bg-black border border-gray-700 relative rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
                     </label>
                   </div>
                 </div>
@@ -292,18 +292,18 @@ const SettingsPage: React.FC = () => {
               {/* Save Button */}
               <button
                 onClick={saveSettings}
-                className="w-full bg-ios-accent hover:opacity-90 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-lg shadow-pink-500/20"
+                className="w-full bg-pink-500 hover:opacity-90 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-lg shadow-pink-500/20"
               >
                 <Save size={20} />
                 <span>Simpan Pengaturan</span>
               </button>
 
               {/* App Info */}
-              <div className="bg-ios-surface backdrop-blur rounded-xl p-4 border border-ios-border text-center">
-                <div className="text-ios-text-secondary text-sm">
+              <div className="bg-black backdrop-blur rounded-xl p-4 border border-gray-700 text-center">
+                <div className="text-white-secondary text-sm">
                   JB Alwikobra E-commerce v1.0.0
                 </div>
-                <div className="text-ios-text-secondary text-xs mt-1 opacity-70">
+                <div className="text-white-secondary text-xs mt-1 opacity-70">
                   © 2024 All rights reserved
                 </div>
               </div>

@@ -62,7 +62,7 @@ export const AdminFeedManagement: React.FC = () => {
       case 'video':
         return 'bg-purple-500/10 text-purple-500 border-purple-500/30';
       default:
-        return 'bg-ios-background/50 text-ios-text border-gray-700/30';
+        return 'bg-ios-background/50 text-white border-gray-700/30';
     }
   };
 
@@ -114,7 +114,7 @@ export const AdminFeedManagement: React.FC = () => {
       {/* Search */}
       <IOSCard variant="elevated" padding="medium">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-ios-text/60" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
           <input
             type="text"
             placeholder="Search feed posts by title, author, or content..."
@@ -122,7 +122,7 @@ export const AdminFeedManagement: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-ios-background border border-gray-700 rounded-xl 
                        focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                       transition-colors duration-200 text-ios-text placeholder-ios-text/60"
+                       transition-colors duration-200 text-white placeholder-ios-text/60"
           />
         </div>
       </IOSCard>
@@ -131,8 +131,8 @@ export const AdminFeedManagement: React.FC = () => {
       <IOSCard variant="elevated" padding="none">
         {loading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-ios-text/60" />
-            <p className="text-ios-text/60 font-medium">Loading feed posts...</p>
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-white/60" />
+            <p className="text-white/60 font-medium">Loading feed posts...</p>
           </div>
         ) : paginatedPosts.length > 0 ? (
           <>
@@ -140,25 +140,25 @@ export const AdminFeedManagement: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-ios-background/50 border-b border-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Post
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Author
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Preview
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Engagement
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text/80 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -168,18 +168,18 @@ export const AdminFeedManagement: React.FC = () => {
                     <tr key={post.id} className="hover:bg-ios-background/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
-                          <div className="text-sm font-semibold text-ios-text truncate">
+                          <div className="text-sm font-semibold text-white truncate">
                             {post.title}
                           </div>
                           {post.content && (
-                            <div className="text-sm text-ios-text/70 truncate mt-1">
+                            <div className="text-sm text-white/70 truncate mt-1">
                               {post.content.substring(0, 100)}...
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-ios-text">{post.author_name}</span>
+                        <span className="text-sm font-medium text-white">{post.author_name}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`inline-flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${getTypeColor(post.type)}`}>
@@ -205,37 +205,37 @@ export const AdminFeedManagement: React.FC = () => {
                               onClick={() => setSelectedImage(post.image!)}
                               className="p-2"
                             >
-                              <Eye className="w-4 h-4 text-ios-text/70" />
+                              <Eye className="w-4 h-4 text-white/70" />
                             </IOSButton>
                           </div>
                         ) : (
-                          <span className="text-sm text-ios-text/40">No image</span>
+                          <span className="text-sm text-white/40">No image</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
-                          <div className="flex items-center space-x-1 text-sm text-ios-text">
+                          <div className="flex items-center space-x-1 text-sm text-white">
                             <span>❤️</span>
                             <span className="font-medium">{post.likes_count}</span>
                           </div>
-                          <div className="flex items-center space-x-1 text-sm text-ios-text">
+                          <div className="flex items-center space-x-1 text-sm text-white">
                             <span>💬</span>
                             <span className="font-medium">{post.comments_count}</span>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-ios-text/70">
+                        <span className="text-sm text-white/70">
                           {new Date(post.created_at).toLocaleDateString()}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <IOSButton variant="ghost" size="small" className="p-2">
-                            <Eye className="w-4 h-4 text-ios-text/70" />
+                            <Eye className="w-4 h-4 text-white/70" />
                           </IOSButton>
                           <IOSButton variant="ghost" size="small" className="p-2">
-                            <Edit className="w-4 h-4 text-ios-text/70" />
+                            <Edit className="w-4 h-4 text-white/70" />
                           </IOSButton>
                           <IOSButton variant="ghost" size="small" className="p-2">
                             <Trash2 className="w-4 h-4 text-ios-error hover:text-ios-error/80" />
@@ -264,10 +264,10 @@ export const AdminFeedManagement: React.FC = () => {
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-ios-background flex items-center justify-center">
-              <MessageSquare className="w-8 h-8 text-ios-text/40" />
+              <MessageSquare className="w-8 h-8 text-white/40" />
             </div>
-            <p className="text-ios-text/60 font-medium mb-1">No feed posts found</p>
-            <p className="text-ios-text/40 text-sm">Try adjusting your search or add your first post</p>
+            <p className="text-white/60 font-medium mb-1">No feed posts found</p>
+            <p className="text-white/40 text-sm">Try adjusting your search or add your first post</p>
           </div>
         )}
       </IOSCard>

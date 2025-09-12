@@ -17,7 +17,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ios-background text-ios-text flex items-center justify-center px-6">
+      <div className="min-h-screen bg-ios-background text-white flex items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="ios-skeleton h-5 w-36 mb-4"></div>
           <div className="ios-skeleton h-4 w-full mb-2"></div>

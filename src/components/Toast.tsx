@@ -48,7 +48,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             `px-3 py-2 rounded shadow text-sm backdrop-blur border ` +
             (t.type === 'success' ? 'bg-green-500/20 text-green-200 border-green-400/40' :
              t.type === 'error' ? 'bg-red-500/20 text-red-200 border-red-400/40' :
-             'bg-white/10 text-white border-white/20')
+             'bg-gray-900/20 text-white border-gray-700')
           }>
             {t.message}
           </div>

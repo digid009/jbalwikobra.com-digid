@@ -44,7 +44,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
             href={matchedText}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ios-accent hover:text-ios-accent/80 underline transition-colors"
+            className="text-pink-500 hover:text-pink-500/80 underline transition-colors"
           >
             {matchedText}
           </a>
@@ -57,7 +57,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
             href={`https://${matchedText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ios-accent hover:text-ios-accent/80 underline transition-colors"
+            className="text-pink-500 hover:text-pink-500/80 underline transition-colors"
           >
             {matchedText}
           </a>
@@ -68,7 +68,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
           <a
             key={key}
             href={`mailto:${matchedText}`}
-            className="text-ios-accent hover:text-ios-accent/80 underline transition-colors"
+            className="text-pink-500 hover:text-pink-500/80 underline transition-colors"
           >
             {matchedText}
           </a>
@@ -80,7 +80,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
           <a
             key={key}
             href={`tel:${cleanPhone}`}
-            className="text-ios-accent hover:text-ios-accent/80 underline transition-colors"
+            className="text-pink-500 hover:text-pink-500/80 underline transition-colors"
           >
             {matchedText}
           </a>
@@ -90,7 +90,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
         parts.push(
           <span
             key={key}
-            className="text-ios-accent font-medium cursor-pointer hover:text-ios-accent/80 transition-colors"
+            className="text-pink-500 font-medium cursor-pointer hover:text-pink-500/80 transition-colors"
             onClick={() => {
               // Could integrate with search functionality
               console.log('Hashtag clicked:', matchedText);
@@ -104,7 +104,7 @@ const LinkifyText: React.FC<LinkifyTextProps> = ({ text, className = '' }) => {
         parts.push(
           <span
             key={key}
-            className="text-ios-accent font-medium cursor-pointer hover:text-ios-accent/80 transition-colors"
+            className="text-pink-500 font-medium cursor-pointer hover:text-pink-500/80 transition-colors"
             onClick={() => {
               // Could integrate with user profile functionality
               console.log('Mention clicked:', matchedText);

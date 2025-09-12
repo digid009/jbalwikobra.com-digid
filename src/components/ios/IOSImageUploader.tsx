@@ -91,11 +91,11 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-ios-text">
+        <h4 className="text-sm font-medium text-white">
           {label} ({images.length}/{max})
         </h4>
         {images.length > 0 && (
-          <p className="text-xs text-ios-text-secondary">
+          <p className="text-xs text-white-secondary">
             Drag to reorder
           </p>
         )}
@@ -113,7 +113,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
           <div
             key={`${src}-${idx}`}
             className={cn(
-              'relative w-full aspect-square rounded-xl overflow-hidden bg-ios-surface border border-ios-border',
+              'relative w-full aspect-square rounded-xl overflow-hidden bg-black border border-gray-700',
               'hover:shadow-lg transition-all duration-200 cursor-move group'
             )}
             draggable
@@ -160,7 +160,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
               'w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 flex flex-col items-center justify-center',
               dragOver || uploading
                 ? 'border-ios-primary bg-ios-primary/10 scale-[1.02]'
-                : 'border-ios-border bg-ios-surface hover:bg-ios-background hover:border-ios-primary/50'
+                : 'border-gray-700 bg-black hover:bg-ios-background hover:border-ios-primary/50'
             )}
             style={{ aspectRatio: '1 / 1' }}
             onDragEnter={(e) => {
@@ -178,7 +178,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
             onDrop={onDrop}
             onClick={() => inputRef.current?.click()}
           >
-            <div className="text-ios-text-secondary text-center">
+            <div className="text-white-secondary text-center">
               {uploading ? (
                 <>
                   <Upload className="w-8 h-8 mx-auto mb-2 animate-pulse" />
@@ -208,7 +208,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
       </div>
       
       {/* Help Text */}
-      <p className="text-xs text-ios-text-secondary text-center">
+      <p className="text-xs text-white-secondary text-center">
         {dragOver ? 'Drop images here' : `Drag & drop or click + to add images • JPG, PNG up to 10MB each`}
       </p>
     </div>

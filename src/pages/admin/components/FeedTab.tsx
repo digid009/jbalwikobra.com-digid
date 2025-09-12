@@ -57,14 +57,14 @@ const FeedTab: React.FC = () => {
           <IOSCard key={i} className="p-6 animate-pulse">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <div className="h-4 bg-ios-surface-secondary rounded mb-2"></div>
-                <div className="h-3 bg-ios-surface-secondary rounded w-1/3"></div>
+                <div className="h-4 bg-black-secondary rounded mb-2"></div>
+                <div className="h-3 bg-black-secondary rounded w-1/3"></div>
               </div>
-              <div className="h-6 bg-ios-surface-secondary rounded w-20"></div>
+              <div className="h-6 bg-black-secondary rounded w-20"></div>
             </div>
             <div className="space-y-2">
-              <div className="h-3 bg-ios-surface-secondary rounded"></div>
-              <div className="h-3 bg-ios-surface-secondary rounded w-3/4"></div>
+              <div className="h-3 bg-black-secondary rounded"></div>
+              <div className="h-3 bg-black-secondary rounded w-3/4"></div>
             </div>
           </IOSCard>
         ))}
@@ -107,7 +107,7 @@ const FeedTab: React.FC = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-ios-text">Feed Management</h2>
+        <h2 className="text-xl font-semibold text-white">Feed Management</h2>
         <IOSButton
           variant="primary"
           size="medium"
@@ -123,7 +123,7 @@ const FeedTab: React.FC = () => {
       {feedPosts.length === 0 ? (
         <IOSCard className="p-8 text-center">
           <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-200" />
-          <h3 className="text-lg font-medium text-ios-text mb-2">No posts found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No posts found</h3>
           <p className="text-gray-200 mb-4">Start by creating your first feed post</p>
           <IOSButton variant="primary" onClick={handleAddPost}>
             Add Post
@@ -140,7 +140,7 @@ const FeedTab: React.FC = () => {
                     <User className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-ios-text">{post.author_name}</h3>
+                    <h3 className="font-medium text-white">{post.author_name}</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-200">
                       <Calendar className="w-3 h-3" />
                       {new Date(post.created_at).toLocaleDateString()}
@@ -155,7 +155,7 @@ const FeedTab: React.FC = () => {
 
               {/* Post Content */}
               <div className="mb-4">
-                <p className="text-ios-text whitespace-pre-wrap leading-relaxed">
+                <p className="text-white whitespace-pre-wrap leading-relaxed">
                   {post.content}
                 </p>
               </div>

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AdminStats } from '../../../services/adminService';
 import { IOSCard, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { StatGrid } from '../layout/DashboardPrimitives';
 import { cn } from '../../../styles/standardClasses';
 
 interface AdminStatsOverviewProps {
@@ -57,7 +58,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
             <div className="w-16 h-16 bg-ios-error/10 rounded-full mx-auto mb-4 flex items-center justify-center">
               <TrendingUp className="w-8 h-8 text-ios-error" />
             </div>
-            <p className="text-ios-text font-medium mb-2">Unable to load statistics</p>
+            <p className="text-white font-medium mb-2">Unable to load statistics</p>
             <p className="text-gray-200 text-sm">Please check your connection and try again</p>
           </div>
         </IOSCard>
@@ -137,7 +138,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       changeType: 'positive' as const,
     },
     {
-      title: 'Total Reviews',
+      title: 'Paid & Completed Orders', // renamed to reflect new business meaning
       value: stats.totalReviews,
       icon: TrendingUp,
       color: 'text-ios-primary',
@@ -155,7 +156,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
         subtitle="Track your business performance and key metrics"
       />
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      <StatGrid className="mt-6" columns={4}>
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
@@ -163,11 +164,13 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
               key={index} 
               variant="elevated" 
               className={cn(
-                'group hover:shadow-xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1',
-                'border border-transparent hover:border-gray-700/20'
+                'group relative overflow-hidden transition-all duration-300 hover:-translate-y-1',
+                'before:absolute before:inset-0 before:bg-gradient-to-br before:from-black/40 before:to-black/80 before:opacity-90',
+                'after:absolute after:inset-px after:rounded-[inherit] after:pointer-events-none after:border after:border-gray-800/60',
+                'hover:shadow-[0_0_0_1px_rgba(236,72,153,0.15),0_4px_24px_-4px_rgba(0,0,0,0.6),0_8px_40px_-8px_rgba(236,72,153,0.25)]'
               )}
             >
-              <div className="p-6">
+              <div className="relative p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className={cn(
                     'p-3 rounded-2xl transition-all duration-300 group-hover:scale-110',
@@ -188,10 +191,10 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-200 mb-2 transition-colors duration-300 group-hover:text-ios-text">
+                  <h3 className="text-sm font-medium text-gray-200 mb-2 transition-colors duration-300 group-hover:text-white">
                     {card.title}
                   </h3>
-                  <p className="text-2xl font-bold text-ios-text transition-all duration-300 group-hover:scale-105">
+                  <p className="text-2xl font-bold text-white transition-all duration-300 group-hover:scale-105">
                     {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                   </p>
                 </div>
@@ -199,7 +202,7 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
             </IOSCard>
           );
         })}
-      </div>
+      </StatGrid>
     </div>
   );
 };

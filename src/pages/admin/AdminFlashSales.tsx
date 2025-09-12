@@ -186,7 +186,7 @@ const AdminFlashSales: React.FC = () => {
                 <div className="col-span-2 text-gray-300">{(row.endTime || row.end_time)?.replace('T',' ').slice(0,16)}</div>
                 <div className="col-span-2">{(row.isActive ?? row.is_active) ? <span className="text-green-400">Aktif</span> : <span className="text-gray-400">Nonaktif</span>}</div>
                 <div className="col-span-2 text-right">
-                  <button onClick={()=>startEdit(row)} className="px-3 py-1.5 rounded border border-white/20 text-white hover:bg-white/10 mr-2">Edit</button>
+                  <button onClick={()=>startEdit(row)} className="px-3 py-1.5 rounded border border-gray-700 text-white hover:bg-gray-900/20 mr-2">Edit</button>
                   <button onClick={()=>handleDelete(row.id)} className="px-3 py-1.5 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10">Hapus</button>
                 </div>
               </div>
@@ -216,7 +216,7 @@ const AdminFlashSales: React.FC = () => {
                     const newOriginal = p ? (p.originalPrice && Number(p.originalPrice) > 0 ? Number(p.originalPrice) : Number(p.price)) : 0;
                     setForm({...form, product_id: id, original_price: newOriginal});
                   }}
-                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                  className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white"
                 >
                   <option value="">-- pilih produk --</option>
                   {products.map(p => (
@@ -233,7 +233,7 @@ const AdminFlashSales: React.FC = () => {
                     value={form.sale_price ? formatNumberID(form.sale_price) : ''}
                     onChange={(e)=>setForm({...form, sale_price: parseNumberID(e.target.value)})}
                     placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                    className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white"
                   />
                 </div>
                 <div>
@@ -244,24 +244,24 @@ const AdminFlashSales: React.FC = () => {
                     value={form.original_price ? formatNumberID(form.original_price) : ''}
                     onChange={(e)=>setForm({...form, original_price: parseNumberID(e.target.value)})}
                     placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                    className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Mulai (opsional)</label>
-                  <input type="datetime-local" value={form.start_time || ''} max={form.end_time || undefined} onChange={(e)=>setForm({...form, start_time: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <input type="datetime-local" value={form.start_time || ''} max={form.end_time || undefined} onChange={(e)=>setForm({...form, start_time: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Berakhir</label>
-                  <input type="datetime-local" min={form.start_time || undefined} value={form.end_time} onChange={(e)=>setForm({...form, end_time: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <input type="datetime-local" min={form.start_time || undefined} value={form.end_time} onChange={(e)=>setForm({...form, end_time: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Stok (opsional)</label>
-                  <input type="number" value={form.stock} onChange={(e)=>setForm({...form, stock: Number(e.target.value)})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <input type="number" value={form.stock} onChange={(e)=>setForm({...form, stock: Number(e.target.value)})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" />
                 </div>
                 <div className="flex items-center gap-2 mt-6">
                   <input id="is_active" type="checkbox" checked={!!form.is_active} onChange={(e)=>setForm({...form, is_active: e.target.checked})} />
@@ -270,7 +270,7 @@ const AdminFlashSales: React.FC = () => {
               </div>
             </div>
             <div>
-              <div className="bg-black border border-white/20 rounded-xl p-3 text-sm text-gray-300">
+              <div className="bg-black border border-gray-700 rounded-xl p-3 text-sm text-gray-300">
                 <div className="mb-2 font-semibold text-white">Preview</div>
                 <div>Produk: {products.find(p=>p.id===form.product_id)?.name || '-'}</div>
                 <div>Harga Sale: Rp {Number(form.sale_price||0).toLocaleString('id-ID')}</div>
@@ -281,7 +281,7 @@ const AdminFlashSales: React.FC = () => {
             </div>
           </div>
           <div className="mt-6 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10">Batal</button>
+            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-gray-700 text-white hover:bg-gray-900/20">Batal</button>
             <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60">{saving ? 'Menyimpan…' : 'Simpan'}</button>
           </div>
         </div>

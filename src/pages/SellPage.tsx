@@ -195,7 +195,7 @@ const SellPage: React.FC = () => {
   ];
 
   return (
-    <div className="bg-ios-background text-ios-text pb-20 sm:pb-0">
+    <div className="bg-ios-background text-white pb-20 sm:pb-0">
       {/* Hero Section */}
       <IOSHero
         title="Jual Akun Game Anda"
@@ -208,7 +208,7 @@ const SellPage: React.FC = () => {
           </IOSButton>
           <a
             href="#how-it-works"
-            className="bg-white/20 backdrop-blur-sm text-white border-2 border-white px-8 py-4 rounded-xl font-semibold hover:bg-white/30 transition-colors text-center shadow-lg"
+            className="bg-gray-900/30 backdrop-blur-sm text-white border-2 border-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-900/30 transition-colors text-center shadow-lg"
           >
             Cara Kerjanya
           </a>
@@ -216,14 +216,14 @@ const SellPage: React.FC = () => {
       </IOSHero>
 
       {/* Quick Form Section */}
-      <section id="sell-form" className="py-12 sm:py-16 bg-ios-background border-t border-ios-border">
+      <section id="sell-form" className="py-12 sm:py-16 bg-ios-background border-t border-gray-700">
         <div ref={formRef} className="scroll-mt-20">
           <div className={cn(standardClasses.container.boxed, 'with-bottom-nav')}>
             <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-ios-text mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                 Estimasi Harga Akun Anda
               </h2>
-              <p className="text-ios-text-secondary text-sm sm:text-base">
+              <p className="text-white-secondary text-sm sm:text-base">
                 Isi form di bawah untuk mendapat estimasi harga akun game Anda
               </p>
             </div>
@@ -231,13 +231,13 @@ const SellPage: React.FC = () => {
             <IOSCard padding="large" className="w-full">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-ios-text-secondary">
+                  <label className="block text-sm font-medium text-white-secondary">
                     Pilih Game *
                   </label>
                   <select
                     value={selectedGame}
                     onChange={(e) => setSelectedGame(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     required
                   >
                     <option value="">{loadingGames ? 'Memuat…' : 'Pilih game...'}</option>
@@ -248,39 +248,39 @@ const SellPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-ios-text-secondary">
+                  <label className="block text-sm font-medium text-white-secondary">
                     Level/Rank Akun
                   </label>
                   <input
                     type="text"
                     value={accountLevel}
                     onChange={(e) => setAccountLevel(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     placeholder="Contoh: Mythic Glory, Conqueror, dll"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-ios-text-secondary">
+                  <label className="block text-sm font-medium text-white-secondary">
                     Estimasi Harga (Opsional)
                   </label>
                   <input
                     type="text"
                     value={estimatedPrice}
                     onChange={handlePriceChange}
-                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[44px] border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base"
                     placeholder="Contoh: Rp 2,000,000"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-ios-text-secondary">
+                  <label className="block text-sm font-medium text-white-secondary">
                     Detail Akun
                   </label>
                   <textarea
                     value={accountDetails}
                     onChange={(e) => setAccountDetails(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-3 min-h-[88px] border border-ios-border bg-ios-surface text-ios-text rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base resize-none"
+                    className="w-full px-3 sm:px-4 py-3 min-h-[88px] border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent text-sm sm:text-base resize-none"
                     rows={3}
                     placeholder="Skin, hero, item khusus, dll"
                   />
@@ -301,7 +301,7 @@ const SellPage: React.FC = () => {
                       <ArrowRight size={20} />
                     </div>
                   </IOSButton>
-                  <p className="text-sm text-ios-text-secondary mt-4">
+                  <p className="text-sm text-white-secondary mt-4">
                     Admin akan menghubungi Anda untuk evaluasi lebih lanjut
                   </p>
                 </div>
@@ -329,13 +329,13 @@ const SellPage: React.FC = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-ios-background border-t border-ios-border">
+      <section className="py-16 bg-ios-background border-t border-gray-700">
         <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-ios-text mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Mengapa Jual di JB Alwikobra?
             </h2>
-            <p className="text-ios-text-secondary max-w-2xl mx-auto">
+            <p className="text-white-secondary max-w-2xl mx-auto">
               Platform terpercaya dengan sistem yang aman dan transparan untuk menjual akun game Anda
             </p>
           </div>
@@ -345,11 +345,11 @@ const SellPage: React.FC = () => {
               const Icon = benefit.icon;
               return (
         <IOSCard key={index} padding="large" className="text-center">
-                  <div className="w-16 h-16 bg-ios-surface border border-ios-border rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-black border border-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <Icon className="text-pink-400" size={24} />
                   </div>
-                  <h3 className="text-lg font-semibold text-ios-text mb-2">{benefit.title}</h3>
-                  <p className="text-ios-text-secondary">{benefit.description}</p>
+                  <h3 className="text-lg font-semibold text-white mb-2">{benefit.title}</h3>
+                  <p className="text-white-secondary">{benefit.description}</p>
                 </IOSCard>
               );
             })}
@@ -358,13 +358,13 @@ const SellPage: React.FC = () => {
       </section>
 
       {/* Popular Games */}
-      <section className="py-16 bg-ios-background border-t border-ios-border">
+      <section className="py-16 bg-ios-background border-t border-gray-700">
         <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-ios-text mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Game Paling Laris Dijual
             </h2>
-            <p className="text-ios-text-secondary">
+            <p className="text-white-secondary">
               Akun game yang paling banyak dicari pembeli di platform kami
             </p>
           </div>
@@ -384,13 +384,13 @@ const SellPage: React.FC = () => {
                 return (
           <IOSCard key={index} padding="large" className="text-center">
                     <div 
-                      className="w-12 h-12 bg-ios-surface border border-ios-border rounded-lg flex items-center justify-center mx-auto mb-3"
+                      className="w-12 h-12 bg-black border border-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3"
                       style={{ borderColor: game.color + '40', backgroundColor: game.color + '10' }}
                     >
                       <IconComponent className="text-pink-400" size={20} style={{ color: game.color }} />
                     </div>
-                    <h3 className="font-semibold text-ios-text mb-1">{game.name}</h3>
-                    <p className="text-sm text-ios-text-secondary">
+                    <h3 className="font-semibold text-white mb-1">{game.name}</h3>
+                    <p className="text-sm text-white-secondary">
                       {game.count === 'Tersedia' ? 'Siap dibeli' : `${game.count} terjual`}
                     </p>
                   </IOSCard>
@@ -402,13 +402,13 @@ const SellPage: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-16 bg-ios-background border-t border-ios-border">
+      <section id="how-it-works" className="py-16 bg-ios-background border-t border-gray-700">
         <div className={standardClasses.container.boxed}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-ios-text mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Cara Jual Akun di JB Alwikobra
             </h2>
-            <p className="text-ios-text-secondary max-w-2xl mx-auto">
+            <p className="text-white-secondary max-w-2xl mx-auto">
               Proses yang mudah dan aman untuk menjual akun game Anda dalam 4 langkah sederhana
             </p>
           </div>
@@ -420,8 +420,8 @@ const SellPage: React.FC = () => {
                   <div className="w-16 h-16 bg-pink-600 text-white rounded-xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                     {step.number}
                   </div>
-      <h3 className="text-lg font-semibold text-ios-text mb-2">{step.title}</h3>
-      <p className="text-ios-text-secondary">{step.description}</p>
+      <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
+      <p className="text-white-secondary">{step.description}</p>
         </IOSCard>
                 
                 {/* Arrow connector */}
@@ -473,13 +473,13 @@ const SellPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-ios-background border-t border-ios-border">
+      <section className="py-16 bg-ios-background border-t border-gray-700">
         <div className={standardClasses.container.boxed}>
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-ios-text mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Siap Menjual Akun Game Anda?
             </h2>
-            <p className="text-ios-text-secondary mb-8 max-w-2xl mx-auto">
+            <p className="text-white-secondary mb-8 max-w-2xl mx-auto">
               Bergabunglah dengan ribuan gamer lainnya yang sudah mempercayakan penjualan akun mereka kepada kami.
               Proses mudah, aman, dan harga terbaik!
             </p>

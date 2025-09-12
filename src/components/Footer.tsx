@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
   ];
 
   return (
-  <footer className="bg-ios-background border-t border-ios-border mt-auto">
+  <footer className="bg-ios-background border-t border-gray-700 mt-auto">
       {/* Main Footer Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -73,27 +73,27 @@ const Footer: React.FC = () => {
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt={settings.siteName || 'Logo'} className="w-10 h-10 rounded-xl object-cover" />
               ) : (
-                <div className="w-10 h-10 bg-ios-accent rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center">
                   <span className="text-white font-bold text-lg">JB</span>
                 </div>
               )}
-              <span className="font-bold text-ios-text text-xl">{settings?.siteName || 'JBalwikobra'}</span>
+              <span className="font-bold text-white text-xl">{settings?.siteName || 'JBalwikobra'}</span>
             </Link>
-            <p className="text-ios-text-secondary text-sm mb-6 leading-relaxed">
+            <p className="text-white-secondary text-sm mb-6 leading-relaxed">
               Platform jual beli online terpercaya dengan pengalaman berbelanja yang aman dan nyaman.
             </p>
             
             {/* Contact Info */}
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 text-ios-text-secondary">
+              <div className="flex items-center space-x-3 text-white-secondary">
                 <Mail className="w-4 h-4" />
                 <span className="text-sm">{settings?.contactEmail || 'support@jbalwikobra.com'}</span>
               </div>
-              <div className="flex items-center space-x-3 text-ios-text-secondary">
+              <div className="flex items-center space-x-3 text-white-secondary">
                 <Phone className="w-4 h-4" />
                 <span className="text-sm">{settings?.contactPhone || '+62 812-3456-7890'}</span>
               </div>
-              <div className="flex items-center space-x-3 text-ios-text-secondary">
+              <div className="flex items-center space-x-3 text-white-secondary">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{settings?.address || 'Jakarta, Indonesia'}</span>
               </div>
@@ -103,13 +103,13 @@ const Footer: React.FC = () => {
           {/* Footer Links */}
           {footerSections.map((section) => (
             <div key={section.title} className="lg:col-span-1">
-              <h3 className="font-semibold text-ios-text mb-4">{section.title}</h3>
+              <h3 className="font-semibold text-white mb-4">{section.title}</h3>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       to={link.href}
-                      className="text-ios-text-secondary hover:text-ios-accent transition-colors text-sm"
+                      className="text-white-secondary hover:text-pink-500 transition-colors text-sm"
                     >
                       {link.label}
                     </Link>
@@ -121,21 +121,21 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Newsletter Subscription */}
-        <div className="mt-12 pt-8 border-t border-ios-border">
+        <div className="mt-12 pt-8 border-t border-gray-700">
           <div className="max-w-md">
-            <h3 className="font-semibold text-ios-text mb-2">Dapatkan Update Terbaru</h3>
-            <p className="text-ios-text-secondary text-sm mb-4">
+            <h3 className="font-semibold text-white mb-2">Dapatkan Update Terbaru</h3>
+            <p className="text-white-secondary text-sm mb-4">
               Berlangganan newsletter untuk mendapatkan info promo dan produk terbaru.
             </p>
             <form className="flex space-x-2">
               <input
                 type="email"
                 placeholder="Email Anda"
-                className="flex-1 px-4 py-2.5 bg-ios-surface border border-ios-border rounded-lg text-ios-text placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent"
+                className="flex-1 px-4 py-2.5 bg-black border border-gray-700 rounded-lg text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-transparent"
               />
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-ios-accent text-white rounded-lg hover:bg-ios-accent/90 transition-colors font-medium"
+                className="px-6 py-2.5 bg-pink-500 text-white rounded-lg hover:bg-pink-500/90 transition-colors font-medium"
               >
                 Subscribe
               </button>
@@ -145,11 +145,11 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-ios-border bg-ios-surface">
+      <div className="border-t border-gray-700 bg-black">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             {/* Copyright */}
-            <div className="text-ios-text-secondary text-sm">
+            <div className="text-white-secondary text-sm">
               © {currentYear} JBalwikobra. All rights reserved.
             </div>
 
@@ -157,21 +157,21 @@ const Footer: React.FC = () => {
             <div className="flex items-center space-x-6">
               <Link
                 to="/terms"
-                className="flex items-center space-x-1 text-ios-text-secondary hover:text-ios-accent transition-colors text-sm"
+                className="flex items-center space-x-1 text-white-secondary hover:text-pink-500 transition-colors text-sm"
               >
                 <Shield className="w-3 h-3" />
                 <span>Syarat & Ketentuan</span>
               </Link>
               <Link
                 to="/privacy"
-                className="flex items-center space-x-1 text-ios-text-secondary hover:text-ios-accent transition-colors text-sm"
+                className="flex items-center space-x-1 text-white-secondary hover:text-pink-500 transition-colors text-sm"
               >
                 <Shield className="w-3 h-3" />
                 <span>Kebijakan Privasi</span>
               </Link>
               <Link
                 to="/help"
-                className="flex items-center space-x-1 text-ios-text-secondary hover:text-ios-accent transition-colors text-sm"
+                className="flex items-center space-x-1 text-white-secondary hover:text-pink-500 transition-colors text-sm"
               >
                 <HelpCircle className="w-3 h-3" />
                 <span>Bantuan</span>
@@ -180,12 +180,12 @@ const Footer: React.FC = () => {
 
             {/* Trust Badges */}
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1 text-ios-text-secondary text-xs">
+              <div className="flex items-center space-x-1 text-white-secondary text-xs">
                 <Heart className="w-3 h-3 text-red-500" />
                 <span>Dibuat dengan cinta</span>
               </div>
               <div className="w-px h-4 bg-ios-border"></div>
-              <div className="text-ios-text-secondary text-xs">
+              <div className="text-white-secondary text-xs">
                 🇮🇩 Made in Indonesia
               </div>
             </div>

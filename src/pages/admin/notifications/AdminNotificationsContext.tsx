@@ -17,6 +17,7 @@ interface AdminNotificationsContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   addNotification: (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => void;
+  toggleRead: (id: string) => void;
 }
 
 const AdminNotificationsContext = createContext<AdminNotificationsContextType | undefined>(undefined);
@@ -110,6 +111,10 @@ export const AdminNotificationsProvider: React.FC<AdminNotificationsProviderProp
     );
   };
 
+  const toggleRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  };
+
   const addNotification = (notification: Omit<AdminNotification, 'id' | 'timestamp' | 'read'>) => {
     setNotifications(prev => [
       {
@@ -141,6 +146,7 @@ export const AdminNotificationsProvider: React.FC<AdminNotificationsProviderProp
       markAsRead,
       markAllAsRead,
       addNotification
+  , toggleRead
     }}>
       {children}
     </AdminNotificationsContext.Provider>

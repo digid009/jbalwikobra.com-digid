@@ -99,7 +99,7 @@ export const OptimizedAdminStats: React.FC = () => {
             <Icon className="w-5 h-5 text-white" />
           </div>
           {cardLoading && (
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-gray-700 border-t-pink-500 rounded-full animate-spin"></div>
           )}
         </div>
         <div className="mt-4">
@@ -107,7 +107,7 @@ export const OptimizedAdminStats: React.FC = () => {
           {cardLoading ? (
             <div className="h-6 bg-gray-200 rounded animate-pulse mt-1"></div>
           ) : (
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{value}</p>
+            <p className="text-2xl font-semibold text-white mt-1">{value}</p>
           )}
           {subValue && !cardLoading && (
             <p className="text-xs text-gray-500 mt-1">{subValue}</p>
@@ -121,7 +121,7 @@ export const OptimizedAdminStats: React.FC = () => {
     <div className="space-y-6">
       {/* Header with refresh */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Dashboard Overview</h2>
+        <h2 className="text-xl font-semibold text-white">Dashboard Overview</h2>
         <div className="flex items-center space-x-3">
           {lastUpdated && (
             <span className="text-sm text-gray-500 flex items-center">
@@ -132,7 +132,7 @@ export const OptimizedAdminStats: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors disabled:opacity-50"
+            className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-white hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
             title="Refresh statistics"
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
@@ -147,7 +147,7 @@ export const OptimizedAdminStats: React.FC = () => {
           icon={Users}
           title="Total Users"
           value={stats?.totalUsers || 0}
-          color="bg-blue-500"
+          color="bg-gray-9000"
           loading={loading}
         />
         
