@@ -10,7 +10,8 @@ import {
   TrendingUp 
 } from 'lucide-react';
 import { AdminStats } from '../../../services/adminService';
-import { IOSCard } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { cn } from '../../../styles/standardClasses';
 
 interface AdminStatsOverviewProps {
   stats: AdminStats | null;
@@ -23,15 +24,27 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[...Array(8)].map((_, i) => (
-          <IOSCard key={i} className="animate-pulse">
-            <div className="p-6">
-              <div className="h-4 bg-ios-background/50 rounded w-1/2 mb-2"></div>
-              <div className="h-8 bg-ios-background/50 rounded w-3/4"></div>
-            </div>
-          </IOSCard>
-        ))}
+      <div className="mb-8">
+        <IOSSectionHeader 
+          title="Dashboard Overview" 
+          subtitle="Loading your business metrics..."
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          {[...Array(8)].map((_, i) => (
+            <IOSCard key={i} variant="elevated" className="animate-pulse">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 bg-ios-background/50 rounded-2xl"></div>
+                  <div className="w-12 h-4 bg-ios-background/50 rounded-full"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 bg-ios-background/50 rounded w-2/3"></div>
+                  <div className="h-6 bg-ios-background/50 rounded w-4/5"></div>
+                </div>
+              </div>
+            </IOSCard>
+          ))}
+        </div>
       </div>
     );
   }
@@ -39,9 +52,13 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
   if (!stats) {
     return (
       <div className="mb-8">
-        <IOSCard>
-          <div className="p-6 text-center">
-            <p className="text-ios-text/60">Failed to load statistics</p>
+        <IOSCard variant="elevated" className="text-center">
+          <div className="p-8">
+            <div className="w-16 h-16 bg-ios-error/10 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <TrendingUp className="w-8 h-8 text-ios-error" />
+            </div>
+            <p className="text-ios-text font-medium mb-2">Unable to load statistics</p>
+            <p className="text-ios-text-secondary text-sm">Please check your connection and try again</p>
           </div>
         </IOSCard>
       </div>
@@ -54,7 +71,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.totalUsers,
       icon: Users,
       color: 'text-ios-primary',
-      bgColor: 'bg-ios-primary/10',
+      bgColor: 'bg-gradient-to-br from-ios-primary/10 to-ios-primary/5',
+      borderColor: 'border-ios-primary/20',
       change: '+12%',
       changeType: 'positive' as const,
     },
@@ -63,7 +81,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.totalOrders,
       icon: ShoppingCart,
       color: 'text-ios-success',
-      bgColor: 'bg-ios-success/10',
+      bgColor: 'bg-gradient-to-br from-ios-success/10 to-ios-success/5',
+      borderColor: 'border-ios-success/20',
       change: '+8%',
       changeType: 'positive' as const,
     },
@@ -72,7 +91,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.totalProducts,
       icon: Package,
       color: 'text-ios-secondary',
-      bgColor: 'bg-ios-secondary/10',
+      bgColor: 'bg-gradient-to-br from-ios-secondary/10 to-ios-secondary/5',
+      borderColor: 'border-ios-secondary/20',
       change: '+3%',
       changeType: 'positive' as const,
     },
@@ -80,8 +100,9 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       title: 'Total Revenue',
       value: `Rp ${stats.totalRevenue.toLocaleString()}`,
       icon: DollarSign,
-      color: 'text-ios-success',
-      bgColor: 'bg-ios-success/10',
+      color: 'text-emerald-600',
+      bgColor: 'bg-gradient-to-br from-emerald-500/10 to-emerald-500/5',
+      borderColor: 'border-emerald-500/20',
       change: '+15%',
       changeType: 'positive' as const,
     },
@@ -90,7 +111,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.pendingOrders,
       icon: Clock,
       color: 'text-ios-warning',
-      bgColor: 'bg-ios-warning/10',
+      bgColor: 'bg-gradient-to-br from-ios-warning/10 to-ios-warning/5',
+      borderColor: 'border-ios-warning/20',
       change: '-2%',
       changeType: 'neutral' as const,
     },
@@ -99,7 +121,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.completedOrders,
       icon: CheckCircle,
       color: 'text-ios-success',
-      bgColor: 'bg-ios-success/10',
+      bgColor: 'bg-gradient-to-br from-ios-success/10 to-ios-success/5',
+      borderColor: 'border-ios-success/20',
       change: '+10%',
       changeType: 'positive' as const,
     },
@@ -107,8 +130,9 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       title: 'Average Rating',
       value: `${stats.averageRating}/5`,
       icon: Star,
-      color: 'text-ios-warning',
-      bgColor: 'bg-ios-warning/10',
+      color: 'text-amber-500',
+      bgColor: 'bg-gradient-to-br from-amber-500/10 to-amber-500/5',
+      borderColor: 'border-amber-500/20',
       change: '+0.2',
       changeType: 'positive' as const,
     },
@@ -117,7 +141,8 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
       value: stats.totalReviews,
       icon: TrendingUp,
       color: 'text-ios-primary',
-      bgColor: 'bg-ios-primary/10',
+      bgColor: 'bg-gradient-to-br from-ios-primary/10 to-ios-primary/5',
+      borderColor: 'border-ios-primary/20',
       change: '+25%',
       changeType: 'positive' as const,
     },
@@ -125,36 +150,49 @@ export const AdminStatsOverview: React.FC<AdminStatsOverviewProps> = ({
 
   return (
     <div className="mb-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-ios-text">Dashboard Overview</h2>
-        <p className="text-ios-text/70">Track your business performance and key metrics</p>
-      </div>
+      <IOSSectionHeader 
+        title="Dashboard Overview" 
+        subtitle="Track your business performance and key metrics"
+      />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <IOSCard key={index} className="hover:shadow-lg transition-shadow duration-200" variant="elevated">
+            <IOSCard 
+              key={index} 
+              variant="elevated" 
+              className={cn(
+                'group hover:shadow-xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-1',
+                'border border-transparent hover:border-ios-border/20'
+              )}
+            >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${card.color}`} />
+                  <div className={cn(
+                    'p-3 rounded-2xl transition-all duration-300 group-hover:scale-110',
+                    card.bgColor,
+                    'border',
+                    card.borderColor
+                  )}>
+                    <Icon className={cn('w-6 h-6 transition-colors duration-300', card.color)} />
                   </div>
-                  <div className={`text-sm font-medium ${
+                  <div className={cn(
+                    'px-2 py-1 rounded-full text-xs font-bold transition-all duration-300',
                     card.changeType === 'positive' 
-                      ? 'text-ios-success' 
-                      : 'text-ios-text/60'
-                  }`}>
+                      ? 'text-ios-success bg-ios-success/10' 
+                      : 'text-ios-text-secondary bg-ios-background'
+                  )}>
                     {card.change}
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-ios-text/70 mb-1">
+                  <h3 className="text-sm font-medium text-ios-text-secondary mb-2 transition-colors duration-300 group-hover:text-ios-text">
                     {card.title}
                   </h3>
-                  <p className="text-2xl font-bold text-ios-text">
-                    {card.value}
+                  <p className="text-2xl font-bold text-ios-text transition-all duration-300 group-hover:scale-105">
+                    {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                   </p>
                 </div>
               </div>
