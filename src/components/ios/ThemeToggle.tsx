@@ -2,6 +2,7 @@ import React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { IOSButton } from './IOSDesignSystem';
+import { cn } from '../../styles/standardClasses';
 
 interface ThemeToggleProps {
   className?: string;
@@ -29,17 +30,21 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
     large: 24
   };
 
+  const baseTokenClasses = isDark
+    ? 'bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.14)] text-yellow-300'
+    : 'bg-[rgba(0,0,0,0.06)] hover:bg-[rgba(0,0,0,0.12)] text-pink-600';
+
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={cn('flex items-center space-x-2', className)}>
       <IOSButton
         variant="ghost"
         size={size}
         onClick={toggle}
-        className={`${sizeClasses[size]} rounded-full transition-all duration-200 hover:scale-105 ${
-          isDark 
-            ? 'bg-gray-800 hover:bg-gray-700 text-yellow-400' 
-            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-        }`}
+        className={cn(
+          sizeClasses[size],
+          'rounded-full transition-all duration-200 hover:scale-105 focus-ring border border-transparent',
+          baseTokenClasses
+        )}
         aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       >
         {isDark ? (
@@ -48,11 +53,13 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
           <Moon size={iconSizes[size]} className="transition-transform duration-200" />
         )}
       </IOSButton>
-      
       {showLabel && (
-        <span className={`text-sm font-medium transition-colors duration-200 ${
-          isDark ? 'text-gray-300' : 'text-gray-700'
-        }`}>
+        <span
+          className={cn(
+            'text-sm font-medium transition-colors duration-200',
+            isDark ? 'text-[var(--dash-text-secondary)]' : 'text-[var(--dash-text-secondary)]'
+          )}
+        >
           {isDark ? 'Dark' : 'Light'}
         </span>
       )}

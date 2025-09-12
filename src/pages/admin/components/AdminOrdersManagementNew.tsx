@@ -3,6 +3,7 @@ import { adminInputWithLeftIcon, adminInputBase } from './ui/InputStyles';
 import { Search, Filter, RefreshCw, AlertCircle, CheckCircle, Clock, XCircle, Package, User, Mail, Phone } from 'lucide-react';
 import { adminService, Order } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
+import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import AdminOrdersTable from './AdminOrdersTable';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
@@ -89,21 +90,21 @@ export const AdminOrdersManagement: React.FC = () => {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
-    <div className="space-y-6">
-      <IOSSectionHeader 
-        title="Orders Management" 
-        subtitle={`${totalCount} total orders`}
-      />
-
-      {/* RLS Diagnostics */}
+    <DashboardSection>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <IOSSectionHeader 
+            title="Orders Management" 
+            subtitle={`${totalCount} total orders`}
+          />
+        </div>
+      </div>
       <RLSDiagnosticsBanner 
         hasErrors={!!error}
         errorMessage={error || ''}
         statsLoaded={!loading}
       />
-
-      {/* Search and Filters */}
-      <IOSCard className="p-6">
+      <DataPanel padded>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-3 flex-1">
             <div className="relative flex-1 max-w-md">
@@ -113,15 +114,16 @@ export const AdminOrdersManagement: React.FC = () => {
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className={adminInputWithLeftIcon}
+                aria-label="Search orders"
               />
             </div>
-            
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className={adminInputBase}
+              aria-label="Filter by status"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -130,31 +132,30 @@ export const AdminOrdersManagement: React.FC = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-
           <div className="flex gap-2">
             <IOSButton
               variant="ghost"
               size="medium"
               onClick={handleSearch}
               disabled={loading}
+              aria-label="Run search"
             >
               <Search size={18} />
               Search
             </IOSButton>
-            
             <IOSButton
               variant="ghost"
               size="medium"
               onClick={handleRefresh}
               disabled={loading}
+              aria-label="Refresh orders"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
               Refresh
             </IOSButton>
           </div>
         </div>
-      </IOSCard>
-
+      </DataPanel>
       <AdminOrdersTable
         orders={orders}
         loading={loading}
@@ -162,20 +163,19 @@ export const AdminOrdersManagement: React.FC = () => {
         getStatusColor={getStatusColor}
         getStatusIcon={getStatusIcon}
       />
-
-      {/* Simple Pagination */}
       {totalPages > 1 && (
-        <IOSCard className="p-4">
+        <DataPanel padded>
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-200 dark:text-gray-400">
               Page {currentPage} of {totalPages} ({totalCount} total orders)
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="navigation" aria-label="Pagination">
               <IOSButton
                 variant="ghost"
                 size="small"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                aria-label="Previous page"
               >
                 Previous
               </IOSButton>
@@ -184,14 +184,15 @@ export const AdminOrdersManagement: React.FC = () => {
                 size="small"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                aria-label="Next page"
               >
                 Next
               </IOSButton>
             </div>
           </div>
-        </IOSCard>
+        </DataPanel>
       )}
-    </div>
+    </DashboardSection>
   );
 };
 

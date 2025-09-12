@@ -304,29 +304,7 @@ class AdminService {
     }
   }
 
-  // Products Management
-  async getProducts(page = 1, limit = 20, search?: string): Promise<{ data: Product[], count: number }> {
-    try {
-      let query = supabase
-        .from('products')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
-
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
-      }
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      return { data: data || [], count: count || 0 };
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      return { data: [], count: 0 };
-    }
-  }
+  // Products Management (see unified implementation later in file)
 
   // Reviews Management
   async getReviews(page = 1, limit = 20): Promise<{ data: Review[], count: number }> {
@@ -502,6 +480,25 @@ class AdminService {
         users: [],
         products: []
       };
+    }
+  }
+
+  // Lightweight delegator to unified implementation later (kept for backward compatibility inside class context)
+  async getProducts(page = 1, limit = 20, search?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<{ data: Product[], count: number }> {
+    // Reuse global instance method after class instantiation if available; fallback simple query
+    try {
+      let queryBuilder = supabase.from('products').select('*', { count: 'exact' })
+        .order(sort?.column || 'created_at', { ascending: sort ? sort.direction === 'asc' : false })
+        .range((page - 1) * limit, page * limit - 1);
+      if (search) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+      }
+      const { data, error, count } = await queryBuilder;
+      if (error) throw error;
+      return { data: data || [], count: count || 0 };
+    } catch (e) {
+      console.error('[AdminService.class.getProducts] fallback error', e);
+      return { data: [], count: 0 };
     }
   }
 
@@ -751,8 +748,9 @@ export const adminService = {
     });
   },
 
-  async getProducts(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<Product>> {
-    return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}`, async () => {
+  async getProducts(page: number = 1, limit: number = 10, searchTerm?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<PaginatedResponse<Product>> {
+    const sortKey = sort ? `${sort.column}:${sort.direction}` : 'created_at:desc';
+    return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}:${sortKey}`, async () => {
       // Use actual schema columns from detection: removed 'tier' (doesn't exist)
       const actualColumns = [
         'id','name','description','price','original_price','category','tier_id','game_title','game_title_id',
@@ -768,9 +766,11 @@ export const adminService = {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
-      console.log('[adminService.getProducts] using actual schema columns');
+      const orderColumn = sort?.column || 'created_at';
+      const ascending = sort ? sort.direction === 'asc' : false;
+      console.log('[adminService.getProducts] using actual schema columns with sort', { orderColumn, ascending });
       const { data, error, count } = await query
-        .order('created_at', { ascending: false })
+        .order(orderColumn, { ascending })
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) {

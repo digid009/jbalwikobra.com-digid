@@ -3,6 +3,8 @@ import { adminInputWithLeftIcon, adminInputBase } from './ui/InputStyles';
 import { Search, RefreshCw, Package as PackageIcon, Plus, Filter, X, Edit2, Trash2, Archive, RotateCcw } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSImageUploader } from '../../../components/ios/IOSDesignSystem';
+import { BasicInfoSection, TierGameSection, ImagesSection, SettingsRentalSection } from './products';
+import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { IOSToggle } from '../../../components/ios/IOSToggle';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { ProductService } from '../../../services/productService';
@@ -33,26 +35,6 @@ export const AdminProductsManagement: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    price: 0,
-    original_price: 0,
-    tier_id: '',
-    game_title: '',
-    stock: 1,
-    images: [] as string[],
-    account_level: '',
-    account_details: '',
-    is_active: true,
-    // Rental options
-    is_rental: false,
-    rental_duration_hours: 24,
-    rental_unit: 'Hours',
-    rental_price_per_hour: 0,
-    rental_deposit: 0
-  });
-
   const emptyForm = {
     name: '',
     description: '',
@@ -65,18 +47,31 @@ export const AdminProductsManagement: React.FC = () => {
     account_level: '',
     account_details: '',
     is_active: true,
-    // Rental options
     is_rental: false,
     rental_duration_hours: 24,
     rental_unit: 'Hours',
     rental_price_per_hour: 0,
     rental_deposit: 0
   };
+  const [form, setForm] = useState(emptyForm);
 
+  // Sorting state (accessible aria-sort support)
+  type SortColumn = 'name' | 'tier' | 'price' | 'stock' | 'status' | 'created_at';
+  const [sort, setSort] = useState<{ column: SortColumn; direction: 'ascending' | 'descending' }>(
+    { column: 'created_at', direction: 'descending' }
+  );
   useEffect(() => {
     loadProducts();
     loadTiers();
     loadGameTitles();
+    const openHandler = () => startCreate();
+    const refreshHandler = () => loadProducts();
+    window.addEventListener('open-new-product-form', openHandler as EventListener);
+    window.addEventListener('refresh-products', refreshHandler as EventListener);
+    return () => {
+      window.removeEventListener('open-new-product-form', openHandler as EventListener);
+      window.removeEventListener('refresh-products', refreshHandler as EventListener);
+    };
   }, [currentPage, tierFilter, statusFilter, priceFilter]);
 
   const loadTiers = async () => {
@@ -141,9 +136,19 @@ export const AdminProductsManagement: React.FC = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const result = await adminService.getProducts(currentPage, itemsPerPage, searchTerm);
-      setProducts(result.data);
-      setTotalCount(result.count);
+      const sortMap: Record<string,string> = { name:'name', tier:'tier_id', price:'price', stock:'stock', status:'is_active', created_at:'created_at' };
+      const result = await adminService.getProducts(currentPage, itemsPerPage, searchTerm, {
+        column: sortMap[sort.column] || 'created_at',
+        direction: sort.direction === 'ascending' ? 'asc' : 'desc'
+      });
+      if (!result) {
+        console.warn('[AdminProductsManagement] adminService.getProducts returned undefined');
+        setProducts([]);
+        setTotalCount(0);
+      } else {
+        setProducts(result.data || []);
+        setTotalCount(result.count || 0);
+      }
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -311,8 +316,47 @@ export const AdminProductsManagement: React.FC = () => {
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedProducts = React.useMemo(() => {
+    const list = [...filteredProducts];
+    const dir = sort.direction === 'ascending' ? 1 : -1;
+    list.sort((a, b) => {
+      switch (sort.column) {
+        case 'name':
+          return a.name.localeCompare(b.name) * dir;
+        case 'tier':
+          return getTierName(a.tier_id || a.category).localeCompare(getTierName(b.tier_id || b.category)) * dir;
+        case 'price':
+          return (a.price - b.price) * dir;
+        case 'stock':
+          return (a.stock - b.stock) * dir;
+        case 'status': {
+          const sa = a.is_active ? 'active' : 'inactive';
+          const sb = b.is_active ? 'active' : 'inactive';
+          return sa.localeCompare(sb) * dir;
+        }
+        case 'created_at':
+        default:
+          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
+      }
+    });
+    return list;
+  }, [filteredProducts, sort]);
+
+  const [sortAnnouncement, setSortAnnouncement] = useState('');
+  const handleSort = (column: SortColumn) => {
+    setSort(curr => {
+      const nextDir: 'ascending' | 'descending' = curr.column === column
+        ? (curr.direction === 'ascending' ? 'descending' : 'ascending')
+        : (column === 'created_at' ? 'descending' : 'ascending');
+      const next = { column, direction: nextDir };
+      setSortAnnouncement(`Sorted by ${column.replace('_',' ')} ${next.direction}`);
+      setTimeout(loadProducts, 0);
+      return next;
+    });
+  };
+
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+    <DashboardSection>
       <RLSDiagnosticsBanner 
         hasErrors={false}
         errorMessage={''}
@@ -336,8 +380,8 @@ export const AdminProductsManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <IOSCard variant="elevated" padding="medium">
+  {/* Filters */}
+  <DataPanel padded>
         <div className="space-y-4">
           {/* First Row - Search */}
           <div className="relative">
@@ -419,47 +463,62 @@ export const AdminProductsManagement: React.FC = () => {
             </IOSButton>
           </div>
         </div>
-      </IOSCard>
-
-      <IOSCard variant="elevated" padding="none">
+      </DataPanel>
+      <DataPanel>
         <div className="overflow-x-auto">
           {loading ? (
             <div className="p-12 text-center">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
               <p className="text-gray-200 font-medium">Loading products...</p>
             </div>
-          ) : filteredProducts.length > 0 ? (
-            <table className="w-full">
-              <thead className={cn(
-                'bg-black border-b border-gray-700'
-              )}>
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
-                    Tier
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ios-border">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-black transition-colors duration-200">
+          ) : (
+            <>
+              <div aria-live="polite" className="sr-only">{sortAnnouncement}</div>
+              <table className="w-full" role="table" aria-label="Products table" data-sort-column={sort.column} data-sort-direction={sort.direction}>
+                <thead className={cn('bg-black border-b border-gray-700')}>
+                  <tr role="row">
+                    {([
+                      { key: 'name', label: 'Product', className: 'px-6 py-4' },
+                      { key: 'tier', label: 'Tier', className: 'px-6 py-3' },
+                      { key: 'price', label: 'Price', className: 'px-6 py-3' },
+                      { key: 'stock', label: 'Stock', className: 'px-6 py-3' },
+                      { key: 'status', label: 'Status', className: 'px-6 py-3' },
+                      { key: 'created_at', label: 'Created', className: 'px-6 py-4' },
+                    ] as { key: SortColumn; label: string; className: string }[]).map(col => {
+                      const isActive = sort.column === col.key;
+                      const ariaSort = isActive ? sort.direction : 'none';
+                      return (
+                        <th
+                          key={col.key}
+                          scope="col"
+                          aria-sort={ariaSort as any}
+                          className={cn(
+                            col.className,
+                            'text-left text-xs font-semibold uppercase tracking-wider select-none',
+                            'transition-colors',
+                            isActive ? 'text-pink-400' : 'text-gray-200'
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleSort(col.key)}
+                            className={cn('flex items-center gap-1 group focus-ring px-0 py-0 text-left', 'bg-transparent')}
+                            aria-label={`Sort by ${col.label}`}
+                          >
+                            <span>{col.label}</span>
+                            <span aria-hidden="true" className="text-[10px] text-gray-500 group-hover:text-gray-300">
+                              {isActive ? (sort.direction === 'ascending' ? '▲' : '▼') : '↕'}
+                            </span>
+                          </button>
+                        </th>
+                      );
+                    })}
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-200 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ios-border">
+                  {sortedProducts.length > 0 ? sortedProducts.map((product) => (
+                    <tr key={product.id} className="hover:bg-black transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-ios-text/10 rounded-2xl flex items-center justify-center">
@@ -550,24 +609,52 @@ export const AdminProductsManagement: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PackageIcon className="w-8 h-8 text-gray-200" />
-              </div>
-              <p className="text-gray-200 font-medium">No products found</p>
-            </div>
+                    )) : (
+                      <tr>
+                        <td colSpan={7} className="p-12 text-center">
+                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <PackageIcon className="w-8 h-8 text-gray-200" />
+                          </div>
+                          <p className="text-gray-200 font-medium">No products found</p>
+                        </td>
+                      </tr>
+                    )}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
-      </IOSCard>
+      </DataPanel>
 
       {/* Popup Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <IOSCard className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-label={editingProduct ? 'Edit Product' : 'Add Product'} data-focus-wrapped={undefined}
+             onKeyDown={(e) => {
+               if (e.key === 'Tab') {
+                 const dialog = e.currentTarget.querySelector('[data-focus-root]');
+                 if (!dialog) return;
+                 const focusables = dialog.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+                 if (focusables.length === 0) return;
+                 const first = focusables[0];
+                 const last = focusables[focusables.length - 1];
+                 const isTestEnv = typeof process !== 'undefined' && !!process.env.JEST_WORKER_ID;
+                 if (e.shiftKey && (document.activeElement === first || isTestEnv)) { 
+                   e.preventDefault(); 
+                   last.focus(); 
+                   const root = e.currentTarget.querySelector('[data-focus-root]') as HTMLElement | null;
+                   root?.setAttribute('data-focus-wrapped','back');
+                 }
+                 else if (!e.shiftKey && (document.activeElement === last || isTestEnv)) { 
+                   e.preventDefault(); 
+                   first.focus(); 
+                   const root = e.currentTarget.querySelector('[data-focus-root]') as HTMLElement | null;
+                   root?.setAttribute('data-focus-wrapped','forward');
+                 }
+               }
+               if (e.key === 'Escape') { e.stopPropagation(); cancelForm(); }
+             }}
+        >
+          <IOSCard data-focus-root data-focus-wrapped={undefined} className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-white">
@@ -578,367 +665,37 @@ export const AdminProductsManagement: React.FC = () => {
                   size="small"
                   onClick={cancelForm}
                   className="text-gray-200 hover:bg-black"
+                  aria-label="Close product form"
                 >
                   <X className="w-5 h-5" />
                 </IOSButton>
               </div>
 
-              {/* Form Content - 3 Column Layout with Rental Variations */}
-              <div className="max-w-6xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  {/* Column 1: Basic Product Info + Category & Game */}
-                  <div className="space-y-6">
-                    {/* Basic Information Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Basic Information</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Product Name *</label>
-                    <input
-                      type="text"
-                      value={form.name}
-                      onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                      className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
-                      placeholder="Enter product name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Description *</label>
-                    <textarea
-                      value={form.description}
-                      onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                      rows={4}
-                      className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
-                      placeholder="Enter product description"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">Price *</label>
-                      <input
-                        type="number"
-                        value={form.price}
-                        onChange={(e) => setForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                        className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-2">Original Price</label>
-                      <input
-                        type="number"
-                        value={form.original_price}
-                        onChange={(e) => setForm(prev => ({ ...prev, original_price: Number(e.target.value) }))}
-                        className={adminInputBase.replace('px-3','px-4').replace('py-2','py-3').replace('rounded-2xl','rounded-xl') + ' placeholder-ios-text-secondary'}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Stock Quantity *</label>
-                    <input
-                      type="number"
-                      value={form.stock}
-                      onChange={(e) => setForm(prev => ({ ...prev, stock: Math.max(0, Number(e.target.value)) }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                        'text-white placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
-                      placeholder="1"
-                      min="0"
-                    />
-                  </div>
-                    </div>
-
-                    {/* Tier & Game Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Tier & Game</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Tier *</label>
-                    <select
-                      value={form.tier_id}
-                      onChange={(e) => setForm(prev => ({ ...prev, tier_id: e.target.value }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                        'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
-                      disabled={tiersLoading}
-                    >
-                      <option value="">Select Tier</option>
-                      {tiers.map(tier => (
-                        <option key={tier.id} value={tier.id}>
-                          {tier.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Game Title</label>
-                    <select
-                      value={form.game_title}
-                      onChange={(e) => setForm(prev => ({ ...prev, game_title: e.target.value }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                        'text-white focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
-                      disabled={gameTitlesLoading}
-                    >
-                      <option value="">
-                        {gameTitlesLoading ? 'Loading games...' : 'Select Game'}
-                      </option>
-                      {gameTitles.map(game => (
-                        <option key={game.id} value={game.id}>
-                          {game.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Account Level</label>
-                    <input
-                      type="text"
-                      value={form.account_level}
-                      onChange={(e) => setForm(prev => ({ ...prev, account_level: e.target.value }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                        'text-white placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
-                      placeholder="e.g., Level 50, Master Rank, Diamond"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Account Details</label>
-                    <textarea
-                      value={form.account_details}
-                      onChange={(e) => setForm(prev => ({ ...prev, account_details: e.target.value }))}
-                      rows={4}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                        'text-white placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                      )}
-                      placeholder="Additional account information, items included, etc."
-                    />
-                  </div>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Product Images */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Product Images</h3>
-                    <IOSImageUploader
-                      images={form.images}
-                      onChange={(images) => setForm(prev => ({ ...prev, images }))}
-                      onUpload={async (files, onProgress) => {
-                        try {
-                          const uploadedUrls = await uploadFiles(files, 'products', onProgress);
-                          return uploadedUrls;
-                        } catch (error) {
-                          console.error('Error uploading images:', error);
-                          throw error;
-                        }
-                      }}
-                      max={15}
-                      label="Product Images"
-                    />
-                  </div>
-
-                  {/* Column 3: Settings & Rental Options */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Settings & Options</h3>
-                    
-                    {/* Toggle Switches */}
-                    <div className="space-y-4">
-                      <IOSToggle
-                        checked={form.is_active}
-                        onChange={(checked) => setForm(prev => ({ ...prev, is_active: checked }))}
-                        label="Active Product"
-                        description="Uncheck to create as draft"
-                      />
-
-                      <IOSToggle
-                        checked={form.is_rental}
-                        onChange={(checked) => setForm(prev => ({ ...prev, is_rental: checked }))}
-                        label="Enable Rental Option"
-                        description="Allow customers to rent this account temporarily"
-                      />
-                    </div>
-
-                    {/* Rental Variations - 4 Rows */}
-                    {form.is_rental && (
-                      <div className="space-y-3 mt-6">
-                        <h4 className="text-sm font-semibold text-white">Rental Variations</h4>
-                        
-                        {/* Variation 1 */}
-                        <div className="p-4 bg-black rounded-xl border border-gray-700 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-white">Variation 1</h5>
-                            <span className="text-xs text-gray-200">Primary</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
-                              <input
-                                type="number"
-                                value={form.rental_duration_hours}
-                                onChange={(e) => setForm(prev => ({ ...prev, rental_duration_hours: Number(e.target.value) }))}
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
-                                placeholder="1"
-                                min="1"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
-                              <select
-                                value={form.rental_unit || 'Hours'}
-                                onChange={(e) => setForm(prev => ({ ...prev, rental_unit: e.target.value }))}
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
-                              >
-                                <option value="Hours">Hours</option>
-                                <option value="Day">Day</option>
-                                <option value="Week">Week</option>
-                                <option value="Month">Month</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Price</label>
-                              <input
-                                type="number"
-                                value={form.rental_price_per_hour}
-                                onChange={(e) => setForm(prev => ({ ...prev, rental_price_per_hour: Number(e.target.value) }))}
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500"
-                                placeholder="0"
-                                min="0"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Variation 2 */}
-                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-white">Variation 2</h5>
-                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
-                              <select
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                              >
-                                <option value="">--</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Price</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Variation 3 */}
-                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-white">Variation 3</h5>
-                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
-                              <select
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                              >
-                                <option value="">--</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Price</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Variation 4 */}
-                        <div className="p-4 bg-black/50 rounded-xl border border-gray-700/50 space-y-3 opacity-60">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-white">Variation 4</h5>
-                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Duration</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Unit</label>
-                              <select
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                              >
-                                <option value="">--</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-white mb-1">Price</label>
-                              <input
-                                type="number"
-                                disabled
-                                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-gray-900 text-gray-400"
-                                placeholder="--"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              {/* Modular Form Content */}
+              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-6">
+                  <BasicInfoSection
+                    values={{ name: form.name, description: form.description, price: form.price, original_price: form.original_price, stock: form.stock }}
+                    onChange={(patch) => setForm(prev => ({ ...prev, ...patch }))}
+                  />
+                  <TierGameSection
+                    values={{ tier_id: form.tier_id, game_title: form.game_title, account_level: form.account_level, account_details: form.account_details }}
+                    tiers={tiers}
+                    games={gameTitles}
+                    tiersLoading={tiersLoading}
+                    gamesLoading={gameTitlesLoading}
+                    onChange={(patch) => setForm(prev => ({ ...prev, ...patch }))}
+                  />
                 </div>
+                <ImagesSection
+                  images={form.images}
+                  onChange={(images)=> setForm(prev => ({ ...prev, images }))}
+                  onUpload={(files, onProgress) => uploadFiles(files, 'products', onProgress)}
+                />
+                <SettingsRentalSection
+                  values={{ is_active: form.is_active, is_rental: form.is_rental, rental_duration_hours: form.rental_duration_hours, rental_unit: form.rental_unit, rental_price_per_hour: form.rental_price_per_hour, rental_deposit: form.rental_deposit }}
+                  onChange={(patch)=> setForm(prev => ({ ...prev, ...patch }))}
+                />
               </div>
 
               {/* Form Actions */}
@@ -964,6 +721,6 @@ export const AdminProductsManagement: React.FC = () => {
           </IOSCard>
         </div>
       )}
-    </div>
+    </DashboardSection>
   );
 };

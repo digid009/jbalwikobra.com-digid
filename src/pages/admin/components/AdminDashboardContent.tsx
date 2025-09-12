@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, BarChart, Package, TrendingDown } from 'lucide-react';
 import { adminService, AdminNotification, OrderDayStat, TopProductStat } from '../../../services/adminService';
+import { DashboardMetricsOverview } from './DashboardMetricsOverview';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { adminCache } from '../../../services/adminCache';
@@ -112,6 +113,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
 
   return (
     <div className="space-y-8">
+      <DashboardMetricsOverview onRefresh={onRefreshStats} />
       <DashboardSection title="Recent Activity" subtitle="Latest updates from your store" dense>
         <DataPanel>
           <div className="flex items-center justify-between mb-6">
@@ -401,7 +403,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                            animationDelay: `${index * 150}ms`,
                            animation: 'slideInLeft 0.6s ease-out forwards'
                          }}>
-                      <div className="product-card flex items-center justify-between p-3 rounded-xl hover:bg-black/30 transition-all duration-200 gradient-overlay">
+                      <div className="product-card gradient-overlay flex items-center justify-between p-3 rounded-xl transition-all duration-200">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-ios-primary/10 to-ios-primary/5 rounded-xl flex items-center justify-center border border-ios-primary/10 text-sm font-bold text-ios-primary">
                             #{index + 1}

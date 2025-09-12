@@ -1,22 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Menu, 
-  X, 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  MessageSquare, 
-  Image, 
-  Zap, 
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Home
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell } from 'lucide-react';
 import { AdminStats, adminService } from '../../services/adminService';
-import { AdminStatsOverview } from './components/AdminStatsOverview';
+import { DashboardMetricsOverview } from './components/DashboardMetricsOverview';
 import { AdminDashboardContent } from './components/AdminDashboardContent';
 import { AdminOrdersManagement } from './components/AdminOrdersManagement';
 import { AdminUsersManagement } from './components/AdminUsersManagement';
@@ -25,87 +10,18 @@ import { AdminFeedManagement } from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
-import { AdminOverview } from './components/AdminOverview';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
-import { IOSCard, IOSButton, IOSSectionHeader } from '../../components/ios/IOSDesignSystem';
+import { IOSButton } from '../../components/ios/IOSDesignSystem';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../styles/standardClasses';
-
-export type AdminTab = 
-  | 'overview'
-  | 'dashboard' 
-  | 'orders' 
-  | 'users' 
-  | 'products' 
-  | 'feed' 
-  | 'banners' 
-  | 'flash-sales' 
-  | 'reviews';
-
-interface NavigationItem {
-  id: AdminTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: keyof AdminStats | null;
-}
-
-const navigationItems: NavigationItem[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: Home,
-    badge: null,
-  },
-  {
-    id: 'dashboard',
-    label: 'Analytics',
-    icon: LayoutDashboard,
-    badge: null,
-  },
-  {
-    id: 'orders',
-    label: 'Orders',
-    icon: ShoppingCart,
-    badge: 'pendingOrders',
-  },
-  {
-    id: 'users',
-    label: 'Users',
-    icon: Users,
-    badge: 'totalUsers',
-  },
-  {
-    id: 'products',
-    label: 'Products',
-    icon: Package,
-    badge: 'totalProducts',
-  },
-  {
-    id: 'feed',
-    label: 'Feed Posts',
-    icon: MessageSquare,
-    badge: null,
-  },
-  {
-    id: 'banners',
-    label: 'Banners',
-    icon: Image,
-    badge: null,
-  },
-  {
-    id: 'flash-sales',
-    label: 'Flash Sales',
-    icon: Zap,
-    badge: null,
-  },
-  {
-    id: 'reviews',
-    label: 'Reviews',
-    icon: Star,
-    badge: 'totalReviews',
-  },
-];
+import { 
+  AdminSidebar, 
+  AdminMobileHeader, 
+  AdminMobileMenu, 
+  navigationItems,
+  AdminTab 
+} from './components/structure';
 
 const ModernAdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -136,11 +52,6 @@ const ModernAdminDashboard: React.FC = () => {
     }
   };
 
-  const sidebarWidth = useMemo(() => {
-    if (sidebarCollapsed) return 'w-16';
-    return 'w-64';
-  }, [sidebarCollapsed]);
-
   const renderContent = () => {
     // Add diagnostic page for development
     if (window.location.search.includes('diagnostic')) {
@@ -148,12 +59,10 @@ const ModernAdminDashboard: React.FC = () => {
     }
 
     switch (activeTab) {
-      case 'overview':
-        return <AdminOverview onNavigate={(section) => setActiveTab(section as AdminTab)} />;
       case 'dashboard':
         return (
           <>
-            <AdminStatsOverview stats={stats} loading={loading} />
+            <DashboardMetricsOverview onRefresh={loadStats} />
             <AdminDashboardContent onRefreshStats={loadStats} />
           </>
         );
@@ -172,243 +81,58 @@ const ModernAdminDashboard: React.FC = () => {
       case 'reviews':
         return <AdminReviewsManagement />;
       default:
-        return <AdminOverview onNavigate={(section) => setActiveTab(section as AdminTab)} />;
+        return <DashboardMetricsOverview onRefresh={loadStats} />;
     }
   };
 
-  const getBadgeValue = (badge: keyof AdminStats | null) => {
-    if (!badge || !stats) return null;
-    const value = stats[badge];
-    return typeof value === 'number' && value > 0 ? value : null;
-  };
-
   return (
-    <div className="min-h-screen bg-ios-background">
-      {/* Global RLS Diagnostics */}
-      <RLSDiagnosticsBanner 
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black">
+      <RLSDiagnosticsBanner
         hasErrors={hasStatsError}
         errorMessage={statsErrorMessage}
         statsLoaded={!loading}
       />
+      <AdminMobileHeader onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
-      {/* Enhanced Sticky Mobile Header */}
-      <div className="lg:hidden bg-black/95 backdrop-blur-md border-b border-gray-700/30 sticky top-0 z-50 shadow-lg">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-3">
-            <IOSButton
-              variant="ghost"
-              size="small"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-3 rounded-full hover:bg-pink-600/20"
-            >
-              <Menu className="w-6 h-6 text-pink-600" />
-            </IOSButton>
-            <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
-          </div>
-          <IOSButton
-            variant="ghost"
-            size="small"
-            className="p-3 rounded-full hover:bg-pink-600/20"
-          >
-            <Bell className="w-6 h-6 text-pink-600" />
-          </IOSButton>
-        </div>
-      </div>
-
-      <div className="flex">
-        {/* Enhanced Sticky Desktop Sidebar */}
-        <div className={cn(
-          'hidden lg:flex flex-col transition-all duration-300 ease-in-out',
-          sidebarWidth,
-          'bg-black/95 backdrop-blur-md border-r border-gray-700/30 sticky top-0 h-screen overflow-y-auto shadow-xl'
-        )}>
-          <div className="p-6">
-            {/* Enhanced Logo/Title with larger fonts */}
-            <div className="flex items-center justify-between mb-8">
-              {!sidebarCollapsed && (
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <LayoutDashboard className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-white">JB Alwikobra</h1>
-                    <p className="text-sm font-medium text-white-secondary">Admin Panel</p>
-                  </div>
-                </div>
-              )}
-              <IOSButton
-                variant="ghost"
-                size="small"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-3 rounded-full hover:bg-pink-600/20"
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight className="w-5 h-5 text-pink-600" />
-                ) : (
-                  <ChevronLeft className="w-5 h-5 text-pink-600" />
-                )}
-              </IOSButton>
-            </div>
-
-            {/* Enhanced Navigation with iOS styling */}
-            <nav className="space-y-2">
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const badgeValue = getBadgeValue(item.badge);
-                const isActive = activeTab === item.id;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={cn(
-                      'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
-                      isActive
-                        ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/25 transform scale-[1.02]'
-                        : 'text-white hover:bg-pink-600/20 hover:text-pink-600 hover:transform hover:scale-[1.01] hover:shadow-md',
-                      sidebarCollapsed && 'justify-center px-4'
-                    )}
-                  >
-                    <Icon className={cn(
-                      'w-6 h-6 flex-shrink-0 transition-colors duration-200',
-                      isActive ? 'text-white' : 'text-pink-500'
-                    )} />
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="text-base font-medium">{item.label}</span>
-                        {badgeValue && (
-                          <span className={cn(
-                            'ml-auto px-3 py-1 text-sm font-bold rounded-full',
-                            isActive 
-                              ? 'bg-gray-900/30 text-white' 
-                              : 'bg-pink-500 text-white'
-                          )}>
-                            {badgeValue > 99 ? '99+' : badgeValue}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Sidebar Footer with larger text */}
-            {!sidebarCollapsed && (
-              <div className="mt-8 pt-6 border-t border-gray-700/30">
-                <div className="text-sm font-medium text-white-secondary text-center">
-                  Version 2.1.9
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Enhanced iOS-style Mobile Sidebar */}
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <div className="absolute left-0 top-0 bottom-0 w-80 bg-black/95 backdrop-blur-md shadow-2xl border-r border-gray-700/30">
-              <div className="p-4">
-                {/* Mobile Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <LayoutDashboard className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold text-white">JB Alwikobra</h1>
-                      <p className="text-sm font-medium text-white-secondary">Admin Panel</p>
-                    </div>
-                  </div>
-                  <IOSButton
-                    variant="ghost"
-                    size="small"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 rounded-full"
-                  >
-                    <X className="w-5 h-5 text-white-secondary" />
-                  </IOSButton>
-                </div>
-
-                {/* Mobile Navigation */}
-                <nav className="space-y-2">
-                  {navigationItems.map((item) => {
-                    const Icon = item.icon;
-                    const badgeValue = getBadgeValue(item.badge);
-                    const isActive = activeTab === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={cn(
-                          'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
-                          isActive
-                            ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg'
-                            : 'text-white hover:bg-pink-600/20 hover:text-pink-600 hover:shadow-md'
-                        )}
-                      >
-                        <Icon className="w-6 h-6 text-pink-500" />
-                        <span className="text-base font-medium">{item.label}</span>
-                        {badgeValue && (
-                          <span className={cn(
-                            'ml-auto px-3 py-1 text-sm font-bold rounded-full',
-                            isActive 
-                              ? 'bg-gray-900/30 text-white' 
-                              : 'bg-pink-500 text-white'
-                          )}>
-                            {badgeValue > 99 ? '99+' : badgeValue}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </nav>
-
-                {/* Mobile Footer */}
-                <div className="mt-8 pt-6 border-t border-gray-700/30">
-                  <div className="text-sm font-medium text-white-secondary text-center">
-                    Version 2.1.9
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="flex">;
+        <AdminSidebar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          version="2.2.0"
+        />
+        <AdminMobileMenu
+          open={isMobileMenuOpen}
+          activeTab={activeTab}
+          onClose={() => setIsMobileMenuOpen(false)}
+          onSelect={setActiveTab}
+        />
 
         {/* Enhanced Main Content Area */}
-        <div className="flex-1 min-w-0 bg-ios-background">
+        <div className="flex-1 min-w-0 bg-gradient-to-br from-black via-gray-950 to-black">
           {/* Enhanced Sticky Content Header */}
-          <div className="hidden lg:block sticky top-0 z-10 bg-ios-background/95 backdrop-blur-md border-b border-gray-700/20 shadow-sm">
+          <div className="hidden lg:block sticky top-0 z-10 bg-gradient-to-r from-black/95 via-gray-950/95 to-black/95 backdrop-blur-md border-b border-pink-500/20 shadow-xl shadow-pink-500/10">
             <div className="px-8 py-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-white">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
                     {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                   </h1>
-                  <p className="text-lg text-white-secondary mt-2 font-medium">
+                  <p className="text-lg text-pink-200/80 mt-2 font-medium">
                     Manage your {activeTab === 'dashboard' ? 'business overview' : activeTab.replace('-', ' ')}
                   </p>
                 </div>
                 <IOSButton
                   variant="ghost"
                   size="small"
-                  className="p-3 rounded-full hover:bg-pink-600/20"
+                  className="p-3 rounded-2xl hover:bg-pink-500/20 border border-pink-500/30 hover:border-pink-500/50 transition-all duration-200"
                 >
-                  <Bell className="w-6 h-6 text-pink-600" />
+                  <Bell className="w-6 h-6 text-pink-500" />
                 </IOSButton>
               </div>
             </div>
-          </div>
-
-          {/* Main Content with larger padding */}
+          </div>          {/* Main Content with larger padding */}
           <main className="p-8 lg:p-10">
             <div className="max-w-7xl mx-auto">
               {renderContent()}

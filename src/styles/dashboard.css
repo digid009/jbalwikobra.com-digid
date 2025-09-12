@@ -1,3 +1,4 @@
+@import './dashboard-animations.css';
 /* Core Dashboard Layout & Primitives */
 :root {
   --dash-gutter-x: clamp(1rem, 2vw, 2.25rem);
@@ -63,6 +64,10 @@ html:not(.dark) {
 .grad-accent-fade { background:linear-gradient(90deg, rgba(236,72,153,0.18), rgba(236,72,153,0)); }
 .grad-surface-sheen { background:linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0)); }
 .dark .grad-surface-sheen { background:linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
+/* New gradient tokens migrated from AdminDashboardContent.css */
+.grad-card-hover { background:linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1)); }
+.grad-sweep-overlay { background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); }
+.grad-shimmer { background:linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.5) 50%, transparent 75%); background-size:200% 100%; }
 
 /* Header enhancements */
 .dashboard-header { backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); background:linear-gradient(to right, rgba(0,0,0,0.85), rgba(0,0,0,0.8)); border-bottom:1px solid rgba(255,255,255,0.07); }

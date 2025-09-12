@@ -1,0 +1,47 @@
+// Metrics utility functions and data formatting
+import { AdminStats } from '../../../../services/adminService';
+
+export const defaultStats: AdminStats = {
+  totalOrders: 0,
+  totalRevenue: 0,
+  totalUsers: 0,
+  totalProducts: 0,
+  totalReviews: 0,
+  averageRating: 0,
+  pendingOrders: 0,
+  completedOrders: 0
+};
+
+export const formatMetrics = (stats: AdminStats) => ({
+  revenue: {
+    formatted: 'Rp ' + (stats?.totalRevenue ?? 0).toLocaleString(),
+    subtitle: `${stats.completedOrders} completed orders`
+  },
+  orders: {
+    formatted: stats.totalOrders.toLocaleString(),
+    subtitle: `${stats.pendingOrders} pending`
+  },
+  users: {
+    formatted: stats.totalUsers.toLocaleString(),
+    subtitle: 'registered users'
+  },
+  products: {
+    formatted: stats.totalProducts.toLocaleString(),
+    subtitle: 'active products'
+  },
+  reviews: {
+    formatted: stats.totalReviews.toLocaleString(),
+    subtitle: stats?.averageRating ? `${stats.averageRating.toFixed(1)}/5 avg rating` : 'No reviews yet'
+  }
+});
+
+export const getMetricAccentColor = (type: string) => {
+  const colors = {
+    revenue: 'from-emerald-500/30 via-emerald-600/20 to-green-500/10',
+    orders: 'from-blue-500/30 via-blue-600/20 to-cyan-500/10', 
+    users: 'from-pink-500/30 via-pink-600/20 to-fuchsia-600/10',
+    products: 'from-violet-500/30 via-purple-600/20 to-indigo-500/10',
+    reviews: 'from-yellow-500/30 via-amber-600/20 to-orange-500/10'
+  };
+  return colors[type as keyof typeof colors] || colors.users;
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Package, 
@@ -17,7 +17,6 @@ import { AdminStats } from '../../../services/adminService';
 import { cn } from '../../../styles/standardClasses';
 
 export type AdminTab = 
-  | 'overview' 
   | 'dashboard' 
   | 'orders' 
   | 'users' 
@@ -35,7 +34,6 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { id: 'overview', label: 'Overview', icon: BarChart3, badge: null },
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, badge: null },
   { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: 'totalOrders' },
   { id: 'users', label: 'Users', icon: Users, badge: 'totalUsers' },
@@ -62,6 +60,25 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) => {
+  const [dispatchOpenEvent] = useState(() => () => {
+    window.dispatchEvent(new CustomEvent('open-command-palette'));
+  });
+
+  useEffect(() => {
+    const handler = () => dispatchOpenEvent();
+    const keyHandler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        dispatchOpenEvent();
+      }
+    };
+    window.addEventListener('open-command-palette', handler as EventListener);
+    window.addEventListener('keydown', keyHandler);
+    return () => {
+      window.removeEventListener('open-command-palette', handler as EventListener);
+      window.removeEventListener('keydown', keyHandler);
+    };
+  }, [dispatchOpenEvent]);
   
   const getBadgeValue = (badge: keyof AdminStats | null) => {
     if (!badge || !stats) return null;
@@ -82,6 +99,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               </div>
               <button
                 type="button"
+                onClick={dispatchOpenEvent}
                 className="command-button hidden md:inline-flex"
                 aria-label="Open command palette"
               >
@@ -128,7 +146,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
             {/* Right: Theme Toggle & Mobile Menu */}
             <div className="flex items-center space-x-3">
-              <ThemeToggle size="medium" />
+              <ThemeToggle size="small" className="!h-8 !w-8" />
               
               {/* Mobile menu button */}
               <IOSButton

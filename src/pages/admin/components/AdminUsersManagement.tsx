@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Users as UsersIcon, Plus } from 'lucide-react';
 import { adminService, User } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination, IOSAvatar } from '../../../components/ios/IOSDesignSystem';
+import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../styles/standardClasses';
 
@@ -46,28 +47,27 @@ export const AdminUsersManagement: React.FC = () => {
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+    <DashboardSection>
       <RLSDiagnosticsBanner 
         hasErrors={hasErrors}
         errorMessage={errorMessage}
         statsLoaded={!loading}
       />
-      
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <IOSSectionHeader title="Users Management" subtitle="Manage all registered users" />
         <div className="flex items-center space-x-2">
-          <IOSButton onClick={loadUsers} className="flex items-center space-x-2">
-            <RefreshCw className="w-4 h-4" />
+          <IOSButton onClick={loadUsers} className="flex items-center space-x-2" aria-label="Refresh users list">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </IOSButton>
-          <IOSButton variant="primary" className="flex items-center space-x-2">
+          <IOSButton variant="primary" className="flex items-center space-x-2" aria-label="Add user">
             <Plus className="w-4 h-4" />
             <span>Add User</span>
           </IOSButton>
         </div>
       </div>
 
-      <IOSCard variant="elevated" padding="medium">
+      <DataPanel padded>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
           <input
@@ -80,11 +80,12 @@ export const AdminUsersManagement: React.FC = () => {
               'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
               'focus:ring-2 focus:ring-ios-accent focus:border-pink-500'
             )}
+            aria-label="Search users"
           />
         </div>
-      </IOSCard>
+      </DataPanel>
 
-      <IOSCard variant="elevated" padding="none">
+      <DataPanel>
         {loading ? (
           <div className="p-12 text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
@@ -92,31 +93,19 @@ export const AdminUsersManagement: React.FC = () => {
           </div>
         ) : filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={cn(
-                'bg-black border-b border-gray-700'
-              )}>
+            <table className="w-full" role="table" aria-label="Users table">
+              <thead className={cn('bg-black border-b border-gray-700')}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Joined
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Status
-                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">User</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">Phone</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">Joined</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ios-border">
+              <tbody className="divide-y divide-ios-border" role="rowgroup">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-black transition-colors duration-200">
+                  <tr key={user.id} className="hover:bg-black transition-colors duration-200" role="row">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <IOSAvatar user={user} size="medium" />
@@ -156,7 +145,6 @@ export const AdminUsersManagement: React.FC = () => {
             <p className="text-gray-200/70 text-sm">Try adjusting your search criteria</p>
           </div>
         )}
-
         <IOSPagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -166,7 +154,7 @@ export const AdminUsersManagement: React.FC = () => {
           showItemsPerPageSelector={true}
           onItemsPerPageChange={setItemsPerPage}
         />
-      </IOSCard>
-    </div>
+      </DataPanel>
+    </DashboardSection>
   );
 };

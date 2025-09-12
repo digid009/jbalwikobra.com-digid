@@ -1,1 +1,1 @@
-export { default } from './ModernAdminDashboardNew';
+export { default } from './ModernAdminDashboard';
