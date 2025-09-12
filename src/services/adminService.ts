@@ -800,6 +800,42 @@ export const adminService = {
     });
   },
 
+  async createFlashSale(flashSaleData: {
+    product_id: string;
+    original_price: number;
+    sale_price: number;
+    discount_percentage: number;
+    start_time: string;
+    end_time: string;
+    is_active: boolean;
+  }): Promise<FlashSale> {
+    const { data, error } = await supabase
+      .from('flash_sales')
+      .insert([{
+        product_id: flashSaleData.product_id,
+        original_price: flashSaleData.original_price,
+        sale_price: flashSaleData.sale_price,
+        discount_percentage: flashSaleData.discount_percentage,
+        start_time: flashSaleData.start_time,
+        end_time: flashSaleData.end_time,
+        is_active: flashSaleData.is_active,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select(`
+        *,
+        products(name, price, image)
+      `)
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache after creating
+    adminCache.clear();
+    
+    return data;
+  },
+
   async getBanners(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Banner>> {
     return adminCache.getOrFetch(`admin:banners:${page}:${limit}`, async () => {
       const { data, error, count } = await supabase

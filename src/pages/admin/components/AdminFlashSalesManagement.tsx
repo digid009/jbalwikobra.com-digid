@@ -5,6 +5,7 @@ import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IO
 import { IOSPagination } from '../../../components/ios/IOSPagination';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../styles/standardClasses';
+import { supabase } from '../../../services/supabase';
 
 interface AdminFlashSalesManagementProps {
   onRefresh?: () => void;
@@ -22,9 +23,45 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   const [showCreateForm, setShowCreateForm] = useState(false);
   const itemsPerPage = 10;
 
+  // Products data for selection
+  const [products, setProducts] = useState<Array<{id: string, name: string, price: number}>>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  // Flash Sale Form state
+  const [formData, setFormData] = useState({
+    product_id: '',
+    discount_type: 'percentage', // 'percentage' or 'fixed'
+    discount_value: 0, // percentage (0-100) or fixed amount
+    start_date: '',
+    start_time: '',
+    end_date: '',
+    end_time: ''
+  });
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     loadFlashSales();
+    loadProducts();
   }, [currentPage, searchTerm, statusFilter, discountFilter]);
+
+  const loadProducts = async () => {
+    try {
+      setProductsLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   const loadFlashSales = async () => {
     try {
@@ -39,6 +76,95 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateFlashSale = async () => {
+    if (!formData.product_id) {
+      setError('Please select a product');
+      return;
+    }
+
+    if (!formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time) {
+      setError('Please set start and end date/times');
+      return;
+    }
+
+    if (formData.discount_value <= 0) {
+      setError('Discount value must be greater than 0');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const selectedProduct = products.find(p => p.id === formData.product_id);
+      if (!selectedProduct) {
+        setError('Selected product not found');
+        return;
+      }
+
+      // Calculate sale price based on discount type
+      let salePrice = 0;
+      let discountPercentage = 0;
+
+      if (formData.discount_type === 'percentage') {
+        discountPercentage = formData.discount_value;
+        salePrice = selectedProduct.price * (1 - formData.discount_value / 100);
+      } else {
+        salePrice = selectedProduct.price - formData.discount_value;
+        discountPercentage = (formData.discount_value / selectedProduct.price) * 100;
+      }
+
+      // Combine date and time
+      const startDateTime = `${formData.start_date}T${formData.start_time}:00.000Z`;
+      const endDateTime = `${formData.end_date}T${formData.end_time}:00.000Z`;
+      
+      const flashSaleData = {
+        product_id: formData.product_id,
+        original_price: selectedProduct.price,
+        sale_price: Math.round(salePrice),
+        discount_percentage: Math.round(discountPercentage),
+        start_time: startDateTime,
+        end_time: endDateTime,
+        is_active: true
+      };
+
+      await adminService.createFlashSale(flashSaleData);
+      
+      // Reset form and reload data
+      setFormData({
+        product_id: '',
+        discount_type: 'percentage',
+        discount_value: 0,
+        start_date: '',
+        start_time: '',
+        end_date: '',
+        end_time: ''
+      });
+      setShowCreateForm(false);
+      await loadFlashSales();
+      
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error creating flash sale:', error);
+      setError(error instanceof Error ? error.message : 'Failed to create flash sale');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      product_id: '',
+      discount_type: 'percentage',
+      discount_value: 0,
+      start_date: '',
+      start_time: '',
+      end_date: '',
+      end_time: ''
+    });
+    setError(null);
   };
 
   const getStatusInfo = (sale: FlashSale) => {
@@ -195,73 +321,220 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
         </div>
       </IOSCard>
 
-      {/* Create Flash Sale Form */}
+      {/* Create Flash Sale Modal Form */}
       {showCreateForm && (
-        <IOSCard variant="elevated" padding="large">
-          <h3 className="text-lg font-semibold text-ios-text mb-4">Create New Flash Sale</h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Product ID</label>
-                <input
-                  type="text"
-                  placeholder="Enter product ID"
-                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Sale Price</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">Start Time</label>
-                <input
-                  type="datetime-local"
-                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-ios-text mb-2">End Time</label>
-                <input
-                  type="datetime-local"
-                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  className="rounded border-ios-border text-ios-primary focus:ring-ios-primary"
-                />
-                <span className="text-sm text-ios-text">Active</span>
-              </label>
-            </div>
-            <div className="flex space-x-3">
-              <IOSButton
-                variant="primary"
-                onClick={() => {
-                  // TODO: Implement create flash sale logic
-                  setShowCreateForm(false);
-                }}
-              >
-                Create Flash Sale
-              </IOSButton>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <IOSCard variant="elevated" padding="large" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-ios-text">Create New Flash Sale</h3>
               <IOSButton
                 variant="ghost"
-                onClick={() => setShowCreateForm(false)}
+                size="small"
+                onClick={() => {
+                  setShowCreateForm(false);
+                  resetForm();
+                }}
               >
-                Cancel
+                <X className="w-5 h-5" />
               </IOSButton>
             </div>
-          </div>
-        </IOSCard>
+
+            {error && (
+              <div className="mb-4 p-3 bg-ios-error/10 border border-ios-error/20 rounded-xl">
+                <p className="text-sm text-ios-error">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* Product Selection */}
+              <div>
+                <label className="block text-sm font-medium text-ios-text mb-2">
+                  Active Product <span className="text-ios-error">*</span>
+                </label>
+                <select
+                  value={formData.product_id}
+                  onChange={(e) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      product_id: e.target.value
+                    }));
+                  }}
+                  className={cn(
+                    'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                    'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                  )}
+                  disabled={productsLoading}
+                >
+                  <option value="">
+                    {productsLoading ? 'Loading products...' : 'Select a product'}
+                  </option>
+                  {products.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Current Price (View Only) */}
+              {formData.product_id && (
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">Current Price</label>
+                  <div className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface/50 text-ios-text">
+                    Rp {products.find(p => p.id === formData.product_id)?.price.toLocaleString() || '0'}
+                  </div>
+                </div>
+              )}
+
+              {/* Discount Type Toggle & Value */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    Discount Type <span className="text-ios-error">*</span>
+                  </label>
+                  <div className="flex space-x-2">
+                    <IOSButton
+                      variant={formData.discount_type === 'percentage' ? 'primary' : 'ghost'}
+                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'percentage', discount_value: 0 }))}
+                      className="flex-1"
+                    >
+                      Percentage
+                    </IOSButton>
+                    <IOSButton
+                      variant={formData.discount_type === 'fixed' ? 'primary' : 'ghost'}
+                      onClick={() => setFormData(prev => ({ ...prev, discount_type: 'fixed', discount_value: 0 }))}
+                      className="flex-1"
+                    >
+                      Fixed Price
+                    </IOSButton>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    {formData.discount_type === 'percentage' ? 'Discount Percentage' : 'Discount Amount'} <span className="text-ios-error">*</span>
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      value={formData.discount_value}
+                      onChange={(e) => setFormData(prev => ({ ...prev, discount_value: Number(e.target.value) }))}
+                      placeholder="0"
+                      min="0"
+                      max={formData.discount_type === 'percentage' ? 100 : undefined}
+                      className={cn(
+                        'flex-1 px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                    />
+                    <span className="text-ios-text-secondary px-2">
+                      {formData.discount_type === 'percentage' ? '%' : 'IDR'}
+                    </span>
+                  </div>
+                  {formData.product_id && formData.discount_value > 0 && (
+                    <p className="mt-2 text-sm text-ios-text-secondary">
+                      Final Price: Rp {
+                        (() => {
+                          const originalPrice = products.find(p => p.id === formData.product_id)?.price || 0;
+                          const finalPrice = formData.discount_type === 'percentage' 
+                            ? originalPrice * (1 - formData.discount_value / 100)
+                            : originalPrice - formData.discount_value;
+                          return Math.max(0, finalPrice).toLocaleString();
+                        })()
+                      }
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Start Date & Time */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    Start Date <span className="text-ios-error">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    className={cn(
+                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    Start Time <span className="text-ios-error">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                    className={cn(
+                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* End Date & Time */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    End Date <span className="text-ios-error">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                    className={cn(
+                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ios-text mb-2">
+                    End Time <span className="text-ios-error">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                    className={cn(
+                      'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                      'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex space-x-3 pt-4 border-t border-ios-border">
+                <IOSButton
+                  variant="primary"
+                  onClick={handleCreateFlashSale}
+                  disabled={saving || !formData.product_id || !formData.start_date || !formData.start_time || !formData.end_date || !formData.end_time || formData.discount_value <= 0}
+                  className="flex-1"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </IOSButton>
+                <IOSButton
+                  variant="ghost"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    resetForm();
+                  }}
+                  disabled={saving}
+                >
+                  Cancel
+                </IOSButton>
+              </div>
+            </div>
+          </IOSCard>
+        </div>
       )}
 
       {/* Flash Sales Table */}
