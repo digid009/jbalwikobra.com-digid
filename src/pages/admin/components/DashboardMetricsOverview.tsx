@@ -3,7 +3,7 @@ import { adminService } from '../../../services/adminService';
 import { IOSButton } from '../../../components/ios/IOSDesignSystem';
 import { RotateCcw } from 'lucide-react';
 import { cn } from '../../../styles/standardClasses';
-import { MetricsGrid, defaultStats } from './metrics';
+import { MetricsGrid, defaultStats } from './metrics/index';
 
 export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => {
   const [stats, setStats] = useState(() => ({ ...defaultStats }));

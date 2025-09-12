@@ -131,43 +131,51 @@ const AdminOrders: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Orders</h1>
-          <p className="text-gray-400">Pantau pesanan guest/user dan tindak lanjuti</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="space-y-8 p-8">
+        {/* Modern Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+              Orders Management
+            </h1>
+            <p className="text-gray-400 font-medium">
+              Monitor customer orders and manage fulfillment
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Advanced Filters */}
-      <div className="bg-black/60 border border-pink-500/30 rounded-xl p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} className="text-pink-400" />
-          <h3 className="text-lg font-semibold text-white">Filter Pesanan</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Cari</label>
-            <input
-              type="text"
-              placeholder="ID, nama, email, telepon..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
-            />
+        {/* Modern Filters */}
+        <div className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-pink-500/10 rounded-xl flex items-center justify-center">
+              <Filter size={18} className="text-pink-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Filter Orders</h3>
           </div>
           
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-            <select 
-              value={statusFilter} 
-              onChange={e=>setStatusFilter(e.target.value as any)} 
-              className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="all">Semua Status</option>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Search */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Search</label>
+              <input
+                type="text"
+                placeholder="ID, name, email, phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Status</label>
+              <select 
+                value={statusFilter} 
+                onChange={e=>setStatusFilter(e.target.value as any)} 
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+              >
+                <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
               <option value="completed">Completed</option>
@@ -273,6 +281,7 @@ const AdminOrders: React.FC = () => {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

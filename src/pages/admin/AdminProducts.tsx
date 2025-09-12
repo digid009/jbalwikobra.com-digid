@@ -362,99 +362,112 @@ const AdminProducts: React.FC = () => {
   // Diagnostics helpers removed from cleaned admin page
 
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
-      <RLSDiagnosticsBanner 
-        hasErrors={hasErrors}
-        errorMessage={errorMessage}
-        statsLoaded={!loading}
-      />
-      
-      <div className="flex items-center justify-between">
-        <IOSSectionHeader title="Produk" subtitle="Kelola daftar produk" />
-        <IOSButton onClick={startCreate} variant="primary" className="flex items-center space-x-2">
-          <span>Tambah Produk</span>
-        </IOSButton>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="space-y-8 p-8">
+        <RLSDiagnosticsBanner 
+          hasErrors={hasErrors}
+          errorMessage={errorMessage}
+          statsLoaded={!loading}
+        />
+        
+        {/* Modern Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+              Products Management
+            </h1>
+            <p className="text-gray-400 font-medium">
+              Manage your product catalog and inventory
+            </p>
+          </div>
+          <IOSButton 
+            onClick={startCreate} 
+            variant="primary" 
+            className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25"
+          >
+            <span>Add Product</span>
+          </IOSButton>
+        </div>
 
-      {!showForm && (
-        <>
-          {/* Filters and Search */}
-          <IOSCard variant="elevated" padding="large">
-            <div className={standardClasses.grid.responsiveAdmin}>
-              {/* Search */}
-              <div>
-                <label className="block text-sm font-semibold text-ios-text mb-2">Cari Produk</label>
-                <input
-                  type="text"
-                  placeholder="Nama, deskripsi, level..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={cn(standardClasses.input.base, 'w-full')}
-                />
+        {!showForm && (
+          <>
+            {/* Modern Filters and Search */}
+            <div className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Search */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Search Products</label>
+                  <input
+                    type="text"
+                    placeholder="Name, description, level..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+                  />
+                </div>
+                
+                {/* Game Filter */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Filter by Game</label>
+                  <select
+                    value={selectedGame}
+                    onChange={(e) => setSelectedGame(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+                  >
+                    <option value="">All Games</option>
+                    {games.map(game => (
+                      <option key={game.id} value={game.id}>{game.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Tier Filter */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Filter by Tier</label>
+                  <select
+                    value={selectedTier}
+                    onChange={(e) => setSelectedTier(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+                  >
+                    <option value="">All Tiers</option>
+                    {tiers.map(tier => (
+                      <option key={tier.id} value={tier.id}>{tier.name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
+                  >
+                    <option value="all">All</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
               </div>
               
-              {/* Game Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-ios-text mb-2">Filter Game</label>
-                <select
-                  value={selectedGame}
-                  onChange={(e) => setSelectedGame(e.target.value)}
-                  className={cn(standardClasses.input.base, 'w-full')}
-                >
-                  <option value="">Semua Game</option>
-                  {games.map(game => (
-                    <option key={game.id} value={game.id}>{game.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Tier Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-ios-text mb-2">Filter Tier</label>
-                <select
-                  value={selectedTier}
-                  onChange={(e) => setSelectedTier(e.target.value)}
-                  className={cn(standardClasses.input.base, 'w-full')}
-                >
-                  <option value="">Semua Tier</option>
-                  {tiers.map(tier => (
-                    <option key={tier.id} value={tier.id}>{tier.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-semibold text-ios-text mb-2">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className={cn(standardClasses.input.base, 'w-full')}
-                >
-                  <option value="all">Semua</option>
-                  <option value="active">Aktif</option>
-                  <option value="archived">Diarsipkan</option>
-                </select>
+              {/* Results Info */}
+              <div className="flex justify-between items-center pt-6 border-t border-gray-700/50">
+                <div className="text-sm text-gray-400">
+                  Showing {paginatedProducts.length} of {filteredProducts.length} products
+                  {filteredProducts.length !== products.length && ` (filtered from ${products.length} total)`}
+                </div>
               </div>
             </div>
-            
-            {/* Results Info and Items Per Page */}
-            <div className={cn(standardClasses.flex.colGap4, 'sm:flex-row justify-between items-start sm:items-center pt-6 border-t border-ios-border')}>
-              <div className="text-sm text-ios-text-secondary">
-                Menampilkan {paginatedProducts.length} dari {filteredProducts.length} produk
-                {filteredProducts.length !== products.length && ` (difilter dari ${products.length} total)`}
-              </div>
-            </div>
-          </IOSCard>
 
-          {/* Product List */}
-          <IOSCard variant="elevated" padding="none">
-            <div className="grid grid-cols-12 text-xs font-semibold uppercase text-ios-text-secondary px-6 py-4 border-b border-ios-border bg-ios-surface">
-              <div className="col-span-5">Nama</div>
-              <div className="col-span-2">Game</div>
-              <div className="col-span-2">Harga</div>
-              <div className="col-span-3 text-right">Aksi</div>
-            </div>
+            {/* Modern Product List */}
+            <div className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
+              <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-400 px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
+                <div className="col-span-5">Product Name</div>
+                <div className="col-span-2">Game</div>
+                <div className="col-span-2">Price</div>
+                <div className="col-span-3 text-right">Actions</div>
+              </div>
             {loading ? (
               <div className="p-12 text-center">
                 <div className="w-8 h-8 border-2 border-ios-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -565,9 +578,9 @@ const AdminProducts: React.FC = () => {
               showItemsPerPageSelector={true}
               onItemsPerPageChange={setItemsPerPage}
             />
-          </IOSCard>
-        </>
-      )}
+            </div>
+          </>
+        )}
 
       {showForm && (
         <IOSCard variant="elevated" padding="large"
@@ -718,6 +731,7 @@ const AdminProducts: React.FC = () => {
           </div>
         </IOSCard>
       )}
+      </div>
     </div>
   );
 };
