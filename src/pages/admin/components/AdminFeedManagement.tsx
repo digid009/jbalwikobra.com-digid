@@ -93,6 +93,7 @@ export const AdminFeedManagement: React.FC = () => {
           <IOSButton 
             variant="primary" 
             className="flex items-center space-x-2"
+            onClick={() => window.location.href = '/admin/posts'}
           >
             <Plus className="w-4 h-4" />
             <span>Add Post</span>

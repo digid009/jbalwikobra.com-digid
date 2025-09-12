@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, RefreshCw, Eye, Edit, Trash2, X } from 'lucide-react';
+import { Search, Filter, RefreshCw, X } from 'lucide-react';
 import { ordersService, Order } from '../../../services/ordersService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
@@ -228,9 +228,6 @@ export const AdminOrdersManagement: React.FC = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-ios-text-secondary uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ios-border">
@@ -269,19 +266,6 @@ export const AdminOrdersManagement: React.FC = () => {
                         <span className="text-xs text-ios-text-secondary">
                           {new Date(order.created_at).toLocaleTimeString()}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-1">
-                        <IOSButton variant="ghost" size="small" className="p-2">
-                          <Eye className="w-4 h-4 text-ios-primary" />
-                        </IOSButton>
-                        <IOSButton variant="ghost" size="small" className="p-2">
-                          <Edit className="w-4 h-4 text-ios-success" />
-                        </IOSButton>
-                        <IOSButton variant="ghost" size="small" className="p-2">
-                          <Trash2 className="w-4 h-4 text-ios-error" />
-                        </IOSButton>
                       </div>
                     </td>
                   </tr>

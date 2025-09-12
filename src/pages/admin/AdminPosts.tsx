@@ -59,7 +59,17 @@ const AdminPosts: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase || !user) return setMessage('Supabase atau user belum siap');
+    
+    // Basic validation
+    if (!formData.content.trim()) {
+      setMessage('Konten post harus diisi');
+      return;
+    }
+    
+    if (!supabase || !user) {
+      setMessage('Supabase atau user belum siap');
+      return;
+    }
     
     setCreating(true);
     setMessage(null);

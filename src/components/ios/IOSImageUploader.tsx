@@ -89,142 +89,128 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Upload Area */}
-      <div
-        className={cn(
-          'relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200',
-          dragOver || uploading
-            ? 'border-ios-primary bg-ios-primary/10'
-            : 'border-ios-border bg-ios-surface hover:bg-ios-background hover:border-ios-primary/50',
-          uploading && 'pointer-events-none'
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-ios-text">
+          {label} ({images.length}/{max})
+        </h4>
+        {images.length > 0 && (
+          <p className="text-xs text-ios-text-secondary">
+            Drag to reorder
+          </p>
         )}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          setDragOver(true);
+      </div>
+      
+      {/* Compact Image Grid with Add Button */}
+      <div 
+        className="grid grid-cols-3 gap-3 auto-rows-fr"
+        style={{ 
+          gridTemplateRows: 'repeat(auto-fit, minmax(0, 1fr))',
+          gridAutoRows: 'minmax(0, 1fr)'
         }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDrop={onDrop}
       >
-        <div className="flex flex-col items-center space-y-4">
-          <div className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center transition-colors',
-            dragOver || uploading
-              ? 'bg-ios-primary text-white'
-              : 'bg-ios-text/10 text-ios-text-secondary'
-          )}>
-            {uploading ? (
-              <Upload className="w-6 h-6 animate-pulse" />
-            ) : (
-              <Camera className="w-6 h-6" />
+        {images.map((src, idx) => (
+          <div
+            key={`${src}-${idx}`}
+            className={cn(
+              'relative w-full aspect-square rounded-xl overflow-hidden bg-ios-surface border border-ios-border',
+              'hover:shadow-lg transition-all duration-200 cursor-move group'
             )}
-          </div>
-          
-          <div>
-            <p className="text-ios-text font-medium mb-2">
-              {uploading 
-                ? `Uploading ${progress.done}/${progress.total}...`
-                : dragOver
-                  ? 'Drop images here'
-                  : 'Drag & drop images here'
-              }
-            </p>
+            draggable
+            onDragStart={onDragStart(idx)}
+            onDragOver={onDragOver(idx)}
+            onDrop={onDropReorder(idx)}
+            title="Drag to reorder"
+          >
+            <img 
+              src={src} 
+              alt={`Upload ${idx + 1}`} 
+              className="w-full h-full object-cover object-center"
+              loading="lazy"
+              style={{ aspectRatio: '1 / 1' }}
+            />
+            
+            {/* Primary Badge */}
+            {idx === 0 && (
+              <div className="absolute top-2 left-2 px-2 py-1 bg-ios-primary text-white text-xs font-medium rounded-md">
+                Primary
+              </div>
+            )}
+            
+            {/* Remove Button */}
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
+              onClick={() => removeImage(idx)}
               className={cn(
-                'px-4 py-2 rounded-lg font-medium transition-colors',
-                uploading
-                  ? 'bg-ios-text/20 text-ios-text-secondary cursor-not-allowed'
-                  : 'bg-ios-primary text-white hover:bg-ios-primary/90'
+                'absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center',
+                'bg-ios-error text-white hover:bg-ios-error/90 transition-colors opacity-0 group-hover:opacity-100',
+                'focus:outline-none focus:ring-2 focus:ring-ios-error/50 focus:opacity-100'
               )}
+              title="Remove image"
             >
-              {uploading ? 'Uploading...' : 'Choose Images'}
+              <X className="w-3 h-3" />
             </button>
           </div>
-          
-          <p className="text-xs text-ios-text-secondary">
-            Maximum {max} images • {images.length}/{max} uploaded
-          </p>
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-          disabled={uploading}
-        />
+        ))}
+        
+        {/* Add More Button */}
+        {images.length < max && (
+          <div
+            className={cn(
+              'w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 flex flex-col items-center justify-center',
+              dragOver || uploading
+                ? 'border-ios-primary bg-ios-primary/10 scale-[1.02]'
+                : 'border-ios-border bg-ios-surface hover:bg-ios-background hover:border-ios-primary/50'
+            )}
+            style={{ aspectRatio: '1 / 1' }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDrop={onDrop}
+            onClick={() => inputRef.current?.click()}
+          >
+            <div className="text-ios-text-secondary text-center">
+              {uploading ? (
+                <>
+                  <Upload className="w-8 h-8 mx-auto mb-2 animate-pulse" />
+                  <p className="text-xs font-medium">Uploading...</p>
+                  <p className="text-xs opacity-75">{progress.done}/{progress.total}</p>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium">Add Image</p>
+                  <p className="text-xs opacity-75">+ Upload</p>
+                </>
+              )}
+            </div>
+            
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+              disabled={uploading}
+            />
+          </div>
+        )}
       </div>
-
-      {/* Image Grid */}
-      {images.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-ios-text">
-              {label} ({images.length})
-            </h4>
-            <p className="text-xs text-ios-text-secondary">
-              Drag to reorder
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {images.map((src, idx) => (
-              <div
-                key={`${src}-${idx}`}
-                className={cn(
-                  'relative aspect-square rounded-xl overflow-hidden bg-ios-surface border border-ios-border',
-                  'hover:shadow-lg transition-all duration-200 cursor-move'
-                )}
-                draggable
-                onDragStart={onDragStart(idx)}
-                onDragOver={onDragOver(idx)}
-                onDrop={onDropReorder(idx)}
-                title="Drag to reorder"
-              >
-                <img 
-                  src={src} 
-                  alt={`Upload ${idx + 1}`} 
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                
-                {/* Primary Badge */}
-                {idx === 0 && (
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-ios-primary text-white text-xs font-medium rounded-md">
-                    Primary
-                  </div>
-                )}
-                
-                {/* Remove Button */}
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className={cn(
-                    'absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center',
-                    'bg-ios-error text-white hover:bg-ios-error/90 transition-colors',
-                    'focus:outline-none focus:ring-2 focus:ring-ios-error/50'
-                  )}
-                  title="Remove image"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      
+      {/* Help Text */}
+      <p className="text-xs text-ios-text-secondary text-center">
+        {dragOver ? 'Drop images here' : `Drag & drop or click + to add images • JPG, PNG up to 10MB each`}
+      </p>
     </div>
   );
 };

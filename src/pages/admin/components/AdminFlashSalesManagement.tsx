@@ -19,6 +19,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   const [discountFilter, setDiscountFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           <IOSButton 
             variant="primary" 
             className="flex items-center space-x-2"
+            onClick={() => setShowCreateForm(!showCreateForm)}
           >
             <Plus className="w-4 h-4" />
             <span>Create Flash Sale</span>
@@ -192,6 +194,75 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           </div>
         </div>
       </IOSCard>
+
+      {/* Create Flash Sale Form */}
+      {showCreateForm && (
+        <IOSCard variant="elevated" padding="large">
+          <h3 className="text-lg font-semibold text-ios-text mb-4">Create New Flash Sale</h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ios-text mb-2">Product ID</label>
+                <input
+                  type="text"
+                  placeholder="Enter product ID"
+                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ios-text mb-2">Sale Price</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ios-text mb-2">Start Time</label>
+                <input
+                  type="datetime-local"
+                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ios-text mb-2">End Time</label>
+                <input
+                  type="datetime-local"
+                  className="w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  className="rounded border-ios-border text-ios-primary focus:ring-ios-primary"
+                />
+                <span className="text-sm text-ios-text">Active</span>
+              </label>
+            </div>
+            <div className="flex space-x-3">
+              <IOSButton
+                variant="primary"
+                onClick={() => {
+                  // TODO: Implement create flash sale logic
+                  setShowCreateForm(false);
+                }}
+              >
+                Create Flash Sale
+              </IOSButton>
+              <IOSButton
+                variant="ghost"
+                onClick={() => setShowCreateForm(false)}
+              >
+                Cancel
+              </IOSButton>
+            </div>
+          </div>
+        </IOSCard>
+      )}
 
       {/* Flash Sales Table */}
       <IOSCard variant="elevated" padding="none">

@@ -2,21 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Package as PackageIcon, Plus, Filter, X, Edit2, Trash2, Archive, RotateCcw } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSImageUploader } from '../../../components/ios/IOSDesignSystem';
+import { IOSToggle } from '../../../components/ios/IOSToggle';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { ProductService } from '../../../services/productService';
 import { uploadFiles } from '../../../services/storageService';
+import { supabase } from '../../../services/supabase';
 import { cn } from '../../../styles/standardClasses';
 
 export const AdminProductsManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [tierFilter, setTierFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 20;
+
+  // Tiers data
+  const [tiers, setTiers] = useState<Array<{id: string, name: string}>>([]);
+  const [tiersLoading, setTiersLoading] = useState(true);
+
+  // Game titles data
+  const [gameTitles, setGameTitles] = useState<Array<{id: string, name: string}>>([]);
+  const [gameTitlesLoading, setGameTitlesLoading] = useState(true);
 
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -26,29 +36,106 @@ export const AdminProductsManagement: React.FC = () => {
     name: '',
     description: '',
     price: 0,
-    originalPrice: 0,
-    category: '',
+    original_price: 0,
+    tier_id: '',
+    game_title: '',
     stock: 1,
     images: [] as string[],
-    accountLevel: '',
-    accountDetails: ''
+    account_level: '',
+    account_details: '',
+    is_active: true,
+    // Rental options
+    is_rental: false,
+    rental_duration_hours: 24,
+    rental_unit: 'Hours',
+    rental_price_per_hour: 0,
+    rental_deposit: 0
   });
 
   const emptyForm = {
     name: '',
     description: '',
     price: 0,
-    originalPrice: 0,
-    category: '',
+    original_price: 0,
+    tier_id: '',
+    game_title: '',
     stock: 1,
     images: [] as string[],
-    accountLevel: '',
-    accountDetails: ''
+    account_level: '',
+    account_details: '',
+    is_active: true,
+    // Rental options
+    is_rental: false,
+    rental_duration_hours: 24,
+    rental_unit: 'Hours',
+    rental_price_per_hour: 0,
+    rental_deposit: 0
   };
 
   useEffect(() => {
     loadProducts();
-  }, [currentPage, categoryFilter, statusFilter, priceFilter]);
+    loadTiers();
+    loadGameTitles();
+  }, [currentPage, tierFilter, statusFilter, priceFilter]);
+
+  const loadTiers = async () => {
+    try {
+      setTiersLoading(true);
+      const { data, error } = await supabase
+        .from('tiers')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setTiers(data || []);
+    } catch (error) {
+      console.error('Error loading tiers:', error);
+      setTiers([]);
+    } finally {
+      setTiersLoading(false);
+    }
+  };
+
+  const loadGameTitles = async () => {
+    try {
+      setGameTitlesLoading(true);
+      const { data, error } = await supabase
+        .from('game_titles')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setGameTitles(data || []);
+    } catch (error) {
+      console.error('Error loading game titles:', error);
+      setGameTitles([]);
+    } finally {
+      setGameTitlesLoading(false);
+    }
+  };
+
+  const getTierName = (tierIdOrCategory: string) => {
+    if (!tierIdOrCategory) return '-';
+    
+    // First try to find by tier ID
+    const tier = tiers.find(t => t.id === tierIdOrCategory);
+    if (tier) return tier.name;
+    
+    // Fallback to category name if not found in tiers
+    return tierIdOrCategory;
+  };
+
+  const getGameTitleName = (gameTitleIdOrName: string) => {
+    if (!gameTitleIdOrName) return '-';
+    
+    // First try to find by game title ID
+    const gameTitle = gameTitles.find(g => g.id === gameTitleIdOrName);
+    if (gameTitle) return gameTitle.name;
+    
+    // Fallback to the name itself if not found in game_titles
+    return gameTitleIdOrName;
+  };
 
   const loadProducts = async () => {
     try {
@@ -91,12 +178,20 @@ export const AdminProductsManagement: React.FC = () => {
         name: fullProduct.name || '',
         description: fullProduct.description || '',
         price: fullProduct.price || 0,
-        originalPrice: fullProduct.originalPrice || 0,
-        category: fullProduct.category || '',
+        original_price: fullProduct.originalPrice || 0,
+        tier_id: (fullProduct as any).tier_id || fullProduct.tierId || fullProduct.category || '',
+        game_title: (fullProduct as any).game_title || fullProduct.gameTitle || '',
         stock: fullProduct.stock || 1,
         images: images,
-        accountLevel: fullProduct.accountLevel || '',
-        accountDetails: fullProduct.accountDetails || ''
+        account_level: fullProduct.accountLevel || '',
+        account_details: fullProduct.accountDetails || '',
+        is_active: true,
+        // Rental fields - Default values for now
+        is_rental: false,
+        rental_duration_hours: 24,
+        rental_unit: 'Hours',
+        rental_price_per_hour: 0,
+        rental_deposit: 0
       });
       // Cast to admin Product type for state
       setEditingProduct(product);
@@ -108,12 +203,20 @@ export const AdminProductsManagement: React.FC = () => {
         name: product.name || '',
         description: product.description || '',
         price: product.price || 0,
-        originalPrice: product.original_price || 0,
-        category: product.category || '',
+        original_price: product.original_price || 0,
+        tier_id: product.tier_id || product.category || '',
+        game_title: product.game_title || '',
         stock: product.stock || 1,
         images: product.images || (product.image ? [product.image] : []),
-        accountLevel: product.account_level || '',
-        accountDetails: product.account_details || ''
+        account_level: product.account_level || '',
+        account_details: product.account_details || '',
+        is_active: product.is_active !== false,
+        // Rental fields - Default values for now
+        is_rental: false,
+        rental_duration_hours: 24,
+        rental_unit: 'Hours',
+        rental_price_per_hour: 0,
+        rental_deposit: 0
       });
       setEditingProduct(product);
       setShowForm(true);
@@ -132,16 +235,23 @@ export const AdminProductsManagement: React.FC = () => {
         name: form.name,
         description: form.description,
         price: form.price,
-        original_price: form.originalPrice || null,
-        category: form.category,
+        original_price: form.original_price || null,
+        tier_id: form.tier_id,
+        game_title: form.game_title || 'General',
+        gameTitle: form.game_title || 'General', // For ProductService compatibility
         stock: form.stock,
         image: form.images[0] || '',
         images: form.images,
-        account_level: form.accountLevel || null,
-        account_details: form.accountDetails || null,
-        gameTitle: 'General',
+        account_level: form.account_level || null,
+        account_details: form.account_details || null,
+        is_active: form.is_active,
         isFlashSale: false,
-        hasRental: false
+        hasRental: form.is_rental,
+        // Rental fields
+        is_rental: form.is_rental,
+        rental_duration_hours: form.is_rental ? form.rental_duration_hours : null,
+        rental_price_per_hour: form.is_rental ? form.rental_price_per_hour : null,
+        rental_deposit: form.is_rental ? form.rental_deposit : null
       };
 
       if (editingProduct) {
@@ -250,8 +360,8 @@ export const AdminProductsManagement: React.FC = () => {
             <div className="flex items-center space-x-3 min-w-[140px]">
               <Filter className="w-4 h-4 text-ios-text-secondary" />
               <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                value={tierFilter}
+                onChange={(e) => setTierFilter(e.target.value)}
                 className={cn(
                   'border border-ios-border rounded-xl px-4 py-2 bg-ios-surface',
                   'focus:ring-2 focus:ring-ios-primary focus:border-transparent',
@@ -313,7 +423,7 @@ export const AdminProductsManagement: React.FC = () => {
               variant="ghost" 
               onClick={() => {
                 setSearchTerm('');
-                setCategoryFilter('all');
+                setTierFilter('all');
                 setStatusFilter('all');
                 setPriceFilter('all');
               }}
@@ -343,7 +453,7 @@ export const AdminProductsManagement: React.FC = () => {
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
-                    Category
+                    Tier
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-ios-text/70 uppercase tracking-wider">
                     Price
@@ -380,12 +490,14 @@ export const AdminProductsManagement: React.FC = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-ios-text">{product.name}</div>
-                          <div className="text-sm text-ios-text-secondary">{product.description.substring(0, 50)}...</div>
+                          <div className="text-sm text-ios-text-secondary">
+                            {getGameTitleName(product.game_title)} • {product.description.substring(0, 40)}...
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-ios-text">{product.category}</span>
+                      <span className="text-sm text-ios-text">{getTierName(product.tier_id || product.category)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-ios-text">
@@ -470,7 +582,7 @@ export const AdminProductsManagement: React.FC = () => {
       {/* Popup Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <IOSCard className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <IOSCard className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-ios-text">
@@ -486,9 +598,16 @@ export const AdminProductsManagement: React.FC = () => {
                 </IOSButton>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column - Basic Info */}
-                <div className="space-y-4">
+              {/* Form Content - 3 Column Layout with Rental Variations */}
+              <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  
+                  {/* Column 1: Basic Product Info + Category & Game */}
+                  <div className="space-y-6">
+                    {/* Basic Information Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Basic Information</h3>
+                  
                   <div>
                     <label className="block text-sm font-medium text-ios-text mb-2">Product Name *</label>
                     <input
@@ -519,7 +638,7 @@ export const AdminProductsManagement: React.FC = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-ios-text mb-2">Price *</label>
                       <input
@@ -539,8 +658,8 @@ export const AdminProductsManagement: React.FC = () => {
                       <label className="block text-sm font-medium text-ios-text mb-2">Original Price</label>
                       <input
                         type="number"
-                        value={form.originalPrice}
-                        onChange={(e) => setForm(prev => ({ ...prev, originalPrice: Number(e.target.value) }))}
+                        value={form.original_price}
+                        onChange={(e) => setForm(prev => ({ ...prev, original_price: Number(e.target.value) }))}
                         className={cn(
                           'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
                           'text-ios-text placeholder-ios-text-secondary',
@@ -551,50 +670,104 @@ export const AdminProductsManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-ios-text mb-2">Category</label>
-                      <select
-                        value={form.category}
-                        onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
-                        className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                          'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
-                        )}
-                      >
-                        <option value="">Select Category</option>
-                        <option value="electronics">Electronics</option>
-                        <option value="fashion">Fashion</option>
-                        <option value="home">Home & Garden</option>
-                        <option value="sports">Sports</option>
-                        <option value="books">Books</option>
-                        <option value="beauty">Beauty</option>
-                        <option value="toys">Toys</option>
-                        <option value="automotive">Automotive</option>
-                      </select>
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">Stock Quantity *</label>
+                    <input
+                      type="number"
+                      value={form.stock}
+                      onChange={(e) => setForm(prev => ({ ...prev, stock: Math.max(0, Number(e.target.value)) }))}
+                      className={cn(
+                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text placeholder-ios-text-secondary',
+                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                      placeholder="1"
+                      min="0"
+                    />
+                  </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-ios-text mb-2">Stock</label>
-                      <input
-                        type="number"
-                        value={form.stock}
-                        onChange={(e) => setForm(prev => ({ ...prev, stock: Number(e.target.value) }))}
-                        className={cn(
-                          'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                          'text-ios-text placeholder-ios-text-secondary',
-                          'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
-                        )}
-                        placeholder="1"
-                      />
+                    {/* Tier & Game Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Tier & Game</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">Tier *</label>
+                    <select
+                      value={form.tier_id}
+                      onChange={(e) => setForm(prev => ({ ...prev, tier_id: e.target.value }))}
+                      className={cn(
+                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                      disabled={tiersLoading}
+                    >
+                      <option value="">Select Tier</option>
+                      {tiers.map(tier => (
+                        <option key={tier.id} value={tier.id}>
+                          {tier.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">Game Title</label>
+                    <select
+                      value={form.game_title}
+                      onChange={(e) => setForm(prev => ({ ...prev, game_title: e.target.value }))}
+                      className={cn(
+                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                      disabled={gameTitlesLoading}
+                    >
+                      <option value="">
+                        {gameTitlesLoading ? 'Loading games...' : 'Select Game'}
+                      </option>
+                      {gameTitles.map(game => (
+                        <option key={game.id} value={game.id}>
+                          {game.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">Account Level</label>
+                    <input
+                      type="text"
+                      value={form.account_level}
+                      onChange={(e) => setForm(prev => ({ ...prev, account_level: e.target.value }))}
+                      className={cn(
+                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text placeholder-ios-text-secondary',
+                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                      placeholder="e.g., Level 50, Master Rank, Diamond"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-ios-text mb-2">Account Details</label>
+                    <textarea
+                      value={form.account_details}
+                      onChange={(e) => setForm(prev => ({ ...prev, account_details: e.target.value }))}
+                      rows={4}
+                      className={cn(
+                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
+                        'text-ios-text placeholder-ios-text-secondary',
+                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
+                      )}
+                      placeholder="Additional account information, items included, etc."
+                    />
+                  </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right Column - Images & Additional Info */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Product Images (Max 15)</label>
+                  {/* Column 2: Product Images */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Product Images</h3>
                     <IOSImageUploader
                       images={form.images}
                       onChange={(images) => setForm(prev => ({ ...prev, images }))}
@@ -612,34 +785,189 @@ export const AdminProductsManagement: React.FC = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Account Level</label>
-                    <input
-                      type="text"
-                      value={form.accountLevel}
-                      onChange={(e) => setForm(prev => ({ ...prev, accountLevel: e.target.value }))}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
-                      )}
-                      placeholder="e.g., Beginner, Advanced, Master"
-                    />
-                  </div>
+                  {/* Column 3: Settings & Rental Options */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-ios-text border-b border-ios-border pb-2">Settings & Options</h3>
+                    
+                    {/* Toggle Switches */}
+                    <div className="space-y-4">
+                      <IOSToggle
+                        checked={form.is_active}
+                        onChange={(checked) => setForm(prev => ({ ...prev, is_active: checked }))}
+                        label="Active Product"
+                        description="Uncheck to create as draft"
+                      />
 
-                  <div>
-                    <label className="block text-sm font-medium text-ios-text mb-2">Account Details</label>
-                    <textarea
-                      value={form.accountDetails}
-                      onChange={(e) => setForm(prev => ({ ...prev, accountDetails: e.target.value }))}
-                      rows={3}
-                      className={cn(
-                        'w-full px-4 py-3 rounded-xl border border-ios-border bg-ios-surface',
-                        'text-ios-text placeholder-ios-text-secondary',
-                        'focus:ring-2 focus:ring-ios-primary focus:border-transparent'
-                      )}
-                      placeholder="Additional account information..."
-                    />
+                      <IOSToggle
+                        checked={form.is_rental}
+                        onChange={(checked) => setForm(prev => ({ ...prev, is_rental: checked }))}
+                        label="Enable Rental Option"
+                        description="Allow customers to rent this account temporarily"
+                      />
+                    </div>
+
+                    {/* Rental Variations - 4 Rows */}
+                    {form.is_rental && (
+                      <div className="space-y-3 mt-6">
+                        <h4 className="text-sm font-semibold text-ios-text">Rental Variations</h4>
+                        
+                        {/* Variation 1 */}
+                        <div className="p-4 bg-ios-surface rounded-xl border border-ios-border space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-medium text-ios-text">Variation 1</h5>
+                            <span className="text-xs text-ios-text-secondary">Primary</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <input
+                                type="number"
+                                value={form.rental_duration_hours}
+                                onChange={(e) => setForm(prev => ({ ...prev, rental_duration_hours: Number(e.target.value) }))}
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                                placeholder="1"
+                                min="1"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <select
+                                value={form.rental_unit || 'Hours'}
+                                onChange={(e) => setForm(prev => ({ ...prev, rental_unit: e.target.value }))}
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                              >
+                                <option value="Hours">Hours</option>
+                                <option value="Day">Day</option>
+                                <option value="Week">Week</option>
+                                <option value="Month">Month</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <input
+                                type="number"
+                                value={form.rental_price_per_hour}
+                                onChange={(e) => setForm(prev => ({ ...prev, rental_price_per_hour: Number(e.target.value) }))}
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-white focus:ring-1 focus:ring-ios-primary focus:border-transparent"
+                                placeholder="0"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Variation 2 */}
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-medium text-ios-text">Variation 2</h5>
+                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <select
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                              >
+                                <option value="">--</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Variation 3 */}
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-medium text-ios-text">Variation 3</h5>
+                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <select
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                              >
+                                <option value="">--</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Variation 4 */}
+                        <div className="p-4 bg-ios-surface/50 rounded-xl border border-ios-border/50 space-y-3 opacity-60">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-medium text-ios-text">Variation 4</h5>
+                            <button className="text-xs text-ios-primary hover:text-ios-primary/80">+ Add</button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Duration</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Unit</label>
+                              <select
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                              >
+                                <option value="">--</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-ios-text mb-1">Price</label>
+                              <input
+                                type="number"
+                                disabled
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-ios-border bg-gray-100 text-gray-400"
+                                placeholder="--"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
