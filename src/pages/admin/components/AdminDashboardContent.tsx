@@ -121,7 +121,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               </div>
               <div>
                 <h3 className="text-lg font-bold text-ios-text">Recent Activity</h3>
-                <p className="text-sm text-ios-text-secondary">Latest updates from your store</p>
+                <p className="text-sm text-ios-text font-medium">Latest updates from your store</p>
               </div>
             </div>
             <IOSButton 
@@ -164,17 +164,17 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   }}
                 >
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-white/50 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-white/20">
+                    <div className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center text-lg border border-white/30 shadow-sm">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
-                        <h4 className="font-semibold text-ios-text truncate pr-2">{notification.title}</h4>
-                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/80 text-ios-text-secondary border border-white/20 backdrop-blur-sm whitespace-nowrap">
+                        <h4 className="font-bold text-ios-text truncate pr-2">{notification.title}</h4>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/90 text-ios-text border border-white/40 backdrop-blur-sm whitespace-nowrap shadow-sm">
                           {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-sm text-ios-text-secondary leading-relaxed">
+                      <p className="text-sm text-ios-text leading-relaxed font-medium">
                         {notification.message}
                       </p>
                       {notification.amount && (
@@ -212,7 +212,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
               </div>
               <div>
                 <h3 className="text-lg font-bold text-ios-text">Analytics Dashboard</h3>
-                <p className="text-sm text-ios-text-secondary">Track your store performance</p>
+                <p className="text-sm text-ios-text font-medium">Track your store performance</p>
               </div>
             </div>
           </div>
@@ -269,7 +269,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 </div>
                 <div>
                   <h4 className="font-bold text-ios-text">Orders & Revenue</h4>
-                  <p className="text-xs text-ios-text-secondary">Daily performance metrics</p>
+                  <p className="text-xs text-ios-text font-medium">Daily performance metrics</p>
                 </div>
               </div>
               
@@ -277,7 +277,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 <div className="h-48 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-12 h-12 border-4 border-ios-primary/20 border-t-ios-primary rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-sm text-ios-text-secondary">Loading analytics...</p>
+                    <p className="text-sm text-ios-text font-medium">Loading analytics...</p>
                   </div>
                 </div>
               ) : series.length===0 ? (
@@ -286,7 +286,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <div className="w-12 h-12 bg-ios-background/30 rounded-2xl mx-auto mb-3 flex items-center justify-center">
                       <BarChart className="w-6 h-6 text-ios-text-secondary" />
                     </div>
-                    <p className="text-sm text-ios-text-secondary">No data available</p>
+                    <p className="text-sm text-ios-text font-medium">No data available</p>
                   </div>
                 </div>
               ) : (
@@ -376,7 +376,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                 </div>
                 <div>
                   <h4 className="font-bold text-ios-text">Top Products</h4>
-                  <p className="text-xs text-ios-text-secondary">Best performing items</p>
+                  <p className="text-xs text-ios-text font-medium">Best performing items</p>
                 </div>
               </div>
               
@@ -419,7 +419,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                             <p className="font-semibold text-ios-text group-hover:text-ios-primary transition-colors">
                               {p.product_name}
                             </p>
-                            <p className="text-xs text-ios-text-secondary">
+                            <p className="text-xs text-ios-text font-medium">
                               {p.count} orders sold
                             </p>
                           </div>

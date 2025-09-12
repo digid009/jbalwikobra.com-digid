@@ -1,9 +1,9 @@
-// Service for orders data access with admin privileges
+// Service for orders data access - Uses anonymous key with proper RLS policies
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY!;
-const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface Order {
   id: string;
@@ -30,7 +30,7 @@ export const ordersService = {
     const offset = (page - 1) * limit;
 
     try {
-      let query = adminClient
+      let query = supabase
         .from('orders')
         .select(`
           id,
@@ -56,7 +56,7 @@ export const ordersService = {
       }
 
       // Get total count for pagination
-      const { count: totalCount, error: countError } = await adminClient
+      const { count: totalCount, error: countError } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true });
 
@@ -87,7 +87,7 @@ export const ordersService = {
 
   async getOrderStats() {
     try {
-      const { data: orders, error } = await adminClient
+      const { data: orders, error } = await supabase
         .from('orders')
         .select('status, amount');
 
@@ -114,7 +114,7 @@ export const ordersService = {
 
   async updateOrderStatus(orderId: string, status: Order['status']) {
     try {
-      const { error } = await adminClient
+      const { error } = await supabase
         .from('orders')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', orderId);
@@ -132,7 +132,7 @@ export const ordersService = {
 
   async deleteOrder(orderId: string) {
     try {
-      const { error } = await adminClient
+      const { error } = await supabase
         .from('orders')
         .delete()
         .eq('id', orderId);

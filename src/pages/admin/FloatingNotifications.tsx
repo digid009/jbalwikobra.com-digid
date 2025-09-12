@@ -104,14 +104,14 @@ const FloatingNotifications: React.FC = () => {
     switch (type) {
       case 'order_created':
       case 'new_order':
-        return 'border-l-blue-500 bg-blue-50';
+        return 'border-l-pink-500 bg-pink-50';
       case 'payment_received':
       case 'payment_confirmed':
-        return 'border-l-green-500 bg-green-50';
+        return 'border-l-green-500 bg-pink-50';
       case 'order_cancelled':
-        return 'border-l-red-500 bg-red-50';
+        return 'border-l-red-500 bg-pink-50';
       default:
-        return 'border-l-gray-500 bg-gray-50';
+        return 'border-l-pink-500 bg-pink-50';
     }
   };
 
@@ -119,35 +119,35 @@ const FloatingNotifications: React.FC = () => {
     switch (type) {
       case 'order_created':
       case 'new_order':
-        return 'bg-blue-500';
+        return 'bg-pink-500';
       case 'payment_received':
       case 'payment_confirmed':
         return 'bg-green-500';
       case 'order_cancelled':
         return 'bg-red-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-pink-500';
     }
   };
 
   if (!items.length) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+    <div className="fixed top-6 right-6 z-[9999] space-y-4 max-w-md">
       {items.slice(0, 5).map((n) => (
-        <div key={n.id} className={`${getNotificationColor(n.type)} text-gray-900 rounded-lg shadow-lg border-l-4 transition-all duration-300`}>
-          <div className="p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-2 flex-1">
-                <div className={`p-1 rounded-full text-white ${getIconBgColor(n.type)}`}>
+        <div key={n.id} className="bg-white rounded-2xl shadow-2xl border border-pink-100 transition-all duration-300 hover:shadow-3xl hover:scale-105">
+          <div className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className={`p-3 rounded-xl text-white shadow-lg ${getIconBgColor(n.type)}`}>
                   {getNotificationIcon(n.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm text-gray-900">{n.title}</h4>
+                    <h4 className="font-bold text-lg text-gray-900">{n.title}</h4>
                   </div>
-                  <p className="text-xs text-gray-700 line-clamp-2 mt-1">{n.body || n.title}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-base text-gray-700 line-clamp-2 mt-2 leading-relaxed">{n.body || n.title}</p>
+                  <p className="text-sm text-pink-600 mt-3 font-semibold">
                     {new Date(n.created_at).toLocaleTimeString('id-ID', { 
                       hour: '2-digit', 
                       minute: '2-digit' 
@@ -157,16 +157,16 @@ const FloatingNotifications: React.FC = () => {
               </div>
               <button 
                 onClick={() => dismissNotification(n.id)} 
-                className="h-6 w-6 shrink-0 rounded hover:bg-gray-200 flex items-center justify-center"
+                className="h-8 w-8 shrink-0 rounded-xl hover:bg-pink-50 flex items-center justify-center transition-colors duration-200"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5 text-pink-500" />
               </button>
             </div>
             <button 
               onClick={() => markAsRead(n.id)} 
-              className="w-full mt-2 h-6 text-xs rounded hover:bg-gray-200/50 text-gray-600"
+              className="w-full mt-4 py-3 text-base rounded-xl hover:bg-pink-50 text-pink-600 font-semibold border-2 border-pink-200 transition-all duration-200 hover:border-pink-300"
             >
-              Tandai Sudah Dibaca
+              Mark as Read
             </button>
           </div>
         </div>

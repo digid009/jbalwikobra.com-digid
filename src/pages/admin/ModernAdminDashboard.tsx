@@ -24,6 +24,7 @@ import { AdminFeedManagement } from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
+import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../components/ios/IOSDesignSystem';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
@@ -132,6 +133,11 @@ const ModernAdminDashboard: React.FC = () => {
   }, [sidebarCollapsed]);
 
   const renderContent = () => {
+    // Add diagnostic page for development
+    if (window.location.search.includes('diagnostic')) {
+      return <DataDiagnosticPage />;
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -174,48 +180,48 @@ const ModernAdminDashboard: React.FC = () => {
         statsLoaded={!loading}
       />
 
-      {/* iOS-style Mobile Header */}
-      <div className="lg:hidden bg-ios-surface/95 backdrop-blur-md border-b border-ios-border/30 sticky top-0 z-50">
+      {/* Enhanced Sticky Mobile Header */}
+      <div className="lg:hidden bg-ios-surface/95 backdrop-blur-md border-b border-ios-border/30 sticky top-0 z-50 shadow-lg">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <IOSButton
               variant="ghost"
               size="small"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 rounded-full"
+              className="p-3 rounded-full hover:bg-pink-50"
             >
-              <Menu className="w-5 h-5 text-ios-primary" />
+              <Menu className="w-6 h-6 text-pink-600" />
             </IOSButton>
-            <h1 className="text-xl font-semibold text-ios-text">Admin</h1>
+            <h1 className="text-xl font-bold text-ios-text">Admin Dashboard</h1>
           </div>
           <IOSButton
             variant="ghost"
             size="small"
-            className="p-2 rounded-full"
+            className="p-3 rounded-full hover:bg-pink-50"
           >
-            <Bell className="w-5 h-5 text-ios-text-secondary" />
+            <Bell className="w-6 h-6 text-pink-600" />
           </IOSButton>
         </div>
       </div>
 
       <div className="flex">
-        {/* Enhanced iOS-style Desktop Sidebar */}
+        {/* Enhanced Sticky Desktop Sidebar */}
         <div className={cn(
-          'hidden lg:block transition-all duration-300 ease-in-out',
+          'hidden lg:flex flex-col transition-all duration-300 ease-in-out',
           sidebarWidth,
-          'bg-ios-surface/95 backdrop-blur-md border-r border-ios-border/30 sticky top-0 h-screen overflow-y-auto'
+          'bg-ios-surface/95 backdrop-blur-md border-r border-ios-border/30 sticky top-0 h-screen overflow-y-auto shadow-xl'
         )}>
-          <div className="p-4">
-            {/* Enhanced Logo/Title */}
+          <div className="p-6">
+            {/* Enhanced Logo/Title with larger fonts */}
             <div className="flex items-center justify-between mb-8">
               {!sidebarCollapsed && (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-secondary rounded-xl flex items-center justify-center">
-                    <LayoutDashboard className="w-4 h-4 text-white" />
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <LayoutDashboard className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold text-ios-text">JB Alwikobra</h1>
-                    <p className="text-xs text-ios-text-secondary">Admin Panel</p>
+                    <h1 className="text-2xl font-bold text-ios-text">JB Alwikobra</h1>
+                    <p className="text-sm font-medium text-ios-text-secondary">Admin Panel</p>
                   </div>
                 </div>
               )}
@@ -223,12 +229,12 @@ const ModernAdminDashboard: React.FC = () => {
                 variant="ghost"
                 size="small"
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 rounded-full hover:bg-ios-background/50"
+                className="p-3 rounded-full hover:bg-pink-50"
               >
                 {sidebarCollapsed ? (
-                  <ChevronRight className="w-4 h-4 text-ios-text-secondary" />
+                  <ChevronRight className="w-5 h-5 text-pink-600" />
                 ) : (
-                  <ChevronLeft className="w-4 h-4 text-ios-text-secondary" />
+                  <ChevronLeft className="w-5 h-5 text-pink-600" />
                 )}
               </IOSButton>
             </div>
@@ -245,26 +251,26 @@ const ModernAdminDashboard: React.FC = () => {
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium',
+                      'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
                       isActive
-                        ? 'bg-gradient-to-r from-ios-primary to-ios-secondary text-white shadow-lg shadow-ios-primary/25 transform scale-[1.02]'
-                        : 'text-ios-text-secondary hover:bg-ios-background/50 hover:text-ios-text hover:transform hover:scale-[1.01]',
-                      sidebarCollapsed && 'justify-center px-3'
+                        ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/25 transform scale-[1.02]'
+                        : 'text-ios-text hover:bg-pink-50 hover:text-pink-600 hover:transform hover:scale-[1.01] hover:shadow-md',
+                      sidebarCollapsed && 'justify-center px-4'
                     )}
                   >
                     <Icon className={cn(
-                      'w-5 h-5 flex-shrink-0 transition-colors duration-200',
-                      isActive ? 'text-white' : 'text-ios-text-secondary'
+                      'w-6 h-6 flex-shrink-0 transition-colors duration-200',
+                      isActive ? 'text-white' : 'text-pink-500'
                     )} />
                     {!sidebarCollapsed && (
                       <>
-                        <span className="text-sm">{item.label}</span>
+                        <span className="text-base font-medium">{item.label}</span>
                         {badgeValue && (
                           <span className={cn(
-                            'ml-auto px-2 py-1 text-xs font-bold rounded-full',
+                            'ml-auto px-3 py-1 text-sm font-bold rounded-full',
                             isActive 
                               ? 'bg-white/20 text-white' 
-                              : 'bg-ios-primary text-white'
+                              : 'bg-pink-500 text-white'
                           )}>
                             {badgeValue > 99 ? '99+' : badgeValue}
                           </span>
@@ -276,10 +282,10 @@ const ModernAdminDashboard: React.FC = () => {
               })}
             </nav>
 
-            {/* Sidebar Footer */}
+            {/* Sidebar Footer with larger text */}
             {!sidebarCollapsed && (
               <div className="mt-8 pt-6 border-t border-ios-border/30">
-                <div className="text-xs text-ios-text-secondary text-center">
+                <div className="text-sm font-medium text-ios-text-secondary text-center">
                   Version 2.1.9
                 </div>
               </div>
@@ -298,13 +304,13 @@ const ModernAdminDashboard: React.FC = () => {
               <div className="p-4">
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-secondary rounded-xl flex items-center justify-center">
-                      <LayoutDashboard className="w-5 h-5 text-white" />
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <LayoutDashboard className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h1 className="text-lg font-bold text-ios-text">JB Alwikobra</h1>
-                      <p className="text-xs text-ios-text-secondary">Admin Panel</p>
+                      <h1 className="text-xl font-bold text-ios-text">JB Alwikobra</h1>
+                      <p className="text-sm font-medium text-ios-text-secondary">Admin Panel</p>
                     </div>
                   </div>
                   <IOSButton
@@ -332,20 +338,20 @@ const ModernAdminDashboard: React.FC = () => {
                           setIsMobileMenuOpen(false);
                         }}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 font-medium',
+                          'w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 font-semibold text-base',
                           isActive
-                            ? 'bg-gradient-to-r from-ios-primary to-ios-secondary text-white shadow-lg'
-                            : 'text-ios-text-secondary hover:bg-ios-background/50 hover:text-ios-text'
+                            ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg'
+                            : 'text-ios-text hover:bg-pink-50 hover:text-pink-600 hover:shadow-md'
                         )}
                       >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-sm">{item.label}</span>
+                        <Icon className="w-6 h-6 text-pink-500" />
+                        <span className="text-base font-medium">{item.label}</span>
                         {badgeValue && (
                           <span className={cn(
-                            'ml-auto px-2 py-1 text-xs font-bold rounded-full',
+                            'ml-auto px-3 py-1 text-sm font-bold rounded-full',
                             isActive 
                               ? 'bg-white/20 text-white' 
-                              : 'bg-ios-primary text-white'
+                              : 'bg-pink-500 text-white'
                           )}>
                             {badgeValue > 99 ? '99+' : badgeValue}
                           </span>
@@ -357,7 +363,7 @@ const ModernAdminDashboard: React.FC = () => {
 
                 {/* Mobile Footer */}
                 <div className="mt-8 pt-6 border-t border-ios-border/30">
-                  <div className="text-xs text-ios-text-secondary text-center">
+                  <div className="text-sm font-medium text-ios-text-secondary text-center">
                     Version 2.1.9
                   </div>
                 </div>
@@ -368,31 +374,31 @@ const ModernAdminDashboard: React.FC = () => {
 
         {/* Enhanced Main Content Area */}
         <div className="flex-1 min-w-0 bg-ios-background">
-          {/* Content Header */}
-          <div className="hidden lg:block sticky top-0 z-10 bg-ios-background/95 backdrop-blur-md border-b border-ios-border/20">
-            <div className="px-8 py-4">
+          {/* Enhanced Sticky Content Header */}
+          <div className="hidden lg:block sticky top-0 z-10 bg-ios-background/95 backdrop-blur-md border-b border-ios-border/20 shadow-sm">
+            <div className="px-8 py-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold text-ios-text">
+                  <h1 className="text-3xl font-bold text-ios-text">
                     {navigationItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                   </h1>
-                  <p className="text-ios-text-secondary text-sm mt-1">
+                  <p className="text-lg text-ios-text-secondary mt-2 font-medium">
                     Manage your {activeTab === 'dashboard' ? 'business overview' : activeTab.replace('-', ' ')}
                   </p>
                 </div>
                 <IOSButton
                   variant="ghost"
                   size="small"
-                  className="p-2 rounded-full"
+                  className="p-3 rounded-full hover:bg-pink-50"
                 >
-                  <Bell className="w-5 h-5 text-ios-text-secondary" />
+                  <Bell className="w-6 h-6 text-pink-600" />
                 </IOSButton>
               </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <main className="p-6 lg:p-8">
+          {/* Main Content with larger padding */}
+          <main className="p-8 lg:p-10">
             <div className="max-w-7xl mx-auto">
               {renderContent()}
             </div>

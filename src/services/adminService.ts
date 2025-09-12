@@ -235,7 +235,7 @@ class AdminService {
       const orders: Order[] = (data || []).map((item: any) => ({
         id: item.id,
         customer_name: item.customer_name || 'Unknown Customer',
-        product_name: 'Product Order', // Generic name since we don't have the relationship
+        product_name: item.product_name || 'Product Order', // Use actual product_name if available
         amount: item.amount || 0,
         status: item.status || 'pending',
         created_at: item.created_at,
@@ -957,7 +957,26 @@ export const adminService = {
           .range((page - 1) * limit, page * limit - 1);
 
         if (error) {
-          // If table doesn't exist, return mock notifications
+          // Generate realistic notifications based on actual orders
+          const { data: recentOrders } = await supabase
+            .from('orders')
+            .select('id, customer_name, product_name, amount, status, created_at')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+          if (recentOrders && recentOrders.length > 0) {
+            return recentOrders.map((order, index) => ({
+              id: `order-${order.id}`,
+              type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
+              title: order.status === 'paid' ? 'Payment Received' : 'New Order',
+              message: `${order.customer_name} - ${order.product_name || 'Product Order'} - Rp ${order.amount?.toLocaleString()}`,
+              created_at: order.created_at,
+              is_read: false,
+              amount: order.amount
+            }));
+          }
+
+          // Fallback mock data
           return [
             {
               id: '1',
@@ -979,7 +998,7 @@ export const adminService = {
         }
         return data || [];
       } catch (error) {
-        // Return mock data on any error
+        // Return basic mock data on any error
         return [
           {
             id: '1',
