@@ -17,11 +17,17 @@ import {
   Shield,
   Settings as SettingsIcon,
   Palette,
-  Users
+  Users,
+  Bug,
+  TestTube,
+  Package,
+  AlertCircle
 } from 'lucide-react';
 import PhoneInput from '../../components/PhoneInput';
 import { useToast } from '../../components/Toast';
 import { IOSCard, IOSButton, IOSContainer } from '../../components/ios/IOSDesignSystem';
+import { adminNotificationService } from '../../services/adminNotificationService';
+import { enhancedAdminService } from '../../services/enhancedAdminService';
 
 const EnhancedAdminSettings: React.FC = () => {
   const { showToast } = useToast();
@@ -35,6 +41,7 @@ const EnhancedAdminSettings: React.FC = () => {
   const [faviconPreview, setFaviconPreview] = useState<string>('');
   const [phoneValidation, setPhoneValidation] = useState({ whatsapp: true, contact: true });
   const [activeSection, setActiveSection] = useState('general');
+  const [testLoading, setTestLoading] = useState({ notification: false, product: false });
 
   useEffect(() => { 
     (async () => {
@@ -116,6 +123,36 @@ const EnhancedAdminSettings: React.FC = () => {
     }
   };
 
+  const handleTestNotification = async () => {
+    setTestLoading(prev => ({ ...prev, notification: true }));
+    try {
+      await adminNotificationService.createTestNotification();
+      showToast('Test notification berhasil dibuat!', 'success');
+    } catch (error) {
+      console.error('Failed to create test notification:', error);
+      showToast('Gagal membuat test notification', 'error');
+    } finally {
+      setTestLoading(prev => ({ ...prev, notification: false }));
+    }
+  };
+
+  const handleTestProduct = async () => {
+    setTestLoading(prev => ({ ...prev, product: true }));
+    try {
+      const result = await enhancedAdminService.createTestProduct();
+      if (result.success) {
+        showToast('Test product berhasil dibuat!', 'success');
+      } else {
+        throw new Error(result.error || 'Failed to create test product');
+      }
+    } catch (error) {
+      console.error('Failed to create test product:', error);
+      showToast('Gagal membuat test product', 'error');
+    } finally {
+      setTestLoading(prev => ({ ...prev, product: false }));
+    }
+  };
+
   if (loading) {
     return (
       <IOSContainer>
@@ -136,6 +173,7 @@ const EnhancedAdminSettings: React.FC = () => {
     { id: 'hero', label: 'Hero Section', icon: Palette },
     { id: 'footer', label: 'Footer', icon: Users },
     { id: 'brand', label: 'Brand Assets', icon: ImageIcon },
+    { id: 'debug', label: 'Debug', icon: Bug },
   ];
 
   return (
@@ -556,27 +594,110 @@ const EnhancedAdminSettings: React.FC = () => {
           </IOSCard>
         )}
 
-        {/* Save Button */}
-        <div className="flex justify-end pt-6">
-          <IOSButton 
-            onClick={save} 
-            disabled={saving}
-            size="large"
-            className="bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700 text-white px-8 py-3"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5 mr-2" />
-                Simpan Pengaturan
-              </>
-            )}
-          </IOSButton>
-        </div>
+        {/* Debug Section */}
+        {activeSection === 'debug' && (
+          <IOSCard padding="large">
+            <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+              <Bug className="w-5 h-5" />
+              Debug Tools
+            </h2>
+            <div className="space-y-6">
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-yellow-400 mb-2">
+                  <Shield className="w-4 h-4" />
+                  <span className="font-medium">Peringatan</span>
+                </div>
+                <p className="text-sm text-yellow-300/80">
+                  Tools ini hanya untuk testing dan debugging. Jangan gunakan di production.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <TestTube className="w-4 h-4" />
+                    Test Notification
+                  </h3>
+                  <p className="text-sm text-white/70">
+                    Membuat notifikasi test untuk debugging sistem notifikasi
+                  </p>
+                  <IOSButton
+                    onClick={handleTestNotification}
+                    disabled={testLoading.notification}
+                    variant="secondary"
+                    size="small"
+                    className="w-full"
+                  >
+                    {testLoading.notification ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Membuat...
+                      </>
+                    ) : (
+                      <>
+                        <TestTube className="w-4 h-4 mr-2" />
+                        Test Notifikasi
+                      </>
+                    )}
+                  </IOSButton>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Test Product
+                  </h3>
+                  <p className="text-sm text-white/70">
+                    Membuat produk test untuk debugging sistem produk
+                  </p>
+                  <IOSButton
+                    onClick={handleTestProduct}
+                    disabled={testLoading.product}
+                    variant="secondary"
+                    size="small"
+                    className="w-full"
+                  >
+                    {testLoading.product ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Membuat...
+                      </>
+                    ) : (
+                      <>
+                        <Package className="w-4 h-4 mr-2" />
+                        Test Product
+                      </>
+                    )}
+                  </IOSButton>
+                </div>
+              </div>
+            </div>
+          </IOSCard>
+        )}
+
+        {/* Save Button - Only show for non-debug sections */}
+        {activeSection !== 'debug' && (
+          <div className="flex justify-end pt-6">
+            <IOSButton 
+              onClick={save} 
+              disabled={saving}
+              size="large"
+              className="bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700 text-white px-8 py-3"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  Simpan Pengaturan
+                </>
+              )}
+            </IOSButton>
+          </div>
+        )}
       </div>
     </IOSContainer>
   );

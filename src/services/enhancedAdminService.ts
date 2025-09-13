@@ -426,6 +426,35 @@ class EnhancedAdminService {
     }, 'Failed to create product');
   }
 
+  async createTestProduct(): Promise<ApiResponse<Product>> {
+    const timestamp = new Date().toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    const testProduct: CreateProductData = {
+      name: `Test Product Debug ${timestamp}`,
+      description: `Ini adalah produk test untuk debugging yang dibuat pada ${timestamp}. Produk ini berfungsi normal dan bisa digunakan untuk testing fitur admin.`,
+      price: 15000,
+      original_price: 20000,
+      image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=TEST+PRODUCT',
+      images: ['https://via.placeholder.com/400x300/6366f1/ffffff?text=TEST+PRODUCT'],
+      category: 'debug-tools',
+      game_title: 'Debug Game Testing',
+      account_level: 'Level Testing',
+      account_details: 'Account details untuk testing sistem admin. Username: testuser, Password: test123, Server: Debug Server',
+      is_flash_sale: false,
+      has_rental: false,
+      stock: 999,
+      is_active: true
+    };
+
+    return this.createProduct(testProduct);
+  }
+
   async updateProduct(id: string, updates: Partial<Product>): Promise<ApiResponse<Product>> {
     return this.handleApiCall(async () => {
       const { data, error } = await supabase

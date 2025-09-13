@@ -19,92 +19,79 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../styles/standardClasses';
 import { DashboardSection } from '../layout/DashboardPrimitives';
+import { adminNotificationService, AdminNotification } from '../../../services/adminNotificationService';
 
 interface NotificationItem {
   id: string;
-  type: 'order' | 'user' | 'product' | 'payment' | 'review' | 'system';
+  type: 'new_order' | 'paid_order' | 'new_user' | 'order_cancelled' | 'new_review' | 'system';
   title: string;
   message: string;
-  timestamp: string;
-  read: boolean;
-  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  is_read: boolean;
+  customer_name?: string;
+  product_name?: string;
+  amount?: number;
+  metadata?: any;
 }
 
-// Mock data - replace with actual service calls
-const mockNotifications: NotificationItem[] = [
-  {
-    id: '1',
-    type: 'user',
-    title: 'Bang! ada yang DAFTAR akun nih!',
-    message: 'namanya Ahmad Rizky Pratama nomor wanya 6281234567890',
-    timestamp: '2025-09-13T10:05:00Z',
-    read: false,
-    priority: 'medium'
-  },
-  {
-    id: '2',
-    type: 'order',
-    title: 'Bang! ada yang ORDER nih!',
-    message: 'namanya Siti Nurhaliza, produknya FREE FIRE A - VAULT 645 PRIME 4 SG harganya Rp2.800.000, belum di bayar sih, tapi moga aja di bayar amin.',
-    timestamp: '2025-09-13T11:24:00Z',
-    read: false,
-    priority: 'high'
-  },
-  {
-    id: '3',
-    type: 'payment',
-    title: 'Bang! ALHAMDULILLAH ada yang BAYAR nih!',
-    message: 'Payment has been received for order',
-    timestamp: '2025-09-13T10:24:00Z',
-    read: true,
-    priority: 'medium'
-  },
-  {
-    id: '4',
-    type: 'user',
-    title: 'Bang! ada yang DAFTAR akun nih!',
-    message: 'namanya {nama user terdaftar} nomor wanya {nomor whatsapp}',
-    timestamp: '2025-09-13T09:24:00Z',
-    read: true,
-    priority: 'low'
-  },
-  {
-    id: '5',
-    type: 'review',
-    title: 'Bang! ada yang REVIEW produk nih!',
-    message: 'namanya {nama customer} memberikan ulasan untuk produk {nama produk}',
-    timestamp: '2025-09-13T08:24:00Z',
-    read: false,
-    priority: 'medium'
-  }
-];
-
 export const AdminNotificationsPage: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Load notifications on component mount
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    setLoading(true);
+    try {
+      const data = await adminNotificationService.getAdminNotifications(50);
+      if (data) {
+        // Convert AdminNotification to NotificationItem format
+        const formattedNotifications: NotificationItem[] = data.map(notif => ({
+          id: notif.id,
+          type: notif.type as any,
+          title: notif.title,
+          message: notif.message,
+          created_at: notif.created_at,
+          is_read: notif.is_read,
+          customer_name: notif.customer_name,
+          product_name: notif.product_name,
+          amount: notif.amount,
+          metadata: notif.metadata
+        }));
+        setNotifications(formattedNotifications);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'order': return <ShoppingBag className="w-5 h-5" />;
-      case 'user': return <User className="w-5 h-5" />;
-      case 'product': return <Package className="w-5 h-5" />;
-      case 'payment': return <CreditCard className="w-5 h-5" />;
-      case 'review': return <Star className="w-5 h-5" />;
+      case 'new_order': return <ShoppingBag className="w-5 h-5" />;
+      case 'paid_order': return <CreditCard className="w-5 h-5" />;
+      case 'new_user': return <User className="w-5 h-5" />;
+      case 'order_cancelled': return <Package className="w-5 h-5" />;
+      case 'new_review': return <Star className="w-5 h-5" />;
       case 'system': return <Settings className="w-5 h-5" />;
       default: return <Bell className="w-5 h-5" />;
     }
   };
 
-  const getNotificationColor = (type: string, priority: string) => {
+  const getNotificationColor = (type: string) => {
     const colors = {
-      order: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
-      user: 'text-green-400 bg-green-500/20 border-green-500/30',
-      product: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
-      payment: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
-      review: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
+      new_order: 'text-blue-400 bg-blue-500/20 border-blue-500/30',
+      paid_order: 'text-green-400 bg-green-500/20 border-green-500/30',
+      new_user: 'text-purple-400 bg-purple-500/20 border-purple-500/30',
+      order_cancelled: 'text-red-400 bg-red-500/20 border-red-500/30',
+      new_review: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
       system: 'text-pink-400 bg-pink-500/20 border-pink-500/30',
     };
     return colors[type as keyof typeof colors] || 'text-gray-400 bg-gray-500/20 border-gray-500/30';
@@ -115,39 +102,87 @@ export const AdminNotificationsPage: React.FC = () => {
     const notificationTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - notificationTime.getTime()) / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1) return 'Baru saja';
+    if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
     
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 24) return `${diffInHours} jam lalu`;
     
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    return `${diffInDays} hari lalu`;
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      console.log(`🔄 AdminNotificationsPage: Marking notification ${id} as read...`);
+      
+      // Optimistically update UI
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id ? { ...notif, is_read: true } : notif
+        )
+      );
+      
+      // Make API call
+      await adminNotificationService.markAsRead(id);
+      console.log(`✅ AdminNotificationsPage: Successfully marked notification ${id} as read`);
+    } catch (error) {
+      console.error('❌ AdminNotificationsPage: Failed to mark notification as read:', error);
+      // Revert optimistic update on error
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id ? { ...notif, is_read: false } : notif
+        )
+      );
+      // Show user that the operation failed
+      alert('Gagal menandai notifikasi sebagai sudah dibaca. Silakan coba lagi.');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      console.log('🔄 AdminNotificationsPage: Marking all notifications as read...');
+      
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      console.log(`📊 Found ${unreadIds.length} unread notifications to mark as read`);
+      
+      // Optimistically update UI
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, is_read: true }))
+      );
+      
+      // Make API calls for all unread notifications
+      await Promise.all(unreadIds.map(id => adminNotificationService.markAsRead(id)));
+      console.log(`✅ AdminNotificationsPage: Successfully marked ${unreadIds.length} notifications as read`);
+    } catch (error) {
+      console.error('❌ AdminNotificationsPage: Failed to mark all notifications as read:', error);
+      // Reload notifications on error
+      loadNotifications();
+      alert('Gagal menandai semua notifikasi sebagai sudah dibaca. Silakan coba lagi.');
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const deleteNotification = async (id: string) => {
+    try {
+      const originalNotifications = [...notifications];
+      // Optimistically remove from UI
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
+      
+      // Note: We'd need a delete endpoint in adminNotificationService for this to work
+      // For now, just keep the optimistic update
+      console.log(`Notification ${id} removed from UI (delete endpoint not implemented)`);
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+      // Restore notifications on error
+      loadNotifications();
+    }
   };
 
   const filteredNotifications = notifications.filter(notif => {
     const matchesFilter = 
       filter === 'all' ||
-      (filter === 'read' && notif.read) ||
-      (filter === 'unread' && !notif.read);
+      (filter === 'read' && notif.is_read) ||
+      (filter === 'unread' && !notif.is_read);
     
     const matchesType = typeFilter === 'all' || notif.type === typeFilter;
     
@@ -158,7 +193,7 @@ export const AdminNotificationsPage: React.FC = () => {
     return matchesFilter && matchesType && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <DashboardSection>
@@ -175,7 +210,7 @@ export const AdminNotificationsPage: React.FC = () => {
           <div className="flex gap-3">
             <IOSButton
               variant="ghost"
-              onClick={() => setLoading(true)}
+              onClick={() => loadNotifications()}
               className="border-pink-500/30 hover:bg-pink-500/20"
             >
               <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
@@ -272,7 +307,7 @@ export const AdminNotificationsPage: React.FC = () => {
                 key={notification.id}
                 className={cn(
                   'transition-all duration-200 hover:shadow-lg',
-                  notification.read 
+                  notification.is_read 
                     ? 'bg-gradient-to-r from-black/40 to-gray-900/40 border-gray-500/20'
                     : 'bg-gradient-to-r from-black/80 to-gray-900/80 border-pink-500/30 shadow-md shadow-pink-500/10'
                 )}
@@ -282,7 +317,7 @@ export const AdminNotificationsPage: React.FC = () => {
                     {/* Icon */}
                     <div className={cn(
                       'flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center border',
-                      getNotificationColor(notification.type, notification.priority)
+                      getNotificationColor(notification.type)
                     )}>
                       {getNotificationIcon(notification.type)}
                     </div>
@@ -292,27 +327,27 @@ export const AdminNotificationsPage: React.FC = () => {
                       <div className="flex items-start justify-between mb-2">
                         <h3 className={cn(
                           'text-lg font-semibold',
-                          notification.read ? 'text-gray-300' : 'text-white'
+                          notification.is_read ? 'text-gray-300' : 'text-white'
                         )}>
                           {notification.title}
                         </h3>
                         
                         <div className="flex items-center gap-2 text-sm text-gray-400">
                           <Clock className="w-4 h-4" />
-                          {formatTimeAgo(notification.timestamp)}
+                          {formatTimeAgo(notification.created_at)}
                         </div>
                       </div>
                       
                       <p className={cn(
                         'text-sm mb-4',
-                        notification.read ? 'text-gray-500' : 'text-gray-300'
+                        notification.is_read ? 'text-gray-500' : 'text-gray-300'
                       )}>
                         {notification.message}
                       </p>
 
                       {/* Actions */}
                       <div className="flex items-center gap-3">
-                        {!notification.read && (
+                        {!notification.is_read && (
                           <IOSButton
                             variant="ghost"
                             size="small"
@@ -320,7 +355,7 @@ export const AdminNotificationsPage: React.FC = () => {
                             className="border-green-500/30 hover:bg-green-500/20 text-green-400"
                           >
                             <Check className="w-4 h-4 mr-1" />
-                            Mark Read
+                            Tandai Sudah Dibaca
                           </IOSButton>
                         )}
                         
