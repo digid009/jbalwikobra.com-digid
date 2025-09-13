@@ -48,7 +48,7 @@ export const AdminProductsManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminService.getProducts(1, 100);
+      const response = await adminService.getProducts(1, 200); // Get all products
       setProducts(response.data);
     } catch (err) {
       console.error('Error loading products:', err);

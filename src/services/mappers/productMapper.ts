@@ -32,6 +32,22 @@ export interface DbProductRow {
   is_flash_sale?: boolean | null;
   flash_sale_end_time?: string | null;
   has_rental?: boolean | null;
+  // LEFT JOIN relations
+  tiers?: {
+    id: string;
+    name: string;
+    slug: string;
+    color?: string;
+    background_gradient?: string;
+    icon?: string;
+  } | null;
+  game_titles?: {
+    id: string;
+    name: string;
+    slug: string;
+    icon?: string;
+    logo_url?: string;
+  } | null;
 }
 
 // Domain shape used by admin panels (kept aligned with existing AdminService.Product interface)
@@ -58,6 +74,22 @@ export interface DomainProduct {
   flash_sale_end_time?: string | null;
   has_rental?: boolean | null;
   archived_at?: string | null;
+  // LEFT JOIN relations for admin filtering
+  tiers?: {
+    id: string;
+    name: string;
+    slug: string;
+    color?: string;
+    background_gradient?: string;
+    icon?: string;
+  } | null;
+  game_titles?: {
+    id: string;
+    name: string;
+    slug: string;
+    icon?: string;
+    logo_url?: string;
+  } | null;
 }
 
 // Helper: ensure images array & primary image coherence
@@ -96,7 +128,10 @@ export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
     is_flash_sale: row.is_flash_sale || null,
     flash_sale_end_time: row.flash_sale_end_time || null,
     has_rental: row.has_rental || null,
-    archived_at: row.archived_at || null
+    archived_at: row.archived_at || null,
+    // Include LEFT JOIN relations for admin filtering
+    tiers: row.tiers || null,
+    game_titles: row.game_titles || null
   };
 }
 

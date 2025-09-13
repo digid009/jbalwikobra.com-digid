@@ -821,16 +821,20 @@ export const adminService = {
   async getProducts(page: number = 1, limit: number = 10, searchTerm?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<PaginatedResponse<Product>> {
     const sortKey = sort ? `${sort.column}:${sort.direction}` : 'created_at:desc';
     return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}:${sortKey}`, async () => {
-      // Use actual schema columns from detection: removed 'tier' (doesn't exist)
-      const actualColumns = [
-        'id','name','description','price','original_price','category','tier_id','game_title','game_title_id',
-        'account_level','account_details','stock','is_active','image','images','created_at','updated_at','archived_at',
-        'is_flash_sale','flash_sale_end_time','has_rental'
-      ].join(',');
-
+      // Use LEFT JOIN with tiers and game_titles to get all products
       let query = supabase
         .from('products')
-        .select(actualColumns, { count: 'exact' });
+        .select(`
+          id, name, description, price, original_price, category, tier_id, game_title, game_title_id,
+          account_level, account_details, stock, is_active, image, images, created_at, updated_at, archived_at,
+          is_flash_sale, flash_sale_end_time, has_rental,
+          tiers (
+            id, name, slug, color, background_gradient, icon
+          ),
+          game_titles (
+            id, name, slug, icon, logo_url
+          )
+        `, { count: 'exact' });
 
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);

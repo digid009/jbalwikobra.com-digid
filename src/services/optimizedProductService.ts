@@ -79,10 +79,10 @@ class OptimizedProductService {
           id, name, description, price, original_price, account_level,
           account_details, images, is_active, archived_at, created_at,
           game_title_id, tier_id, has_rental,
-          tiers!inner (
+          tiers (
             id, name, slug, color, background_gradient, icon
           ),
-          game_titles!inner (
+          game_titles (
             id, name, slug, icon, logo_url
           )
         `, { count: 'exact' });

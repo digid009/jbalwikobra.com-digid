@@ -9,8 +9,8 @@ import { Product, Tier, GameTitle } from '../types';
 
 // Mobile-first constants
 const MOBILE_CONSTANTS = {
-  PRODUCTS_PER_PAGE: 12, // Optimized for mobile scrolling
-  PRODUCTS_PER_PAGE_MOBILE: 8, // Fewer products on mobile for faster loading
+  PRODUCTS_PER_PAGE: 16, // Increased for desktop to show more products
+  PRODUCTS_PER_PAGE_MOBILE: 12, // Increased for mobile to show more products (was 8)
 } as const;
 
 interface ProductsPageState {
@@ -92,7 +92,7 @@ export const useProductsData = () => {
           status: 'active'
         }, {
           page: 1,
-          limit: 100
+          limit: 200 // Increased to get all products
         }),
         ProductService.getTiers(),
         ProductService.getGameTitles()
