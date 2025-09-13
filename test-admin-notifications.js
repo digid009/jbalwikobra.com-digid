@@ -2,7 +2,7 @@
  * Test script untuk sistem notifikasi admin
  * Memverifikasi template notifikasi dan fungsi mark as read
  */
-import { adminNotificationService } from '../src/services/adminNotificationService.js';
+import { adminNotificationService } from './src/services/adminNotificationService.js';
 
 console.log('🧪 Testing Admin Notification System...\n');
 

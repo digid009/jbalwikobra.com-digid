@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../../styles/standardClasses';
+import FloatingNotifications from '../FloatingNotifications';
 
 interface DashboardLayoutProps {
   header?: React.ReactNode;
@@ -24,6 +25,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ header, childr
         </div>
       </main>
       {footer}
+      
+      {/* FloatingNotifications - muncul di semua halaman admin */}
+      <FloatingNotifications />
     </div>
   );
 };

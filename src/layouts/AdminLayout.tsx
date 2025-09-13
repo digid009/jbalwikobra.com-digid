@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Package, Users, Zap, ListOrdered, Image as ImageIcon, Settings as SettingsIcon, Gamepad2, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/TraditionalAuthContext';
+import FloatingNotifications from '../pages/admin/FloatingNotifications';
 
 const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -21,11 +22,11 @@ const AdminLayout: React.FC = () => {
   if (isSuper) links.push({ to: '/admin/users', label: 'Users', icon: Users } as any);
 
   return (
-    <div className="min-h-screen bg-ios-background text-white">
+    <div className="min-h-screen bg-ios-background text-ios-text">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-ios-background/95 backdrop-blur border-b border-gray-700 pt-safe-top">
+      <header className="sticky top-0 z-30 bg-ios-background/95 backdrop-blur border-b border-ios-border pt-safe-top">
         <div className="h-16 px-4 md:px-6 flex items-center justify-between">
-          <button onClick={() => setOpen(!open)} className="md:hidden text-white p-2 rounded-lg hover:bg-black transition-colors" aria-label="Menu">
+          <button onClick={() => setOpen(!open)} className="md:hidden text-ios-text p-2 rounded-lg hover:bg-ios-surface transition-colors" aria-label="Menu">
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-3">
@@ -33,13 +34,13 @@ const AdminLayout: React.FC = () => {
               <span className="text-white text-sm font-bold">A</span>
             </div>
             <div className="hidden md:block">
-              <div className="font-semibold text-white">Admin Panel</div>
-              <div className="text-xs text-white-secondary -mt-1">JB Alwikobra</div>
+              <div className="font-semibold text-ios-text">Admin Panel</div>
+              <div className="text-xs text-ios-text-secondary -mt-1">JB Alwikobra</div>
             </div>
           </div>
           <button
             onClick={async ()=>{ await logout(); window.location.href='/' }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black border border-gray-700 hover:bg-pink-500/10 hover:border-ios-accent/30 text-sm text-white transition-all duration-200"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ios-surface border border-ios-border hover:bg-ios-accent/10 hover:border-ios-accent/30 text-sm text-ios-text transition-all duration-200"
             title="Keluar"
           >
             <LogOut size={16} />
@@ -51,7 +52,7 @@ const AdminLayout: React.FC = () => {
       {/* Shell with sidebar */}
       <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
         {/* Sidebar */}
-        <aside className={`bg-black border-r border-gray-700 md:sticky md:top-16 md:h-[calc(100vh-64px)] overflow-y-auto ${open ? 'block' : 'hidden'} md:block`}>
+        <aside className={`bg-ios-surface border-r border-ios-border md:sticky md:top-16 md:h-[calc(100vh-64px)] overflow-y-auto ${open ? 'block' : 'hidden'} md:block`}>
           <nav className="py-4 px-2">
             {links.map((l) => {
               const Icon = l.icon as any;
@@ -60,7 +61,7 @@ const AdminLayout: React.FC = () => {
                   key={l.to}
                   to={l.to}
                   end={(l as any).end}
-                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 mb-1 text-sm font-medium rounded-xl transition-all duration-200 ${isActive ? 'text-pink-500 bg-pink-500/10 border border-ios-accent/20' : 'text-white-secondary hover:text-white hover:bg-ios-background'}`}
+                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 mb-1 text-sm font-medium rounded-xl transition-all duration-200 ${isActive ? 'text-ios-accent bg-ios-accent/10 border border-ios-accent/20' : 'text-ios-text-secondary hover:text-ios-text hover:bg-ios-background'}`}
                 >
                   <Icon size={18} />
                   <span>{l.label}</span>
@@ -71,10 +72,13 @@ const AdminLayout: React.FC = () => {
         </aside>
 
         {/* Content */}
-        <main className="p-3.5 text-white min-h-[calc(100vh-64px)]">
+        <main className="p-6 md:p-8 text-ios-text min-h-[calc(100vh-64px)]">
           <Outlet />
         </main>
       </div>
+      
+      {/* FloatingNotifications - muncul di semua halaman admin */}
+      <FloatingNotifications />
     </div>
   );
 };

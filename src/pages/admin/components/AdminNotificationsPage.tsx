@@ -34,9 +34,9 @@ interface NotificationItem {
 const mockNotifications: NotificationItem[] = [
   {
     id: '1',
-    type: 'system',
-    title: 'Test Notification',
-    message: 'Testing admin notifications system',
+    type: 'user',
+    title: 'Bang! ada yang DAFTAR akun nih!',
+    message: 'namanya Ahmad Rizky Pratama nomor wanya 6281234567890',
     timestamp: '2025-09-13T10:05:00Z',
     read: false,
     priority: 'medium'
@@ -44,8 +44,8 @@ const mockNotifications: NotificationItem[] = [
   {
     id: '2',
     type: 'order',
-    title: 'New Order Received',
-    message: 'A new order has been placed by a customer',
+    title: 'Bang! ada yang ORDER nih!',
+    message: 'namanya Siti Nurhaliza, produknya FREE FIRE A - VAULT 645 PRIME 4 SG harganya Rp2.800.000, belum di bayar sih, tapi moga aja di bayar amin.',
     timestamp: '2025-09-13T11:24:00Z',
     read: false,
     priority: 'high'
@@ -53,7 +53,7 @@ const mockNotifications: NotificationItem[] = [
   {
     id: '3',
     type: 'payment',
-    title: 'Payment Confirmed',
+    title: 'Bang! ALHAMDULILLAH ada yang BAYAR nih!',
     message: 'Payment has been received for order',
     timestamp: '2025-09-13T10:24:00Z',
     read: true,
@@ -62,8 +62,8 @@ const mockNotifications: NotificationItem[] = [
   {
     id: '4',
     type: 'user',
-    title: 'New User Registration',
-    message: 'A new user has registered on the platform',
+    title: 'Bang! ada yang DAFTAR akun nih!',
+    message: 'namanya {nama user terdaftar} nomor wanya {nomor whatsapp}',
     timestamp: '2025-09-13T09:24:00Z',
     read: true,
     priority: 'low'
@@ -71,8 +71,8 @@ const mockNotifications: NotificationItem[] = [
   {
     id: '5',
     type: 'review',
-    title: 'New Product Review',
-    message: 'A customer has left a review for a product',
+    title: 'Bang! ada yang REVIEW produk nih!',
+    message: 'namanya {nama customer} memberikan ulasan untuk produk {nama produk}',
     timestamp: '2025-09-13T08:24:00Z',
     read: false,
     priority: 'medium'
