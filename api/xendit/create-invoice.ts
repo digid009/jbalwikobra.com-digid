@@ -3,7 +3,35 @@ const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
-import { adminNotificationService } from '../../src/services/adminNotificationService';
+// Simple admin notification function for serverless environment
+async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'new_order', customerPhone?: string) {
+  try {
+    const notification = {
+      title: 'New Order Received',
+      message: `${customerName} placed an order for ${productName}`,
+      type,
+      metadata: {
+        order_id: orderId,
+        customer_name: customerName,
+        product_name: productName,
+        amount,
+        customer_phone: customerPhone
+      },
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+
+    const { error } = await sb
+      .from('admin_notifications')
+      .insert(notification);
+
+    if (error) {
+      console.error('[Admin] Notification insert error:', error);
+    }
+  } catch (error) {
+    console.error('[Admin] Notification creation failed:', error);
+  }
+}
 
 async function createOrderIfProvided(order: any, clientExternalId?: string) {
   try {
@@ -134,7 +162,8 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
           }
         }
 
-        await adminNotificationService.createOrderNotification(
+        await createOrderNotification(
+          sb,
           data.id,
           data.customer_name || 'Guest Customer',
           productName,
