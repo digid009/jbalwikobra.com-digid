@@ -455,7 +455,13 @@ const ModernNotificationsPanel: React.FC<ModernNotificationsPanelProps> = ({
                   setNotifications(updatedNotifications);
                   const count = await notificationService.getUnreadCount(user?.id);
                   setUnreadCount(count);
-                } catch {}
+                } catch (error) {
+                  console.error('Failed to mark all notifications as read:', error);
+                  // Still update the UI optimistically for better UX
+                  const updatedNotifications = notifications.map(n => ({ ...n, is_read: true }));
+                  setNotifications(updatedNotifications);
+                  setUnreadCount(0);
+                }
               }}
               className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
             >
@@ -492,7 +498,21 @@ const ModernNotificationsPanel: React.FC<ModernNotificationsPanelProps> = ({
                     const count = await notificationService.getUnreadCount(user?.id);
                     setUnreadCount(count);
                   }
-                } catch {}
+                } catch (error) {
+                  console.error('Failed to mark notification as read:', error);
+                  // Still update the UI optimistically for better UX
+                  const updatedNotifications = notifications.map(n => n.id === notification.id ? { ...n, is_read: true } : n);
+                  setNotifications(updatedNotifications);
+                  // Refetch the count to keep it accurate
+                  try {
+                    const count = await notificationService.getUnreadCount(user?.id);
+                    setUnreadCount(count);
+                  } catch {
+                    // If we can't fetch count, try to estimate it
+                    const unreadInList = updatedNotifications.filter(n => !n.is_read).length;
+                    setUnreadCount(Math.max(0, unreadInList));
+                  }
+                }
                 onClose();
                 if (notification.link_url) navigate(notification.link_url);
               }}

@@ -18,6 +18,6 @@
       "*": ["*", "src/*"]
     }
   },
-  "include": ["src", "api"],
+  "include": ["src/**/*", "api/**/*", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "build", "dist"]
 }

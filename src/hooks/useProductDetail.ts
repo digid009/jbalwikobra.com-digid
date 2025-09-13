@@ -271,7 +271,7 @@ export const useProductDetail = () => {
   }, [state.product, showToast]);
 
   // Computed values
-  const isFlashSaleActive = state.product?.flashSaleEndTime && state.product.isFlashSale;
+  const isFlashSaleActive = Boolean(state.product?.flashSaleEndTime && state.product.isFlashSale);
   const timeRemaining = state.product?.flashSaleEndTime 
     ? calculateTimeRemaining(state.product.flashSaleEndTime) 
     : null;

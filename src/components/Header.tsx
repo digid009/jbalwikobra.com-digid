@@ -205,7 +205,12 @@ const Header = () => {
                                 setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
                                 const count = await notificationService.getUnreadCount(user?.id);
                                 setUnreadCount(count);
-                              } catch {}
+                              } catch (error) {
+                                console.error('Failed to mark all notifications as read:', error);
+                                // Still update UI for better UX
+                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                                setUnreadCount(0);
+                              }
                             }}
                             className="text-xs text-pink-500 hover:underline"
                           >
@@ -236,7 +241,11 @@ const Header = () => {
                                       const count = await notificationService.getUnreadCount(user?.id);
                                       setUnreadCount(count);
                                     }
-                                  } catch {}
+                                  } catch (error) {
+                                    console.error('Failed to mark notification as read:', error);
+                                    // Optimistic update for better UX
+                                    setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
+                                  }
                                   setIsNotifOpen(false);
                                   if (n.link_url) navigate(n.link_url);
                                 }}

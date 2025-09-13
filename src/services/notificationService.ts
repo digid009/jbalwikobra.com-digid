@@ -84,17 +84,17 @@ class NotificationService {
     try {
       // Use RPC that handles both owned and global notifications
       const { error } = await supabase.rpc('mark_notification_read', { n_id: notificationId, u_id: userId });
-      if (error) throw error;
-      // Invalidate related caches
-      await Promise.resolve(
-        ['latest', 'unread-count'].forEach(tag => {
-          globalCache.delete(`${this.cacheTag}:${tag}:10:${userId}`);
-          globalCache.delete(`${this.cacheTag}:${tag}:10:${userId || 'guest'}`);
-          globalCache.delete(`${this.cacheTag}:${tag}:*:${userId}`);
-        })
-      );
+      if (error) {
+        console.error('Failed to mark notification as read:', error);
+        throw error;
+      }
+      
+      // More comprehensive cache invalidation
+      this.invalidateCache(userId);
     } catch (e) {
-      console.warn('markAsRead failed:', e);
+      console.error('markAsRead failed:', e);
+      // Re-throw the error so the UI can handle it properly
+      throw e;
     }
   }
 
@@ -102,15 +102,44 @@ class NotificationService {
     if (!userId) return; // guests: skip
     try {
       const { error } = await supabase.rpc('mark_all_notifications_read', { u_id: userId });
-      if (error) throw error;
-      // Invalidate caches for this user
-      ['latest', 'unread-count'].forEach(tag => {
-        globalCache.delete(`${this.cacheTag}:${tag}:10:${userId}`);
-        globalCache.delete(`${this.cacheTag}:${tag}:*:${userId}`);
-      });
+      if (error) {
+        console.error('Failed to mark all notifications as read:', error);
+        throw error;
+      }
+      
+      // More comprehensive cache invalidation
+      this.invalidateCache(userId);
     } catch (e) {
-      console.warn('markAllAsRead failed:', e);
+      console.error('markAllAsRead failed:', e);
+      // Re-throw the error so the UI can handle it properly
+      throw e;
     }
+  }
+
+  private invalidateCache(userId?: string | null): void {
+    // Clear all notification-related caches for this user
+    const userKey = userId || 'guest';
+    const keysToDelete = [
+      `${this.cacheTag}:latest:10:${userKey}`,
+      `${this.cacheTag}:unread-count:${userKey}`,
+    ];
+
+    // Also try common cache key patterns
+    if (userId) {
+      keysToDelete.push(
+        `${this.cacheTag}:latest:10:${userId}`,
+        `${this.cacheTag}:unread-count:${userId}`,
+        `${this.cacheTag}:latest:5:${userId}`,
+        `${this.cacheTag}:latest:20:${userId}`
+      );
+    }
+
+    keysToDelete.forEach(key => {
+      globalCache.delete(key);
+    });
+
+    // Also invalidate by tags if we have them
+    globalCache.invalidateByTags([this.cacheTag, 'user-notifications']);
   }
 }
 
