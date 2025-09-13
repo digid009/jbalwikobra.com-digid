@@ -1,1 +1,3 @@
-export { default } from './ModernAdminDashboard';
+import ModernAdminDashboard from './ModernAdminDashboard';
+
+export default ModernAdminDashboard;
