@@ -356,11 +356,11 @@ const HomePage: React.FC = () => {
   {/* Flash Sales (Modular) */}
   <HomeFlashSalesSection products={state.flashSaleProducts} limit={MOBILE_CONSTANTS.FLASH_SALE_DISPLAY_LIMIT} />
 
-  {/* Features (Modular) */}
-  <HomeFeaturesSection />
-
   {/* Popular Games (Modular) */}
   <HomePopularGamesSection games={state.popularGames} limit={12} />
+
+  {/* Features (Modular) */}
+  <HomeFeaturesSection />
 
       {/* Final CTA using IOSHero for consistency */}
       <IOSHero 

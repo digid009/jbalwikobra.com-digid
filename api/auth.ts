@@ -2,7 +2,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { adminNotificationService } from '../src/services/adminNotificationService';
+// Remove adminNotificationService import to avoid module resolution issues
+// import { adminNotificationService } from '../src/services/adminNotificationService';
 
 // Lazily initialize Supabase client to avoid module-load failures
 let supabase: SupabaseClient | null = null;
@@ -255,12 +256,13 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
       // Create admin notification for new user signup
       try {
-        await adminNotificationService.createUserSignupNotification(
-          newUser.id,
-          'New User', // Default name since name might not be provided yet
-          phone
-        );
-        console.log('[Admin] User signup notification created successfully');
+        // TODO: Re-enable when adminNotificationService module resolution is fixed
+        // await adminNotificationService.createUserSignupNotification(
+        //   newUser.id,
+        //   'New User', // Default name since name might not be provided yet
+        //   phone
+        // );
+        console.log('[Admin] User signup notification skipped (service temporarily disabled)');
       } catch (notificationError) {
         console.error('[Admin] Failed to create user signup notification:', notificationError);
       }
@@ -434,24 +436,26 @@ async function handleCompleteProfile(req: VercelRequest, res: VercelResponse) {
 
     // Update admin notification with actual user name
     try {
+      // TODO: Re-enable when adminNotificationService module resolution is fixed
       // Find recent signup notifications for this user and update them
-      const notifications = await adminNotificationService.getAdminNotifications(50);
-      const userNotification = notifications.find(n => 
-        n.type === 'new_user' && n.user_id === user_id
-      );
+      // const notifications = await adminNotificationService.getAdminNotifications(50);
+      // const userNotification = notifications.find(n => 
+      //   n.type === 'new_user' && n.user_id === user_id
+      // );
       
-      if (userNotification) {
-        // Update the notification with actual name and better message
-        await getSupabase()
-          .from('admin_notifications')
-          .update({
-            title: 'Bang! ada yang DAFTAR akun nih!',
-            message: `namanya ${name} nomor wanya ${user.phone}`,
-            customer_name: name
-          })
-          .eq('id', userNotification.id);
-        console.log('[Admin] Updated user signup notification with actual name');
-      }
+      // if (userNotification) {
+      //   // Update the notification with actual name and better message
+      //   await getSupabase()
+      //     .from('admin_notifications')
+      //     .update({
+      //       title: 'Bang! ada yang DAFTAR akun nih!',
+      //       message: `namanya ${name} nomor wanya ${user.phone}`,
+      //       customer_name: name
+      //     })
+      //     .eq('id', userNotification.id);
+      //   console.log('[Admin] Updated user signup notification with actual name');
+      // }
+      console.log('[Admin] Notification update skipped (service temporarily disabled)');
     } catch (notificationError) {
       console.error('[Admin] Failed to update user signup notification:', notificationError);
     }
