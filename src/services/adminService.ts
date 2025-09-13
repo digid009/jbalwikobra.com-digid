@@ -121,18 +121,22 @@ export interface PaginatedResponse<T> {
 
 export interface FeedPost {
   id: string;
-  title: string;
+  user_id: string;
+  type: 'post' | 'announcement';
+  product_id?: string | null;
+  title?: string | null;
   content: string;
-  image?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  // Add missing properties for feed management
-  type: 'text' | 'image' | 'video';
-  author_name: string;
+  rating?: number | null;
+  image_url?: string | null;
   likes_count: number;
   comments_count: number;
   is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  is_pinned: boolean;
+  // Optional computed fields
+  author_name?: string;
+  views?: number;
 }
 
 export interface AdminNotification {
@@ -974,19 +978,44 @@ export const adminService = {
     return adminCache.getOrFetch(`admin:feed-posts:${page}:${limit}`, async () => {
       const { data, error, count } = await supabase
         .from('feed_posts')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          users:user_id (
+            name
+          )
+        `, { count: 'exact' })
+        .eq('is_deleted', false)
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) throw error;
       
+      // Add computed author_name field
+      const postsWithAuthor = (data || []).map(post => ({
+        ...post,
+        author_name: post.users?.name || 'Unknown User'
+      }));
+      
       return {
-        data: data || [],
+        data: postsWithAuthor,
         count: count || 0,
         page,
         totalPages: Math.ceil((count || 0) / limit)
       };
     });
+  },
+
+  async deleteFeedPost(postId: string): Promise<void> {
+    const { error } = await supabase
+      .from('feed_posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) throw error;
+    
+    // Clear cache for feed posts
+    adminCache.clear();
   },
 
   // ----- Dashboard Analytics -----
@@ -1420,5 +1449,93 @@ export const adminService = {
       .insert(reviews);
 
     if (error) throw error;
+  },
+
+  // Enhanced Feed Posts Management
+  async createFeedPost(data: {
+    title?: string;
+    content: string;
+    type: 'post' | 'announcement';
+    image_url?: string;
+    is_pinned?: boolean;
+  }): Promise<void> {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user?.id) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('feed_posts')
+      .insert({
+        ...data,
+        user_id: user.user.id,
+        likes_count: 0,
+        comments_count: 0,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+  },
+
+  async updateFeedPost(id: string, data: {
+    title?: string;
+    content: string;
+    type: 'post' | 'announcement';
+    image_url?: string;
+    is_pinned?: boolean;
+  }): Promise<void> {
+    const { error } = await supabase
+      .from('feed_posts')
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+  },
+
+  async toggleFeedPostPin(id: string): Promise<void> {
+    const { data: post, error: fetchError } = await supabase
+      .from('feed_posts')
+      .select('is_pinned')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const { error } = await supabase
+      .from('feed_posts')
+      .update({ 
+        is_pinned: !post.is_pinned,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+  },
+
+  async deleteFeedPostPermanent(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('feed_posts')
+      .update({ 
+        is_deleted: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
   }
 };

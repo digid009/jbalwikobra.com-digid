@@ -27,7 +27,7 @@ import {
   Users
 } from 'lucide-react';
 
-const SellPage: React.FC = () => {
+const SellPageNew: React.FC = () => {
   const [selectedGame, setSelectedGame] = useState('');
   const [accountLevel, setAccountLevel] = useState('');
   const [estimatedPrice, setEstimatedPrice] = useState('');
@@ -376,4 +376,4 @@ const SellPage: React.FC = () => {
   );
 };
 
-export default SellPage;
+export default SellPageNew;

@@ -10,6 +10,7 @@ interface PhoneInputProps {
   className?: string;
   onValidationChange?: (isValid: boolean) => void;
   defaultCountry?: string;
+  disableAutoDetection?: boolean;
 }
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
@@ -19,7 +20,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   required = false,
   className = "",
   onValidationChange,
-  defaultCountry = 'ID'
+  defaultCountry = 'ID',
+  disableAutoDetection = false
 }) => {
   const [selectedCountry, setSelectedCountry] = useState<Country>(
     COUNTRIES.find(c => c.code === defaultCountry) || COUNTRIES[0]
@@ -172,13 +174,15 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Auto-detect country based on input
-    const detectedCountry = detectCountryFromNumber(inputValue);
-    if (detectedCountry && detectedCountry.code !== selectedCountry.code) {
-      setSelectedCountry(detectedCountry);
+    // Auto-detect country based on input (only if not disabled)
+    if (!disableAutoDetection) {
+      const detectedCountry = detectCountryFromNumber(inputValue);
+      if (detectedCountry && detectedCountry.code !== selectedCountry.code) {
+        setSelectedCountry(detectedCountry);
+      }
     }
     
-    const currentCountry = detectedCountry || selectedCountry;
+    const currentCountry = !disableAutoDetection ? (detectCountryFromNumber(inputValue) || selectedCountry) : selectedCountry;
     
     // Validate and format
     const validation = validatePhoneNumber(inputValue, currentCountry);
@@ -258,22 +262,23 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   // Parse initial value
   useEffect(() => {
     if (value) {
-      // Find country from phone number
-      const detectedCountry = detectCountryFromNumber(value);
-      if (detectedCountry) {
+      // Find country from phone number (only if auto-detection is enabled)
+      const detectedCountry = !disableAutoDetection ? detectCountryFromNumber(value) : null;
+      if (detectedCountry && !disableAutoDetection) {
         setSelectedCountry(detectedCountry);
       }
       
       // Format for display
-      const formatted = formatPhoneNumber(value, detectedCountry || selectedCountry);
+      const currentCountry = detectedCountry || selectedCountry;
+      const formatted = formatPhoneNumber(value, currentCountry);
       setPhoneNumber(formatted);
       
       // Validate
-      const validation = validatePhoneNumber(value, detectedCountry || selectedCountry);
+      const validation = validatePhoneNumber(value, currentCountry);
       setError(validation.error);
       setIsValid(validation.isValid);
     }
-  }, [value]);
+  }, [value, disableAutoDetection]);
 
   const getBorderColor = () => {
     if (!phoneNumber) return 'border-gray-700';

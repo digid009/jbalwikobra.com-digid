@@ -4,7 +4,7 @@ import { AdminDashboardContent } from './components/AdminDashboardContent';
 import { AdminOrdersManagement } from './components/AdminOrdersManagementNew';
 import { AdminUsersManagement } from './components/AdminUsersManagement';
 import { AdminProductsManagement } from './components/AdminProductsManagement';
-import { AdminFeedManagement } from './components/AdminFeedManagement';
+import AdminFeedManagement from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import AdminFlashSalesV2 from './AdminFlashSalesV2';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';

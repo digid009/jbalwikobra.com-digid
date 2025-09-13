@@ -393,7 +393,7 @@ const ModernUserActions: React.FC<ModernUserActionsProps> = ({
         <IOSButton 
           variant="ghost" 
           size="small"
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/auth')}
           className="text-white border-white/20 hover:bg-white/10"
         >
           Masuk
@@ -401,7 +401,7 @@ const ModernUserActions: React.FC<ModernUserActionsProps> = ({
         <IOSButton 
           variant="primary" 
           size="small"
-          onClick={() => navigate('/register')}
+          onClick={() => navigate('/auth')}
           className="bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700"
         >
           Daftar
@@ -664,7 +664,7 @@ const ModernMobileMenu: React.FC<ModernMobileMenuProps> = ({
                   variant="ghost" 
                   fullWidth
                   onClick={() => {
-                    navigate('/login');
+                    navigate('/auth');
                     onClose();
                   }}
                   className="text-white border-white/20 hover:bg-white/10"
@@ -675,7 +675,7 @@ const ModernMobileMenu: React.FC<ModernMobileMenuProps> = ({
                   variant="primary" 
                   fullWidth
                   onClick={() => {
-                    navigate('/register');
+                    navigate('/auth');
                     onClose();
                   }}
                   className="bg-gradient-to-r from-pink-500 to-fuchsia-600"

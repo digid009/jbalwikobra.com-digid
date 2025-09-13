@@ -370,14 +370,15 @@ p, span, h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Force dark theme for this application */
 @media (prefers-color-scheme: light) {
   :root {
-    --ios-background: #ffffff;
-    --ios-secondary-background: #f2f2f7;
-    --ios-tertiary-background: #ffffff;
-    --ios-primary-text: #000000;
-    --ios-secondary-text: #8e8e93;
-    --ios-separator: #c6c6c8;
+    --ios-background: #000000; /* Force dark background even in light mode */
+    --ios-secondary-background: #1c1c1e;
+    --ios-tertiary-background: #2c2c2e;
+    --ios-primary-text: #ffffff;
+    --ios-secondary-text: #aeaeb2;
+    --ios-separator: #38383a;
   }
 }
 

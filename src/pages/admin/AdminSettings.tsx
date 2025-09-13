@@ -113,6 +113,7 @@ const AdminSettings: React.FC = () => {
                 onValidationChange={(isValid) => setPhoneValidation(prev => ({...prev, whatsapp: isValid}))}
                 placeholder="Masukkan Nomor WhatsApp"
                 className="bg-black border-gray-700 text-white"
+                disableAutoDetection={true}
               />
             </div>
             

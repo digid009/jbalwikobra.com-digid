@@ -755,6 +755,7 @@ const ProductDetailPage: React.FC = () => {
                     onValidationChange={setIsPhoneValid}
                     placeholder="Masukkan Nomor WhatsApp"
                     required
+                    disableAutoDetection={true}
                   />
                 </div>
 

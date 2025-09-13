@@ -254,6 +254,7 @@ const EnhancedAdminSettings: React.FC = () => {
                     onValidationChange={(isValid) => setPhoneValidation(prev => ({...prev, contact: isValid}))}
                     placeholder="Masukkan Nomor Telepon"
                     className="bg-white/10 border-white/20 text-white focus:border-pink-500/50"
+                    disableAutoDetection={true}
                   />
                 </div>
                 
@@ -267,6 +268,7 @@ const EnhancedAdminSettings: React.FC = () => {
                     onValidationChange={(isValid) => setPhoneValidation(prev => ({...prev, whatsapp: isValid}))}
                     placeholder="Masukkan Nomor WhatsApp"
                     className="bg-white/10 border-white/20 text-white focus:border-pink-500/50"
+                    disableAutoDetection={true}
                   />
                 </div>
               </div>

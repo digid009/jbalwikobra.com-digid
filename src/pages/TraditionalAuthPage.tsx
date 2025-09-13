@@ -279,6 +279,7 @@ const AuthPage: React.FC = () => {
                         onChange={(value) => setPhoneLoginData({ ...phoneLoginData, phone: value })}
                         placeholder="Masukkan Nomor WhatsApp"
                         required
+                        disableAutoDetection={true}
                       />
                     </div>
 
@@ -323,6 +324,7 @@ const AuthPage: React.FC = () => {
                   })}
                   placeholder="Masukkan Nomor WhatsApp"
                   required
+                  disableAutoDetection={true}
                 />
                 <p className="text-xs text-white-secondary mt-1">
                   Verification code will be sent to this number (Supports Asian countries)
