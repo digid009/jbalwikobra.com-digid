@@ -16,16 +16,7 @@ import {
 import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { AdminStats } from '../../../services/adminService';
 import { cn } from '../../../styles/standardClasses';
-
-export type AdminTab = 
-  | 'dashboard' 
-  | 'orders' 
-  | 'users' 
-  | 'products' 
-  | 'feed' 
-  | 'banners' 
-  | 'flash-sales' 
-  | 'reviews';
+import { AdminTab } from './structure/adminTypes';
 
 interface NavigationItem {
   id: AdminTab;

@@ -8,7 +8,7 @@ import { AdminUsersManagement } from './components/AdminUsersManagement';
 import { AdminProductsManagement } from './components/AdminProductsManagement';
 import { AdminFeedManagement } from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
-import { AdminFlashSalesManagement } from './components/AdminFlashSalesManagement';
+import AdminFlashSalesV2 from './AdminFlashSalesV2';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import { AdminNotificationsPage } from './components/AdminNotificationsPage';
 import EnhancedAdminSettings from './EnhancedAdminSettings';
@@ -118,7 +118,7 @@ const ModernAdminDashboard: React.FC = () => {
       case 'banners':
         return <AdminBannersManagement />;
       case 'flash-sales':
-        return <AdminFlashSalesManagement />;
+        return <AdminFlashSalesV2 />;
       case 'reviews':
         return <AdminReviewsManagement />;
       case 'notifications':

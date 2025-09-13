@@ -6,12 +6,14 @@ interface FlashSaleTimerProps {
   endTime: string;
   className?: string;
   compact?: boolean;
+  variant?: 'card' | 'inline'; // New variant for different styles
 }
 
 const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({ 
   endTime, 
   className = '',
-  compact = false 
+  compact = false,
+  variant = 'inline'
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(() => calculateTimeRemaining(endTime));
 
@@ -29,10 +31,31 @@ const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({
   }, [endTime]);
 
   if (timeRemaining.isExpired) {
+    if (variant === 'card') {
+      return (
+        <div className={`w-full flex items-center justify-center gap-2 text-pink-600 bg-white rounded-lg py-2 text-[11px] font-semibold tracking-wide ${className}`}>
+          <Clock className="w-4 h-4" />
+          <span>Berakhir</span>
+        </div>
+      );
+    }
+    
     return (
       <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black text-pink-400 text-xs font-semibold border border-pink-400/60 backdrop-blur-sm ${className}`}>
         <Clock size={12} className="text-pink-400" />
         <span>BERAKHIR</span>
+      </div>
+    );
+  }
+
+  if (variant === 'card') {
+    return (
+      <div className={`w-full flex items-center justify-center gap-2 text-pink-600 bg-white rounded-lg py-2 text-[11px] font-semibold tracking-wide group-hover:bg-white/90 ${className}`}>
+        <Clock className="w-4 h-4" />
+        <span>
+          {timeRemaining.days > 0 && `${timeRemaining.days} Hari `}
+          {`${timeRemaining.hours.toString().padStart(2,'0')}:${timeRemaining.minutes.toString().padStart(2,'0')}:${timeRemaining.seconds.toString().padStart(2,'0')}`} tersisa
+        </span>
       </div>
     );
   }

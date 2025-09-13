@@ -97,8 +97,8 @@ const ModernFooter: React.FC = () => {
       links: [
         { label: 'Feed Komunitas', href: '/feed' },
         { label: 'Forum Diskusi', href: '/community', external: true },
-        { label: 'Discord Server', href: '#', external: true },
-        { label: 'Telegram Group', href: '#', external: true },
+        { label: 'Discord Server', href: '#discord', external: true },
+        { label: 'Telegram Group', href: '#telegram', external: true },
       ]
     },
   ];
@@ -318,8 +318,8 @@ const FooterSection: React.FC<{ section: FooterSection }> = ({ section }) => (
   <div>
     <h3 className="font-semibold text-white mb-6 text-base">{section.title}</h3>
     <ul className="space-y-3">
-      {section.links.map((link) => (
-        <li key={link.href}>
+      {section.links.map((link, index) => (
+        <li key={`${link.href}-${link.label}-${index}`}>
           {link.external ? (
             <a
               href={link.href}

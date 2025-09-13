@@ -390,79 +390,125 @@ export const IOSSkeleton: React.FC<IOSSkeletonProps> = ({
   height,
   className = ''
 }) => {
-  const baseClasses = 'animate-pulse bg-zinc-800';
-  
   const variantClasses = {
     text: 'rounded h-4',
     rectangular: 'rounded-lg',
     circular: 'rounded-full'
   };
-  
-  const style = {
-    ...(width && { width }),
-    ...(height && { height })
-  };
-
   return (
     <div
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
-      style={style}
+      className={`bg-zinc-800/60 animate-pulse ${variantClasses[variant]} ${!width ? 'w-full' : ''} ${className}`}
+      style={{ width, height }}
     />
   );
 };
 
-// Input Component with iOS styling
-interface IOSInputProps {
-  label?: string;
-  placeholder?: string;
-  type?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+// Input Component
+interface IOSInputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  leadingIcon?: React.ReactNode;
+  trailingIcon?: React.ReactNode;
   error?: string;
-  disabled?: boolean;
-  className?: string;
+  label?: string;
+  helperText?: string;
+  fullWidth?: boolean;
+  inputSize?: 'sm' | 'md' | 'lg';
+  variant?: 'filled' | 'outline' | 'subtle';
 }
 
-export const IOSInput: React.FC<IOSInputProps> = ({
-  label,
-  placeholder,
-  type = 'text',
-  value,
-  onChange,
+export const IOSInputField: React.FC<IOSInputFieldProps> = ({
+  leadingIcon,
+  trailingIcon,
   error,
-  disabled,
-  className = ''
+  label,
+  helperText,
+  fullWidth = true,
+  inputSize = 'md',
+  variant = 'filled',
+  className = '',
+  ...props
 }) => {
+  const sizeClasses = {
+    sm: 'h-10 text-sm px-3',
+    md: 'h-12 text-base px-4',
+    lg: 'h-14 text-lg px-5'
+  };
+  const paddingLeft = leadingIcon ? 'pl-11' : '';
+  const paddingRight = trailingIcon ? 'pr-11' : '';
+  const variantClasses = {
+    filled: 'bg-zinc-900/60 border border-zinc-800 focus:border-pink-500',
+    outline: 'bg-transparent border border-zinc-700 focus:border-pink-500',
+    subtle: 'bg-zinc-900/40 border border-transparent focus:border-pink-500'
+  };
   return (
-    <div className={`space-y-2 ${className}`}>
-      {label && (
-        <label className="block text-sm font-medium text-zinc-300">
-          {label}
-        </label>
-      )}
-      
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`
-          w-full px-4 py-3 bg-zinc-900/50 border border-zinc-700 rounded-xl
-          text-white placeholder-zinc-500
-          focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-all duration-200
-          ${error ? 'border-red-500 focus:ring-red-500' : ''}
-        `}
-      />
-      
-      {error && (
-        <p className="text-sm text-red-400">{error}</p>
-      )}
+    <div className={`${fullWidth ? 'w-full' : ''} ${className}`}>
+      {label && <label className="block mb-2 text-sm font-medium text-zinc-300">{label}</label>}
+      <div className="relative">
+        {leadingIcon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+            {leadingIcon}
+          </div>
+        )}
+        <input
+          className={`w-full rounded-xl outline-none focus:ring-2 focus:ring-pink-500/40 transition-all text-white placeholder-zinc-500 ${sizeClasses[inputSize]} ${variantClasses[variant]} ${paddingLeft} ${paddingRight} ${error ? 'border-red-500 focus:ring-red-500/40' : ''}`}
+          {...props}
+        />
+        {trailingIcon && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">
+            {trailingIcon}
+          </div>
+        )}
+      </div>
+      {(helperText || error) && <p className={`mt-2 text-xs ${error ? 'text-red-400' : 'text-zinc-500'}`}>{error || helperText}</p>}
     </div>
   );
 };
+
+// Hero V2 Component
+interface IOSHeroV2Props {
+  title: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  gradient?: string;
+  children?: React.ReactNode;
+  className?: string;
+  size?: 'default' | 'compact';
+}
+
+export const IOSHeroV2: React.FC<IOSHeroV2Props> = ({
+  title,
+  subtitle,
+  icon: Icon,
+  gradient = 'from-pink-600 via-rose-600 to-purple-700',
+  children,
+  className = '',
+  size = 'default'
+}) => {
+  const padding = size === 'compact' ? 'py-10' : 'py-14 lg:py-20';
+  return (
+    <section className={`relative overflow-hidden rounded-none ${padding} bg-gradient-to-br ${gradient} ${className}`}>
+  <IOSContainer size="xl" padding className="relative z-10 text-center">
+        {Icon && (
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-black/20 border border-white/10 flex items-center justify-center">
+            <Icon className="text-white" size={36} />
+          </div>
+        )}
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="text-zinc-100/90 text-lg sm:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+        {children}
+      </IOSContainer>
+      <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.15),transparent_60%)]" />
+    </section>
+  );
+};
+
+// Backward compatibility alias
+export const IOSInput = IOSInputField;
 
 // Toast Component for notifications
 interface IOSToastProps {

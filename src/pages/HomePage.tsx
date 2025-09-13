@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/ProductCard'; // retained for any remaining usage
 import { standardClasses, cn } from '../styles/standardClasses';
 import { 
   Zap, 
@@ -28,7 +28,11 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
+import { IOSHero, IOSButton, IOSContainer } from '../components/ios/IOSDesignSystem';
 import BannerCarousel from '../components/BannerCarousel';
+import HomeFlashSalesSection from '../components/home/HomeFlashSalesSection';
+import HomeFeaturesSection from '../components/home/HomeFeaturesSection';
+import HomePopularGamesSection from '../components/home/HomePopularGamesSection';
 import { useToast } from '../components/Toast';
 
 // Mobile-first constants following platform guidelines
@@ -303,180 +307,89 @@ const HomePage: React.FC = () => {
         <BannerCarousel />
       </section>
 
-      {/* Hero Section - Mobile-first design */}
-  <section className="px-4 py-8 text-center">
-        <div className="max-w-md mx-auto mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-            Marketplace Akun Game
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500"> #1</span>
-          </h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
-            Jual, beli, dan rental akun game favorit dengan mudah, aman, dan terpercaya
-          </p>
+      {/* Hero Section using IOSHero */}
+      <IOSHero 
+        title="Marketplace Akun Game #1" 
+        subtitle="Jual, beli, dan rental akun game favorit dengan mudah, aman, dan terpercaya"
+        backgroundGradient="from-pink-600 via-rose-600 to-purple-700"
+        className="rounded-3xl overflow-hidden mx-4 mt-2"
+      >
+        <div className="max-w-md mx-auto">
+          <div className="space-y-3">
+            <Link to="/flash-sales" className="block">
+              <IOSButton 
+                variant="primary" 
+                size="large" 
+                className="w-full flex items-center justify-center space-x-2"
+              >
+                <Zap size={18} />
+                <span>Flash Sale Hari Ini</span>
+                <Sparkles size={16} />
+              </IOSButton>
+            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Link to="/products">
+                <IOSButton 
+                  variant="secondary" 
+                  size="medium" 
+                  className="w-full flex items-center justify-center space-x-2"
+                >
+                  <ShoppingBag size={16} />
+                  <span>Belanja</span>
+                </IOSButton>
+              </Link>
+              <Link to="/sell">
+                <IOSButton 
+                  variant="ghost" 
+                  size="medium" 
+                  className="w-full flex items-center justify-center space-x-2 text-white"
+                >
+                  <TrendingUp size={16} />
+                  <span>Jual Akun</span>
+                </IOSButton>
+              </Link>
+            </div>
+          </div>
         </div>
+      </IOSHero>
 
-        {/* CTA Buttons - Optimized for mobile touch */}
-        <div className="space-y-3 max-w-sm mx-auto">
-          <Link to="/flash-sales" className="block">
-            <button 
-              className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-2xl flex items-center justify-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-pink-500/25"
-              style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
+  {/* Flash Sales (Modular) */}
+  <HomeFlashSalesSection products={state.flashSaleProducts} limit={MOBILE_CONSTANTS.FLASH_SALE_DISPLAY_LIMIT} />
+
+  {/* Features (Modular) */}
+  <HomeFeaturesSection />
+
+  {/* Popular Games (Modular) */}
+  <HomePopularGamesSection games={state.popularGames} limit={12} />
+
+      {/* Final CTA using IOSHero for consistency */}
+      <IOSHero 
+        title="Siap Memulai Gaming Anda?" 
+        subtitle="Bergabunglah dengan ribuan gamer yang sudah mempercayakan transaksi mereka kepada kami"
+        backgroundGradient="from-pink-700 via-rose-600 to-purple-700"
+        className="rounded-3xl overflow-hidden mx-4 mt-4 mb-8"
+      >
+        <div className="max-w-sm mx-auto space-y-3">
+          <Link to="/products" className="block">
+            <IOSButton 
+              variant="secondary" 
+              size="large" 
+              className="w-full font-semibold"
             >
-              <Zap size={20} />
-              <span>Flash Sale Hari Ini</span>
-              <Sparkles size={16} />
-            </button>
+              Mulai Belanja Sekarang
+            </IOSButton>
           </Link>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Link to="/products">
-              <button 
-                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-colors duration-200 border border-zinc-700"
-                style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
-              >
-                <ShoppingBag size={18} />
-                <span className="text-sm">Belanja</span>
-              </button>
-            </Link>
-            
-            <Link to="/sell">
-              <button 
-                className="w-full bg-black text-white hover:bg-gray-800 font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition-colors duration-200"
-                style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
-              >
-                <TrendingUp size={18} />
-                <span className="text-sm">Jual Akun</span>
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Flash Sales Section */}
-      {state.flashSaleProducts.length > 0 && (
-  <section className="py-8">
-          <div className="px-4 mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-1">Flash Sale</h2>
-              <p className="text-zinc-400 text-sm">Diskon hingga 70% - Terbatas!</p>
-            </div>
-            <Link 
-              to="/flash-sales"
-              className="flex items-center space-x-1 text-pink-400 hover:text-pink-300 transition-colors text-sm font-medium"
+          <Link to="/sell" className="block">
+            <IOSButton 
+              variant="ghost" 
+              size="medium" 
+              className="w-full text-white/90"
             >
-              <span>Lihat Semua</span>
-              <ChevronRight size={16} />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex space-x-4 px-4 pb-2">
-              {state.flashSaleProducts.slice(0, MOBILE_CONSTANTS.FLASH_SALE_DISPLAY_LIMIT).map((product) => (
-                <div key={product.id} className="flex-shrink-0 w-64">
-                  <ProductCard
-                    product={product}
-                    showFlashSaleTimer={true}
-                    className="w-full"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Features Section */}
-  <section className="px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Mengapa Pilih Kami?</h2>
-          <p className="text-zinc-400 text-sm">Platform terdepan dengan jaminan keamanan terbaik</p>
+              Jual Akun Anda
+            </IOSButton>
+          </Link>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {features.map((feature, index) => (
-            <MobileFeatureCard 
-              key={feature.title}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              delay={index * 100}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Game Categories */}
-  <section className="px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-white mb-1">Game Populer</h2>
-          <p className="text-zinc-400 text-sm">Pilih dari berbagai game populer</p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {state.popularGames.slice(0, 12).map((game, index) => (
-            <GameCategoryCard 
-              key={game.id}
-              game={game}
-              index={index}
-            />
-          ))}
-        </div>
-
-        {state.popularGames.length > 12 && (
-          <div className="text-center mt-6">
-            <Link to="/products">
-              <button className="text-pink-400 hover:text-pink-300 font-medium text-sm flex items-center space-x-1 mx-auto transition-colors">
-                <span>Lihat Game Lainnya</span>
-                <ArrowRight size={16} />
-              </button>
-            </Link>
-          </div>
-        )}
-      </section>
-
-      {/* Final CTA Section */}
-  <section className="px-4 py-12">
-        <div className="bg-gradient-to-br from-pink-600 via-rose-600 to-purple-700 rounded-3xl p-8 text-center relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute inset-0 opacity-20">
-            <div 
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-              }}
-            />
-          </div>
-          
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold text-white mb-3">
-              Siap Memulai Gaming Anda?
-            </h2>
-            <p className="text-pink-100 mb-6 text-sm leading-relaxed">
-              Bergabunglah dengan ribuan gamer yang sudah mempercayakan transaksi mereka kepada kami
-            </p>
-            
-            <div className="space-y-3 max-w-xs mx-auto">
-              <Link to="/products" className="block">
-                <button 
-                  className="w-full bg-black text-pink-600 hover:bg-pink-600/20 font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
-                  style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
-                >
-                  Mulai Belanja Sekarang
-                </button>
-              </Link>
-              
-              <Link to="/sell" className="block">
-                <button 
-                  className="w-full bg-gray-900/30 backdrop-blur-sm text-white hover:bg-gray-900/30 font-medium py-3 px-6 rounded-xl border border-gray-600 transition-all duration-200"
-                  style={{ minHeight: MOBILE_CONSTANTS.MIN_TOUCH_TARGET }}
-                >
-                  Jual Akun Anda
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      </IOSHero>
 
       {/* Bottom spacing for mobile navigation */}
   <div className="h-6"></div>

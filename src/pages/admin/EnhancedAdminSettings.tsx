@@ -20,11 +20,11 @@ import {
   Users
 } from 'lucide-react';
 import PhoneInput from '../../components/PhoneInput';
-import { useNotifications } from '../../components/NotificationSystem';
+import { useToast } from '../../components/Toast';
 import { IOSCard, IOSButton, IOSContainer } from '../../components/ios/IOSDesignSystem';
 
 const EnhancedAdminSettings: React.FC = () => {
-  const { addNotification } = useNotifications();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
@@ -76,29 +76,29 @@ const EnhancedAdminSettings: React.FC = () => {
           faviconUrl: s.faviconUrl || '',
         });
       } catch (error) {
-        addNotification('Gagal memuat pengaturan', 'error');
+        showToast('Gagal memuat pengaturan', 'error');
       } finally {
         setLoading(false);
       }
     })(); 
-  }, [addNotification]);
+  }, [showToast]);
 
   const save = async () => {
     // Validate phone numbers before saving
     if (!phoneValidation.whatsapp && form.whatsappNumber) {
-      addNotification('Nomor WhatsApp tidak valid. Pastikan format sudah benar.', 'error');
+      showToast('Nomor WhatsApp tidak valid. Pastikan format sudah benar.', 'error');
       return;
     }
     
     if (!phoneValidation.contact && form.contactPhone) {
-      addNotification('Nomor telepon tidak valid. Pastikan format sudah benar.', 'error');
+      showToast('Nomor telepon tidak valid. Pastikan format sudah benar.', 'error');
       return;
     }
     
     setSaving(true);
     try {
       await SettingsService.upsert({ ...form, logoFile, faviconFile });
-      addNotification('Pengaturan berhasil disimpan!', 'success');
+      showToast('Pengaturan berhasil disimpan!', 'success');
       
       // Reset file states after successful save
       setLogoFile(null);
@@ -110,7 +110,7 @@ const EnhancedAdminSettings: React.FC = () => {
       const updatedSettings = await SettingsService.get();
       setSettings(updatedSettings);
     } catch (error) {
-      addNotification('Gagal menyimpan pengaturan. Silakan coba lagi.', 'error');
+      showToast('Gagal menyimpan pengaturan. Silakan coba lagi.', 'error');
     } finally {
       setSaving(false);
     }
