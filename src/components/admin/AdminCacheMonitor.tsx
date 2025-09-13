@@ -3,11 +3,15 @@ import { Database, TrendingUp, Clock, RefreshCw } from 'lucide-react';
 import { adminCache } from '../../services/adminCache';
 import { IOSCard } from '../ios/IOSDesignSystem';
 
+// Use the CacheStats from adminCache.ts
 interface CacheStats {
   totalEntries: number;
+  totalHits: number;
+  totalMisses: number;
   totalSize: number;
   hitRate: number;
-  entries: Array<{ key: string; age: number; size: number }>;
+  oldestEntry: number;
+  newestEntry: number;
 }
 
 export const AdminCacheMonitor: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -24,23 +28,6 @@ export const AdminCacheMonitor: React.FC<{ className?: string }> = ({ className 
 
     return () => clearInterval(interval);
   }, []);
-
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatAge = (ms: number): string => {
-    const seconds = Math.floor(ms / 1000);
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h`;
-  };
 
   const handleClearCache = () => {
     adminCache.clear();
@@ -72,7 +59,7 @@ export const AdminCacheMonitor: React.FC<{ className?: string }> = ({ className 
               <div className="text-xs text-gray-500">Entries</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-white">{formatBytes(stats.totalSize)}</div>
+              <div className="text-lg font-semibold text-white">{Math.round(stats.totalSize / 1024)}KB</div>
               <div className="text-xs text-gray-500">Size</div>
             </div>
             <div>
@@ -97,23 +84,12 @@ export const AdminCacheMonitor: React.FC<{ className?: string }> = ({ className 
               </div>
               
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {stats.entries.length === 0 ? (
+                {stats.totalEntries === 0 ? (
                   <div className="text-xs text-gray-500 text-center py-2">No cache entries</div>
                 ) : (
-                  stats.entries.map((entry, index) => (
-                    <div key={index} className="flex justify-between items-center text-xs">
-                      <span className="text-gray-700 truncate flex-1 mr-2" title={entry.key}>
-                        {entry.key.length > 20 ? `${entry.key.substring(0, 20)}...` : entry.key}
-                      </span>
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatAge(entry.age)}
-                        </span>
-                        <span>{formatBytes(entry.size)}</span>
-                      </div>
-                    </div>
-                  ))
+                  <div className="text-xs text-gray-500 text-center py-2">
+                    {stats.totalEntries} cached items (detailed view coming soon)
+                  </div>
                 )}
               </div>
             </div>

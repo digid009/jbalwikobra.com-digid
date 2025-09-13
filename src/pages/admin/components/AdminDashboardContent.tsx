@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, BarChart, Package, TrendingDown } from 'lucide-react';
-import { adminService, AdminNotification, OrderStatusDayStat } from '../../../services/adminService';
+import { adminClient, AdminDashboardStats, AdminNotification, OrderStatusTimeSeries } from '../../../services/unifiedAdminClient';
+import { prefetchManager } from '../../../services/intelligentPrefetch';
 import { DashboardMetricsOverview } from './DashboardMetricsOverview';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
-import { adminCache } from '../../../services/adminCache';
+import { AdminPerformanceMonitor } from './AdminPerformanceMonitor';
 import { cn } from '../../../styles/standardClasses';
 import './AdminDashboardContent.css';
 
@@ -16,15 +17,19 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const [recentNotifications, setRecentNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [series, setSeries] = useState<OrderStatusDayStat[]>([]);
+  const [series, setSeries] = useState<OrderStatusTimeSeries[]>([]);
   const [range, setRange] = useState<'7d' | '14d' | '30d'>('7d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [dashboardStats, setDashboardStats] = useState<AdminDashboardStats | null>(null);
 
   useEffect(() => {
+    // Set current page for intelligent prefetching
+    prefetchManager.setCurrentPage('dashboard');
+    
     loadDashboardData();
     // Prefetch dashboard data on mount
-    adminService.prefetchDashboardData();
+    adminClient.prefetchDashboardData();
   }, []);
 
   // Reload data when range changes
@@ -35,12 +40,30 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // Use cached notification data
-      const notifications = await adminService.getNotifications(1, 5);
-      setRecentNotifications(notifications);
+      
+      // Use batch request for efficiency
+      const batchResults = await adminClient.batchRequest([
+        { id: 'stats', endpoint: 'dashboard-stats' },
+        { id: 'notifications', endpoint: 'recent-notifications', params: { limit: 5 } }
+      ]);
+
+      if (batchResults.stats?.data) {
+        setDashboardStats(batchResults.stats.data);
+      }
+      
+      if (batchResults.notifications?.data) {
+        setRecentNotifications(batchResults.notifications.data);
+      }
+
+      // Get time series data
       const days = range === '7d' ? 7 : range === '14d' ? 14 : 30;
-      const ts = await adminService.getOrderStatusTimeSeries(customStart && customEnd ? { startDate: customStart, endDate: customEnd } : { days });
-      setSeries(ts);
+      const timeSeriesOptions = customStart && customEnd 
+        ? { startDate: customStart, endDate: customEnd }
+        : { days };
+      
+      const timeSeries = await adminClient.getOrderStatusTimeSeries(timeSeriesOptions);
+      setSeries(timeSeries);
+      
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -51,10 +74,15 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      // Force refresh cached data
-      adminCache.invalidatePattern('admin:');
+      
+      // Force refresh cached data using unified client
+      adminClient.invalidateOrdersCaches();
+      adminClient.invalidateUsersCaches();
+      adminClient.invalidateProductsCaches();
+      
       await loadDashboardData();
-      await adminService.prefetchDashboardData();
+      await adminClient.prefetchDashboardData();
+      
       // Also refresh the main stats
       if (onRefreshStats) {
         onRefreshStats();
@@ -76,8 +104,8 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
         return '❌';
       case 'new_user':
         return '👤';
-      case 'new_review':
-        return '⭐';
+      case 'low_stock':
+        return '⚠️';
       default:
         return '📢';
     }
@@ -93,14 +121,15 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
         return 'bg-ios-danger/10 border-ios-danger/20';
       case 'new_user':
         return 'bg-ios-secondary/10 border-ios-secondary/20';
-      case 'new_review':
+      case 'low_stock':
         return 'bg-ios-warning/10 border-ios-warning/20';
       default:
         return 'bg-black/50 border-ios-primary/20';
     }
   };
 
-  const maxCreated = useMemo(() => Math.max(1, ...series.map(s => s.created)), [series]);
+  // Use 'total' instead of 'created' as it exists in OrderStatusTimeSeries
+  const maxTotal = useMemo(() => Math.max(1, ...series.map(s => s.total)), [series]);
   const maxCompleted = useMemo(() => Math.max(1, ...series.map(s => s.completed)), [series]);
 
   const handleRangeChange = (val: '7d'|'14d'|'30d') => {
@@ -265,7 +294,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <path 
                       d={`M 0 100 ${series.map((d, i) => {
                         const x = (i / (series.length - 1)) * 100;
-                        const y = 100 - (d.created / maxCreated) * 85;
+                        const y = 100 - (d.total / maxTotal) * 85;
                         return `L ${x} ${y}`;
                       }).join(' ')} L 100 100 Z`}
                       fill="url(#createdGradient)"
@@ -287,7 +316,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <path 
                       d={`M ${series.map((d, i) => {
                         const x = (i / (series.length - 1)) * 100;
-                        const y = 100 - (d.created / maxCreated) * 85;
+                        const y = 100 - (d.total / maxTotal) * 85;
                         return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
                       }).join(' ')}`}
                       fill="none"
@@ -314,7 +343,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     {/* Enhanced data points for orders created */}
                     {series.map((d, i) => {
                       const x = (i / (series.length - 1)) * 100;
-                      const y = 100 - (d.created / maxCreated) * 85;
+                      const y = 100 - (d.total / maxTotal) * 85;
                       return (
                         <g key={`created-${i}`}>
                           <circle
@@ -382,11 +411,11 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   
                   {/* Enhanced Y-axis labels */}
                   <div className="absolute left-0 top-6 bottom-16 flex flex-col justify-between text-right pr-2">
-                    <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">{maxCreated}</span>
-                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.8)}</span>
-                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.6)}</span>
-                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.4)}</span>
-                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxCreated * 0.2)}</span>
+                    <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">{maxTotal}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxTotal * 0.8)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxTotal * 0.6)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxTotal * 0.4)}</span>
+                    <span className="text-xs text-gray-500 font-medium">{Math.round(maxTotal * 0.2)}</span>
                     <span className="text-xs text-gray-400 font-semibold bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">0</span>
                   </div>
                   
@@ -421,6 +450,11 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
           </div>
         </DataPanel>
       </DashboardSection>
+
+      {/* Performance Monitor */}
+      {process.env.NODE_ENV === 'development' && (
+        <AdminPerformanceMonitor />
+      )}
     </div>
   );
 };

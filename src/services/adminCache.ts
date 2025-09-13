@@ -1,17 +1,37 @@
 /**
- * Optimized Admin Cache Manager
- * Reduces API calls and minimizes cache egress usage
+ * Enhanced Admin Cache Manager
+ * Reduces API calls and minimizes cache egress usage with advanced features
  */
 
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
   ttl: number;
+  hits: number;
+  lastAccessed: number;
 }
 
-class AdminCacheManager {
+interface CacheStats {
+  totalEntries: number;
+  totalHits: number;
+  totalMisses: number;
+  totalSize: number;
+  hitRate: number;
+  oldestEntry: number;
+  newestEntry: number;
+}
+
+class EnhancedAdminCacheManager {
   private cache = new Map<string, CacheEntry<any>>();
+  private stats = {
+    hits: 0,
+    misses: 0,
+    sets: 0,
+    evictions: 0,
+  };
+
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_CACHE_SIZE = 100; // Maximum number of entries
   private readonly STATS_TTL = 2 * 60 * 1000; // 2 minutes for stats (more frequent updates)
   private readonly LIST_TTL = 3 * 60 * 1000; // 3 minutes for lists
 
@@ -26,7 +46,100 @@ class AdminCacheManager {
     'admin:flash-sales': this.LIST_TTL,
     'admin:feed-posts': this.LIST_TTL,
     'admin:notifications': 30 * 1000, // 30 seconds for real-time notifications
+    'admin:time-series': this.LIST_TTL,
   };
+
+  /**
+   * Get cached data (standard get without fetch fallback)
+   */
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    
+    if (!entry) {
+      this.stats.misses++;
+      return null;
+    }
+
+    // Check if expired
+    if (this.isExpired(entry)) {
+      this.cache.delete(key);
+      this.stats.misses++;
+      return null;
+    }
+
+    // Update access stats
+    entry.hits++;
+    entry.lastAccessed = Date.now();
+    this.stats.hits++;
+    
+    return entry.data;
+  }
+
+  /**
+   * Get stale data (even if expired) - useful for fallback scenarios
+   */
+  getStale<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) {
+      return null;
+    }
+
+    // Update access stats but don't count as regular hit
+    entry.hits++;
+    entry.lastAccessed = Date.now();
+    
+    return entry.data;
+  }
+
+  /**
+   * Set cache entry with TTL
+   */
+  set<T>(key: string, data: T, ttl?: number): void {
+    const entryTtl = ttl || this.CACHE_CONFIG[key as keyof typeof this.CACHE_CONFIG] || this.DEFAULT_TTL;
+    
+    // Evict entries if we're at capacity
+    if (this.cache.size >= this.MAX_CACHE_SIZE && !this.cache.has(key)) {
+      this.evictLeastUsed();
+    }
+
+    const entry: CacheEntry<T> = {
+      data,
+      timestamp: Date.now(),
+      ttl: entryTtl,
+      hits: 0,
+      lastAccessed: Date.now(),
+    };
+
+    this.cache.set(key, entry);
+    this.stats.sets++;
+  }
+
+  /**
+   * Check if cache entry is expired
+   */
+  private isExpired(entry: CacheEntry<any>): boolean {
+    return (Date.now() - entry.timestamp) > entry.ttl;
+  }
+
+  /**
+   * Evict least recently used entry
+   */
+  private evictLeastUsed(): void {
+    let oldestKey = '';
+    let oldestTime = Date.now();
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.lastAccessed < oldestTime) {
+        oldestTime = entry.lastAccessed;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+      this.stats.evictions++;
+    }
+  }
 
   /**
    * Get cached data or fetch if not available/expired
@@ -44,11 +157,11 @@ class AdminCacheManager {
       this.invalidate(cacheKey);
     }
 
-    // Check if we have valid cached data
-    const cached = this.cache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
+    // Check if we have valid cached data using the new get method
+    const cachedData = this.get<T>(cacheKey);
+    if (cachedData) {
       console.log(`🎯 Cache HIT: ${cacheKey}`);
-      return cached.data;
+      return cachedData;
     }
 
     // Fetch fresh data
@@ -56,19 +169,16 @@ class AdminCacheManager {
     try {
       const data = await fetchFunction();
       
-      // Store in cache
-      this.cache.set(cacheKey, {
-        data,
-        timestamp: Date.now(),
-        ttl
-      });
+      // Store in cache using new set method
+      this.set(cacheKey, data, ttl);
 
       return data;
     } catch (error) {
       // If fetch fails and we have stale data, return it
-      if (cached) {
+      const staleData = this.getStale<T>(cacheKey);
+      if (staleData) {
         console.log(`⚠️  Using stale cache for ${cacheKey} due to fetch error`);
-        return cached.data;
+        return staleData;
       }
       throw error;
     }
@@ -119,27 +229,33 @@ class AdminCacheManager {
   }
 
   /**
-   * Get cache statistics
+   * Get enhanced cache statistics
    */
-  getStats(): {
-    totalEntries: number;
-    totalSize: number;
-    hitRate: number;
-    entries: Array<{ key: string; age: number; size: number }>;
-  } {
+  getStats(): CacheStats {
     const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
       key,
       age: Date.now() - entry.timestamp,
-      size: JSON.stringify(entry.data).length
+      size: JSON.stringify(entry.data).length,
+      hits: entry.hits,
+      lastAccessed: entry.lastAccessed
     }));
 
     const totalSize = entries.reduce((sum, entry) => sum + entry.size, 0);
+    const totalRequests = this.stats.hits + this.stats.misses;
+    const hitRate = totalRequests > 0 ? (this.stats.hits / totalRequests) * 100 : 0;
+
+    const timestamps = entries.map(e => e.lastAccessed).filter(t => t > 0);
+    const oldestEntry = timestamps.length > 0 ? Math.min(...timestamps) : 0;
+    const newestEntry = timestamps.length > 0 ? Math.max(...timestamps) : 0;
 
     return {
       totalEntries: this.cache.size,
+      totalHits: this.stats.hits,
+      totalMisses: this.stats.misses,
       totalSize,
-      hitRate: 0, // Would need hit/miss tracking for accurate rate
-      entries
+      hitRate,
+      oldestEntry,
+      newestEntry
     };
   }
 
@@ -151,7 +267,7 @@ class AdminCacheManager {
     let cleaned = 0;
 
     for (const [key, entry] of this.cache.entries()) {
-      if ((now - entry.timestamp) > entry.ttl) {
+      if (this.isExpired(entry)) {
         this.cache.delete(key);
         cleaned++;
       }
@@ -186,7 +302,7 @@ class AdminCacheManager {
 }
 
 // Global instance
-export const adminCache = new AdminCacheManager();
+export const adminCache = new EnhancedAdminCacheManager();
 
 // Cleanup interval
 setInterval(() => {

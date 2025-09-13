@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+// Clean environment variables to remove any CRLF characters
+const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL || '').replace(/[\r\n]/g, '');
+const supabaseAnonKey = (process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/[\r\n]/g, '');
 
 let supabase: SupabaseClient | null = null;
 

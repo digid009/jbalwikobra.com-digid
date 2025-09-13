@@ -9,8 +9,9 @@ let supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient {
   if (supabase) return supabase;
   
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  // Clean environment variables to remove any CRLF characters  
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '').replace(/[\r\n]/g, '');
+  const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').replace(/[\r\n]/g, '');
   
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing Supabase configuration');
@@ -124,34 +125,51 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
   try {
     const { identifier, password } = req.body;
 
+    console.log('Login attempt for identifier:', identifier ? 'provided' : 'missing');
+
     if (!identifier || !password) {
       return res.status(400).json({ error: 'Identifier and password are required' });
     }
 
     // Find user by phone or email
+    console.log('Attempting to find user in database...');
     const { data: user, error: userError } = await getSupabase()
       .from('users')
       .select('*')
       .or(`phone.eq.${identifier},email.eq.${identifier}`)
       .single();
 
-    if (userError || !user) {
+    if (userError) {
+      console.error('Database error when finding user:', userError);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Verify password (handle users without password hash gracefully)
-    if (!user.password_hash) {
+    if (!user) {
+      console.log('User not found for identifier');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    console.log('User found, verifying password...');
+
+    // Verify password (handle users without password hash gracefully)
+    if (!user.password_hash) {
+      console.log('User has no password hash');
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
+      console.log('Password verification failed');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check if account is active
     if (!user.is_active) {
+      console.log('User account is deactivated');
       return res.status(403).json({ error: 'Account is deactivated' });
     }
+
+    console.log('Creating session...');
 
     // Create session
     const sessionToken = generateSessionToken();

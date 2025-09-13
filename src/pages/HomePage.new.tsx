@@ -383,26 +383,6 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* Features Section */}
-      <section className="px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Mengapa Pilih Kami?</h2>
-          <p className="text-zinc-400 text-sm">Platform terdepan dengan jaminan keamanan terbaik</p>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {features.map((feature, index) => (
-            <MobileFeatureCard 
-              key={feature.title}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              delay={index * 100}
-            />
-          ))}
-        </div>
-      </section>
-
       {/* Game Categories */}
       <section className="px-4 py-8">
         <div className="mb-6">
@@ -430,6 +410,26 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
         )}
+      </section>
+
+      {/* Features Section */}{/* Features Section */}
+      <section className="px-4 py-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Mengapa Pilih Kami?</h2>
+          <p className="text-zinc-400 text-sm">Platform terdepan dengan jaminan keamanan terbaik</p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {features.map((feature, index) => (
+            <MobileFeatureCard 
+              key={feature.title}
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+              delay={index * 100}
+            />
+          ))}
+        </div>
       </section>
 
       {/* Final CTA Section */}
