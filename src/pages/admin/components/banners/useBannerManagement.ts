@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminService, Banner } from '../../../../services/adminService';
 import { BannerFormData } from './types';
+import { scrollToPaginationContent } from '../../../../utils/scrollUtils';
 
 export const useBannerManagement = (itemsPerPage: number = 10) => {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -10,6 +11,12 @@ export const useBannerManagement = (itemsPerPage: number = 10) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+
+  // Handle page change with scroll to admin content
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   useEffect(() => {
     loadBanners();
@@ -85,6 +92,7 @@ export const useBannerManagement = (itemsPerPage: number = 10) => {
     setSearchTerm,
     currentPage,
     setCurrentPage,
+    handlePageChange,
     totalPages,
     submitting,
     loadBanners,

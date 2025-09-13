@@ -25,6 +25,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
     setSearchTerm,
     currentPage,
     setCurrentPage,
+    handlePageChange,
     totalPages,
     submitting,
     loadBanners,
@@ -104,7 +105,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
         loading={loading}
         totalPages={totalPages}
         currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         onToggleStatus={handleToggleStatus}
         onDeleteBanner={handleDeleteBanner}
         onEditBanner={handleEditBanner}

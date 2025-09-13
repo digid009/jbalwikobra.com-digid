@@ -6,6 +6,7 @@ import { IOSAvatar } from '../../../components/ios/IOSAvatar';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../styles/standardClasses';
 import { getUserAvatarUrl, getUserDisplayName } from '../../../utils/avatarUtils';
+import { scrollToPaginationContent } from '../../../utils/scrollUtils';
 
 export const AdminReviewsManagement: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -21,6 +22,12 @@ export const AdminReviewsManagement: React.FC = () => {
   const [ratingFilter, setRatingFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Handle page change with scroll to admin content
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   useEffect(() => {
     loadReviews();
@@ -331,7 +338,7 @@ export const AdminReviewsManagement: React.FC = () => {
           totalPages={totalPages}
           totalItems={totalCount}
           itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           showItemsPerPageSelector={true}
           onItemsPerPageChange={setItemsPerPage}
         />

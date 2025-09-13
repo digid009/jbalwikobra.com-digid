@@ -6,6 +6,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { IOSButton } from '../ios/IOSDesignSystemV2';
+import { scrollToPaginationContent } from '../../utils/scrollUtils';
 
 interface MobilePaginationProps {
   currentPage: number;
@@ -19,6 +20,12 @@ export const MobilePagination = React.memo(({
   onPageChange 
 }: MobilePaginationProps) => {
   if (totalPages <= 1) return null;
+
+  // Handle page change with automatic scroll to pagination content
+  const handlePageChange = (page: number) => {
+    onPageChange(page);
+    scrollToPaginationContent();
+  };
 
   const getVisiblePages = () => {
     const delta = 1;
@@ -52,7 +59,7 @@ export const MobilePagination = React.memo(({
         variant="tertiary"
         size="sm"
         disabled={currentPage === 1}
-        onClick={() => onPageChange(currentPage - 1)}
+        onClick={() => handlePageChange(currentPage - 1)}
         className="w-12 h-12 p-0"
       >
         <ChevronLeft size={18} />
@@ -67,7 +74,7 @@ export const MobilePagination = React.memo(({
               <IOSButton
                 variant={currentPage === page ? 'primary' : 'tertiary'}
                 size="sm"
-                onClick={() => onPageChange(page as number)}
+                onClick={() => handlePageChange(page as number)}
                 className="w-10 h-10 p-0"
               >
                 {page}
@@ -81,7 +88,7 @@ export const MobilePagination = React.memo(({
         variant="tertiary"
         size="sm"
         disabled={currentPage === totalPages}
-        onClick={() => onPageChange(currentPage + 1)}
+        onClick={() => handlePageChange(currentPage + 1)}
         className="w-12 h-12 p-0"
       >
         <ChevronRight size={18} />

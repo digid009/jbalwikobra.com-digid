@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { IOSButton } from './IOSDesignSystem';
 import { cn } from '../../styles/standardClasses';
+import { scrollToPaginationContent } from '../../utils/scrollUtils';
 
 interface IOSPaginationProps {
   currentPage: number;
@@ -30,6 +31,12 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  // Handle page change with automatic scroll to pagination content
+  const handlePageChange = (page: number) => {
+    onPageChange(page);
+    scrollToPaginationContent();
+  };
 
   const getVisiblePages = () => {
     const delta = 2;
@@ -107,7 +114,7 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
           <IOSButton
             variant="ghost"
             size="small"
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className="flex items-center gap-2 px-3 py-2"
           >
@@ -122,7 +129,7 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
                   <span className="px-3 py-2 text-white-secondary text-sm">...</span>
                 ) : (
                   <button
-                    onClick={() => onPageChange(page as number)}
+                    onClick={() => handlePageChange(page as number)}
                     className={cn(
                       'px-3 py-2 text-sm rounded-lg transition-all duration-200',
                       currentPage === page
@@ -140,7 +147,7 @@ export const IOSPagination: React.FC<IOSPaginationProps> = ({
           <IOSButton
             variant="ghost"
             size="small"
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="flex items-center gap-2 px-3 py-2"
           >

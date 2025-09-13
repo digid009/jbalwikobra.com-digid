@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Product, Tier, GameTitle } from '../types';
+import { scrollToPaginationContent } from '../utils/scrollUtils';
 
 // Mobile-first constants
 const MOBILE_CONSTANTS = {
@@ -216,7 +217,7 @@ export const useProductsData = () => {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToPaginationContent();
   }, []);
 
   const resetFilters = useCallback(() => {

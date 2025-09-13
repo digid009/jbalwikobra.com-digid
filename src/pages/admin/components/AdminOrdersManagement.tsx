@@ -7,6 +7,7 @@ import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBann
 import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
 import { cn } from '../../../styles/standardClasses';
+import { scrollToPaginationContent } from '../../../utils/scrollUtils';
 
 export const AdminOrdersManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -22,6 +23,12 @@ export const AdminOrdersManagement: React.FC = () => {
   const [completingOrders, setCompletingOrders] = useState<Set<string>>(new Set());
   const { notifications, showSuccess, showError, showInfo, removeNotification } = useNotifications();
   const itemsPerPage = 20;
+
+  // Handle page change with scroll to admin content
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   useEffect(() => {
     loadOrders();
@@ -462,7 +469,7 @@ export const AdminOrdersManagement: React.FC = () => {
                 totalPages={totalPages}
                 totalItems={totalCount}
                 itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
               />
             </div>
           )}

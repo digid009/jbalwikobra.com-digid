@@ -103,6 +103,8 @@ const ProductsTab: React.FC = () => {
 
   const handlePageChange = useCallback((page: number) => {
     updatePagination({ page });
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [updatePagination]);
 
   const handleSelectProduct = useCallback((id: string) => {

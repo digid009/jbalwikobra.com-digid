@@ -5,6 +5,7 @@ import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination, IOSAvatar } from '
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../styles/standardClasses';
+import { scrollToPaginationContent } from '../../../utils/scrollUtils';
 
 export const AdminUsersManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -15,6 +16,12 @@ export const AdminUsersManagement: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [hasErrors, setHasErrors] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // Handle page change with scroll to admin content
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   useEffect(() => {
     loadUsers();
@@ -184,7 +191,7 @@ export const AdminUsersManagement: React.FC = () => {
               totalPages={totalPages}
               totalItems={totalCount}
               itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
               showItemsPerPageSelector={true}
               onItemsPerPageChange={setItemsPerPage}
             />

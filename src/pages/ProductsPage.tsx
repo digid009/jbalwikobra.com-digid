@@ -89,10 +89,12 @@ const ProductsPage: React.FC = () => {
       />
 
       {/* Products Grid */}
-      <ProductsGrid
-        products={currentProducts}
-        onResetFilters={resetFilters}
-      />
+      <div id="products-grid">
+        <ProductsGrid
+          products={currentProducts}
+          onResetFilters={resetFilters}
+        />
+      </div>
 
       {/* Pagination */}
       <MobilePagination 

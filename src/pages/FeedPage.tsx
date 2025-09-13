@@ -9,6 +9,7 @@ import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 import { standardClasses, cn } from '../styles/standardClasses';
+import { scrollToPaginationContent } from '../utils/scrollUtils';
 
 // Mobile-first constants
 const MIN_TOUCH_TARGET = 44; // iOS HIG minimum 44pt touch target
@@ -249,11 +250,15 @@ export default function FeedPage() {
   const handleFilterChange = (filter: FeedFilter) => {
     setActiveFilter(filter);
     setCurrentPage(1); // Reset to first page
+    // Scroll to content tabs when filter changes
+    scrollToPaginationContent();
   };
   
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Scroll to content tabs when page changes
+    scrollToPaginationContent();
   };
 
   const toggleLike = async (postId: string) => {
@@ -384,7 +389,7 @@ export default function FeedPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Modern Tab Navigation with Glass Effect */}
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl mb-8">
+        <div id="content-tabs" className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl mb-8">
           <div className="flex gap-3">
             <Tab
               label="Semua"

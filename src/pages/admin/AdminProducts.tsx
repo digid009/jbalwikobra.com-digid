@@ -11,6 +11,7 @@ import { useToast } from '../../components/Toast';
 import { standardClasses, cn } from '../../styles/standardClasses';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../components/ios/IOSDesignSystem';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
+import { scrollToPaginationContent } from '../../utils/scrollUtils';
 // Admin page cleaned: diagnostics imports removed
 
 type FormState = {
@@ -63,6 +64,12 @@ const AdminProducts: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(20); // Increased default to 20
   const [totalProducts, setTotalProducts] = useState(0); // Track total for pagination
   const [debouncedSearch, setDebouncedSearch] = useState(''); // Debounced search
+
+  // Handle page change with scroll to admin content
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   // Debounced search effect
   useEffect(() => {
@@ -461,7 +468,7 @@ const AdminProducts: React.FC = () => {
             </div>
 
             {/* Modern Product List */}
-            <div className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
+            <div id="admin-content" className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
               <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-400 px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
                 <div className="col-span-5">Product Name</div>
                 <div className="col-span-2">Game</div>
@@ -574,7 +581,7 @@ const AdminProducts: React.FC = () => {
               totalPages={totalPages}
               totalItems={totalProducts}
               itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
               showItemsPerPageSelector={true}
               onItemsPerPageChange={setItemsPerPage}
             />
