@@ -94,13 +94,13 @@ export interface Banner {
   id: string;
   title: string;
   subtitle?: string;
-  imageUrl: string;
-  linkUrl?: string;
-  ctaText?: string; // optional CTA label
-  sortOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  image_url: string;
+  link_url?: string;
+  cta_text?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WebsiteSettings {

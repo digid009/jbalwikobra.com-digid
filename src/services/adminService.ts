@@ -91,12 +91,14 @@ export interface Review {
 export interface Banner {
   id: string;
   title: string;
-  description: string;
+  subtitle?: string;
   image_url: string;
   link_url?: string;
-  is_active: boolean;
+  cta_text?: string;
   sort_order: number;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface FlashSale {
@@ -960,7 +962,7 @@ export const adminService = {
       const { data, error, count } = await supabase
         .from('banners')
         .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
+        .order('sort_order', { ascending: true })
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) throw error;
@@ -972,6 +974,99 @@ export const adminService = {
         totalPages: Math.ceil((count || 0) / limit)
       };
     });
+  },
+
+  async createBanner(banner: Omit<Banner, 'id' | 'created_at' | 'updated_at'>): Promise<Banner> {
+    const { data, error } = await supabase
+      .from('banners')
+      .insert([banner])
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+    
+    return data;
+  },
+
+  async updateBanner(id: string, updates: Partial<Omit<Banner, 'id' | 'created_at' | 'updated_at'>>): Promise<Banner> {
+    const { data, error } = await supabase
+      .from('banners')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+    
+    return data;
+  },
+
+  async deleteBanner(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('banners')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+  },
+
+  async toggleBannerStatus(id: string): Promise<Banner> {
+    // First get current status
+    const { data: currentBanner, error: fetchError } = await supabase
+      .from('banners')
+      .select('is_active')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Toggle status
+    const { data, error } = await supabase
+      .from('banners')
+      .update({ 
+        is_active: !currentBanner.is_active,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+    
+    return data;
+  },
+
+  async reorderBanners(bannerIds: string[]): Promise<void> {
+    // Update sort_order for each banner
+    const updates = bannerIds.map((id, index) => ({
+      id,
+      sort_order: index + 1,
+      updated_at: new Date().toISOString()
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('banners')
+        .update({ sort_order: update.sort_order, updated_at: update.updated_at })
+        .eq('id', update.id);
+
+      if (error) throw error;
+    }
+    
+    // Clear cache
+    adminCache.clear();
   },
 
   async getFeedPosts(page: number = 1, limit: number = 10): Promise<PaginatedResponse<FeedPost>> {

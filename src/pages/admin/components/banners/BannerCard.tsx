@@ -79,9 +79,9 @@ export const BannerCard: React.FC<BannerCardProps> = ({
             <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
               {banner.title || 'Untitled Banner'}
             </h3>
-            {banner.description && (
+            {banner.subtitle && (
               <p className="text-sm text-gray-400 line-clamp-2">
-                {banner.description}
+                {banner.subtitle}
               </p>
             )}
           </div>
