@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Plus, Package, AlertCircle, Loader2, RefreshCw, Grid, List, Edit, Eye } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
-import { IOSCard, IOSButton, IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { ProductService } from '../../../services/productService';
+import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystemV2';
 import { cn } from '../../../styles/standardClasses';
 import { ProductCrudModal } from './ProductCrudModal';
+import { ProductCard } from './products/ProductCard';
+import { ProductCardList } from './products/ProductCardList';
+import { Tier, GameTitle } from '../../../types';
 
 export const AdminProductsManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Reference data for filters
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,8 +24,6 @@ export const AdminProductsManagement: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [gameTitleFilter, setGameTitleFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'price' | 'created_at'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,12 +36,13 @@ export const AdminProductsManagement: React.FC = () => {
 
   useEffect(() => {
     loadProducts();
+    loadReferenceData();
   }, []);
 
   // Separate effect for client-side filtering - no need to reload data
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filtering changes
-  }, [searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter, sortBy, sortOrder]);
+  }, [searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter]);
 
   const loadProducts = async () => {
     try {
@@ -48,6 +55,19 @@ export const AdminProductsManagement: React.FC = () => {
       setError('Failed to load products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReferenceData = async () => {
+    try {
+      const [tiersData, gameTitlesData] = await Promise.all([
+        ProductService.getTiers(),
+        ProductService.getGameTitles()
+      ]);
+      setTiers(tiersData);
+      setGameTitles(gameTitlesData);
+    } catch (error) {
+      console.error('Error loading reference data:', error);
     }
   };
 
@@ -99,50 +119,35 @@ export const AdminProductsManagement: React.FC = () => {
       );
     }
 
-    // Apply tier filter
+    // Apply tier filter using proper tier data
     if (tierFilter !== 'all') {
-      filtered = filtered.filter(product => 
-        product.tier?.toLowerCase() === tierFilter.toLowerCase()
-      );
+      filtered = filtered.filter(product => {
+        const tierSlug = (product as any).tiers?.slug || (product as any).tier_slug || product.tier;
+        const tierName = (product as any).tiers?.name || (product as any).tier_name;
+        return tierSlug?.toLowerCase() === tierFilter.toLowerCase() ||
+               tierName?.toLowerCase() === tierFilter.toLowerCase();
+      });
     }
 
-    // Apply game title filter
+    // Apply game title filter using proper game title data  
     if (gameTitleFilter !== 'all') {
-      filtered = filtered.filter(product => 
-        product.game_title?.toLowerCase() === gameTitleFilter.toLowerCase()
-      );
+      filtered = filtered.filter(product => {
+        const gameTitleSlug = (product as any).game_titles?.slug || (product as any).game_title_slug;
+        const gameTitleName = (product as any).game_titles?.name || (product as any).game_title_name || product.game_title;
+        return gameTitleSlug?.toLowerCase() === gameTitleFilter.toLowerCase() ||
+               gameTitleName?.toLowerCase() === gameTitleFilter.toLowerCase();
+      });
     }
 
-    // Apply sorting
+    // Default sort by name ascending
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name?.toLowerCase() || '';
-          bValue = b.name?.toLowerCase() || '';
-          break;
-        case 'price':
-          aValue = a.price || 0;
-          bValue = b.price || 0;
-          break;
-        case 'created_at':
-          aValue = new Date(a.created_at || 0);
-          bValue = new Date(b.created_at || 0);
-          break;
-        default:
-          return 0;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
+      const aValue = a.name?.toLowerCase() || '';
+      const bValue = b.name?.toLowerCase() || '';
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
     });
 
     return filtered;
-  }, [products, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter, sortBy, sortOrder]);
+  }, [products, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -154,24 +159,12 @@ export const AdminProductsManagement: React.FC = () => {
     return Array.from(cats);
   }, [products]);
 
-  const tiers = useMemo(() => {
-    const tierSet = new Set(products.map(p => p.tier).filter(Boolean));
-    return Array.from(tierSet);
-  }, [products]);
-
-  const gameTitles = useMemo(() => {
-    const titleSet = new Set(products.map(p => p.game_title).filter(Boolean));
-    return Array.from(titleSet);
-  }, [products]);
-
   const clearAllFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setCategoryFilter('all');
     setTierFilter('all');
     setGameTitleFilter('all');
-    setSortBy('name');
-    setSortOrder('asc');
   };
 
   return (
@@ -293,7 +286,7 @@ export const AdminProductsManagement: React.FC = () => {
                 >
                   <option value="all">All Tiers</option>
                   {tiers.map(tier => (
-                    <option key={tier} value={tier}>{tier}</option>
+                    <option key={tier.id} value={tier.slug}>{tier.name}</option>
                   ))}
                 </select>
               </div>
@@ -307,36 +300,9 @@ export const AdminProductsManagement: React.FC = () => {
                   className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
                 >
                   <option value="all">All Games</option>
-                  {gameTitles.map(title => (
-                    <option key={title} value={title}>{title}</option>
+                  {gameTitles.map(gameTitle => (
+                    <option key={gameTitle.id} value={gameTitle.slug}>{gameTitle.name}</option>
                   ))}
-                </select>
-              </div>
-
-              {/* Sort By */}
-              <div className="flex items-center space-x-3 min-w-[140px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'created_at')}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="name">Name</option>
-                  <option value="price">Price</option>
-                  <option value="created_at">Date</option>
-                </select>
-              </div>
-
-              {/* Sort Order */}
-              <div className="flex items-center space-x-3 min-w-[120px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Order:</span>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="asc">A-Z</option>
-                  <option value="desc">Z-A</option>
                 </select>
               </div>
 
@@ -370,125 +336,45 @@ export const AdminProductsManagement: React.FC = () => {
           ) : filteredProducts.length > 0 ? (
             <div className="p-6">
               {viewMode === 'grid' ? (
-                /* Grid View */
+                /* Grid View - Using ProductCard component with tier styling */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {paginatedProducts.map((product) => (
-                    <div
+                    <ProductCard
                       key={product.id}
-                      className="bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden hover:border-pink-500/30 transition-all duration-300 group"
-                    >
-                      <div className="aspect-square bg-gradient-to-br from-gray-800/50 to-gray-700/30 relative overflow-hidden">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-12 h-12 text-gray-400" />
-                          </div>
-                        )}
-                        <div className="absolute top-2 right-2">
-                          <span className={cn(
-                            "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
-                            product.is_active
-                              ? "bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-200 border border-emerald-500/30"
-                              : "bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-200 border border-gray-500/30"
-                          )}>
-                            {product.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-white group-hover:text-pink-200 transition-colors duration-300 line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-                          {product.description || 'No description available'}
-                        </p>
-                        <div className="flex items-center justify-between mt-3">
-                          <span className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                            Rp {(product.price || 0).toLocaleString()}
-                          </span>
-                          {product.category && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/20">
-                              {product.category}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Edit Button */}
-                        <div className="mt-3">
-                          <IOSButton
-                            size="small"
-                            onClick={() => handleEditProduct(product)}
-                            className="w-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-200 hover:text-blue-100 transition-all duration-300"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Product
-                          </IOSButton>
-                        </div>
-                      </div>
-                    </div>
+                      product={product}
+                      tiers={tiers}
+                      gameTitles={gameTitles}
+                      onEdit={() => handleEditProduct(product)}
+                      onView={() => {
+                        // Add view functionality if needed
+                        console.log('View product:', product);
+                      }}
+                      onDelete={() => {
+                        // Add delete functionality if needed
+                        console.log('Delete product:', product);
+                      }}
+                    />
                   ))}
                 </div>
               ) : (
-                /* List View */
+                /* List View - Using ProductCardList component with tier styling */
                 <div className="space-y-3">
                   {paginatedProducts.map((product) => (
-                    <div
+                    <ProductCardList
                       key={product.id}
-                      className="flex items-center gap-4 p-4 bg-gradient-to-r from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-xl border border-white/10 hover:border-pink-500/30 transition-all duration-300 group"
-                    >
-                      <div className="w-16 h-16 bg-gradient-to-br from-gray-800/50 to-gray-700/30 rounded-lg overflow-hidden flex-shrink-0">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white group-hover:text-pink-200 transition-colors duration-300 truncate">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-400 truncate">
-                          {product.description || 'No description available'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                            Rp {(product.price || 0).toLocaleString()}
-                          </div>
-                          {product.category && (
-                            <div className="text-xs text-pink-300">{product.category}</div>
-                          )}
-                        </div>
-                        <IOSButton
-                          size="small"
-                          onClick={() => handleEditProduct(product)}
-                          className="px-3 py-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-200 hover:text-blue-100 transition-all duration-300"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </IOSButton>
-                        <span className={cn(
-                          "inline-flex px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap",
-                          product.is_active
-                            ? "bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-200 border border-emerald-500/30"
-                            : "bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-200 border border-gray-500/30"
-                        )}>
-                          {product.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                    </div>
+                      product={product}
+                      tiers={tiers}
+                      gameTitles={gameTitles}
+                      onEdit={() => handleEditProduct(product)}
+                      onView={() => {
+                        // Add view functionality if needed
+                        console.log('View product:', product);
+                      }}
+                      onDelete={() => {
+                        // Add delete functionality if needed
+                        console.log('Delete product:', product);
+                      }}
+                    />
                   ))}
                 </div>
               )}
@@ -496,15 +382,32 @@ export const AdminProductsManagement: React.FC = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="mt-8 pt-6 border-t border-white/10">
-                  <IOSPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredProducts.length}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                    showItemsPerPageSelector={true}
-                    onItemsPerPageChange={setItemsPerPage}
-                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400">
+                      Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
+                    </span>
+                    <div className="flex gap-2">
+                      <IOSButton
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2"
+                      >
+                        Previous
+                      </IOSButton>
+                      <span className="px-4 py-2 bg-pink-500/20 text-pink-200 rounded-lg border border-pink-500/30 text-sm font-medium">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <IOSButton
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-2"
+                      >
+                        Next
+                      </IOSButton>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

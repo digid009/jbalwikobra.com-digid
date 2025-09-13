@@ -1,11 +1,14 @@
 import React from 'react';
 import { Product } from '../../../../services/adminService';
-import { IOSButton, IOSCard } from '../../../../components/ios/IOSDesignSystem';
-import { Package, Edit, Eye, Trash2, Star, DollarSign } from 'lucide-react';
+import { IOSButton, IOSCard } from '../../../../components/ios/IOSDesignSystemV2';
+import { Package, Edit, Eye, Trash2, Star, DollarSign, Crown, Users, Trophy } from 'lucide-react';
 import { cn } from '../../../../styles/standardClasses';
+import { Tier, GameTitle } from '../../../../types';
 
 interface ProductCardProps {
   product: Product;
+  tiers?: Tier[];
+  gameTitles?: GameTitle[];
   onView?: (product: Product) => void;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
@@ -14,19 +17,109 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
+  tiers,
+  gameTitles,
   onView,
   onEdit,
   onDelete,
   className
 }) => {
+  // Get tier data for styling - matching products page style
+  const getTierStyles = (product: Product) => {
+    // First try to get tier from the tiers array using tier_id
+    let tierData = null;
+    if (product.tier_id && tiers) {
+      tierData = tiers.find(t => t.id === product.tier_id);
+    }
+    
+    // Try to get tier from product data relationships (fallback)
+    const tierSlug = tierData?.slug || (product as any).tiers?.slug || (product as any).tier_slug || product.tier;
+    const tierName = tierData?.name || (product as any).tiers?.name || (product as any).tier_name;
+    const tierColor = tierData?.color || (product as any).tiers?.color;
+    
+    switch (tierSlug) {
+      case 'premium':
+        return {
+          // Card background gradient - matching products page
+          cardBg: 'bg-gradient-to-br from-amber-700/40 via-amber-700/30 to-yellow-700/40',
+          cardBorder: 'border-amber-500/30',
+          // Tier tag gradient 
+          bg: 'from-amber-500/20 to-orange-500/20',
+          border: 'border-amber-500/30',
+          text: 'text-amber-200',
+          icon: Crown,
+          name: tierName || 'PREMIUM'
+        };
+      case 'pelajar':
+        return {
+          // Card background gradient - matching products page
+          cardBg: 'bg-gradient-to-br from-blue-700/40 via-blue-700/30 to-indigo-700/40',
+          cardBorder: 'border-blue-500/30',
+          // Tier tag gradient
+          bg: 'from-blue-500/20 to-indigo-500/20', 
+          border: 'border-blue-500/30',
+          text: 'text-blue-200',
+          icon: Users,
+          name: tierName || 'PELAJAR'
+        };
+      case 'reguler':
+      default:
+        return {
+          // Card background gradient - matching products page
+          cardBg: 'bg-gradient-to-br from-zinc-700/40 via-zinc-700/30 to-gray-700/40',
+          cardBorder: 'border-gray-500/30',
+          // Tier tag gradient
+          bg: 'from-gray-500/20 to-slate-500/20',
+          border: 'border-gray-500/30', 
+          text: 'text-gray-200',
+          icon: Trophy,
+          name: tierName || 'REGULER'
+        };
+    }
+  };
+
+  const tierStyle = getTierStyles(product);
+  const TierIcon = tierStyle.icon;
+
+  // Get game title data - use passed gameTitles array for better data
+  const getGameTitleData = () => {
+    if (product.game_title_id && gameTitles) {
+      const gameTitle = gameTitles.find(gt => gt.id === product.game_title_id);
+      if (gameTitle) {
+        return {
+          name: gameTitle.name,
+          slug: gameTitle.slug
+        };
+      }
+    }
+    
+    // Fallback to existing data
+    return {
+      name: (product as any).game_titles?.name || (product as any).game_title_name || product.game_title || 'Game',
+      slug: (product as any).game_titles?.slug || (product as any).game_title_slug
+    };
+  };
+
+  const gameTitle = getGameTitleData().name;
+
   return (
-    <IOSCard className={cn(
-      'group hover:scale-[1.02] transition-all duration-300 overflow-hidden',
-      'bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm',
-      'border border-white/10 hover:border-pink-500/30',
-      'shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-pink-500/20',
-      className
-    )}>
+    <IOSCard 
+      variant="elevated" 
+      padding="none"
+      hoverable
+      className={cn(
+        'group overflow-hidden transition-all duration-300 border',
+        // Apply tier styling to entire card - matching products page
+        tierStyle.cardBg,
+        tierStyle.cardBorder,
+        'shadow-lg shadow-black/20 hover:shadow-xl',
+        // Tier-specific hover effects
+        tierStyle.cardBorder.includes('amber') ? 'hover:shadow-amber-500/20' :
+        tierStyle.cardBorder.includes('blue') ? 'hover:shadow-blue-500/20' :
+        'hover:shadow-gray-500/20',
+        className
+      )}
+    >
       {/* Product Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
         {product.image ? (
@@ -61,6 +154,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 ⚡ Flash Sale
               </span>
             )}
+            {/* Tier Tag */}
+            <span className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full backdrop-blur-sm border',
+              `bg-gradient-to-r ${tierStyle.bg} ${tierStyle.border} ${tierStyle.text}`
+            )}>
+              <TierIcon className="w-3 h-3" />
+              {tierStyle.name}
+            </span>
           </div>
           {(product as any).rating && (
             <div className="flex items-center gap-1 px-2 py-1 bg-black/50 rounded-full backdrop-blur-sm border border-white/20">
@@ -96,18 +197,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           )}
           
-          {product.category && (
-            <span className="inline-block px-2 py-1 text-xs text-gray-300 bg-white/5 rounded-md border border-white/10">
-              {product.category}
-            </span>
-          )}
+          {/* Game Title and Category */}
+          <div className="flex flex-wrap gap-2">
+            {gameTitle && (
+              <span className="inline-block px-2 py-1 text-xs text-blue-300 bg-blue-500/10 rounded-md border border-blue-500/20">
+                🎮 {gameTitle}
+              </span>
+            )}
+            {product.category && (
+              <span className="inline-block px-2 py-1 text-xs text-gray-300 bg-white/5 rounded-md border border-white/10">
+                {product.category}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-3 border-t border-white/5">
           <IOSButton
             variant="ghost"
-            size="small"
+            size="sm"
             onClick={() => onView?.(product)}
             className="flex-1 text-xs py-2 hover:bg-pink-500/20 border border-pink-500/30"
           >
@@ -116,7 +225,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </IOSButton>
           <IOSButton
             variant="ghost"
-            size="small"
+            size="sm"
             onClick={() => onEdit?.(product)}
             className="flex-1 text-xs py-2 hover:bg-blue-500/20 border border-blue-500/30"
           >
@@ -125,7 +234,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </IOSButton>
           <IOSButton
             variant="ghost"
-            size="small"
+            size="sm"
             onClick={() => onDelete?.(product)}
             className="hover:bg-red-500/20 border border-red-500/30 px-3 py-2"
           >

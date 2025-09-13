@@ -320,10 +320,10 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                           <circle
                             cx={x}
                             cy={y}
-                            r="1"
+                            r="0.1"
                             fill="#10B981"
                             stroke="#FFFFFF"
-                            strokeWidth="0.5"
+                            strokeWidth="0.50"
                             className="drop-shadow-lg"
                             filter="url(#glow)"
                           />
