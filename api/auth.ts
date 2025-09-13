@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { adminNotificationService } from '../src/services/adminNotificationService';
 
 // Lazily initialize Supabase client to avoid module-load failures
 let supabase: SupabaseClient | null = null;
@@ -233,6 +234,18 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
       }
 
       userId = newUser.id;
+
+      // Create admin notification for new user signup
+      try {
+        await adminNotificationService.createUserSignupNotification(
+          newUser.id,
+          'New User', // Default name since name might not be provided yet
+          phone
+        );
+        console.log('[Admin] User signup notification created successfully');
+      } catch (notificationError) {
+        console.error('[Admin] Failed to create user signup notification:', notificationError);
+      }
     }
 
     // Generate verification code
@@ -399,6 +412,30 @@ async function handleCompleteProfile(req: VercelRequest, res: VercelResponse) {
 
     if (userError) {
       return res.status(500).json({ error: 'Failed to complete profile' });
+    }
+
+    // Update admin notification with actual user name
+    try {
+      // Find recent signup notifications for this user and update them
+      const notifications = await adminNotificationService.getAdminNotifications(50);
+      const userNotification = notifications.find(n => 
+        n.type === 'new_user' && n.user_id === user_id
+      );
+      
+      if (userNotification) {
+        // Update the notification with actual name and better message
+        await getSupabase()
+          .from('admin_notifications')
+          .update({
+            title: 'Bang! ada yang DAFTAR akun nih!',
+            message: `namanya ${name} nomor wanya ${user.phone}`,
+            customer_name: name
+          })
+          .eq('id', userNotification.id);
+        console.log('[Admin] Updated user signup notification with actual name');
+      }
+    } catch (notificationError) {
+      console.error('[Admin] Failed to update user signup notification:', notificationError);
     }
 
     const { password_hash, login_attempts, locked_until, ...safeUser } = user;

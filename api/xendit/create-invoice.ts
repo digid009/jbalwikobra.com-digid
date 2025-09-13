@@ -3,6 +3,8 @@ const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
+import { adminNotificationService } from '../../src/services/adminNotificationService';
+
 async function createOrderIfProvided(order: any, clientExternalId?: string) {
   try {
     if (!order) {
@@ -116,6 +118,35 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
         throw error;
       }
       console.log('[createOrderIfProvided] Inserted order successfully:', data?.id);
+      
+      // Create admin notification for new order
+      try {
+        // Get product name if product_id exists
+        let productName = 'Unknown Product';
+        if (data?.product_id) {
+          const productRes = await sb
+            .from('products')
+            .select('name')
+            .eq('id', data.product_id)
+            .single();
+          if (productRes.data) {
+            productName = productRes.data.name;
+          }
+        }
+
+        await adminNotificationService.createOrderNotification(
+          data.id,
+          data.customer_name || 'Guest Customer',
+          productName,
+          Number(data.amount || 0),
+          'new_order',
+          data.customer_phone
+        );
+        console.log('[Admin] New order notification created successfully');
+      } catch (notificationError) {
+        console.error('[Admin] Failed to create new order notification:', notificationError);
+      }
+
       return data;
     }
   } catch (e) {

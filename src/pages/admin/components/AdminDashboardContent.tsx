@@ -320,7 +320,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                           <circle
                             cx={x}
                             cy={y}
-                            r="0.1"
+                            r="0.5"
                             fill="#10B981"
                             stroke="#FFFFFF"
                             strokeWidth="0.50"
@@ -347,7 +347,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                           <circle
                             cx={x}
                             cy={y}
-                            r="1"
+                            r="0.5"
                             fill="#3B82F6"
                             stroke="#FFFFFF"
                             strokeWidth="0.5"

@@ -2,6 +2,7 @@
 // Security features: Webhook signature verification, transaction rollback, configurable WhatsApp API
 
 import crypto from 'crypto';
+import { adminNotificationService } from '../../src/services/adminNotificationService';
 
 // Configuration interface for better type safety
 interface WebhookConfig {
@@ -153,6 +154,21 @@ async function sendOrderPaidNotification(
     if (!config.whatsappApiKey) {
       console.error('[WhatsApp] API key not configured');
       return;
+    }
+
+    // Create admin notification for dashboard
+    try {
+      await adminNotificationService.createOrderNotification(
+        order.id,
+        order.customer_name || 'Guest Customer',
+        product?.name || 'Unknown Product',
+        Number(order.amount || 0),
+        'paid_order',
+        order.customer_phone
+      );
+      console.log('[Admin] Order paid notification created successfully');
+    } catch (notificationError) {
+      console.error('[Admin] Failed to create order paid notification:', notificationError);
     }
 
     const response = await fetch(`${config.whatsappApiUrl}/send_message_group_id`, {

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X, ShoppingCart, CreditCard, XCircle } from 'lucide-react';
+import { X, ShoppingCart, CreditCard, XCircle, User, Star, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/TraditionalAuthContext';
-import { notificationService, AppNotification } from '../../services/notificationService';
+import { adminNotificationService, AdminNotification } from '../../services/adminNotificationService';
+import { IOSCard, IOSButton } from '../../components/ios/IOSDesignSystemV2';
 import { supabase } from '../../services/supabase';
 
-type NotificationItem = AppNotification & { _ts: number };
+type NotificationItem = AdminNotification & { _ts: number };
 
 const FloatingNotifications: React.FC = () => {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ const FloatingNotifications: React.FC = () => {
 
     async function bootstrap() {
       try {
-        const latest = await notificationService.getLatest(5, user?.id);
+        const latest = await adminNotificationService.getAdminNotifications(5);
         if (latest?.length) {
           lastSeenRef.current = latest[0].created_at;
           setItems(latest.map(n => ({ ...n, _ts: Date.now() })));
@@ -27,18 +28,17 @@ const FloatingNotifications: React.FC = () => {
       } catch { /* ignore */ }
 
       if (canRealtime && supabase) {
-        // Subscribe to new notification inserts
+        // Subscribe to new admin notification inserts
         channel = supabase
-          .channel('public:notifications:insert')
+          .channel('public:admin_notifications:insert')
           .on(
             'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'notifications' },
+            { event: 'INSERT', schema: 'public', table: 'admin_notifications' },
             (payload: any) => {
-              const n = payload?.new as AppNotification;
-              // Show if global or for current user
-              const visible = !n.user_id || (user?.id && n.user_id === user.id);
-              if (!visible) return;
-              push(n);
+              const n = payload?.new as AdminNotification;
+              if (n) {
+                push(n);
+              }
             }
           )
           .subscribe();
@@ -48,7 +48,7 @@ const FloatingNotifications: React.FC = () => {
       if (!canRealtime) {
         pollingRef.current = window.setInterval(async () => {
           try {
-            const latest = await notificationService.getLatest(1, user?.id);
+            const latest = await adminNotificationService.getAdminNotifications(1);
             if (latest?.[0] && latest[0].created_at !== lastSeenRef.current) {
               lastSeenRef.current = latest[0].created_at;
               push(latest[0]);
@@ -66,7 +66,7 @@ const FloatingNotifications: React.FC = () => {
     };
   }, [user?.id, canRealtime]);
 
-  const push = (notif: AppNotification) => {
+  const push = (notif: AdminNotification) => {
     setItems(prev => [{ ...notif, _ts: Date.now() }, ...prev.slice(0, 4)]);
   };
 
@@ -76,7 +76,7 @@ const FloatingNotifications: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await notificationService.markAsRead(id);
+      await adminNotificationService.markAsRead(id);
       setItems(prev => prev.filter(n => n.id !== id));
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
@@ -87,46 +87,69 @@ const FloatingNotifications: React.FC = () => {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'order_created':
       case 'new_order':
         return <ShoppingCart className="h-4 w-4" />;
-      case 'payment_received':
-      case 'payment_confirmed':
+      case 'paid_order':
         return <CreditCard className="h-4 w-4" />;
+      case 'new_user':
+        return <User className="h-4 w-4" />;
       case 'order_cancelled':
         return <XCircle className="h-4 w-4" />;
+      case 'new_review':
+        return <Star className="h-4 w-4" />;
       default:
-        return <ShoppingCart className="h-4 w-4" />;
+        return <AlertCircle className="h-4 w-4" />;
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'order_created':
       case 'new_order':
-        return 'border-l-pink-500 bg-pink-50';
-      case 'payment_received':
-      case 'payment_confirmed':
-        return 'border-l-green-500 bg-pink-50';
+        return 'border-l-gray-500 bg-gray-900/95 backdrop-blur-sm';
+      case 'paid_order':
+        return 'border-l-pink-500 bg-pink-950/95 backdrop-blur-sm';
+      case 'new_user':
+        return 'border-l-blue-500 bg-blue-950/95 backdrop-blur-sm';
       case 'order_cancelled':
-        return 'border-l-red-500 bg-pink-50';
+        return 'border-l-red-500 bg-red-950/95 backdrop-blur-sm';
+      case 'new_review':
+        return 'border-l-yellow-500 bg-yellow-950/95 backdrop-blur-sm';
       default:
-        return 'border-l-pink-500 bg-pink-50';
+        return 'border-l-gray-500 bg-gray-900/95 backdrop-blur-sm';
     }
   };
 
   const getIconBgColor = (type: string) => {
     switch (type) {
-      case 'order_created':
       case 'new_order':
+        return 'bg-gray-600';
+      case 'paid_order':
         return 'bg-pink-500';
-      case 'payment_received':
-      case 'payment_confirmed':
-        return 'bg-green-500';
+      case 'new_user':
+        return 'bg-blue-500';
       case 'order_cancelled':
         return 'bg-red-500';
+      case 'new_review':
+        return 'bg-yellow-500';
       default:
-        return 'bg-pink-500';
+        return 'bg-gray-500';
+    }
+  };
+
+  const getTextColor = (type: string) => {
+    switch (type) {
+      case 'new_order':
+        return 'text-gray-200';
+      case 'paid_order':
+        return 'text-pink-200';
+      case 'new_user':
+        return 'text-blue-200';
+      case 'order_cancelled':
+        return 'text-red-200';
+      case 'new_review':
+        return 'text-yellow-200';
+      default:
+        return 'text-gray-200';
     }
   };
 
@@ -135,7 +158,7 @@ const FloatingNotifications: React.FC = () => {
   return (
     <div className="fixed top-6 right-6 z-[9999] space-y-4 max-w-md">
       {items.slice(0, 5).map((n) => (
-        <div key={n.id} className="bg-black rounded-2xl shadow-2xl border border-pink-100 transition-all duration-300 hover:shadow-3xl hover:scale-105">
+        <div key={n.id} className={`rounded-2xl shadow-2xl border-l-4 transition-all duration-300 hover:shadow-3xl hover:scale-105 ${getNotificationColor(n.type)}`}>
           <div className="p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-4 flex-1">
@@ -146,8 +169,10 @@ const FloatingNotifications: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-lg text-white">{n.title}</h4>
                   </div>
-                  <p className="text-base text-gray-700 line-clamp-2 mt-2 leading-relaxed">{n.body || n.title}</p>
-                  <p className="text-sm text-pink-600 mt-3 font-semibold">
+                  <p className={`text-base line-clamp-2 mt-2 leading-relaxed ${getTextColor(n.type)}`}>
+                    {n.message}
+                  </p>
+                  <p className="text-sm text-pink-400 mt-3 font-semibold">
                     {new Date(n.created_at).toLocaleTimeString('id-ID', { 
                       hour: '2-digit', 
                       minute: '2-digit' 
@@ -157,14 +182,14 @@ const FloatingNotifications: React.FC = () => {
               </div>
               <button 
                 onClick={() => dismissNotification(n.id)} 
-                className="h-8 w-8 shrink-0 rounded-xl hover:bg-pink-600/20 flex items-center justify-center transition-colors duration-200"
+                className="h-8 w-8 shrink-0 rounded-xl hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
               >
-                <X className="h-5 w-5 text-pink-500" />
+                <X className="h-5 w-5 text-white/80" />
               </button>
             </div>
             <button 
               onClick={() => markAsRead(n.id)} 
-              className="w-full mt-4 py-3 text-base rounded-xl hover:bg-pink-600/20 text-pink-600 font-semibold border-2 border-pink-200 transition-all duration-200 hover:border-pink-300"
+              className="w-full mt-4 py-3 text-base rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold border-2 border-white/20 transition-all duration-200 hover:border-white/30"
             >
               Mark as Read
             </button>
