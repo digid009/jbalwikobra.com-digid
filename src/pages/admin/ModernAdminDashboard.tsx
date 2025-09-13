@@ -8,13 +8,13 @@ import { AdminUsersManagement } from './components/AdminUsersManagement';
 import { AdminProductsManagement } from './components/AdminProductsManagement';
 import AdminFeedManagement from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
-import AdminFlashSalesV2 from './AdminFlashSalesV2';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import { AdminNotificationsPage } from './components/AdminNotificationsPage';
 import EnhancedAdminSettings from './EnhancedAdminSettings';
 import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { IOSButton } from '../../components/ios/IOSDesignSystem';
+import { RefactoredAdminFlashSalesManagement } from '../../components/admin/flash-sales';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../styles/standardClasses';
 import { 
@@ -118,7 +118,7 @@ const ModernAdminDashboard: React.FC = () => {
       case 'banners':
         return <AdminBannersManagement />;
       case 'flash-sales':
-        return <AdminFlashSalesV2 />;
+        return <RefactoredAdminFlashSalesManagement onRefresh={loadStats} />;
       case 'reviews':
         return <AdminReviewsManagement />;
       case 'notifications':
