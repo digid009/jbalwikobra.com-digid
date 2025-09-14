@@ -810,12 +810,14 @@ export class ProductService {
         original_price: product.originalPrice ?? product.original_price ?? null,
         image: product.image,
         images: product.images ?? [],
-        category: product.category ?? 'general', // Add default category
+        category: product.category ?? 'general',
+        category_id: product.categoryId ?? (product as any).category_id ?? null,
         account_level: product.accountLevel ?? product.account_level ?? null,
         account_details: product.accountDetails ?? product.account_details ?? null,
         is_flash_sale: product.isFlashSale ?? false,
         has_rental: product.hasRental ?? false,
         stock: product.stock ?? 1,
+        is_active: product.isActive !== undefined ? product.isActive : (product as any).is_active ?? true,
       };
 
       if (hasRelations === true) {
@@ -899,12 +901,14 @@ export class ProductService {
         original_price: (updates as any).original_price ?? updates.originalPrice,
         image: (updates as any).image,
         images: (updates as any).images,
-        category: (updates as any).category ?? 'general', // Add default category for updates
+        category: (updates as any).category ?? 'general',
+        category_id: (updates as any).category_id ?? updates.categoryId ?? null,
         account_level: (updates as any).account_level ?? updates.accountLevel,
         account_details: (updates as any).account_details ?? updates.accountDetails,
         is_flash_sale: (updates as any).is_flash_sale ?? updates.isFlashSale,
         has_rental: (updates as any).has_rental ?? updates.hasRental,
         stock: (updates as any).stock ?? updates.stock,
+        is_active: (updates as any).is_active ?? updates.isActive,
       };
 
       if (hasRelations === true) {
@@ -1101,8 +1105,26 @@ export class ProductService {
 
   static async getCategories(): Promise<string[]> {
     try {
-      // Categories have been removed from the system
-      return [];
+      if (!supabase) {
+        return [];
+      }
+      // Try new categories table first
+      const { data: catData, error: catErr } = await supabase
+        .from('categories')
+        .select('slug, name, is_active')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (!catErr && catData && catData.length) {
+        return catData.map(c => c.slug || c.name).filter(Boolean);
+      }
+      // Fallback: distinct legacy categories from products
+      const { data: legacyData } = await supabase
+        .from('products')
+        .select('category')
+        .not('category', 'is', null);
+      const set = new Set<string>();
+      legacyData?.forEach(r => r.category && set.add(r.category));
+      return Array.from(set);
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];

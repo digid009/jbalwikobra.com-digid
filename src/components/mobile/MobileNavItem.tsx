@@ -8,7 +8,6 @@ export interface MobileNavItemConfig {
   activeIcon?: React.ComponentType<any>;
   isSpecial?: boolean;
   badge?: number;
-  animateBadge?: boolean;
 }
 
 interface Props {
@@ -34,7 +33,7 @@ const MobileNavItem: React.FC<Props> = ({ item, isActive, touchSize = 44 }) => {
           <IconComponent size={item.isSpecial ? 26 : 22} strokeWidth={isActive ? 2.5 : 2} />
         </div>
         {item.badge && item.badge > 0 && (
-          <div className={`mobile-nav-badge ${item.animateBadge ? 'mobile-nav-badge-anim' : ''}`}>
+          <div className="mobile-nav-badge">
             <span>{item.badge > 99 ? '99+' : item.badge}</span>
           </div>
         )}

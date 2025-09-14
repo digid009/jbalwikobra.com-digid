@@ -12,6 +12,7 @@ interface ProductCardProps {
   onView?: (product: Product) => void;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
+  onStatusChange?: (id: string, next: boolean) => void; // new
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  onStatusChange,
   className
 }) => {
   // Get tier data for styling - matching products page style
@@ -138,17 +140,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
         
-        {/* Overlay badges */}
+    {/* Overlay badges (removed status badge per new design) */}
         <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
           <div className="flex flex-col gap-2">
-            <span className={cn(
-              'inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full backdrop-blur-sm border',
-              product.is_active 
-                ? 'bg-green-500/80 text-white border-green-400/50' 
-                : 'bg-red-500/80 text-white border-red-400/50'
-            )}>
-              {product.is_active ? 'Active' : 'Inactive'}
-            </span>
+      {/* Status badge moved to actions row */}
             {product.is_flash_sale && (
               <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-500/80 text-white border border-pink-400/50 backdrop-blur-sm">
                 ⚡ Flash Sale
@@ -213,32 +208,39 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pt-3 border-t border-white/5">
-          <IOSButton
-            variant="ghost"
-            size="sm"
-            onClick={() => onView?.(product)}
-            className="flex-1 text-xs py-2 hover:bg-pink-500/20 border border-pink-500/30"
-          >
-            <Eye className="w-3 h-3 mr-1.5" />
-            View
-          </IOSButton>
+        <div className="flex items-center gap-3 pt-3 border-t border-white/5">
+          {/* Active Switch + Status Badge */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onStatusChange?.(product.id, !product.is_active)}
+              role="switch"
+              aria-checked={product.is_active}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-500/40 border ${product.is_active ? 'bg-gradient-to-r from-emerald-500 to-green-600 border-emerald-400' : 'bg-black/40 border-white/20'}`}
+              title={product.is_active ? 'Set Inactive' : 'Set Active'}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${product.is_active ? 'translate-x-5' : 'translate-x-1'}`}
+              />
+            </button>
+            <span className={cn(
+              'inline-flex items-center px-2 py-1 text-[10px] font-semibold rounded-full border',
+              product.is_active
+                ? 'bg-green-500/20 text-green-300 border-green-500/40'
+                : 'bg-red-500/20 text-red-300 border-red-500/40'
+            )}>
+              {product.is_active ? 'ACTIVE' : 'INACTIVE'}
+            </span>
+          </div>
+          {/* Keep only Edit action per new requirement */}
           <IOSButton
             variant="ghost"
             size="sm"
             onClick={() => onEdit?.(product)}
-            className="flex-1 text-xs py-2 hover:bg-blue-500/20 border border-blue-500/30"
+            className="ml-auto text-xs py-2 hover:bg-blue-500/20 border border-blue-500/30"
           >
             <Edit className="w-3 h-3 mr-1.5" />
             Edit
-          </IOSButton>
-          <IOSButton
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete?.(product)}
-            className="hover:bg-red-500/20 border border-red-500/30 px-3 py-2"
-          >
-            <Trash2 className="w-3 h-3" />
           </IOSButton>
         </div>
       </div>

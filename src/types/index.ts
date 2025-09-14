@@ -52,12 +52,14 @@ export interface Product {
   image: string;
   images?: string[];
   category?: string; // Keep for backward compatibility (optional now)
+  categoryId?: string; // New foreign key
   gameTitle: string; // Keep for backward compatibility
   tier?: ProductTier; // Keep for backward compatibility
   tierId?: string; // New foreign key
   gameTitleId?: string; // New foreign key
   tierData?: Tier; // Populated tier data
   gameTitleData?: GameTitle; // Populated game title data
+  categoryData?: Category; // Populated category data
   accountLevel?: string;
   accountDetails?: string;
   isFlashSale: boolean;

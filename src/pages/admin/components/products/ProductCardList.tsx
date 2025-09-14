@@ -13,6 +13,7 @@ interface ProductCardListProps {
   onView?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   className?: string;
+  onStatusChange?: (id: string, next: boolean) => void; // new
 }
 
 export const ProductCardList: React.FC<ProductCardListProps> = ({
@@ -22,7 +23,8 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
   onEdit,
   onView,
   onDelete,
-  className
+  className,
+  onStatusChange
 }) => {
   // Get tier data for styling - matching products page style
   const getTierStyles = (product: Product) => {
@@ -108,7 +110,7 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 group backdrop-blur-sm',
+        'flex items-center gap-4 p-3 rounded-xl border transition-all duration-300 group backdrop-blur-sm',
         // Apply tier styling to list view card
         tierStyle.cardBg,
         tierStyle.cardBorder,
@@ -116,23 +118,33 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
         className
       )}
     >
-      {/* Product Image */}
-      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800/50 to-gray-700/30">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzM3Mzc0MSIvPgo8cGF0aCBkPSJNMjAgMTBWMzBNMTAgMjBIMzAiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-6 h-6 text-gray-400" />
-          </div>
-        )}
+      {/* Product Image + Status */}
+      <div className="flex flex-col items-center gap-2 w-14">
+        <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800/50 to-gray-700/30">
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzM3Mzc0MSIvPgo8cGF0aCBkPSJNMjAgMTBWMzBNMTAgMjBIMzAiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Package className="w-6 h-6 text-gray-400" />
+            </div>
+          )}
+        </div>
+        <span className={cn(
+          'inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full border',
+          product.is_active
+            ? 'bg-green-500/20 text-green-300 border-green-500/40'
+            : 'bg-red-500/20 text-red-300 border-red-500/40'
+        )}>
+          {product.is_active ? 'ACTIVE' : 'INACTIVE'}
+        </span>
       </div>
 
       {/* Product Info */}
@@ -142,7 +154,7 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
             <h3 className="font-semibold text-white group-hover:text-white/90 transition-colors duration-300 truncate">
               {product.name}
             </h3>
-            <p className="text-sm text-gray-400 truncate mt-1">
+            <p className="text-sm text-gray-400 line-clamp-2 mt-1">
               {product.description || 'No description available'}
             </p>
             
@@ -167,7 +179,20 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
       </div>
 
       {/* Price and Actions */}
-      <div className="flex items-center gap-4 flex-shrink-0">
+  <div className="flex items-center gap-4 flex-shrink-0">
+        {/* Switch */}
+        <button
+          type="button"
+          onClick={() => onStatusChange?.(product.id, !product.is_active)}
+          role="switch"
+          aria-checked={product.is_active}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-500/40 border ${product.is_active ? 'bg-gradient-to-r from-emerald-500 to-green-600 border-emerald-400' : 'bg-black/40 border-white/20'}`}
+          title={product.is_active ? 'Set Inactive' : 'Set Active'}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${product.is_active ? 'translate-x-5' : 'translate-x-1'}`}
+          />
+        </button>
         <div className="text-right">
           <div className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
             Rp {(product.price || 0).toLocaleString()}
@@ -176,7 +201,6 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
             <div className="text-xs text-pink-300">{product.category}</div>
           )}
         </div>
-        
         {onEdit && (
           <IOSButton
             size="sm"
@@ -187,16 +211,6 @@ export const ProductCardList: React.FC<ProductCardListProps> = ({
             Edit
           </IOSButton>
         )}
-        
-        {/* Status Badge */}
-        <span className={cn(
-          "inline-flex px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap",
-          product.is_active
-            ? "bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-200 border border-emerald-500/30"
-            : "bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-200 border border-gray-500/30"
-        )}>
-          {product.is_active ? 'Active' : 'Inactive'}
-        </span>
       </div>
     </div>
   );

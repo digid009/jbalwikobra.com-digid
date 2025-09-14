@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../../services/adminService';
 import { ProductService } from '../../../services/productService';
@@ -25,12 +25,15 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   product, 
   onSuccess 
 }) => {
+  const initialFocusRef = useRef<HTMLHeadingElement | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: 0,
     originalPrice: 0,
     category: '',
+    categoryId: '', // new
     gameTitle: '',
     gameTitleId: '', // Add gameTitleId field
     tier: 'reguler' as ProductTier,
@@ -60,6 +63,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
           price: product.price || 0,
           originalPrice: product.original_price || 0,
           category: product.category || '',
+          categoryId: (product as any).category_id || '',
           gameTitle: product.game_title || '',
           gameTitleId: product.game_title_id || '', // Add gameTitleId from product
           tier: (product.tier || 'reguler') as ProductTier,
@@ -82,6 +86,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
           price: 0,
           originalPrice: 0,
           category: '',
+          categoryId: '',
           gameTitle: '',
           gameTitleId: '', // Add empty gameTitleId
           tier: 'reguler' as ProductTier,
@@ -100,6 +105,12 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
     }
   }, [product, isOpen]);
 
+  useEffect(() => {
+    if (isOpen && initialFocusRef.current) {
+      initialFocusRef.current.focus();
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -116,7 +127,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
       if (formData.price <= 0) {
         throw new Error('Product price must be greater than 0');
       }
-      if (!formData.category.trim()) {
+      if (!formData.categoryId && !formData.category.trim()) {
         throw new Error('Product category is required');
       }
       if (!formData.gameTitleId) {
@@ -133,7 +144,9 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         price: formData.price,
         originalPrice: formData.originalPrice, // camelCase for TypeScript
         original_price: formData.originalPrice, // snake_case for database
-        category: formData.category.trim(),
+        category: (formData.categoryId || formData.category).trim(),
+        categoryId: formData.categoryId || formData.category,
+        category_id: formData.categoryId || formData.category,
         gameTitle: formData.gameTitle, // camelCase for TypeScript
         game_title: formData.gameTitle, // snake_case for database
         gameTitleId: formData.gameTitleId, // camelCase for TypeScript
@@ -144,8 +157,8 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         accountDetails: formData.accountDetails?.trim() || null, // camelCase for TypeScript
         account_details: formData.accountDetails?.trim() || null, // snake_case for database
         stock: formData.stock,
-        isActive: formData.isActive, // camelCase for TypeScript
-        is_active: formData.isActive, // snake_case for database
+        isActive: formData.isActive,
+        is_active: formData.isActive,
         isFlashSale: formData.isFlashSale, // camelCase for TypeScript
         is_flash_sale: formData.isFlashSale, // snake_case for database
         hasRental: formData.hasRental, // camelCase for TypeScript
@@ -191,7 +204,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
@@ -200,7 +213,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
       <div className="relative w-full max-w-6xl max-h-[90vh] bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10">
-          <h2 className="text-2xl font-bold text-white">
+          <h2 ref={initialFocusRef} tabIndex={-1} id="product-modal-title" className="text-2xl font-bold text-white focus:outline-none">
             {isEdit ? 'Edit Product' : 'Add New Product'}
           </h2>
           <IOSButton 
@@ -244,6 +257,8 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
                   onHasRentalChange={(hasRental) => setFormData(prev => ({ ...prev, hasRental }))}
                   rentalOptions={rentalOptions}
                   onRentalOptionsChange={setRentalOptions}
+                  isActive={formData.isActive}
+                  onIsActiveChange={(val) => setFormData(prev => ({ ...prev, isActive: val }))}
                 />
               </div>
             </div>

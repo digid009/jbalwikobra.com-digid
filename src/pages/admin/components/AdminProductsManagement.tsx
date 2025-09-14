@@ -18,6 +18,7 @@ export const AdminProductsManagement: React.FC = () => {
   // Reference data for filters
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,11 +30,12 @@ export const AdminProductsManagement: React.FC = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -61,12 +63,14 @@ export const AdminProductsManagement: React.FC = () => {
 
   const loadReferenceData = async () => {
     try {
-      const [tiersData, gameTitlesData] = await Promise.all([
+      const [tiersData, gameTitlesData, categoriesData] = await Promise.all([
         ProductService.getTiers(),
-        ProductService.getGameTitles()
+        ProductService.getGameTitles(),
+        ProductService.getCategories()
       ]);
       setTiers(tiersData);
       setGameTitles(gameTitlesData);
+      setAvailableCategories(categoriesData);
     } catch (error) {
       console.error('Error loading reference data:', error);
     }
@@ -91,6 +95,17 @@ export const AdminProductsManagement: React.FC = () => {
   const handleProductSaved = () => {
     loadProducts(); // Refresh products after save
     handleCloseModal();
+  };
+
+  const handleStatusChange = async (id: string, next: boolean) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: next } : p)); // optimistic
+    try {
+      await ProductService.updateProduct(id, { is_active: next });
+    } catch (e) {
+      // revert on failure
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !next } : p));
+      console.error('Failed to update status', e);
+    }
   };
 
   const filteredProducts = useMemo(() => {
@@ -156,9 +171,10 @@ export const AdminProductsManagement: React.FC = () => {
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category).filter(Boolean));
-    return Array.from(cats);
-  }, [products]);
+    const legacy = new Set(products.map(p => p.category).filter(Boolean) as string[]);
+    availableCategories.forEach(c => legacy.add(c));
+    return Array.from(legacy);
+  }, [products, availableCategories]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -201,120 +217,134 @@ export const AdminProductsManagement: React.FC = () => {
 
       {/* Modern Filters Section */}
       <div className="px-6">
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
-          <div className="space-y-6">
-            {/* First Row - Search and View Mode */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-400/60" />
-                <input
-                  type="text"
-                  placeholder="Search products by name, description, or category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                />
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            className="w-full flex items-center justify-between px-6 py-4 text-left bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 hover:from-pink-500/15 hover:to-fuchsia-500/15 transition-colors"
+            aria-expanded={filtersOpen}
+            aria-controls="product-filters-panel"
+          >
+            <span className="font-semibold text-pink-100 tracking-wide">Filters</span>
+            <span className="text-xs text-pink-200 bg-white/10 px-2 py-1 rounded-full border border-white/10">{filtersOpen ? 'Hide' : 'Show'}</span>
+          </button>
+          <div
+            id="product-filters-panel"
+            className={`transition-[max-height] duration-500 ease-in-out ${filtersOpen ? 'max-h-[1200px]' : 'max-h-0'} overflow-hidden`}
+          >
+            <div className="p-6 space-y-6">
+              {/* First Row - Search and View Mode */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-400/60" />
+                  <input
+                    type="text"
+                    placeholder="Search products by name, description, or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                  />
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex bg-black/60 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden">
+                  <button 
+                    onClick={() => setViewMode('grid')} 
+                    className={cn(
+                      'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
+                      viewMode === 'grid' 
+                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    )}
+                  >
+                    <Grid className="w-4 h-4" />
+                    Grid
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('list')} 
+                    className={cn(
+                      'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
+                      viewMode === 'list' 
+                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    )}
+                  >
+                    <List className="w-4 h-4" />
+                    List
+                  </button>
+                </div>
               </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex bg-black/60 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden">
-                <button 
-                  onClick={() => setViewMode('grid')} 
-                  className={cn(
-                    'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
-                    viewMode === 'grid' 
-                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                  )}
-                >
-                  <Grid className="w-4 h-4" />
-                  Grid
-                </button>
-                <button 
-                  onClick={() => setViewMode('list')} 
-                  className={cn(
-                    'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
-                    viewMode === 'list' 
-                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                  )}
-                >
-                  <List className="w-4 h-4" />
-                  List
-                </button>
-              </div>
-            </div>
+              {/* Second Row - Filters */}
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Status Filter */}
+                <div className="flex items-center space-x-3 min-w-[140px]">
+                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Status:</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
 
-            {/* Second Row - Filters */}
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Status Filter */}
-              <div className="flex items-center space-x-3 min-w-[140px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Status:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
+                {/* Category Filter */}
+                <div className="flex items-center space-x-3 min-w-[160px]">
+                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Category:</span>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                  >
+                    <option value="all">All Categories</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Category Filter */}
-              <div className="flex items-center space-x-3 min-w-[160px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Category:</span>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
+                {/* Tier Filter */}
+                <div className="flex items-center space-x-3 min-w-[140px]">
+                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Tier:</span>
+                  <select
+                    value={tierFilter}
+                    onChange={(e) => setTierFilter(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                  >
+                    <option value="all">All Tiers</option>
+                    {tiers.map(tier => (
+                      <option key={tier.id} value={tier.slug}>{tier.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Tier Filter */}
-              <div className="flex items-center space-x-3 min-w-[140px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Tier:</span>
-                <select
-                  value={tierFilter}
-                  onChange={(e) => setTierFilter(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Tiers</option>
-                  {tiers.map(tier => (
-                    <option key={tier.id} value={tier.slug}>{tier.name}</option>
-                  ))}
-                </select>
-              </div>
+                {/* Game Title Filter */}
+                <div className="flex items-center space-x-3 min-w-[160px]">
+                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Game:</span>
+                  <select
+                    value={gameTitleFilter}
+                    onChange={(e) => setGameTitleFilter(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                  >
+                    <option value="all">All Games</option>
+                    {gameTitles.map(gameTitle => (
+                      <option key={gameTitle.id} value={gameTitle.slug}>{gameTitle.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Game Title Filter */}
-              <div className="flex items-center space-x-3 min-w-[160px]">
-                <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Game:</span>
-                <select
-                  value={gameTitleFilter}
-                  onChange={(e) => setGameTitleFilter(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                {/* Clear Filters */}
+                <IOSButton 
+                  onClick={clearAllFilters}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-red-500/10 to-pink-500/10 border-red-500/20 hover:from-red-500/20 hover:to-pink-500/20 whitespace-nowrap"
                 >
-                  <option value="all">All Games</option>
-                  {gameTitles.map(gameTitle => (
-                    <option key={gameTitle.id} value={gameTitle.slug}>{gameTitle.name}</option>
-                  ))}
-                </select>
+                  <Filter className="w-4 h-4" />
+                  <span>Clear</span>
+                </IOSButton>
               </div>
-
-              {/* Clear Filters */}
-              <IOSButton 
-                onClick={clearAllFilters}
-                className="flex items-center space-x-2 bg-gradient-to-r from-red-500/10 to-pink-500/10 border-red-500/20 hover:from-red-500/20 hover:to-pink-500/20 whitespace-nowrap"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Clear</span>
-              </IOSButton>
             </div>
           </div>
         </div>
@@ -346,14 +376,9 @@ export const AdminProductsManagement: React.FC = () => {
                       tiers={tiers}
                       gameTitles={gameTitles}
                       onEdit={() => handleEditProduct(product)}
-                      onView={() => {
-                        // Add view functionality if needed
-                        console.log('View product:', product);
-                      }}
-                      onDelete={() => {
-                        // Add delete functionality if needed
-                        console.log('Delete product:', product);
-                      }}
+                      onView={() => { console.log('View product:', product); }}
+                      onDelete={() => { console.log('Delete product:', product); }}
+                      onStatusChange={handleStatusChange}
                     />
                   ))}
                 </div>
@@ -367,14 +392,9 @@ export const AdminProductsManagement: React.FC = () => {
                       tiers={tiers}
                       gameTitles={gameTitles}
                       onEdit={() => handleEditProduct(product)}
-                      onView={() => {
-                        // Add view functionality if needed
-                        console.log('View product:', product);
-                      }}
-                      onDelete={() => {
-                        // Add delete functionality if needed
-                        console.log('Delete product:', product);
-                      }}
+                      onView={() => { console.log('View product:', product); }}
+                      onDelete={() => { console.log('Delete product:', product); }}
+                      onStatusChange={handleStatusChange}
                     />
                   ))}
                 </div>

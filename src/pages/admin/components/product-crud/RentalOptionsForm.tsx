@@ -8,6 +8,8 @@ interface RentalOptionsFormProps {
   onHasRentalChange: (hasRental: boolean) => void;
   rentalOptions: RentalOption[];
   onRentalOptionsChange: (options: RentalOption[]) => void;
+  isActive: boolean; // new
+  onIsActiveChange: (val: boolean) => void; // new
 }
 
 export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
@@ -15,6 +17,8 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
   onHasRentalChange,
   rentalOptions,
   onRentalOptionsChange,
+  isActive,
+  onIsActiveChange,
 }) => {
   const addRentalOption = () => {
     // Check if we've reached the maximum of 4 rental options
@@ -53,23 +57,48 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
         <h3 className="text-lg font-semibold text-white">Rental Options</h3>
       </div>
 
-      <div className="space-y-4">
-        {/* Enable Rental Toggle */}
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="has_rental"
-            checked={hasRental}
-            onChange={(e) => onHasRentalChange(e.target.checked)}
-            className="w-5 h-5 rounded border border-emerald-500/30 bg-black/50 text-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-          />
-          <label htmlFor="has_rental" className="text-sm font-medium text-white">
-            Enable rental options for this product
-          </label>
+      <div className="space-y-6">
+        {/* Active Switch */}
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <p className="text-sm font-semibold text-white">Product Active</p>
+            <p className="text-xs text-gray-400 mt-1">Matikan untuk menyembunyikan produk dari etalase.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onIsActiveChange(!isActive)}
+            role="switch"
+            aria-checked={isActive}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-500/40 border ${isActive ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 border-pink-400' : 'bg-black/40 border-white/20'}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${isActive ? 'translate-x-5' : 'translate-x-1'}`}
+            />
+          </button>
         </div>
 
+        {/* Enable Rental Switch */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-white">Rental Mode</p>
+            <p className="text-xs text-gray-400 mt-1">Aktifkan jika produk bisa disewakan dengan beberapa durasi.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onHasRentalChange(!hasRental)}
+            role="switch"
+            aria-checked={hasRental}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 border ${hasRental ? 'bg-gradient-to-r from-emerald-500 to-green-600 border-emerald-400' : 'bg-black/40 border-white/20'}`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${hasRental ? 'translate-x-5' : 'translate-x-1'}`}
+            />
+          </button>
+        </div>
+
+        {/* Rental Options Section */}
         {hasRental && (
-          <>
+          <div className="space-y-4">
             {/* Rental Options List */}
             {rentalOptions.length > 0 && (
               <div className="space-y-3">
@@ -174,7 +203,7 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
                 <li>• Clear descriptions help customers choose the right option</li>
               </ul>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

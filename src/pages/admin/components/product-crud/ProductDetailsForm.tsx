@@ -10,6 +10,7 @@ interface ProductDetailsFormProps {
     price: number;
     originalPrice: number;
     category: string;
+    categoryId?: string; // added
     gameTitle: string;
     gameTitleId: string; // Add gameTitleId for storing the selected game ID
     tier: ProductTier;
@@ -28,8 +29,10 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
 }) => {
   const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // Fetch game titles on component mount
+  // Fetch game titles and categories on component mount
   useEffect(() => {
     const fetchGameTitles = async () => {
       try {
@@ -54,7 +57,20 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const cats = await ProductService.getCategories();
+        setCategories(cats);
+      } catch (e) {
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
     fetchGameTitles();
+    fetchCategories();
   }, []);
 
   const handleGameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -67,6 +83,7 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
       gameTitle: selectedGame?.name || '', // Keep the name for backward compatibility
     }));
   };
+
   return (
     <div className="bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-2xl border border-white/10 p-6">
       <div className="flex items-center gap-3 mb-6">
@@ -192,12 +209,16 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
             Price*
           </label>
           <input
-            type="number"
-            min="0"
-            value={formData.price}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+            type="text"
+            inputMode="numeric"
+            value={formData.price ? formData.price.toLocaleString('id-ID') : ''}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/[^0-9]/g, '');
+              const num = raw ? parseInt(raw, 10) : 0;
+              setFormData((prev: any) => ({ ...prev, price: num }));
+            }}
             className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-            placeholder="Rp 1.000.000"
+            placeholder="1.000.000"
             required
           />
         </div>
@@ -208,34 +229,61 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
             Original Price (IDR)
           </label>
           <input
-            type="number"
-            min="0"
-            value={formData.originalPrice}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, originalPrice: parseFloat(e.target.value) || 0 }))}
+            type="text"
+            inputMode="numeric"
+            value={formData.originalPrice ? formData.originalPrice.toLocaleString('id-ID') : ''}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/[^0-9]/g, '');
+              const num = raw ? parseInt(raw, 10) : 0;
+              setFormData((prev: any) => ({ ...prev, originalPrice: num }));
+            }}
             className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
             placeholder="0"
           />
         </div>
 
-        {/* Status Toggle */}
-        <div className="bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 rounded-xl p-4 border border-pink-500/20 backdrop-blur-sm">
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.isActive}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, isActive: e.target.checked }))}
-              className="w-5 h-5 rounded border border-pink-500/30 bg-black/50 text-pink-500 focus:ring-2 focus:ring-pink-500/20"
-            />
-            <div>
-              <label htmlFor="is_active" className="text-sm font-medium text-white cursor-pointer">
-                Product is active and visible
-              </label>
-              <p className="text-xs text-gray-400 mt-1">
-                Inactive products won't appear in the store
-              </p>
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-semibold text-pink-200 mb-2">
+            Category*
+          </label>
+          <div className="relative">
+            <select
+              value={formData.categoryId || formData.category || ''}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, categoryId: e.target.value, category: e.target.value }))}
+              disabled={loadingCategories}
+              className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed appearance-none pr-10"
+              required
+            >
+              {loadingCategories ? (
+                <option value="">Loading categories...</option>
+              ) : (
+                <>
+                  <option value="">Select Category</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+            {loadingCategories && (
+              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                <Loader2 className="w-4 h-4 animate-spin text-pink-400" />
+              </div>
+            )}
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg className={`w-4 h-4 text-pink-200/60 ${loadingCategories ? 'hidden' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </div>
+          {!loadingCategories && categories.length === 0 && (
+            <p className="text-red-400 text-xs mt-2">
+              No categories found. After migration, create categories first.
+            </p>
+          )}
         </div>
       </div>
     </div>
