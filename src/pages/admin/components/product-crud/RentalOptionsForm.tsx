@@ -1,15 +1,15 @@
 import React from 'react';
-import { Clock, Plus, Trash2 } from 'lucide-react';
-import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
+import { Clock } from 'lucide-react';
+import { IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
 import type { RentalOption } from './types';
 
 interface RentalOptionsFormProps {
-  hasRental: boolean;
+  hasRental: boolean; // rental available toggle
   onHasRentalChange: (hasRental: boolean) => void;
   rentalOptions: RentalOption[];
   onRentalOptionsChange: (options: RentalOption[]) => void;
-  isActive: boolean; // new
-  onIsActiveChange: (val: boolean) => void; // new
+  isActive: boolean; // product active (passed for potential conditional styling)
+  onIsActiveChange: (val: boolean) => void;
 }
 
 export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
@@ -21,9 +21,8 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
   onIsActiveChange,
 }) => {
   const addRentalOption = () => {
-    // Check if we've reached the maximum of 4 rental options
-    if (rentalOptions.length >= 4) {
-      alert('Maximum 4 rental options allowed per product.');
+    if (rentalOptions.length >= 5) {
+      alert('Maximum 5 rental options allowed per product.');
       return;
     }
 
@@ -31,7 +30,6 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
       id: Date.now().toString(),
       duration: '',
       price: 0,
-      description: '',
     };
     onRentalOptionsChange([...rentalOptions, newOption]);
   };
@@ -49,160 +47,60 @@ export const RentalOptionsForm: React.FC<RentalOptionsFormProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-emerald-500/20 to-green-600/20 rounded-xl flex items-center justify-center border border-emerald-500/30">
-          <Clock className="w-5 h-5 text-emerald-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-white">Rental Options</h3>
+    <div className="section-block stack-lg">
+      <div className="section-title flex items-center gap-2">
+        <Clock className="w-5 h-5 text-emerald-400" />
+        Pililhan Rental
       </div>
-
-      <div className="space-y-6">
-        {/* Active Switch */}
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
-          <div>
-            <p className="text-sm font-semibold text-white">Product Active</p>
-            <p className="text-xs text-gray-400 mt-1">Matikan untuk menyembunyikan produk dari etalase.</p>
+      <div className="section-divider" />
+      <div className="stack-md">
+        <div className="flex items-center justify-between p-sm rounded-xl bg-white/5 border border-white/10">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-white/90">Rental Tersedia</span>
+            <span className="text-xs text-white/50">Aktifkan untuk menambah varian durasi & harga</span>
           </div>
           <button
             type="button"
-            onClick={() => onIsActiveChange(!isActive)}
-            role="switch"
-            aria-checked={isActive}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-500/40 border ${isActive ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 border-pink-400' : 'bg-black/40 border-white/20'}`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${isActive ? 'translate-x-5' : 'translate-x-1'}`}
-            />
-          </button>
-        </div>
-
-        {/* Enable Rental Switch */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-white">Rental Mode</p>
-            <p className="text-xs text-gray-400 mt-1">Aktifkan jika produk bisa disewakan dengan beberapa durasi.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onHasRentalChange(!hasRental)}
             role="switch"
             aria-checked={hasRental}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 border ${hasRental ? 'bg-gradient-to-r from-emerald-500 to-green-600 border-emerald-400' : 'bg-black/40 border-white/20'}`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ${hasRental ? 'translate-x-5' : 'translate-x-1'}`}
-            />
-          </button>
+            onClick={() => onHasRentalChange(!hasRental)}
+            className={`toggle ${hasRental ? 'active' : ''}`}
+          />
         </div>
-
-        {/* Rental Options Section */}
         {hasRental && (
-          <div className="space-y-4">
-            {/* Rental Options List */}
-            {rentalOptions.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-emerald-200">
-                    Rental Variants ({rentalOptions.length}/5)
-                  </span>
-                  <span className="text-xs text-gray-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20">
-                    {5 - rentalOptions.length} remaining
-                  </span>
-                </div>
-                {rentalOptions.map((option, index) => (
-                  <div
-                    key={option.id}
-                    className="bg-gradient-to-br from-black/30 to-black/20 rounded-xl p-4 border border-white/10 space-y-3 backdrop-blur-sm hover:border-emerald-500/20 transition-all duration-300"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-emerald-200 flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center text-xs font-bold text-emerald-300 border border-emerald-500/30">
-                          {index + 1}
-                        </div>
-                        Rental Option {index + 1}
-                      </span>
-                      <IOSButton
-                        onClick={() => removeRentalOption(option.id)}
-                        className="p-1 bg-red-500/20 border-red-500/30 hover:bg-red-500/30 transition-all duration-300"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-400" />
-                      </IOSButton>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Duration */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-300 mb-1">
-                          Duration
-                        </label>
-                        <input
-                          type="text"
-                          value={option.duration}
-                          onChange={(e) => updateRentalOption(option.id, 'duration', e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/20 text-white text-sm placeholder-gray-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-                          placeholder="e.g., 7 days"
-                        />
-                      </div>
-
-                      {/* Price */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-300 mb-1">
-                          Price (IDR)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={option.price}
-                          onChange={(e) => updateRentalOption(option.id, 'price', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/20 text-white text-sm placeholder-gray-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-300 mb-1">
-                        Description (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={option.description || ''}
-                        onChange={(e) => updateRentalOption(option.id, 'description', e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-black/50 border border-emerald-500/20 text-white text-sm placeholder-gray-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
-                        placeholder="Additional details..."
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Rental Option Button */}
-            <IOSButton
-              onClick={addRentalOption}
-              disabled={rentalOptions.length >= 5}
-              className={`w-full transition-all duration-300 ${
-                rentalOptions.length >= 5
-                  ? 'bg-gray-600/20 border-gray-600/30 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/30 hover:from-emerald-500/30 hover:to-green-500/30 text-emerald-200'
-              }`}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {rentalOptions.length >= 5 ? 'Maximum Options Reached' : 'Add Rental Option'}
-            </IOSButton>
-
-            {/* Rental Info */}
-            <div className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-xl p-4 border border-emerald-500/20 backdrop-blur-sm">
-              <p className="text-sm text-emerald-200 mb-2 font-medium">⏰ Rental Guidelines:</p>
-              <ul className="text-xs text-emerald-300/80 space-y-1">
-                <li>• Maximum 4 rental variants per product</li>
-                <li>• Duration examples: "3 days", "1 week", "30 days"</li>
-                <li>• Rental price should be lower than purchase price</li>
-                <li>• Clear descriptions help customers choose the right option</li>
-              </ul>
+          <div className="stack-md">
+            <div className="grid grid-cols-2 gap-4 typography-caption-1 text-secondary">
+              <div>Duration</div>
+              <div>Price</div>
             </div>
+            {rentalOptions.map((option) => (
+              <div key={option.id} className="grid grid-cols-2 gap-4 items-center">
+                <input
+                  type="text"
+                  value={option.duration}
+                  onChange={(e) => updateRentalOption(option.id, 'duration', e.target.value)}
+                  className="form-control sm"
+                  placeholder="e.g. 6 Hours"
+                  disabled={!hasRental}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={option.price ? `Rp ${option.price.toLocaleString('id-ID')}` : ''}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                    const val = raw ? parseInt(raw, 10) : 0;
+                    updateRentalOption(option.id, 'price', val);
+                  }}
+                  className="form-control sm"
+                  placeholder="Rp 0"
+                  disabled={!hasRental}
+                />
+              </div>
+            ))}
+            <IOSButton onClick={addRentalOption} disabled={rentalOptions.length >= 5} className="w-full">
+              Add Rental Option
+            </IOSButton>
           </div>
         )}
       </div>

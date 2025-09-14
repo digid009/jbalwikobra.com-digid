@@ -176,7 +176,7 @@ function App() {
                     <ModernHeader />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />
-                    <main className="flex-1 pt-[75px] pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
+                    <main className="flex-1 pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">

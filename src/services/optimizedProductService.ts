@@ -1,7 +1,7 @@
 // Optimized ProductService with pagination and caching
 import { supabase } from './supabase';
 import { deletePublicUrls } from './storageService';
-import { Product, FlashSale, Tier, GameTitle, ProductTier } from '../types';
+import { Product, FlashSale, Tier, GameTitle } from '../types';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -76,7 +76,7 @@ class OptimizedProductService {
       let query = supabase
         .from('products')
         .select(`
-          id, name, description, price, original_price, account_level,
+          id, name, description, price, original_price,
           account_details, images, is_active, archived_at, created_at,
           game_title_id, tier_id, has_rental,
           tiers (
@@ -245,12 +245,10 @@ class OptimizedProductService {
       isActive: product.is_active ?? product.isActive,
       archivedAt: product.archived_at ?? product.archivedAt,
       originalPrice: product.original_price ?? product.originalPrice,
-      accountLevel: product.account_level ?? product.accountLevel,
+  // accountLevel removed
       accountDetails: product.account_details ?? product.accountDetails,
       tierData: product.tiers,
       gameTitleData: product.game_titles,
-      tier: product.tiers?.slug as ProductTier,
-      gameTitle: product.game_titles?.name,
       hasRental: product.has_rental ?? false,
       rentalOptions: [] // Load separately if needed
     };

@@ -128,7 +128,7 @@ const ModernFooter: React.FC = () => {
   };
 
   return (
-    <footer className="relative bg-black/40 backdrop-blur-xl border-t border-white/10">
+  <footer className="relative bg-black/40 backdrop-blur-xl border-t border-white/10 typography-body surface-glass-lg">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-500/10 to-fuchsia-500/10 rounded-full blur-3xl" />
@@ -137,7 +137,7 @@ const ModernFooter: React.FC = () => {
 
       <div className="relative">
         {/* Main Footer Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 p-md stack-lg">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {/* Brand Section */}
@@ -247,14 +247,14 @@ const FooterBrand: React.FC<{ settings: WebsiteSettings | null }> = ({ settings 
       )}
       
       <div>
-        <h2 className="text-xl font-bold text-white group-hover:text-pink-300 transition-colors duration-300">
+  <h2 className="text-xl font-bold text-white group-hover:text-pink-300 transition-colors duration-300 typography-title-3">
           {settings?.siteName || 'JBalwikobra'}
         </h2>
         <p className="text-sm text-white/60">Digital Gaming Store</p>
       </div>
     </Link>
     
-    <p className="text-white/70 text-sm leading-relaxed mb-6">
+  <p className="text-white/70 text-sm leading-relaxed mb-6 typography-body">
       {settings?.companyDescription || 
       'Platform terpercaya untuk jual beli akun game dengan harga terbaik. Aman, cepat, dan mudah untuk semua gamers Indonesia.'}
     </p>
@@ -280,7 +280,7 @@ const FooterBrand: React.FC<{ settings: WebsiteSettings | null }> = ({ settings 
 // Footer Contact Component
 const FooterContact: React.FC<{ settings: WebsiteSettings | null }> = ({ settings }) => (
   <div className="space-y-4">
-    <h3 className="font-semibold text-white text-lg mb-4">Kontak Kami</h3>
+  <h3 className="font-semibold text-white text-lg mb-4 typography-title-3">Kontak Kami</h3>
     
     <div className="space-y-3">
       <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/20 hover:border-pink-500/30 transition-all duration-300 group">
@@ -316,7 +316,7 @@ const FooterContact: React.FC<{ settings: WebsiteSettings | null }> = ({ setting
 // Footer Section Component
 const FooterSection: React.FC<{ section: FooterSection }> = ({ section }) => (
   <div>
-    <h3 className="font-semibold text-white mb-6 text-base">{section.title}</h3>
+  <h3 className="font-semibold text-white mb-6 text-base typography-subheadline">{section.title}</h3>
     <ul className="space-y-3">
       {section.links.map((link, index) => (
         <li key={`${link.href}-${link.label}-${index}`}>
@@ -382,10 +382,10 @@ const NewsletterSection: React.FC<NewsletterSectionProps> = ({
         )}
       </div>
       <div className="text-left">
-        <h3 className="font-bold text-white text-lg">
+  <h3 className="font-bold text-white text-lg typography-title-3">
           {isSubscribed ? 'Berhasil Berlangganan!' : 'Newsletter JBalwikobra'}
         </h3>
-        <p className="text-pink-200 text-sm">
+  <p className="text-pink-200 text-sm typography-footnote">
           {isSubscribed ? 'Terima kasih sudah bergabung!' : 'Dapatkan penawaran eksklusif dan update terbaru'}
         </p>
       </div>

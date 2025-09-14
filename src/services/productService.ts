@@ -10,7 +10,7 @@ g._productServiceCache = g._productServiceCache || new Map();
 // Track database capabilities globally
 let hasRelations: boolean | null = null; // null = unknown, true = supports relations, false = legacy schema
 let hasFlashSaleJoin: boolean | null = null;
-let hasGameTitleText: boolean | null = null; // whether products has legacy text column game_title
+// game_title legacy text column fully removed from schema – purge any adaptive logic
 function isUuid(v?: string | null) {
   return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
@@ -117,12 +117,11 @@ const sampleProducts: Product[] = [
     originalPrice: 3000000,
     image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400',
     images: ['https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400'],
-    gameTitle: 'Mobile Legends',
-    tier: 'premium',
     tierId: '3',
     gameTitleId: '1',
     tierData: sampleTiers[2],
     gameTitleData: sampleGameTitles[0],
+  categoryId: 'sample-cat-1',
     accountLevel: 'Mythic Glory',
     accountDetails: 'All heroes unlocked, 500+ skins, Winrate 75%',
     isFlashSale: true,
@@ -144,13 +143,11 @@ const sampleProducts: Product[] = [
     originalPrice: 2200000,
     image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400',
     images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400'],
-    category: 'Battle Royale',
-    gameTitle: 'PUBG Mobile',
-    tier: 'pelajar',
     tierId: '2',
     gameTitleId: '2',
     tierData: sampleTiers[1],
     gameTitleData: sampleGameTitles[1],
+  categoryId: 'sample-cat-1',
     accountLevel: 'Conqueror',
     accountDetails: 'KD 4.5, All season rewards, Mythic weapons',
     isFlashSale: false,
@@ -171,13 +168,11 @@ const sampleProducts: Product[] = [
     originalPrice: 1000000,
     image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400',
     images: ['https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400'],
-    category: 'Battle Royale',
-    gameTitle: 'Free Fire',
-    tier: 'pelajar',
     tierId: '2',
     gameTitleId: '3',
     tierData: sampleTiers[1],
     gameTitleData: sampleGameTitles[2],
+  categoryId: 'sample-cat-1',
     accountLevel: 'Grandmaster',
     accountDetails: 'All characters, All pets maxed, Rare gun skins',
     isFlashSale: true,
@@ -190,6 +185,13 @@ const sampleProducts: Product[] = [
 ];
 
 export class ProductService {
+  // Invalidate category related caches
+  static invalidateCategoryCache() {
+    try {
+      g._productServiceCache.delete('categories_simple');
+      g._productServiceCache.delete('categories_detailed');
+    } catch (_) { /* ignore */ }
+  }
   // Force reset of capability detection - useful after schema changes
   static resetCapabilities() {
     hasRelations = null;
@@ -229,23 +231,7 @@ export class ProductService {
         console.log('⚠️ Legacy schema detected');
       }
 
-      // Detect presence of legacy text column game_title
-      try {
-        const { error: gtErr } = await supabase
-          .from('products')
-          .select('game_title')
-          .limit(1);
-        if (!gtErr) {
-          hasGameTitleText = true;
-          console.log('✅ Legacy text column detected: products.game_title');
-        } else {
-          hasGameTitleText = false;
-          console.log('ℹ️ No legacy text column products.game_title');
-        }
-      } catch (e) {
-        hasGameTitleText = false;
-        console.log('ℹ️ No legacy text column products.game_title');
-      }
+  // Legacy products.game_title text column has been dropped – no detection needed
 
       // Test rental options
       const { error: rentalError } = await supabase
@@ -290,7 +276,7 @@ export class ProductService {
       if (hasRelations === false) {
         throw new Error('REL_SKIP');
       }
-  let query = supabase
+      let query = supabase
         .from('products')
         .select(`
           *,
@@ -303,6 +289,9 @@ export class ProductService {
           game_titles (
             id, name, slug, description, icon, color,
             logo_url, is_popular, is_active, sort_order, created_at, updated_at
+          ),
+          categories (
+            id, name, slug, description, icon, color, is_active, sort_order
           )
         `);
       if (!opts?.includeArchived) {
@@ -313,17 +302,31 @@ export class ProductService {
 
       if (!error && data) {
         hasRelations = true;
-        return data.map((product: any) => ({
-          ...product,
-          isActive: product.is_active ?? product.isActive,
-          archivedAt: product.archived_at ?? product.archivedAt,
-          rentalOptions: product.rental_options || [],
-          hasRental: product.has_rental ?? product.hasRental ?? ((product.rental_options || []).length > 0),
-          tierData: product.tiers,
-          gameTitleData: product.game_titles,
-          tier: product.tiers?.slug as ProductTier,
-          gameTitle: product.game_titles?.name || product.game_title
-        }));
+        return data.map((product: any) => {
+          const cat = product.categories;
+          return {
+            ...product,
+            isActive: product.is_active ?? product.isActive,
+            archivedAt: product.archived_at ?? product.archivedAt,
+            rentalOptions: product.rental_options || [],
+            hasRental: product.has_rental ?? product.hasRental ?? ((product.rental_options || []).length > 0),
+            tierData: product.tiers,
+            gameTitleData: product.game_titles,
+            categoryData: cat ? {
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug,
+              description: cat.description,
+              icon: cat.icon,
+              color: cat.color,
+              isActive: cat.is_active ?? cat.isActive,
+              sortOrder: cat.sort_order ?? cat.sortOrder,
+            } : undefined,
+            categoryId: cat?.id || product.category_id || product.categoryId,
+            // tier string removed
+            // legacy gameTitle removed
+          };
+        });
       }
 
       if (error && (error as any).message !== 'REL_SKIP') {
@@ -337,6 +340,15 @@ export class ProductService {
       if (err2) {
         console.error('Supabase error (basic products):', err2);
         return sampleProducts;
+      }
+      // Attempt to enrich with category names via categories table if category_id present
+      const allCatIds = Array.from(new Set((basic || []).map((p: any) => p.category_id).filter(Boolean)));
+      const categoriesMap = new Map<string, any>();
+      if (allCatIds.length) {
+        try {
+          const { data: cats } = await supabase.from('categories').select('*').in('id', allCatIds);
+          for (const c of cats || []) categoriesMap.set(c.id, c);
+        } catch (_) { /* ignore */ }
       }
       hasRelations = false;
   // Fetch rental options separately
@@ -357,14 +369,27 @@ export class ProductService {
           console.debug('rental_options fetch failed (non-fatal):', e);
         }
       }
-  return (basic || []).map((p: any) => ({
-        ...p,
-  isActive: p.is_active ?? p.isActive,
-  archivedAt: p.archived_at ?? p.archivedAt,
-        rentalOptions: rentalsByProduct.get(p.id) || [],
-        hasRental: p.has_rental ?? p.hasRental ?? ((rentalsByProduct.get(p.id) || []).length > 0),
-        gameTitle: p.game_title || p.gameTitle,
-      }));
+  return (basic || []).map((p: any) => {
+        const cat = categoriesMap.get(p.category_id);
+        return {
+          ...p,
+          isActive: p.is_active ?? p.isActive,
+          archivedAt: p.archived_at ?? p.archivedAt,
+          rentalOptions: rentalsByProduct.get(p.id) || [],
+          hasRental: p.has_rental ?? p.hasRental ?? ((rentalsByProduct.get(p.id) || []).length > 0),
+          categoryId: p.category_id || p.categoryId,
+          categoryData: cat ? {
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+            description: cat.description,
+            icon: cat.icon,
+            color: cat.color,
+            isActive: cat.is_active ?? cat.isActive,
+            sortOrder: cat.sort_order ?? cat.sortOrder,
+          } : undefined,
+        };
+      });
     } catch (error) {
       console.error('Error fetching products:', error);
       console.warn('Using sample data due to error');
@@ -397,7 +422,8 @@ export class ProductService {
           *,
           rental_options (*),
           tiers (*),
-          game_titles (*)
+          game_titles (*),
+          categories (*)
         `)
         .eq('id', id)
         .maybeSingle(); // Use maybeSingle() instead of single() to avoid 406 errors
@@ -417,14 +443,26 @@ export class ProductService {
       console.log('[ProductService] Found product from DB:', { id: data.id, name: data.name, idType: typeof data.id });
       
       const rentalOptions: any[] = (data as any).rental_options || [];
+      const cat = (data as any).categories;
       const result = {
         ...data,
         rentalOptions,
         hasRental: (data as any).has_rental ?? (data as any).hasRental ?? (rentalOptions.length > 0),
         tierData: (data as any).tiers,
         gameTitleData: (data as any).game_titles,
-        tier: (data as any).tiers?.slug,
-        gameTitle: (data as any).game_titles?.name || (data as any).game_title,
+        categoryData: cat ? {
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          description: cat.description,
+          icon: cat.icon,
+          color: cat.color,
+          isActive: cat.is_active ?? cat.isActive,
+          sortOrder: cat.sort_order ?? cat.sortOrder,
+        } : undefined,
+  categoryId: cat?.id || (data as any).category_id || (data as any).categoryId,
+  // tier string removed
+  // legacy gameTitle removed
       } as any;
       console.log('[ProductService] Returning final product:', { id: result.id, name: result.name, idType: typeof result.id });
       return result;
@@ -607,7 +645,7 @@ export class ProductService {
             createdAt: gt.created_at ?? gt.createdAt,
             updatedAt: gt.updated_at ?? gt.updatedAt,
           } : undefined,
-          gameTitle: gt?.name || prod.gameTitle,
+          // legacy gameTitle removed
           tierData: tier ? {
             id: tier.id,
             name: tier.name,
@@ -803,16 +841,14 @@ export class ProductService {
         return null;
       }
 
-      const payload: any = {
+  const payload: any = {
         name: product.name,
         description: product.description,
         price: product.price,
         original_price: product.originalPrice ?? product.original_price ?? null,
         image: product.image,
         images: product.images ?? [],
-        category: product.category ?? 'general',
         category_id: product.categoryId ?? (product as any).category_id ?? null,
-        account_level: product.accountLevel ?? product.account_level ?? null,
         account_details: product.accountDetails ?? product.account_details ?? null,
         is_flash_sale: product.isFlashSale ?? false,
         has_rental: product.hasRental ?? false,
@@ -820,18 +856,58 @@ export class ProductService {
         is_active: product.isActive !== undefined ? product.isActive : (product as any).is_active ?? true,
       };
 
-      if (hasRelations === true) {
-        payload.game_title_id = product.gameTitleId ?? product.game_title_id ?? null;
-        payload.tier_id = product.tierId ?? product.tier_id ?? null;
-        console.log('📊 Using relational schema with foreign keys');
-        // Some deployments still require text column game_title (NOT NULL). Include when present.
-        if (hasGameTitleText === true) {
-          payload.game_title = product.gameTitle ?? (product as any).game_title ?? 'General';
-        }
-      } else {
-        payload.game_title = product.gameTitle ?? product.game_title ?? null;
-        console.log('📋 Using legacy schema with text fields');
+      // --- Defensive normalization start ---
+      const normalizeFk = (v: any) => (typeof v === 'string' && isUuid(v) ? v : null);
+      const emptyToNull = (v: any) => (v === '' ? null : v);
+
+      // Clean primitive required fields
+      if (typeof payload.price !== 'number' || isNaN(payload.price)) {
+        throw new Error('Invalid price supplied');
       }
+      if (!payload.name || !payload.description) {
+        throw new Error('Name & description required');
+      }
+
+      // Ensure stock is integer >=0
+      payload.stock = Number.isFinite(payload.stock) && payload.stock >= 0 ? Math.floor(payload.stock) : 0;
+
+      // Enforce category presence (either FK or legacy text) as required business rule
+      if (!payload.category_id) {
+        throw new Error('Category is required');
+      }
+
+      // Normalize category_id (allow null if not uuid / not yet migrated)
+      payload.category_id = normalizeFk(emptyToNull(payload.category_id));
+
+      // Lazy capability detection if not yet determined
+      if (hasRelations === null) {
+        try {
+          const { error: relErr } = await supabase
+            .from('products')
+            .select('id, game_title_id, tier_id')
+            .limit(1);
+          if (!relErr) {
+            hasRelations = true;
+          } else {
+            hasRelations = false;
+          }
+        } catch {
+          hasRelations = false;
+        }
+  // Legacy text column removal – skip detection
+      }
+
+  // Relational-only mode: ensure *_id fields set; legacy text column removed
+  payload.game_title_id = normalizeFk(emptyToNull(product.gameTitleId ?? (product as any).game_title_id));
+  payload.tier_id = normalizeFk(emptyToNull(product.tierId ?? (product as any).tier_id));
+  // Never send payload.game_title
+  delete payload.game_title;
+
+      // Remove undefined to appease PostgREST
+      Object.keys(payload).forEach(k => {
+        if (payload[k] === undefined) delete payload[k];
+      });
+      // --- Defensive normalization end ---
 
       console.log('💾 Final create payload:', payload);
 
@@ -894,35 +970,55 @@ export class ProductService {
         return null;
       }
 
-      const payload: any = {
+  const payload: any = {
         name: updates.name,
         description: updates.description,
         price: updates.price,
         original_price: (updates as any).original_price ?? updates.originalPrice,
         image: (updates as any).image,
         images: (updates as any).images,
-        category: (updates as any).category ?? 'general',
         category_id: (updates as any).category_id ?? updates.categoryId ?? null,
-        account_level: (updates as any).account_level ?? updates.accountLevel,
-        account_details: (updates as any).account_details ?? updates.accountDetails,
         is_flash_sale: (updates as any).is_flash_sale ?? updates.isFlashSale,
         has_rental: (updates as any).has_rental ?? updates.hasRental,
         stock: (updates as any).stock ?? updates.stock,
         is_active: (updates as any).is_active ?? updates.isActive,
       };
 
-      if (hasRelations === true) {
-        payload.game_title_id = (updates as any).game_title_id ?? updates.gameTitleId ?? null;
-        payload.tier_id = (updates as any).tier_id ?? updates.tierId ?? null;
-        console.log('📊 Using relational schema with foreign keys');
-        // Also set text game_title if column exists
-        if (hasGameTitleText === true) {
-          payload.game_title = (updates as any).game_title ?? updates.gameTitle ?? 'General';
-        }
-      } else {
-        payload.game_title = (updates as any).game_title ?? updates.gameTitle ?? null;
-        console.log('📋 Using legacy schema with text fields');
+  // Column 'account_details' triggered PGRST204 (schema cache miss / absent column). Omit until migration adds it.
+  delete payload.account_details;
+
+      // --- Defensive normalization start (update) ---
+      const normalizeFk = (v: any) => (typeof v === 'string' && isUuid(v) ? v : null);
+      const emptyToNull = (v: any) => (v === '' ? null : v);
+      if (payload.price !== undefined && (typeof payload.price !== 'number' || isNaN(payload.price as any))) {
+        delete payload.price; // don't send invalid price
       }
+      if (payload.category_id !== undefined) {
+        payload.category_id = normalizeFk(emptyToNull(payload.category_id));
+      }
+      // Lazy capability detection on update as well
+      if (hasRelations === null) {
+        try {
+          const { error: relErr } = await supabase
+            .from('products')
+            .select('id, game_title_id, tier_id')
+            .limit(1);
+          if (!relErr) {
+            hasRelations = true;
+          } else {
+            hasRelations = false;
+          }
+        } catch {
+          hasRelations = false;
+        }
+  // Legacy text column removal – skip detection
+      }
+
+  // Relational-only mode for updates
+  payload.game_title_id = normalizeFk(emptyToNull((updates as any).game_title_id ?? updates.gameTitleId));
+  payload.tier_id = normalizeFk(emptyToNull((updates as any).tier_id ?? updates.tierId));
+  delete payload.game_title; // ensure not sent
+  console.log('� Using relational schema (legacy game_title fully removed)');
 
       // Remove undefined values to prevent database issues
       Object.keys(payload).forEach(k => {
@@ -930,6 +1026,7 @@ export class ProductService {
           delete payload[k];
         }
       });
+      // --- Defensive normalization end (update) ---
 
       console.log('💾 Final update payload:', payload);
 
@@ -1104,27 +1201,35 @@ export class ProductService {
   }
 
   static async getCategories(): Promise<string[]> {
+    // 5 minute TTL cache
+    const cacheKey = 'categories_simple';
+    const hit = g._productServiceCache.get(cacheKey);
+    if (hit && Date.now() - hit.t < 5 * 60 * 1000) {
+      return hit.v;
+    }
     try {
       if (!supabase) {
         return [];
       }
-      // Try new categories table first
       const { data: catData, error: catErr } = await supabase
         .from('categories')
-        .select('slug, name, is_active')
+        .select('slug, name, is_active, sort_order')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
+      let result: string[] = [];
       if (!catErr && catData && catData.length) {
-        return catData.map(c => c.slug || c.name).filter(Boolean);
+        result = catData.map(c => c.slug || c.name).filter(Boolean);
+      } else {
+        const { data: legacyData } = await supabase
+          .from('products')
+          .select('category')
+          .not('category', 'is', null);
+        const set = new Set<string>();
+        legacyData?.forEach(r => r.category && set.add(r.category));
+        result = Array.from(set);
       }
-      // Fallback: distinct legacy categories from products
-      const { data: legacyData } = await supabase
-        .from('products')
-        .select('category')
-        .not('category', 'is', null);
-      const set = new Set<string>();
-      legacyData?.forEach(r => r.category && set.add(r.category));
-      return Array.from(set);
+      g._productServiceCache.set(cacheKey, { v: result, t: Date.now() });
+      return result;
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -1147,7 +1252,7 @@ export class ProductService {
       if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY || !supabase) {
         const counts = new Map<string, number>();
         for (const p of sampleProducts) {
-          const key = p.gameTitle || p.gameTitleData?.name || 'Lainnya';
+          const key = p.gameTitleData?.name || 'Lainnya';
           counts.set(key, (counts.get(key) || 0) + 1);
         }
         const items = sampleGameTitles.map(gt => ({
@@ -1199,6 +1304,28 @@ export class ProductService {
       return items;
     } catch (error) {
       console.error('Error fetching popular games:', error);
+      return [];
+    }
+  }
+
+  // Detailed category list (id, name, slug) with caching
+  static async getCategoryList(): Promise<Array<{ id: string; name: string; slug: string }>> {
+    const cacheKey = 'categories_detailed';
+    const hit = g._productServiceCache.get(cacheKey);
+    if (hit && Date.now() - hit.t < 5 * 60 * 1000) return hit.v;
+    try {
+      if (!supabase) return [];
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, slug, is_active, sort_order')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      const result = (data || []).map(c => ({ id: c.id, name: c.name, slug: c.slug }));
+      g._productServiceCache.set(cacheKey, { v: result, t: Date.now() });
+      return result;
+    } catch (e) {
+      console.error('Error getCategoryList:', e);
       return [];
     }
   }

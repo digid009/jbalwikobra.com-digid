@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus, Search, Filter, X } from 'lucide-react';
 import { adminService, Review } from '../../../services/adminService';
-import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { IOSAvatar } from '../../../components/ios/IOSAvatar';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../utils/cn';
@@ -314,14 +315,12 @@ export const AdminReviewsManagement: React.FC = () => {
           </div>
         )}
 
-        <IOSPagination
+        <IOSPaginationV2
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={totalCount}
           itemsPerPage={itemsPerPage}
           onPageChange={handlePageChange}
-          showItemsPerPageSelector={true}
-          onItemsPerPageChange={setItemsPerPage}
         />
       </IOSCard>
     </div>

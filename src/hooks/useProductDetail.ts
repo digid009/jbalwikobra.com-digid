@@ -228,7 +228,7 @@ export const useProductDetail = () => {
       price: state.product.price,
       image: state.product.images?.[0] || '',
       rating: 5,
-      category: state.product.category || '',
+  category: (state.product as any).categoryData?.name || '',
       available: true
     };
 

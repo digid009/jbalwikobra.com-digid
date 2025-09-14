@@ -89,7 +89,6 @@ class IntelligentPrefetchManager {
           this.prefetchWithPriority('dashboard-stats', 10),
           this.prefetchWithPriority('recent-orders', 9),
           this.prefetchWithPriority('recent-notifications', 8),
-          // Prefetch likely next pages
           this.prefetchWithPriority('orders-overview', 7)
         );
         break;

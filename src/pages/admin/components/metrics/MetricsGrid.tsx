@@ -1,7 +1,8 @@
 import React from 'react';
 import { TrendingUp, Users, Package, Star, Clock, Zap } from 'lucide-react';
 import { AdminStats } from '../../../../services/adminService';
-import { MetricCard } from './MetricCard';
+// NOTE: MetricCard deprecated in favor of AdminStatCard
+import { AdminStatCard } from './AdminStatCard';
 import { formatMetrics, getMetricAccentColor } from './metricsUtils';
 import { cn } from '../../../../utils/cn';
 
@@ -32,53 +33,53 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ stats, loading, classN
 
   return (
     <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6', className)}>
-      <MetricCard
-        large
+      <AdminStatCard
+        size="large"
+        variant="success"
         label="Total Revenue"
         value={metrics.revenue.formatted}
         sub={metrics.revenue.subtitle}
         icon={<TrendingUp className="w-7 h-7" />}
-        accent={getMetricAccentColor('revenue')}
       />
       
-      <MetricCard
+      <AdminStatCard
         label="Total Orders"
+        variant="info"
         value={metrics.orders.formatted}
         sub={metrics.orders.subtitle}
         icon={<Clock className="w-6 h-6" />}
-        accent={getMetricAccentColor('orders')}
       />
       
-      <MetricCard
+      <AdminStatCard
         label="Users"
+        variant="neutral"
         value={metrics.users.formatted}
         sub={metrics.users.subtitle}
         icon={<Users className="w-6 h-6" />}
-        accent={getMetricAccentColor('users')}
       />
       
-      <MetricCard
+      <AdminStatCard
         label="Products"
+        variant="default"
         value={metrics.products.formatted}
         sub={metrics.products.subtitle}
         icon={<Package className="w-6 h-6" />}
-        accent={getMetricAccentColor('products')}
       />
       
-      <MetricCard
+      <AdminStatCard
         label="Flash Sales"
+        variant="warning"
         value={metrics.flashSales?.formatted || "0"}
         sub={metrics.flashSales?.subtitle || "active sales"}
         icon={<Zap className="w-6 h-6" />}
-        accent={getMetricAccentColor('flashSales')}
       />
       
-      <MetricCard
+      <AdminStatCard
         label="Reviews & Ratings"
+        variant="danger"
         value={metrics.reviews.formatted}
         sub={metrics.reviews.subtitle}
         icon={<Star className="w-6 h-6" />}
-        accent={getMetricAccentColor('reviews')}
       />
     </div>
   );

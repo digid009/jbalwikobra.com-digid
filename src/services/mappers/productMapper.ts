@@ -18,9 +18,7 @@ export interface DbProductRow {
   category?: string | null; // legacy textual category
   tier_id?: string | null;  // relational FK (optional)
   tier?: string | null;     // sometimes stored as plain text tier
-  game_title?: string | null; // legacy text column
-  game_title_id?: string | null; // relational FK
-  account_level?: string | null;
+  game_title_id?: string | null; // relational FK (text column removed)
   account_details?: string | null;
   stock?: number | null;
   is_active?: boolean | null;
@@ -58,8 +56,7 @@ export interface DomainProduct {
   price: number;
   original_price?: number | null;
   category: string; // UI expects .category always present (fallback chain applied)
-  game_title?: string | null;
-  account_level?: string | null;
+  // legacy text game_title removed – access via relation or *_id
   account_details?: string | null;
   stock: number;
   is_active: boolean;
@@ -67,7 +64,6 @@ export interface DomainProduct {
   updated_at?: string;
   image?: string;
   images?: string[];
-  tier?: string | null; // retain for compatibility
   tier_id?: string | null;
   game_title_id?: string | null;
   is_flash_sale?: boolean | null;
@@ -104,6 +100,15 @@ function normalizeImages(row: Pick<DbProductRow, 'image' | 'images'>): { image?:
 }
 
 export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
+  // Runtime guard: detect accidental reintroduction of legacy fields
+  if (process.env.NODE_ENV !== 'production') {
+    if ((row as any).game_title || (row as any).gameTitle) {
+      console.warn('[productMapper] Detected legacy game_title field in row id', row.id);
+    }
+    if ((row as any).tier && !(row as any).tier_id && !row.tiers) {
+      console.warn('[productMapper] Legacy textual tier detected without relation in row id', row.id);
+    }
+  }
   const { image, images } = normalizeImages(row);
   return {
     id: row.id,
@@ -111,10 +116,9 @@ export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
     description: row.description || '',
     price: Number(row.price) || 0,
     original_price: row.original_price ?? null,
-    // Category fallback: explicit category -> tier_id -> game_title (no 'tier' column exists)
-    category: (row.category || row.tier_id || row.game_title || 'general') as string,
-    game_title: row.game_title || null,
-    account_level: row.account_level || null,
+  // Category fallback updated: prefer category_id (relational), then legacy category, then tier_id, then game_title
+  category: (row as any).category_id || row.category || row.tier_id || row.game_titles?.slug || row.game_titles?.name || 'general',
+    // game_title textual value deprecated
     account_details: row.account_details || null,
     stock: Number(row.stock) || 0,
     is_active: row.is_active !== false, // default true
@@ -122,9 +126,9 @@ export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
     updated_at: row.updated_at,
     image,
     images,
-    tier: null, // No tier column in actual schema
+  // tier textual field removed – use tier_id + relation only
     tier_id: row.tier_id || null,
-    game_title_id: row.game_title_id || null,
+  game_title_id: row.game_title_id || null,
     is_flash_sale: row.is_flash_sale || null,
     flash_sale_end_time: row.flash_sale_end_time || null,
     has_rental: row.has_rental || null,
@@ -144,9 +148,7 @@ export function domainToInsertPayload(input: Partial<DomainProduct>): Record<str
     original_price: input.original_price ?? null,
     category: input.category, // keep for legacy support
     tier_id: input.tier_id ?? null,
-    game_title_id: input.game_title_id ?? null,
-    game_title: input.game_title ?? null,
-    account_level: input.account_level ?? null,
+  game_title_id: input.game_title_id ?? null,
     account_details: input.account_details ?? null,
     stock: input.stock ?? 0,
     is_active: input.is_active !== false,
@@ -170,8 +172,6 @@ export function domainToUpdatePayload(input: Partial<DomainProduct>): Record<str
   assign('category', input.category);
   assign('tier_id', input.tier_id);
   assign('game_title_id', input.game_title_id);
-  assign('game_title', input.game_title);
-  assign('account_level', input.account_level);
   assign('account_details', input.account_details);
   assign('stock', input.stock);
   assign('is_active', input.is_active);

@@ -125,7 +125,7 @@ const ProductDetailPage: React.FC = () => {
       price: effectivePrice,
       image: product.images?.[0] || '',
       rating: 5, // Default rating since it's not in Product type
-      category: product.category || '',
+  category: (product as any).categoryData?.name || '',
       available: true // Default to available since it's not in Product type
     };
 
@@ -403,12 +403,12 @@ const ProductDetailPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3 mb-6">
               {/* Game Title - with fallback */}
               <span className="bg-pink-500/10 text-pink-400 px-3 py-1 rounded-full text-sm font-medium border border-pink-500/30">
-                {product.gameTitle || 'FREE FIRE'}
+                {product.gameTitleData?.name || 'GAME'}
               </span>
 
               {/* Tier (fallback to legacy tier name) - always show */}
               <span className="bg-black text-white px-3 py-1 rounded-full text-sm font-medium border border-gray-700">
-                {product.tierData?.name || (product.tier === 'premium' ? 'Premium' : product.tier === 'pelajar' ? 'Pelajar' : product.tier === 'reguler' ? 'Reguler' : 'Reguler')}
+                {product.tierData?.name || 'Reguler'}
               </span>
             </div>
 

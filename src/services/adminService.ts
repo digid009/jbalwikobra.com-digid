@@ -58,7 +58,8 @@ export interface Product {
   description: string;
   price: number;
   original_price?: number;
-  category: string;
+  category_id?: string; // migrated FK
+  categoryData?: { id: string; name: string; slug?: string }; // optional joined data
   game_title?: string;
   account_level?: string;
   account_details?: string;
@@ -304,6 +305,43 @@ class AdminService {
     } catch (error) {
       console.error('Error fetching orders:', error);
       return { data: [], count: 0 };
+    }
+  }
+
+  // Product quick updates (inline table actions)
+  async updateProductFields(id: string, fields: Partial<Pick<Product,'price'|'stock'|'is_active'>>): Promise<Product | null> {
+    try {
+      const updatePayload: any = { ...fields, updated_at: new Date().toISOString() };
+      const { data, error } = await supabase
+        .from('products')
+        .update(updatePayload)
+        .eq('id', id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      // map legacy shape to new product interface minimally
+      const mapped: Product = { ...data, category_id: (data as any).category_id };
+      return mapped;
+    } catch (e) {
+      console.error('[adminService.updateProductFields] error', e);
+      return null;
+    }
+  }
+
+  async toggleProductActive(id: string, current: boolean): Promise<boolean> {
+    const res = await this.updateProductFields(id, { is_active: !current });
+    return !!res;
+  }
+
+  /** Permanently delete a product by id */
+  async deleteProduct(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.error('[adminService.deleteProduct] error', e);
+      return false;
     }
   }
 
@@ -793,6 +831,16 @@ export const adminService = {
         totalPages: Math.ceil((count || 0) / limit)
       };
     });
+  },
+
+  // Inline quick update wrappers
+  async updateProductFields(id: string, fields: Partial<Pick<Product,'price'|'stock'|'is_active'>>) {
+    const service = new AdminService();
+    return service.updateProductFields(id, fields);
+  },
+  async toggleProductActive(id: string, current: boolean) {
+    const service = new AdminService();
+    return service.toggleProductActive(id, current);
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
       let query = supabase
@@ -825,8 +873,8 @@ export const adminService = {
       let query = supabase
         .from('products')
         .select(`
-          id, name, description, price, original_price, category, tier_id, game_title, game_title_id,
-          account_level, account_details, stock, is_active, image, images, created_at, updated_at, archived_at,
+          id, name, description, price, original_price, tier_id, game_title_id, category_id,
+          stock, is_active, image, images, created_at, updated_at, archived_at,
           is_flash_sale, flash_sale_end_time, has_rental,
           tiers (
             id, name, slug, color, background_gradient, icon
@@ -855,7 +903,12 @@ export const adminService = {
       const rows = data || [];
       console.log('[adminService.getProducts] success:', { rows: rows.length, count });
 
-      const mapped = rows.map((row: any) => dbRowToDomainProduct(row) as unknown as Product);
+      const mapped = rows.map((row: any) => {
+        const base: any = dbRowToDomainProduct(row);
+        // expose category_id as categoryId for edit modal compatibility
+        if ((row as any).category_id) base.categoryId = (row as any).category_id;
+        return base as Product;
+      });
 
       return {
         data: mapped,

@@ -51,10 +51,7 @@ export interface Product {
   originalPrice?: number;
   image: string;
   images?: string[];
-  category?: string; // Keep for backward compatibility (optional now)
-  categoryId?: string; // New foreign key
-  gameTitle: string; // Keep for backward compatibility
-  tier?: ProductTier; // Keep for backward compatibility
+  categoryId: string; // Foreign key (required after migration)
   tierId?: string; // New foreign key
   gameTitleId?: string; // New foreign key
   tierData?: Tier; // Populated tier data

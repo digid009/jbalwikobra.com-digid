@@ -131,6 +131,15 @@ class UnifiedAdminClient {
     endpoint: string,
     options: APIRequestOptions = {}
   ): Promise<T> {
+    // Backward compatibility: normalize legacy action names inside endpoint query
+    if (endpoint.startsWith('?')) {
+      const usp = new URLSearchParams(endpoint.substring(1));
+      const action = usp.get('action');
+      if (action === 'dashboard') usp.set('action', 'dashboard-stats');
+      if (action === 'notifications') usp.set('action', 'recent-notifications');
+      endpoint = `?${usp.toString()}`;
+    }
+
     const cacheKey = `admin:${endpoint}`;
     const { skipCache = false, timeout = this.DEFAULT_TIMEOUT, retries = 2 } = options;
 
@@ -274,7 +283,8 @@ class UnifiedAdminClient {
    * Get dashboard statistics
    */
   async getDashboardStats(options: APIRequestOptions = {}): Promise<AdminDashboardStats> {
-    return this.apiRequest<AdminDashboardStats>('?action=dashboard', {
+    // Use canonical action name 'dashboard-stats'
+    return this.apiRequest<AdminDashboardStats>('?action=dashboard-stats', {
       backgroundRefresh: true,
       ...options
     });
@@ -357,8 +367,9 @@ class UnifiedAdminClient {
     limit: number = 10,
     options: APIRequestOptions = {}
   ): Promise<AdminNotification[]> {
+    // Canonical action name 'recent-notifications'
     const params = new URLSearchParams({
-      action: 'notifications',
+      action: 'recent-notifications',
       page: page.toString(),
       limit: limit.toString()
     });
@@ -484,18 +495,21 @@ class UnifiedAdminClient {
    */
   invalidateOrdersCaches(): void {
     adminCache.invalidatePattern('admin:?action=orders');
-    adminCache.invalidatePattern('admin:?action=dashboard');
+    adminCache.invalidatePattern('admin:?action=dashboard'); // backward compat
+    adminCache.invalidatePattern('admin:?action=dashboard-stats');
     adminCache.invalidatePattern('admin:?action=time-series');
   }
 
   invalidateUsersCaches(): void {
     adminCache.invalidatePattern('admin:?action=users');
-    adminCache.invalidatePattern('admin:?action=dashboard');
+    adminCache.invalidatePattern('admin:?action=dashboard'); // backward compat
+    adminCache.invalidatePattern('admin:?action=dashboard-stats');
   }
 
   invalidateProductsCaches(): void {
     adminCache.invalidatePattern('admin:?action=products');
-    adminCache.invalidatePattern('admin:?action=dashboard');
+    adminCache.invalidatePattern('admin:?action=dashboard'); // backward compat
+    adminCache.invalidatePattern('admin:?action=dashboard-stats');
   }
 
   /**

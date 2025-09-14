@@ -491,7 +491,7 @@ const ProductsTab: React.FC = () => {
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Tag className="w-4 h-4" />
-                          {product.category}
+                          {(product as any).categoryData?.name || 'Uncategorized'}
                         </div>
                         <div className="flex items-center gap-1">
                           <Package className="w-4 h-4" />

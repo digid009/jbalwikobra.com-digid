@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Zap, Clock, CheckCircle, XCircle, Search, Edit, Trash2, Eye, Filter, X } from 'lucide-react';
 import { adminService, FlashSale, PaginatedResponse } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
-import { IOSPagination } from '../../../components/ios/IOSPagination';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../utils/cn';
 import { supabase } from '../../../services/supabase';
@@ -778,12 +778,13 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-700/30 bg-black/40">
-                <IOSPagination
+                <IOSPaginationV2
                   currentPage={currentPage}
                   totalPages={totalPages}
                   totalItems={filteredSales.length}
                   itemsPerPage={itemsPerPage}
                   onPageChange={setCurrentPage}
+                  compact
                 />
               </div>
             )}

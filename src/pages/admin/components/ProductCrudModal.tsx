@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../../services/adminService';
 import { ProductService } from '../../../services/productService';
-import { ProductTier } from '../../../types';
-import { IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { IOSButton } from '../../../components/ios/IOSDesignSystemV2';
 import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
 import { 
   ProductDetailsForm, 
@@ -11,6 +10,7 @@ import {
   RentalOptionsForm 
 } from './product-crud';
 import type { RentalOption } from './product-crud';
+import { useCategories } from '../../../hooks/useCategories';
 
 interface ProductCrudModalProps {
   isOpen: boolean;
@@ -32,12 +32,9 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
     description: '',
     price: 0,
     originalPrice: 0,
-    category: '',
-    categoryId: '', // new
-    gameTitle: '',
-    gameTitleId: '', // Add gameTitleId field
-    tier: 'reguler' as ProductTier,
-    accountLevel: '',
+  categoryId: '',
+  gameTitleId: '', // FK only
+  // tier removed (use tierId if needed later)
     accountDetails: '',
     stock: 0,
     isActive: true,
@@ -48,6 +45,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   });
 
   const [rentalOptions, setRentalOptions] = useState<RentalOption[]>([]);
+  const { categories, loading: loadingCategories } = useCategories();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { notifications, showSuccess, showError, removeNotification } = useNotifications();
@@ -57,17 +55,21 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (product) {
+        console.debug('[ProductCrudModal] Editing product raw:', {
+          id: product.id,
+          category_id: (product as any).category_id,
+          categoryId: (product as any).categoryId,
+          // tiers removed
+        });
         setFormData({
           name: product.name || '',
           description: product.description || '',
           price: product.price || 0,
           originalPrice: product.original_price || 0,
-          category: product.category || '',
-          categoryId: (product as any).category_id || '',
-          gameTitle: product.game_title || '',
-          gameTitleId: product.game_title_id || '', // Add gameTitleId from product
-          tier: (product.tier || 'reguler') as ProductTier,
-          accountLevel: product.account_level || '',
+          // categoryId: product may have either category_id (snake) or categoryId (camel) depending on fetch path
+          categoryId: (product as any).category_id || (product as any).categoryId || '',
+          gameTitleId: (product as any).game_title_id || (product as any).gameTitleId || '',
+          // tier removed (migration complete)
           accountDetails: product.account_details || '',
           stock: product.stock || 0,
           isActive: product.is_active ?? true,
@@ -85,12 +87,9 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
           description: '',
           price: 0,
           originalPrice: 0,
-          category: '',
           categoryId: '',
-          gameTitle: '',
-          gameTitleId: '', // Add empty gameTitleId
-          tier: 'reguler' as ProductTier,
-          accountLevel: '',
+          gameTitleId: '',
+          // tier removed
           accountDetails: '',
           stock: 0,
           isActive: true,
@@ -104,6 +103,19 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
       setError(null);
     }
   }, [product, isOpen]);
+
+  // After categories load, ensure categoryId persists (avoid cleared select when option appears later)
+  useEffect(() => {
+    if (!loadingCategories && product) {
+      const existing = (product as any).category_id || (product as any).categoryId;
+      if (existing && !formData.categoryId) {
+        const existsInList = categories.some(c => c.id === existing);
+        if (existsInList) {
+          setFormData(prev => ({ ...prev, categoryId: existing }));
+        }
+      }
+    }
+  }, [loadingCategories, categories, product, formData.categoryId]);
 
   useEffect(() => {
     if (isOpen && initialFocusRef.current) {
@@ -127,7 +139,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
       if (formData.price <= 0) {
         throw new Error('Product price must be greater than 0');
       }
-      if (!formData.categoryId && !formData.category.trim()) {
+  if (!formData.categoryId) {
         throw new Error('Product category is required');
       }
       if (!formData.gameTitleId) {
@@ -142,34 +154,31 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         name: formData.name.trim(),
         description: formData.description.trim(),
         price: formData.price,
-        originalPrice: formData.originalPrice, // camelCase for TypeScript
-        original_price: formData.originalPrice, // snake_case for database
-        category: (formData.categoryId || formData.category).trim(),
-        categoryId: formData.categoryId || formData.category,
-        category_id: formData.categoryId || formData.category,
-        gameTitle: formData.gameTitle, // camelCase for TypeScript
-        game_title: formData.gameTitle, // snake_case for database
-        gameTitleId: formData.gameTitleId, // camelCase for TypeScript
-        game_title_id: formData.gameTitleId, // snake_case for database
-        tier: formData.tier,
-        accountLevel: formData.accountLevel?.trim() || null, // camelCase for TypeScript
-        account_level: formData.accountLevel?.trim() || null, // snake_case for database
-        accountDetails: formData.accountDetails?.trim() || null, // camelCase for TypeScript
-        account_details: formData.accountDetails?.trim() || null, // snake_case for database
+        originalPrice: formData.originalPrice,
+        original_price: formData.originalPrice,
+        categoryId: formData.categoryId,
+        category_id: formData.categoryId,
+        // Only send relational foreign key for game title (legacy text column removed)
+  // legacy gameTitle placeholder removed
+  gameTitleId: formData.gameTitleId,
+  game_title_id: formData.gameTitleId,
+  // tier removed
+        accountDetails: formData.accountDetails?.trim() || null,
+        account_details: formData.accountDetails?.trim() || null,
         stock: formData.stock,
         isActive: formData.isActive,
         is_active: formData.isActive,
-        isFlashSale: formData.isFlashSale, // camelCase for TypeScript
-        is_flash_sale: formData.isFlashSale, // snake_case for database
-        hasRental: formData.hasRental, // camelCase for TypeScript
-        has_rental: formData.hasRental, // snake_case for database
+        isFlashSale: formData.isFlashSale,
+        is_flash_sale: formData.isFlashSale,
+        hasRental: formData.hasRental,
+        has_rental: formData.hasRental,
         image: formData.images[0] || '',
         images: formData.images,
-      };
+      } as const;
 
       if (isEdit && product) {
         // Update existing product
-        console.log('🔄 Updating product:', apiData);
+  console.log('🔄 Updating product:', apiData);
         const result = await ProductService.updateProduct(product.id, apiData);
         if (result) {
           console.log('✅ Product updated successfully');
@@ -179,7 +188,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         }
       } else {
         // Create new product
-        console.log('➕ Creating product:', apiData);
+  console.log('➕ Creating product:', apiData);
         const result = await ProductService.createProduct(apiData);
         if (result) {
           console.log('✅ Product created successfully');
@@ -201,90 +210,96 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
     }
   };
 
+  // Close on Escape key (register regardless, logic checks isOpen)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
-      <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      <div className="relative w-full max-w-6xl max-h-[90vh] bg-gradient-to-br from-gray-900/95 via-gray-800/90 to-gray-900/95 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10">
-          <h2 ref={initialFocusRef} tabIndex={-1} id="product-modal-title" className="text-2xl font-bold text-white focus:outline-none">
-            {isEdit ? 'Edit Product' : 'Add New Product'}
+      <div className="modal-overlay" onClick={onClose} />
+      <div className="modal-shell">
+        <div className="modal-header">
+          <h2 ref={initialFocusRef} tabIndex={-1} id="product-modal-title" className="modal-title focus-ring">
+            {isEdit ? 'Ubah Produk' : 'Tambah Produk Baru'}
           </h2>
-          <IOSButton 
-            onClick={onClose}
-            className="p-2 bg-white/10 hover:bg-white/20 border-white/20"
-          >
+          <button onClick={onClose} type="button" className="modal-close focus-ring" aria-label="Close modal">
             <X className="w-5 h-5" />
-          </IOSButton>
+          </button>
         </div>
-
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-          <form onSubmit={handleSubmit} className="p-6">
-            {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300">
-                {error}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Product Details */}
-              <div className="lg:col-span-1">
-                <ProductDetailsForm
-                  formData={formData}
-                  setFormData={setFormData}
-                />
-              </div>
-
-              {/* Product Images */}
-              <div className="lg:col-span-1">
-                <ProductImagesUpload
-                  images={formData.images}
-                  onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
-                />
-              </div>
-
-              {/* Rental Options */}
-              <div className="lg:col-span-1">
-                <RentalOptionsForm
-                  hasRental={formData.hasRental}
-                  onHasRentalChange={(hasRental) => setFormData(prev => ({ ...prev, hasRental }))}
-                  rentalOptions={rentalOptions}
-                  onRentalOptionsChange={setRentalOptions}
-                  isActive={formData.isActive}
-                  onIsActiveChange={(val) => setFormData(prev => ({ ...prev, isActive: val }))}
+        <form onSubmit={handleSubmit} className="modal-body stack-xl">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+          <div className="stack-lg">
+            <ProductDetailsForm
+              formData={formData}
+              setFormData={setFormData}
+            />
+            <ProductImagesUpload
+              images={formData.images}
+              onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+            />
+            {/* Product Active Switch Section */}
+            <div className="section-block stack-md">
+              <div className="section-title">Status Produk</div>
+              <div className="section-divider" />
+              <div className="flex items-center justify-between p-sm rounded-xl bg-white/5 border border-white/10">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white/90">Aktif</span>
+                  <span className="text-xs text-white/50">Tentukan apakah produk dapat ditampilkan & dijual</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.isActive}
+                  onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                  className={`toggle ${formData.isActive ? 'active' : ''}`}
                 />
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-white/10 flex justify-end gap-4">
-              <IOSButton
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 border-white/20 text-white"
-              >
-                Cancel
-              </IOSButton>
-              <IOSButton
-                type="submit"
-                disabled={loading || !formData.name.trim()}
-                className="px-6 py-3 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30 text-pink-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Saving...' : (isEdit ? 'Update Product' : 'Create Product')}
-              </IOSButton>
-            </div>
-          </form>
-        </div>
+            <RentalOptionsForm
+              hasRental={formData.hasRental}
+              onHasRentalChange={(hasRental) => setFormData(prev => ({ ...prev, hasRental }))}
+              rentalOptions={rentalOptions}
+              onRentalOptionsChange={setRentalOptions}
+              isActive={formData.isActive}
+              onIsActiveChange={(val) => setFormData(prev => ({ ...prev, isActive: val }))}
+            />
+          </div>
+          <div className="modal-footer flex items-center justify-end gap-3 pt-4">
+            <IOSButton
+              type="button"
+              variant="tertiary"
+              size="md"
+              onClick={onClose}
+              className="min-w-[120px]"
+            >
+              Batal
+            </IOSButton>
+            <IOSButton
+              type="submit"
+              variant="primary"
+              size="md"
+              disabled={loading || !formData.name.trim()}
+              className="min-w-[160px]"
+            >
+              {loading ? 'Menyimpan...' : (isEdit ? 'Perbarui Produk' : 'Buat Produk')}
+            </IOSButton>
+          </div>
+        </form>
       </div>
-
-      {/* Notification Container */}
       <NotificationContainer
         notifications={notifications}
         onRemove={removeNotification}

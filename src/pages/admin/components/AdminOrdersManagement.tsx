@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, RefreshCw, X, AlertCircle, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
 import { adminService, Order } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
-import { IOSPagination } from '../../../components/ios/IOSPagination';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
@@ -464,7 +464,7 @@ export const AdminOrdersManagement: React.FC = () => {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="px-6 py-4 border-t border-white/10 bg-gradient-to-r from-pink-500/5 to-fuchsia-500/5">
-              <IOSPagination
+              <IOSPaginationV2
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalCount}

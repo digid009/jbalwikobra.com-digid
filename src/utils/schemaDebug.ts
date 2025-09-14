@@ -58,7 +58,7 @@ export const comprehensiveSchemaCheck = async (): Promise<SchemaInfo> => {
     console.log('📦 Checking products table with relational fields...');
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, game_title_id, tier_id, game_title')
+      .select('id, name, price, game_title_id, tier_id')
       .limit(5);
 
     if (productsError) {
@@ -84,11 +84,11 @@ export const comprehensiveSchemaCheck = async (): Promise<SchemaInfo> => {
 
       // Analyze data consistency
       const withRelations = products?.filter(p => p.game_title_id || p.tier_id).length || 0;
-      const withLegacyFields = products?.filter(p => p.game_title && !p.game_title_id).length || 0;
+  const withLegacyFields = 0; // legacy game_title column fully removed
 
       if (withLegacyFields > 0) {
-        result.issues.push(`${withLegacyFields} products using legacy game_title field`);
-        result.recommendations.push('Migrate legacy game_title fields to game_title_id references');
+        result.issues.push(`${withLegacyFields} products unexpectedly still using legacy game_title field`);
+        result.recommendations.push('Investigate residual legacy game_title usage; migration should be complete');
       }
 
       console.log(`📊 Products analysis: ${withRelations} with relations, ${withLegacyFields} with legacy fields`);
@@ -103,9 +103,7 @@ export const comprehensiveSchemaCheck = async (): Promise<SchemaInfo> => {
       original_price: null,
       image: '',
       images: [],
-      category: 'test', // Add category field to satisfy NOT NULL constraint
-  // Fallback for environments with NOT NULL game_title text column
-  game_title: 'Test Game',
+  category: 'test', // legacy category fallback; using only relational FKs for game
       account_level: null,
       account_details: null,
       is_flash_sale: false,

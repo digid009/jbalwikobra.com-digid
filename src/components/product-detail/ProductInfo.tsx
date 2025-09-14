@@ -36,15 +36,13 @@ export const ProductInfo = React.memo(({
       <div className="flex flex-wrap items-center gap-3 mb-6">
         {/* Game Title - with fallback */}
         <span className="bg-pink-500/10 text-pink-400 px-3 py-1 rounded-full text-sm font-medium border border-pink-500/30">
-          {product.gameTitle || 'FREE FIRE'}
+          {product.gameTitleData?.name || 'GAME'}
         </span>
 
         {/* Tier - always show */}
         <span className="bg-black text-white px-3 py-1 rounded-full text-sm font-medium border border-gray-700">
           {product.tierData?.name || (
-            product.tier === 'premium' ? 'Premium' : 
-            product.tier === 'pelajar' ? 'Pelajar' : 
-            product.tier === 'reguler' ? 'Reguler' : 'Reguler'
+            product.tierData?.name || 'Reguler'
           )}
         </span>
       </div>

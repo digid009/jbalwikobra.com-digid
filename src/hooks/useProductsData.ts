@@ -137,7 +137,7 @@ export const useProductsData = () => {
     if (filterState.searchTerm) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(filterState.searchTerm.toLowerCase()) ||
-        product.gameTitle.toLowerCase().includes(filterState.searchTerm.toLowerCase()) ||
+  product.gameTitleData?.name?.toLowerCase().includes(filterState.searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(filterState.searchTerm.toLowerCase())
       );
     }
@@ -145,7 +145,7 @@ export const useProductsData = () => {
     // Game filter
     if (filterState.selectedGame) {
       filtered = filtered.filter(product => {
-        const gameName = product.gameTitleData?.name || product.gameTitle;
+  const gameName = product.gameTitleData?.name;
         return gameName?.toLowerCase() === filterState.selectedGame.toLowerCase();
       });
     }
@@ -153,7 +153,7 @@ export const useProductsData = () => {
     // Tier filter
     if (filterState.selectedTier) {
       filtered = filtered.filter(product => {
-        const tierSlug = product.tierData?.slug || product.tier;
+        const tierSlug = product.tierData?.slug;
         return tierSlug?.toLowerCase() === filterState.selectedTier.toLowerCase();
       });
     }

@@ -1,4 +1,10 @@
 import React from 'react';
+/**
+ * DEPRECATED COMPONENT
+ * --------------------
+ * MetricCard has been superseded by `AdminStatCard` (tokenized variant system).
+ * Do not add new usages. Migrate existing references to `AdminStatCard` and then remove this file.
+ */
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface MetricCardProps {

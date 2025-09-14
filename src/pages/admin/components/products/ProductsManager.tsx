@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystem';
-import { IOSPagination } from '../../../../components/ios/IOSDesignSystem';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
+// DS V2 components + new pagination
+import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
+import { IOSPaginationV2 } from '../../../../components/ios/IOSPaginationV2';
 import { adminService, Product } from '../../../../services/adminService';
+import { ProductService } from '../../../../services/productService';
+import { useCategories } from '../../../../hooks/useCategories';
 import { Search, Filter, Plus, Package, AlertCircle, Loader2 } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import ProductsFilters from './ProductsFilters';
-import ProductsGrid from './ProductsGrid';
+// Removed card/list/grid UI in favor of unified table view
+import ProductsTable from './ProductsTable';
+import { t } from '../../../../i18n/strings';
 
 interface ProductsManagerProps {
   className?: string;
@@ -15,14 +20,20 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   className = ''
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredProductsState, setFilteredProductsState] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearch = useDeferredValue(searchTerm);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(deferredSearch), 250);
+    return () => clearTimeout(id);
+  }, [deferredSearch]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState(''); // holds category_id
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -32,6 +43,7 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   const [paginatedProducts, setPaginatedProducts] = useState<Product[]>([]);
 
   const [showFilters, setShowFilters] = useState(false);
+  const { categories } = useCategories();
 
   // Load products
   const loadProducts = async () => {
@@ -41,7 +53,8 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
       
       const response = await adminService.getProducts(1, 100); // Get more products for local filtering
       setProducts(response.data);
-      setFilteredProducts(response.data);
+  setFilteredProductsState(response.data);
+  // categories handled by hook
     } catch (err) {
       console.error('Error loading products:', err);
       setError('Failed to load products');
@@ -51,15 +64,15 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   };
 
   // Apply filters and sorting
-  useEffect(() => {
+  const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
     // Apply search filter
-    if (searchTerm) {
+  if (debouncedSearch) {
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    product.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+  (product as any).categoryData?.name?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
     }
 
@@ -72,9 +85,7 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
 
     // Apply category filter
     if (categoryFilter) {
-      filtered = filtered.filter(product => 
-        product.category?.toLowerCase() === categoryFilter.toLowerCase()
-      );
+  filtered = filtered.filter(product => (product as any).category_id === categoryFilter);
     }
 
     // Apply sorting
@@ -105,20 +116,23 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
       }
     });
 
-    setFilteredProducts(filtered);
-  }, [products, searchTerm, statusFilter, categoryFilter, sortBy, sortOrder]);
+    return filtered;
+  }, [products, debouncedSearch, statusFilter, categoryFilter, sortBy, sortOrder]);
+
+  // keep filteredProducts state for existing pagination logic (optional)
+  useEffect(() => { setFilteredProductsState(filteredProducts); }, [filteredProducts]);
 
   // Apply pagination
   useEffect(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
-  }, [filteredProducts, currentPage, itemsPerPage]);
+    setPaginatedProducts(filteredProductsState.slice(startIndex, endIndex));
+  }, [filteredProductsState, currentPage, itemsPerPage]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, categoryFilter, sortBy, sortOrder]);
+  }, [debouncedSearch, statusFilter, categoryFilter, sortBy, sortOrder]);
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -151,6 +165,17 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
       await loadProducts(); // Refresh after deletion
     } catch (error) {
       console.error('Error deleting product:', error);
+    }
+  };
+
+  const handleQuickUpdate = async (id: string, fields: Partial<Pick<Product,'price'|'stock'|'is_active'>>) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...fields } : p)); // optimistic
+    const updated = await adminService.updateProductFields(id, fields);
+    if (!updated) {
+      // revert on failure
+      await loadProducts();
+    } else {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updated } : p));
     }
   };
 
@@ -199,32 +224,34 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Products Management</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('common.productsManagement')}</h2>
           <p className="text-gray-300">
-            {filteredProducts.length} of {products.length} products
+            {filteredProducts.length} / {products.length}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <IOSButton
-            variant="ghost"
+            variant="tertiary"
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'flex items-center gap-2',
-              showFilters ? 'bg-pink-500/20 border-pink-500/50' : 'border-gray-500/30'
+              'flex items-center gap-2 border',
+              showFilters ? 'border-pink-500/60 bg-pink-600/20' : 'border-zinc-700'
             )}
           >
             <Filter className="w-4 h-4" />
-            Filters
+            {t('common.filters')}
           </IOSButton>
 
           <IOSButton
             variant="primary"
+            size="sm"
             onClick={handleAddProduct}
-            className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-fuchsia-600"
+            className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Product
+            {t('common.addProduct')}
           </IOSButton>
         </div>
       </div>
@@ -244,30 +271,51 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
           onSortOrderChange={setSortOrder}
           onAddProduct={handleAddProduct}
           onClearFilters={clearAllFilters}
+          categories={categories}
         />
       )}
 
-      {/* Products Grid */}
-      <ProductsGrid
+      {/* Products Table */}
+      <ProductsTable
         products={paginatedProducts}
         loading={loading}
-        onProductView={handleViewProduct}
-        onProductEdit={handleEditProduct}
-        onProductDelete={handleDeleteProduct}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={(field)=>{
+          if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+          } else {
+            setSortBy(field as any);
+            setSortOrder('asc');
+          }
+        }}
+        onView={handleViewProduct}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
+        onQuickUpdate={handleQuickUpdate}
       />
 
       {/* Pagination */}
         {filteredProducts.length > 0 && (
-          <div className="pt-6">
-            <IOSPagination
+          <div className="pt-6 space-y-3">
+            {/* External items-per-page selector (replaces legacy built-in) */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-300">
+              <span className="text-zinc-400">Items per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e)=>{ setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+              >
+                {[8,12,16,24].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+              <span className="text-zinc-500">Total {filteredProducts.length}</span>
+            </div>
+            <IOSPaginationV2
               currentPage={currentPage}
               totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
               totalItems={filteredProducts.length}
               itemsPerPage={itemsPerPage}
               onPageChange={(page) => setCurrentPage(page)}
-              showItemsPerPageSelector
-              onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
-              itemsPerPageOptions={[8,12,16,24]}
             />
           </div>
         )}
@@ -291,19 +339,20 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
             {products.length === 0 ? (
               <IOSButton
                 variant="primary"
+                size="sm"
                 onClick={handleAddProduct}
-                className="bg-gradient-to-r from-pink-500 to-fuchsia-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Your First Product
+                {t('common.addProduct')}
               </IOSButton>
             ) : (
               <IOSButton
-                variant="ghost"
+                variant="tertiary"
+                size="sm"
                 onClick={clearAllFilters}
-                className="border-pink-500/30 hover:bg-pink-500/20"
+                className="border border-pink-500/40"
               >
-                Clear All Filters
+                {t('common.clearAllFilters')}
               </IOSButton>
             )}
           </div>

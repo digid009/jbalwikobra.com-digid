@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Camera, Upload } from 'lucide-react';
 import { IOSButton, IOSCard } from '../../../components/ios/IOSDesignSystem';
 import { Product } from '../../../services/enhancedAdminService';
+import { ProductService } from '../../../services/productService';
+import { useCategories } from '../../../hooks/useCategories';
+// NOTE: migrated to category_id; legacy category removed
 
 interface ProductDialogProps {
   product: Product | null;
@@ -14,12 +17,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   onSave,
   onClose
 }) => {
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const [formData, setFormData] = useState<any>({
     name: '',
     description: '',
     price: 0,
     original_price: 0,
-    category: '',
+    category_id: '',
     stock: 1,
     image: '',
     is_active: true
@@ -29,12 +32,13 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
   useEffect(() => {
     if (product) {
-      setFormData(product);
+  // map incoming product to new shape
+  setFormData({ ...product, category_id: (product as any).category_id });
       setImagePreview(product.image || '');
     }
   }, [product]);
 
-  const handleInputChange = (field: keyof Product, value: any) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -72,19 +76,9 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     }
   };
 
-  const categories = [
-    'Electronics',
-    'Clothing',
-    'Books',
-    'Home & Garden',
-    'Sports',
-    'Beauty',
-    'Automotive',
-    'Toys',
-    'Food',
-    'Health',
-    'Other'
-  ];
+  const { categories } = useCategories();
+
+  // categories provided by hook
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -171,17 +165,18 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Category
+                Category *
               </label>
               <select
-                value={formData.category || ''}
-                onChange={(e) => handleInputChange('category', e.target.value)}
+                value={formData.category_id || ''}
+                onChange={(e) => handleInputChange('category_id', e.target.value)}
+                required
                 className="w-full p-3 border border-ios-separator rounded-2xl bg-black focus:border-ios-primary focus:outline-none"
               >
                 <option value="">Select category</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>

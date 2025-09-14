@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, Image, Eye, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { IOSCard, IOSButton, IOSPagination } from '../../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystem';
+import { IOSPaginationV2 } from '../../../../components/ios/IOSPaginationV2';
 import { BannerTableProps } from './types';
 
 export const BannerTable: React.FC<BannerTableProps> = ({
@@ -166,25 +167,15 @@ export const BannerTable: React.FC<BannerTableProps> = ({
           </tbody>
         </table>
       </div>
-      <div className="admin-pagination px-6 pb-6">
-        <IOSPagination 
-          totalPages={totalPages} 
-          currentPage={currentPage} 
-          totalItems={banners.length} 
-          itemsPerPage={banners.length} 
-          onPageChange={onPageChange} 
-        />
-      </div>
-
-      {/* Pagination */}
       {totalPages > 1 && (
-  <div className="px-6 py-4 border-t border-gray-700/30 bg-black/40">
-          <IOSPagination
+        <div className="px-6 pb-6">
+          <IOSPaginationV2
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={banners.length}
             itemsPerPage={10}
             onPageChange={onPageChange}
+            compact
           />
         </div>
       )}

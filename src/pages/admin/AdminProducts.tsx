@@ -11,7 +11,10 @@ import { useToast } from '../../components/Toast';
 // Legacy standardClasses/cn removed—minimal replacements
 import { cn } from '../../utils/cn';
 const standardClasses = { flex:{rowGap3:'flex items-center gap-3',rowGap2:'flex items-center gap-2',row:'flex'}, spacing:{section:'space-y-6'} };
-import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../components/ios/IOSDesignSystem';
+// Migrated to Design System V2 components & new pagination
+import { IOSCard, IOSButton, IOSSectionHeader } from '../../components/ios/IOSDesignSystemV2';
+import { IOSPaginationV2 } from '../../components/ios/IOSPaginationV2';
+import { t } from '../../i18n/strings';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 import { scrollToPaginationContent } from '../../utils/scrollUtils';
 // Admin page cleaned: diagnostics imports removed
@@ -120,7 +123,7 @@ const AdminProducts: React.FC = () => {
       let query = supabase
         .from('products')
         .select(`
-          id, name, description, price, original_price, account_level,
+          id, name, description, price, original_price,
           is_active, archived_at, created_at, images, game_title_id, tier_id,
           tiers (id, name, slug, color, background_gradient),
           game_titles (id, name, slug, icon)
@@ -170,22 +173,22 @@ const AdminProducts: React.FC = () => {
         originalPrice: product.original_price,
         image: product.images?.[0] || '',
         images: product.images || [],
-        category: '', // Legacy field
-        gameTitle: product.game_titles?.[0]?.name || '',
-        tier: product.tiers?.[0]?.slug as ProductTier || 'reguler',
+  categoryId: (product as any).category_id || 'sample-cat-1',
+  // legacy gameTitle removed
+  // tier string removed
         tierId: product.tier_id,
         gameTitleId: product.game_title_id,
         tierData: product.tiers?.[0] as any,
         gameTitleData: product.game_titles?.[0] as any,
-        accountLevel: product.account_level,
-        isFlashSale: false, // Set default
-        hasRental: false, // Set default
-        stock: 1, // Set default
+  // accountLevel removed
+        isFlashSale: false, // default
+        hasRental: false, // default
+        stock: 1, // default
         isActive: product.is_active !== false,
         archivedAt: product.archived_at,
         createdAt: product.created_at,
-        updatedAt: product.created_at, // Use created_at as fallback
-        rentalOptions: [] // Load separately if needed for performance
+        updatedAt: product.created_at,
+        rentalOptions: []
       }));
 
       setProducts(mappedProducts);
@@ -383,18 +386,19 @@ const AdminProducts: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
-              Products Management
+              {t('common.productsManagement')}
             </h1>
             <p className="text-gray-400 font-medium">
-              Manage your product catalog and inventory
+              {t('common.manageCatalog')}
             </p>
           </div>
           <IOSButton 
             onClick={startCreate} 
-            variant="primary" 
-            className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25"
+            variant="primary"
+            size="sm"
+            className="flex items-center space-x-2"
           >
-            <span>Add Product</span>
+            {t('common.addProduct')}
           </IOSButton>
         </div>
 
@@ -491,8 +495,8 @@ const AdminProducts: React.FC = () => {
                 </div>
                 <p className="text-ios-text-secondary font-medium mb-2">
                   {filteredProducts.length === 0 && products.length > 0 
-                    ? 'Tidak ada produk yang sesuai dengan filter.'
-                    : 'Belum ada produk.'
+                    ? t('common.noMatchingProducts')
+                    : t('common.noProducts')
                   }
                 </p>
                 <p className="text-ios-text-secondary/70 text-sm">Produk yang ditambahkan akan muncul di sini</p>
@@ -523,14 +527,14 @@ const AdminProducts: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="col-span-2 text-ios-text">{p.gameTitleData?.name || p.gameTitle}</div>
+                    <div className="col-span-2 text-ios-text">{p.gameTitleData?.name || '-'}</div>
                     <div className="col-span-2 text-ios-text font-semibold">Rp {Number(p.price||0).toLocaleString('id-ID')}</div>
                     <div className="col-span-3 text-right space-x-2">
                       <IOSButton 
                         onClick={() => startEdit(p)} 
-                        variant="ghost" 
-                        size="small"
-                        className="text-ios-accent border-ios-accent/30 hover:bg-ios-accent/10"
+                        variant="tertiary" 
+                        size="sm"
+                        className="text-pink-400 border border-pink-400/30 hover:bg-pink-500/10"
                       >
                         Edit
                       </IOSButton>
@@ -542,9 +546,9 @@ const AdminProducts: React.FC = () => {
                             await loadProducts();
                             push('Produk dipulihkan dari arsip', 'success');
                           }} 
-                          variant="ghost" 
-                          size="small"
-                          className="text-ios-success border-ios-success/30 hover:bg-ios-success/10"
+                          variant="tertiary" 
+                          size="sm"
+                          className="text-green-400 border border-green-400/30 hover:bg-green-500/10"
                         >
                           Pulihkan
                         </IOSButton>
@@ -557,18 +561,18 @@ const AdminProducts: React.FC = () => {
                             await loadProducts();
                             push('Produk diarsipkan', 'success');
                           }} 
-                          variant="ghost" 
-                          size="small"
-                          className="text-ios-warning border-ios-warning/30 hover:bg-ios-warning/10"
+                          variant="tertiary" 
+                          size="sm"
+                          className="text-amber-400 border border-amber-400/30 hover:bg-amber-500/10"
                         >
                           Arsipkan
                         </IOSButton>
                       )}
                       <IOSButton 
                         onClick={() => handleDelete(p.id)} 
-                        variant="ghost" 
-                        size="small"
-                        className="text-ios-error border-ios-error/30 hover:bg-ios-error/10"
+                        variant="destructive" 
+                        size="sm"
+                        className="border border-red-500/40 hover:bg-red-600/20"
                       >
                         Hapus
                       </IOSButton>
@@ -578,21 +582,32 @@ const AdminProducts: React.FC = () => {
               </div>
             )}
             
-            <IOSPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalProducts}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              showItemsPerPageSelector={true}
-              onItemsPerPageChange={setItemsPerPage}
-            />
+            <div className="px-6 py-4 border-t border-gray-700/40 space-y-4">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300">
+                <span className="text-gray-400">Items per page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e)=>{ setItemsPerPage(Number(e.target.value)); handlePageChange(1); }}
+                  className="bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  {[10,20,50,100].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                <span className="text-gray-500">Total {totalProducts}</span>
+              </div>
+              <IOSPaginationV2
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalProducts}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+              />
+            </div>
             </div>
           </>
         )}
 
       {showForm && (
-        <IOSCard variant="elevated" padding="large"
+        <IOSCard variant="elevated" padding="lg"
           className="bg-ios-surface"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -731,11 +746,11 @@ const AdminProducts: React.FC = () => {
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-2">
-            <IOSButton onClick={cancelForm} variant="ghost" className="border-ios-border text-ios-text">
-              Batal
+            <IOSButton onClick={cancelForm} variant="tertiary" size="sm">
+              {t('common.cancel')}
             </IOSButton>
-            <IOSButton onClick={handleSave} variant="primary" disabled={saving}>
-              {saving ? 'Menyimpan...' : 'Simpan'}
+            <IOSButton onClick={handleSave} variant="primary" size="sm" disabled={saving}>
+              {saving ? t('common.saving') : t('common.save')}
             </IOSButton>
           </div>
         </IOSCard>

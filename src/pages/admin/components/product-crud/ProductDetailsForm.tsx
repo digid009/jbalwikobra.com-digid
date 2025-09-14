@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Loader2 } from 'lucide-react';
-import { ProductTier, GameTitle } from '../../../../types';
+import { GameTitle } from '../../../../types';
 import { ProductService } from '../../../../services/productService';
+import { useCategories } from '../../../../hooks/useCategories';
 
 interface ProductDetailsFormProps {
   formData: {
@@ -9,12 +9,8 @@ interface ProductDetailsFormProps {
     description: string;
     price: number;
     originalPrice: number;
-    category: string;
-    categoryId?: string; // added
-    gameTitle: string;
-    gameTitleId: string; // Add gameTitleId for storing the selected game ID
-    tier: ProductTier;
-    accountLevel: string;
+    categoryId: string;
+    gameTitleId: string; // FK only
     accountDetails: string;
     stock: number;
     isActive: boolean;
@@ -23,268 +19,172 @@ interface ProductDetailsFormProps {
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
-export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
-  formData,
-  setFormData,
-}) => {
+export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({ formData, setFormData }) => {
   const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const { categories, loading: loadingCategories } = useCategories();
 
-  // Fetch game titles and categories on component mount
+  // Ensure category preselect after categories loaded (especially when editing)
   useEffect(() => {
-    const fetchGameTitles = async () => {
+    if (!loadingCategories && categories.length && formData.categoryId) {
+      const exists = categories.some(c => c.id === formData.categoryId);
+      if (!exists) {
+        // If current categoryId not found, clear it to force user to reselect (avoids invisible value)
+        setFormData((prev: any) => ({ ...prev, categoryId: '' }));
+      }
+    }
+  }, [loadingCategories, categories, formData.categoryId, setFormData]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch game titles
       try {
         setLoadingGames(true);
         const games = await ProductService.getGameTitles();
-        // Filter only active games and sort by popularity and name
         const activeGames = games
-          .filter(game => game.isActive !== false)
+          .filter(g => g.isActive !== false)
           .sort((a, b) => {
-            // Sort by popularity first, then by name
-            if (a.isPopular !== b.isPopular) {
-              return b.isPopular ? 1 : -1;
-            }
+            if (a.isPopular !== b.isPopular) return b.isPopular ? 1 : -1;
             return a.name.localeCompare(b.name);
           });
         setGameTitles(activeGames);
-      } catch (error) {
-        console.error('Failed to fetch game titles:', error);
+      } catch (e) {
         setGameTitles([]);
       } finally {
         setLoadingGames(false);
       }
-    };
 
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true);
-        const cats = await ProductService.getCategories();
-        setCategories(cats);
-      } catch (e) {
-        setCategories([]);
-      } finally {
-        setLoadingCategories(false);
-      }
+  // Categories handled by hook
     };
-
-    fetchGameTitles();
-    fetchCategories();
+    fetchData();
   }, []);
 
   const handleGameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedGameId = e.target.value;
-    const selectedGame = gameTitles.find(game => game.id === selectedGameId);
-    
+    const id = e.target.value;
+    const game = gameTitles.find(g => g.id === id);
     setFormData((prev: any) => ({
       ...prev,
-      gameTitleId: selectedGameId,
-      gameTitle: selectedGame?.name || '', // Keep the name for backward compatibility
+      gameTitleId: id,
     }));
   };
 
   return (
-    <div className="bg-gradient-to-br from-white/5 via-white/3 to-transparent backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-pink-500/20 to-fuchsia-600/20 rounded-xl flex items-center justify-center border border-pink-500/30">
-          <Package className="w-5 h-5 text-pink-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-white">Product Details</h3>
-      </div>
-
-      <div className="space-y-4">
-        {/* Product Name */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Product Name*
-          </label>
+    <div className="section-block stack-lg">
+      <div className="section-title">Basic Information</div>
+      <div className="section-divider" />
+      <div className="form-grid-3">
+        <div className="form-field">
+          <label htmlFor="productName" className="form-label required">Product Name</label>
           <input
+            id="productName"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData((prev: any) => ({ ...prev, name: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+            className="form-control control-h-lg"
             placeholder="Enter product name"
             required
           />
         </div>
-
-        {/* Product Description */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Product Description*
-          </label>
-          <textarea
-            rows={4}
-            value={formData.description}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300 resize-none"
-            placeholder="Enter product description"
-            required
-          />
-        </div>
-
-        {/* Game Title */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Game Title*
-          </label>
-          <div className="relative">
-            <select
-              value={formData.gameTitleId || formData.gameTitle || ''}
-              onChange={handleGameChange}
-              disabled={loadingGames}
-              className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed appearance-none pr-10"
-              required
-            >
-              {loadingGames ? (
-                <option value="">Loading games...</option>
-              ) : (
-                <>
-                  <option value="">Select Game</option>
-                  {gameTitles.map((game) => (
-                    <option 
-                      key={game.id} 
-                      value={game.id}
-                      className="bg-gray-800 text-white"
-                    >
-                      {game.name} {game.isPopular ? '⭐' : ''}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-            {loadingGames && (
-              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="w-4 h-4 animate-spin text-pink-400" />
-              </div>
-            )}
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg className={`w-4 h-4 text-pink-200/60 ${loadingGames ? 'hidden' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          {!loadingGames && gameTitles.length === 0 && (
-            <p className="text-red-400 text-xs mt-2">
-              No games available. Please contact administrator.
-            </p>
-          )}
-        </div>
-
-        {/* Tier */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Tier*
-          </label>
+        <div className="form-field">
+          <label htmlFor="gameTitle" className="form-label required">Game Title</label>
           <select
-            value={formData.tier}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, tier: e.target.value as ProductTier }))}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+            id="gameTitle"
+            value={formData.gameTitleId || ''}
+            onChange={handleGameChange}
+            disabled={loadingGames}
+            className="select-control control-h-lg"
             required
           >
-            <option value="reguler">Regular</option>
-            <option value="pelajar">Pelajar</option>
-            <option value="premium">Premium</option>
+            {loadingGames ? (
+              <option value="">Loading...</option>
+            ) : (
+              <>
+                <option value="">Select</option>
+                {gameTitles.map(game => (
+                  <option key={game.id} value={game.id} className="bg-gray-800 text-white">
+                    {game.name} {game.isPopular ? '⭐' : ''}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </div>
-
-        {/* Account Level */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Account Level
-          </label>
-          <input
-            type="text"
-            value={formData.accountLevel}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, accountLevel: e.target.value }))}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-            placeholder="e.g., Level 30"
-          />
+  {/* Tier selection removed: system now relies solely on tierId relationally if needed */}
+        <div className="form-field">
+          <label htmlFor="category" className="form-label required">Category</label>
+          <select
+            id="category"
+            value={formData.categoryId || ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFormData((prev: any) => ({ ...prev, categoryId: val || null }));
+            }}
+            disabled={loadingCategories}
+            required
+            className="select-control control-h-lg"
+          >
+            {loadingCategories ? (
+              <option value="">Loading...</option>
+            ) : (
+              <>
+                <option value="">Select</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id} className="bg-gray-800 text-white">
+                    {cat.name}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
         </div>
-
-        {/* Price */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Price*
-          </label>
+      </div>
+      <div className="form-field">
+        <label htmlFor="description" className="form-label required">Product Description</label>
+        <textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev: any) => ({ ...prev, description: e.target.value }))}
+          className="form-control no-resize"
+          placeholder="Enter detailed product description"
+          required
+        />
+      </div>
+      <div className="section-divider" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="form-field">
+          <label htmlFor="price" className="form-label required">Price</label>
           <input
+            id="price"
             type="text"
             inputMode="numeric"
-            value={formData.price ? formData.price.toLocaleString('id-ID') : ''}
+            value={formData.price ? `Rp ${formData.price.toLocaleString('id-ID')}` : ''}
             onChange={(e) => {
               const raw = e.target.value.replace(/[^0-9]/g, '');
               const num = raw ? parseInt(raw, 10) : 0;
               setFormData((prev: any) => ({ ...prev, price: num }));
             }}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-            placeholder="1.000.000"
+            className="form-control control-h-lg"
+            placeholder="Rp 1.000.000"
             required
           />
         </div>
-
-        {/* Original Price */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Original Price (IDR)
-          </label>
+        <div className="form-field">
+          <label htmlFor="originalPrice" className="form-label">Original Price</label>
           <input
+            id="originalPrice"
             type="text"
             inputMode="numeric"
-            value={formData.originalPrice ? formData.originalPrice.toLocaleString('id-ID') : ''}
+            value={formData.originalPrice ? `Rp ${formData.originalPrice.toLocaleString('id-ID')}` : ''}
             onChange={(e) => {
               const raw = e.target.value.replace(/[^0-9]/g, '');
               const num = raw ? parseInt(raw, 10) : 0;
               setFormData((prev: any) => ({ ...prev, originalPrice: num }));
             }}
-            className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-            placeholder="0"
+            className="form-control control-h-lg"
+            placeholder="Rp 1.000.000"
           />
         </div>
-
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-semibold text-pink-200 mb-2">
-            Category*
-          </label>
-          <div className="relative">
-            <select
-              value={formData.categoryId || formData.category || ''}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, categoryId: e.target.value, category: e.target.value }))}
-              disabled={loadingCategories}
-              className="w-full px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed appearance-none pr-10"
-              required
-            >
-              {loadingCategories ? (
-                <option value="">Loading categories...</option>
-              ) : (
-                <>
-                  <option value="">Select Category</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-            {loadingCategories && (
-              <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="w-4 h-4 animate-spin text-pink-400" />
-              </div>
-            )}
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg className={`w-4 h-4 text-pink-200/60 ${loadingCategories ? 'hidden' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          {!loadingCategories && categories.length === 0 && (
-            <p className="text-red-400 text-xs mt-2">
-              No categories found. After migration, create categories first.
-            </p>
-          )}
-        </div>
+  {/* accountLevel removed */}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ interface ProductsFiltersProps {
   onAddProduct?: () => void;
   onClearFilters: () => void;
   className?: string;
+  categories?: { id: string; name: string }[]; // dynamic categories
 }
 
 export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
@@ -32,7 +33,8 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
   onSortOrderChange,
   onAddProduct,
   onClearFilters,
-  className = ''
+  className = '',
+  categories = []
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -115,11 +117,9 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
                 className="w-full px-3 py-2 bg-black/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-pink-500/50"
               >
                 <option value="">All Categories</option>
-                <option value="gaming">Gaming</option>
-                <option value="mobile">Mobile</option>
-                <option value="console">Console</option>
-                <option value="pc">PC</option>
-                <option value="premium">Premium</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
 
@@ -166,19 +166,21 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <div className="flex items-center justify-between pt-4 border-t border-white/10">
-            <span className="text-sm text-gray-300">
-              Filters applied
-            </span>
-            <IOSButton
-              variant="ghost"
-              size="small"
-              onClick={onClearFilters}
-              className="flex items-center gap-2 hover:bg-red-500/20 border border-red-500/30 text-red-400"
-            >
-              <X className="w-4 h-4" />
-              Clear All
-            </IOSButton>
+          <div className="filter-footer border-t border-white/10 pt-4">
+            <div className="left">
+              <span className="fs-sm text-secondary">Filters applied</span>
+            </div>
+            <div className="right">
+              <IOSButton
+                variant="ghost"
+                size="small"
+                onClick={onClearFilters}
+                className="flex items-center gap-2 hover:bg-red-500/20 border border-red-500/30 text-red-400"
+              >
+                <X className="w-4 h-4" />
+                Clear All
+              </IOSButton>
+            </div>
           </div>
         )}
       </div>

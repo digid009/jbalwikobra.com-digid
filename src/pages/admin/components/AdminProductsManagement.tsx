@@ -1,24 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Plus, Package, AlertCircle, Loader2, RefreshCw, Grid, List, Edit, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, Plus, Package, AlertCircle, Loader2, RefreshCw, CheckCircle2, XCircle, ChevronDown, Trash2 } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { ProductService } from '../../../services/productService';
+import { useCategories } from '../../../hooks/useCategories';
 import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystemV2';
-import { IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { ProductCrudModal } from './ProductCrudModal';
-import { ProductCard } from './products/ProductCard';
-import { ProductCardList } from './products/ProductCardList';
+// Table implementation replaces legacy card & list views
+import { ProductsTable } from './products/ProductsTable';
 import { Tier, GameTitle } from '../../../types';
 
-export const AdminProductsManagement: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+interface AdminProductsManagementProps {
+  initialProducts?: Product[];
+}
+
+export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = ({ initialProducts }) => {
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Reference data for filters
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const { categories: availableCategories } = useCategories();
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,18 +36,38 @@ export const AdminProductsManagement: React.FC = () => {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [itemsPerPage, setItemsPerPage] = useState(20); // default 20 per requirement
+  // Sorting state for table
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'created_at'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Custom page size dropdown state
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
+  // Delete confirmation state
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  // Toast notifications
+  const [toasts, setToasts] = useState<{ id: number; type: 'success' | 'error'; message: string }[]>([]);
+  const pushToast = (type: 'success' | 'error', message: string) => {
+    const id = Date.now() + Math.random();
+    setToasts(t => [...t, { id, type, message }]);
+    setTimeout(() => {
+      setToasts(t => t.filter(to => to.id !== id));
+    }, 3500);
+  };
 
   useEffect(() => {
-    loadProducts();
+    if (!initialProducts) {
+      loadProducts();
+    } else {
+      setLoading(false);
+    }
     loadReferenceData();
-  }, []);
+  }, [initialProducts]);
 
   // Separate effect for client-side filtering - no need to reload data
   useEffect(() => {
@@ -51,8 +78,9 @@ export const AdminProductsManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminService.getProducts(1, 200); // Get all products
-      setProducts(response.data);
+  const response: any = await adminService.getProducts(1, 200); // Get all products
+  const list = response && Array.isArray(response.data) ? response.data : (response?.data ? [response.data] : []);
+  setProducts(list);
     } catch (err) {
       console.error('Error loading products:', err);
       setError('Failed to load products');
@@ -63,14 +91,12 @@ export const AdminProductsManagement: React.FC = () => {
 
   const loadReferenceData = async () => {
     try {
-      const [tiersData, gameTitlesData, categoriesData] = await Promise.all([
+      const [tiersData, gameTitlesData] = await Promise.all([
         ProductService.getTiers(),
-        ProductService.getGameTitles(),
-        ProductService.getCategories()
+        ProductService.getGameTitles()
       ]);
       setTiers(tiersData);
       setGameTitles(gameTitlesData);
-      setAvailableCategories(categoriesData);
     } catch (error) {
       console.error('Error loading reference data:', error);
     }
@@ -97,15 +123,31 @@ export const AdminProductsManagement: React.FC = () => {
     handleCloseModal();
   };
 
-  const handleStatusChange = async (id: string, next: boolean) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: next } : p)); // optimistic
+  // Quick inline update (price, stock, is_active etc.)
+  const handleQuickUpdate = async (id: string, fields: Partial<Product>) => {
+    const prevProduct = products.find(p => p.id === id);
+    if (!prevProduct) return;
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...fields } : p)); // optimistic
     try {
-      await ProductService.updateProduct(id, { is_active: next });
+      await (adminService as any).updateProductFields(id, fields);
+      pushToast('success', 'Perubahan tersimpan');
     } catch (e) {
-      // revert on failure
-      setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !next } : p));
-      console.error('Failed to update status', e);
+      console.error('Failed quick update', e);
+      // revert
+      setProducts(prev => prev.map(p => p.id === id ? prevProduct : p));
+      pushToast('error', 'Gagal menyimpan perubahan');
     }
+  };
+
+  const handleSort = (column: 'name' | 'price' | 'stock' | 'created_at') => {
+    setSortBy(prev => {
+      if (prev === column) {
+        setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'));
+        return prev; // same column toggles order
+      }
+      setSortOrder('asc');
+      return column;
+    });
   };
 
   const filteredProducts = useMemo(() => {
@@ -115,9 +157,9 @@ export const AdminProductsManagement: React.FC = () => {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(product =>
-        product.name?.toLowerCase().includes(searchLower) ||
-        product.description?.toLowerCase().includes(searchLower) ||
-        product.category?.toLowerCase().includes(searchLower)
+  product.name?.toLowerCase().includes(searchLower) ||
+  product.description?.toLowerCase().includes(searchLower) ||
+  (product as any).categoryData?.name?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -130,15 +172,17 @@ export const AdminProductsManagement: React.FC = () => {
 
     // Apply category filter
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(product => 
-        product.category?.toLowerCase() === categoryFilter.toLowerCase()
+      filtered = filtered.filter(product =>
+        (product as any).categoryData?.id === categoryFilter ||
+        (product as any).categoryData?.slug === categoryFilter ||
+        (product as any).categoryData?.name?.toLowerCase() === categoryFilter.toLowerCase()
       );
     }
 
     // Apply tier filter using proper tier data
     if (tierFilter !== 'all') {
       filtered = filtered.filter(product => {
-        const tierSlug = (product as any).tiers?.slug || (product as any).tier_slug || product.tier;
+  const tierSlug = (product as any).tiers?.slug || (product as any).tier_slug;
         const tierName = (product as any).tiers?.name || (product as any).tier_name;
         return tierSlug?.toLowerCase() === tierFilter.toLowerCase() ||
                tierName?.toLowerCase() === tierFilter.toLowerCase();
@@ -155,15 +199,44 @@ export const AdminProductsManagement: React.FC = () => {
       });
     }
 
-    // Default sort by name ascending
+    // Apply table sorting
     filtered.sort((a, b) => {
-      const aValue = a.name?.toLowerCase() || '';
-      const bValue = b.name?.toLowerCase() || '';
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      let aValue: any;
+      let bValue: any;
+      switch (sortBy) {
+        case 'price':
+          aValue = a.price ?? 0; bValue = b.price ?? 0; break;
+        case 'stock':
+          aValue = a.stock ?? 0; bValue = b.stock ?? 0; break;
+        case 'created_at':
+          aValue = (a as any).created_at || ''; bValue = (b as any).created_at || ''; break;
+        default:
+          aValue = a.name?.toLowerCase() || ''; bValue = b.name?.toLowerCase() || ''; break;
+      }
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
     });
 
-    return filtered;
-  }, [products, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter]);
+    // Enrich with categoryData if missing, using availableCategories map
+    const enriched = filtered.map(p => {
+      const anyP: any = p;
+      if (!anyP.categoryData) {
+        const catId = anyP.category_id || anyP.categoryId || anyP.category;
+        if (catId) {
+          const cat = availableCategories.find(c => c.id === catId);
+          if (cat) {
+            return {
+              ...p,
+              categoryData: { id: cat.id, name: cat.name || cat.slug, slug: cat.slug }
+            } as any;
+          }
+        }
+      }
+      return p;
+    });
+    return enriched;
+  }, [products, availableCategories, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter, sortBy, sortOrder]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -171,9 +244,15 @@ export const AdminProductsManagement: React.FC = () => {
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   const categories = useMemo(() => {
-    const legacy = new Set(products.map(p => p.category).filter(Boolean) as string[]);
-    availableCategories.forEach(c => legacy.add(c));
-    return Array.from(legacy);
+    const set = new Map<string, { id: string; label: string }>();
+    for (const p of products) {
+      const cd: any = (p as any).categoryData;
+      if (cd?.id) set.set(cd.id, { id: cd.id, label: cd.name || cd.slug });
+    }
+    for (const c of availableCategories) {
+      set.set(c.id, { id: c.id, label: c.name || c.slug });
+    }
+    return Array.from(set.values());
   }, [products, availableCategories]);
 
   const clearAllFilters = () => {
@@ -185,165 +264,203 @@ export const AdminProductsManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 min-h-screen">
-      {/* Modern Header with Glass Effect */}
-      <div className="bg-gradient-to-r from-black via-gray-950 to-black backdrop-blur-xl border-b border-white/10 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
-              Products Management
-            </h1>
-            <p className="text-gray-400 mt-1">{filteredProducts.length} of {products.length} products</p>
+    <div className="stack-lg min-h-screen">
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 stack-sm w-72">
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={cn(
+              'flex items-start gap-sm p-md rounded-xl shadow-lg border backdrop-blur-md animate-fade-in-up fs-sm',
+              t.type === 'success'
+                ? 'surface-tint-emerald text-primary'
+                : 'surface-tint-red text-primary'
+            )}
+          >
+            {t.type === 'success' ? <CheckCircle2 className="w-4 h-4 mt-0.5" /> : <XCircle className="w-4 h-4 mt-0.5" />}
+            <div className="flex-1 leading-snug">{t.message}</div>
+            <button
+              onClick={() => setToasts(ts => ts.filter(x => x.id !== t.id))}
+              className="fs-xs opacity-60 hover:opacity-100 transition-soft"
+            >Tutup</button>
           </div>
-          <div className="flex items-center gap-3">
+        ))}
+      </div>
+      {/* Modern Header with Glass Effect (refactored to tokens) */}
+  <div className="px-lg py-lg">
+        <div className="flex items-center justify-between gap-md flex-wrap">
+          <div className="space-y-xs">
+            <h1 className="heading-section fs-xl md:fs-2xl">
+              Manajemen Produk
+            </h1>
+            <p className="text-secondary fs-sm mt-xs">{filteredProducts.length} dari {products.length} produk</p>
+          </div>
+          <div className="flex items-center gap-sm flex-wrap">
+            {/* Page Size Selector (custom dropdown for readability) */}
+            <div className="relative" onBlur={(e)=>{ if(!e.currentTarget.contains(e.relatedTarget as Node)) setPageSizeOpen(false); }}>
+              <button
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={pageSizeOpen}
+                onClick={()=>setPageSizeOpen(o=>!o)}
+                className={cn(
+                  'h-11 w-[110px] text-left rounded-lg border text-sm px-3 pt-4 pb-1 relative',
+                  'bg-white/5 border-white/12 hover:bg-white/8 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 transition-soft'
+                )}
+              >
+                <span className="absolute left-3 top-1 text-[10px] font-medium tracking-wide text-secondary/70">Tampil</span>
+                <span className="font-medium select-none">{itemsPerPage}</span>
+                <ChevronDown className={cn('w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-pink-400/70 transition-transform', pageSizeOpen && 'rotate-180')} />
+              </button>
+              {pageSizeOpen && (
+                <ul
+                  role="listbox"
+                  tabIndex={-1}
+                  className="absolute z-20 mt-1 w-[110px] rounded-md overflow-hidden border border-white/15 shadow-xl backdrop-blur-xl bg-neutral-900/90 text-sm">
+                  {[20,50,100].map(size => (
+                    <li
+                      key={size}
+                      role="option"
+                      aria-selected={itemsPerPage===size}
+                      tabIndex={0}
+                      onClick={()=>{ setItemsPerPage(size); setCurrentPage(1); setPageSizeOpen(false); }}
+                      onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); setItemsPerPage(size); setCurrentPage(1); setPageSizeOpen(false);} if(e.key==='Escape'){ setPageSizeOpen(false);} }}
+                      className={cn(
+                        'px-3 py-2 cursor-pointer flex items-center gap-2',
+                        'hover:bg-pink-500/15 focus:bg-pink-500/20 outline-none',
+                        itemsPerPage===size ? 'text-pink-300 font-semibold bg-pink-500/10' : 'text-primary'
+                      )}
+                    >
+                      {size}
+                      {itemsPerPage===size && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pink-400" />}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <IOSButton 
               onClick={loadProducts} 
-              className="flex items-center space-x-2 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30" 
+              className="flex items-center gap-xs px-md py-sm bg-accent-soft ring-accent/20 hover:bg-accent-soft/70 transition-soft" 
               disabled={loading}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              <span className="fs-sm md:fs-base">Segarkan</span>
             </IOSButton>
             <IOSButton 
               onClick={handleAddProduct}
-              className="flex items-center space-x-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30"
+              className="flex items-center gap-xs px-md py-sm bg-accent-soft hover:bg-accent-soft/70 border-subtle transition-soft"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Product</span>
+              <span className="fs-sm md:fs-base">Tambah Produk</span>
             </IOSButton>
           </div>
         </div>
       </div>
 
       {/* Modern Filters Section */}
-      <div className="px-6">
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-          <button
-            onClick={() => setFiltersOpen(o => !o)}
-            className="w-full flex items-center justify-between px-6 py-4 text-left bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 hover:from-pink-500/15 hover:to-fuchsia-500/15 transition-colors"
-            aria-expanded={filtersOpen}
-            aria-controls="product-filters-panel"
-          >
-            <span className="font-semibold text-pink-100 tracking-wide">Filters</span>
-            <span className="text-xs text-pink-200 bg-white/10 px-2 py-1 rounded-full border border-white/10">{filtersOpen ? 'Hide' : 'Show'}</span>
-          </button>
+      <div className="px-lg">
+        <div className="filter-panel">
+          <div className="filter-panel-header">
+            <span className="filter-title">Filters</span>
+            <button
+              onClick={() => setFiltersOpen(o => !o)}
+              className="filter-toggle-badge transition-soft hover:brightness-110"
+              aria-expanded={filtersOpen}
+              aria-controls="product-filters-panel"
+              type="button"
+            >{filtersOpen ? 'Sembunyikan' : 'Tampilkan'}</button>
+          </div>
           <div
             id="product-filters-panel"
-            className={`transition-[max-height] duration-500 ease-in-out ${filtersOpen ? 'max-h-[1200px]' : 'max-h-0'} overflow-hidden`}
+            className={`transition-[max-height] duration-500 ease-in-out ${filtersOpen ? 'max-h-[1400px]' : 'max-h-0'} overflow-hidden`}
           >
-            <div className="p-6 space-y-6">
-              {/* First Row - Search and View Mode */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-400/60" />
-                  <input
-                    type="text"
-                    placeholder="Search products by name, description, or category..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                  />
-                </div>
-
-                {/* View Mode Toggle */}
-                <div className="flex bg-black/60 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden">
-                  <button 
-                    onClick={() => setViewMode('grid')} 
-                    className={cn(
-                      'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
-                      viewMode === 'grid' 
-                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                    )}
-                  >
-                    <Grid className="w-4 h-4" />
-                    Grid
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('list')} 
-                    className={cn(
-                      'px-4 py-3 text-sm font-semibold transition-all duration-300 flex items-center gap-2',
-                      viewMode === 'list' 
-                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg' 
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                    )}
-                  >
-                    <List className="w-4 h-4" />
-                    List
-                  </button>
-                </div>
+            <div className="filter-content">
+              {/* Search Row */}
+              <div className="input-icon-left">
+                <Search className="icon" />
+                <input
+                  type="text"
+                  placeholder="Search products (name, description, category)"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control control-h-lg"
+                />
               </div>
 
-              {/* Second Row - Filters */}
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Status Filter */}
-                <div className="flex items-center space-x-3 min-w-[140px]">
-                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Status:</span>
+              {/* Fields Grid */}
+              <div className="fields-grid">
+                {/* Status */}
+                <div className="form-field">
+                  <label className="form-label fs-xs text-secondary">Status</label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                    className="select-control control-h-lg"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
-
-                {/* Category Filter */}
-                <div className="flex items-center space-x-3 min-w-[160px]">
-                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Category:</span>
+                {/* Category */}
+                <div className="form-field">
+                  <label className="form-label fs-xs text-secondary">Category</label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                    className="select-control control-h-lg"
                   >
                     <option value="all">All Categories</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Tier Filter */}
-                <div className="flex items-center space-x-3 min-w-[140px]">
-                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Tier:</span>
+                {/* Tier */}
+                <div className="form-field">
+                  <label className="form-label fs-xs text-secondary">Tier</label>
                   <select
                     value={tierFilter}
                     onChange={(e) => setTierFilter(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                    className="select-control control-h-lg"
                   >
                     <option value="all">All Tiers</option>
-                    {tiers.map(tier => (
+                    {(tiers || []).map(tier => (
                       <option key={tier.id} value={tier.slug}>{tier.name}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Game Title Filter */}
-                <div className="flex items-center space-x-3 min-w-[160px]">
-                  <span className="text-sm font-medium text-pink-200/80 whitespace-nowrap">Game:</span>
+                {/* Game */}
+                <div className="form-field">
+                  <label className="form-label fs-xs text-secondary">Game</label>
                   <select
                     value={gameTitleFilter}
                     onChange={(e) => setGameTitleFilter(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
+                    className="select-control control-h-lg"
                   >
                     <option value="all">All Games</option>
-                    {gameTitles.map(gameTitle => (
+                    {(gameTitles || []).map(gameTitle => (
                       <option key={gameTitle.id} value={gameTitle.slug}>{gameTitle.name}</option>
                     ))}
                   </select>
                 </div>
+              </div>
 
-                {/* Clear Filters */}
-                <IOSButton 
-                  onClick={clearAllFilters}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-red-500/10 to-pink-500/10 border-red-500/20 hover:from-red-500/20 hover:to-pink-500/20 whitespace-nowrap"
-                >
-                  <Filter className="w-4 h-4" />
-                  <span>Clear</span>
-                </IOSButton>
+              {/* Footer (actions + results) */}
+              <div className="filter-footer">
+                <div className="left">
+                  <div className="chip" aria-hidden="true">{filteredProducts.length} Results</div>
+                </div>
+                <div className="right">
+                  <IOSButton
+                    onClick={clearAllFilters}
+                    className="chip-clear flex items-center gap-xs px-md py-sm"
+                    type="button"
+                  >
+                    <Filter className="w-4 h-4" />
+                    <span className="fs-xs">Clear All</span>
+                  </IOSButton>
+                </div>
               </div>
             </div>
           </div>
@@ -351,100 +468,71 @@ export const AdminProductsManagement: React.FC = () => {
       </div>
 
       {/* Modern Products Display */}
-      <div className="px-6">
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+      <div className="px-lg">
+        <div className="surface-glass-md rounded-2xl border-subtle shadow-2xl overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center">
-              <div className="relative">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
+            <div className="p-xl text-center stack-md">
+              <div className="relative inline-block">
+                <div className="badge-circle lg surface-tint-pink badge-ring mb-sm">
+                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
                 </div>
-                <div className="absolute inset-0 rounded-full bg-pink-500/10 animate-pulse"></div>
+                <div className="absolute inset-0 badge-circle lg bg-accent-soft animate-pulse opacity-40"></div>
               </div>
-              <p className="text-white font-medium">Loading products...</p>
-              <p className="text-gray-400 text-sm mt-1">Fetching product data from database</p>
+              <p className="heading-section fs-lg">Memuat produk...</p>
+              <p className="text-secondary fs-sm">Mengambil data produk dari database</p>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="p-6">
-              {viewMode === 'grid' ? (
-                /* Grid View - Using ProductCard component with tier styling */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {paginatedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      tiers={tiers}
-                      gameTitles={gameTitles}
-                      onEdit={() => handleEditProduct(product)}
-                      onView={() => { console.log('View product:', product); }}
-                      onDelete={() => { console.log('Delete product:', product); }}
-                      onStatusChange={handleStatusChange}
-                    />
-                  ))}
-                </div>
-              ) : (
-                /* List View - Using ProductCardList component with tier styling */
-                <div className="space-y-3">
-                  {paginatedProducts.map((product) => (
-                    <ProductCardList
-                      key={product.id}
-                      product={product}
-                      tiers={tiers}
-                      gameTitles={gameTitles}
-                      onEdit={() => handleEditProduct(product)}
-                      onView={() => { console.log('View product:', product); }}
-                      onDelete={() => { console.log('Delete product:', product); }}
-                      onStatusChange={handleStatusChange}
-                    />
-                  ))}
-                </div>
-              )}
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-8 pt-6 border-t border-white/10">
-                  <IOSPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredProducts.length}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={(p) => setCurrentPage(p)}
-                  />
-                </div>
-              )}
+            <div className="p-lg stack-lg">
+              <ProductsTable
+                products={paginatedProducts as any}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                onView={(p: Product) => navigate(`/products/${p.id}`)}
+                onEdit={handleEditProduct}
+                onDelete={(p: Product) => setProductToDelete(p)}
+                loading={loading}
+                onQuickUpdate={(id, fields) => handleQuickUpdate(id, fields as any)}
+              />
+              <div className="pt-lg">
+                <IOSPaginationV2
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredProducts.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={(p)=>setCurrentPage(p)}
+                />
+              </div>
             </div>
           ) : (
-            <div className="p-12 text-center">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-8 h-8 text-pink-400/60" />
+            <div className="p-xl text-center stack-md">
+              <div className="relative inline-block">
+                <div className="badge-circle lg surface-tint-pink badge-ring mb-sm">
+                  <Package className="w-8 h-8 text-accent" />
                 </div>
-                <div className="absolute inset-0 rounded-full bg-pink-500/5 animate-pulse"></div>
+                <div className="absolute inset-0 badge-circle lg bg-accent-soft animate-pulse opacity-40"></div>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">
-                {products.length === 0 ? 'No Products Found' : 'No Matching Products'}
-              </h3>
-              <p className="text-gray-400 max-w-md mx-auto mb-6">
+              <h3 className="heading-section fs-xl">{products.length === 0 ? 'Tidak Ada Produk' : 'Tidak Ada yang Cocok'}</h3>
+              <p className="text-secondary fs-sm layout-narrow mx-auto">
                 {products.length === 0 
-                  ? 'Get started by adding your first product to the system.'
-                  : 'Try adjusting your filters or search terms to find what you\'re looking for.'
-                }
+                  ? 'Mulai dengan menambahkan produk pertama Anda.'
+                  : 'Coba ubah filter atau kata kunci pencarian untuk menemukan produk.'}
               </p>
               {products.length === 0 ? (
                 <IOSButton
                   onClick={handleAddProduct}
-                  className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30"
+                  className="px-lg py-sm surface-tint-emerald hover:bg-emerald-500/25 transition-soft"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Product
+                  Tambah Produk Pertama
                 </IOSButton>
               ) : (
                 <IOSButton
                   onClick={clearAllFilters}
-                  className="bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border-pink-500/20 hover:from-pink-500/20 hover:to-fuchsia-500/20"
+                  className="px-lg py-sm surface-tint-pink hover:bg-pink-500/25 transition-soft"
                 >
                   <Filter className="w-4 h-4 mr-2" />
-                  Clear All Filters
+                  Reset Semua Filter
                 </IOSButton>
               )}
             </div>
@@ -459,6 +547,51 @@ export const AdminProductsManagement: React.FC = () => {
         product={selectedProduct}
         onSuccess={handleProductSaved}
       />
+
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={()=>!deleting && setProductToDelete(null)} />
+          <div className="relative w-full max-w-md rounded-2xl surface-glass-md border border-red-500/30 shadow-2xl p-6 space-y-4 animate-fade-in-up">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/15 border border-red-500/40">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <h3 className="text-lg font-semibold text-white">Hapus Produk?</h3>
+                <p className="text-sm text-gray-300 leading-relaxed">Tindakan ini akan menghapus produk <span className="font-semibold text-white">{productToDelete.name}</span> secara permanen dari sistem. Data tidak dapat dikembalikan.</p>
+                <p className="text-xs text-red-300/80">Pastikan tidak ada order aktif yang masih bergantung pada produk ini.</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={()=> setProductToDelete(null)}
+                className="px-4 h-10 rounded-lg text-sm font-medium bg-white/5 hover:bg-white/10 disabled:opacity-50 border border-white/10 text-gray-200"
+              >Batal</button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={async ()=>{
+                  if (!productToDelete) return;
+                  setDeleting(true);
+                  const ok = await (adminService as any).deleteProduct(productToDelete.id);
+                  if (ok) {
+                    setProducts(prev => prev.filter(p => p.id !== productToDelete.id));
+                    pushToast('success', 'Produk berhasil dihapus');
+                  } else {
+                    pushToast('error', 'Gagal menghapus produk');
+                  }
+                  setDeleting(false);
+                  setProductToDelete(null);
+                }}
+                className="px-5 h-10 rounded-lg text-sm font-semibold bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 disabled:opacity-50 text-white shadow-lg shadow-red-900/30"
+              >{deleting ? 'Menghapus...' : 'Hapus Permanen'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

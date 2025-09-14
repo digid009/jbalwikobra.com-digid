@@ -26,7 +26,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const isFlashSaleActive = showFlashSaleTimer && timeRemaining && !timeRemaining.isExpired;
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
-  const showBest = showFlashSaleTimer || product.tier === 'premium';
+  const showBest = showFlashSaleTimer || product.tierData?.slug === 'premium';
 
   // Debug logging for flash sales
   if (showFlashSaleTimer) {
@@ -53,8 +53,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   // Robust monogram: derive from game title name or slug, producing tokens initials (e.g., Free Fire -> FF, Mobile Legends -> ML)
   const getMonogram = (): string => {
-    const name = product.gameTitleData?.name || product.gameTitle || '';
-    const slug = product.gameTitleData?.slug || (product.gameTitle ? product.gameTitle.toLowerCase().replace(/\s+/g, '-') : '');
+  const name = product.gameTitleData?.name || '';
+  const slug = product.gameTitleData?.slug || '';
     const source = name || slug;
     if (!source) return 'JB';
     const normalized = source.replace(/[-_]+/g, ' ').trim();
@@ -70,7 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   // Tier styling with dynamic data - optimized for flash sale style
-  const getTierStyles = (tierData?: any, tier?: string) => {
+  const getTierStyles = (tierData?: any) => {
     // Use dynamic tier data if available
     if (tierData?.backgroundGradient) {
       return {
@@ -84,48 +84,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
       };
     }
     
-    // Fallback to tier-specific styling for flash sale look
-    switch (tier) {
-      case 'premium':
-        // Emas untuk premium
-        return {
-          bg: 'bg-gradient-to-br from-amber-700/40 via-amber-700/30 to-yellow-700/40',
-          ring: 'ring-amber-500/40',
-          textColor: 'text-white',
-          badge: 'bg-amber-400/20 text-amber-100 border-amber-300/60',
-          badgeColor: '#FFD700',
-          borderColor: '#FFD700',
-          cardBorder: 'border-amber-500/30'
-        };
-      case 'pelajar':
-        // Biru untuk pelajar
-        return {
-          bg: 'bg-gradient-to-br from-blue-700/40 via-blue-700/30 to-indigo-700/40',
-          ring: 'ring-blue-500/40',
-          textColor: 'text-white',
-          badge: 'bg-blue-400/20 text-blue-100 border-blue-300/60',
-          badgeColor: '#3b82f6',
-          borderColor: '#60a5fa',
-          cardBorder: 'border-blue-500/30'
-        };
-      default:
-        // Silver untuk reguler
-        return {
-          bg: 'bg-gradient-to-br from-zinc-700/40 via-zinc-700/30 to-gray-700/40',
-          ring: 'ring-gray-300/40',
-          textColor: 'text-white',
-          badge: 'bg-gray-300/20 text-gray-100 border-gray-200/60',
-          badgeColor: '#C0C0C0',
-          borderColor: '#D1D5DB',
-          cardBorder: 'border-gray-500/30'
-        };
-    }
+    // Default neutral styling when no dynamic tierData
+    return {
+      bg: 'bg-gradient-to-br from-zinc-700/40 via-zinc-700/30 to-gray-700/40',
+      ring: 'ring-gray-300/40',
+      textColor: 'text-white',
+      badge: 'bg-gray-300/20 text-gray-100 border-gray-200/60',
+      badgeColor: '#C0C0C0',
+      borderColor: '#D1D5DB',
+      cardBorder: 'border-gray-500/30'
+    };
   };
 
-  const tierStyle = getTierStyles(product.tierData, product.tier);
+  const tierStyle = getTierStyles(product.tierData);
 
   // Get tier icon with dynamic data
-  const getTierIcon = (tierData?: any, tier?: string) => {
+  const getTierIcon = (tierData?: any) => {
     if (tierData?.icon) {
       switch (tierData.icon) {
         case 'Crown': return Crown;
@@ -135,24 +109,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
       }
     }
     
-    // Fallback
-    switch (tier) {
-      case 'premium': return Crown;
-      case 'pelajar': return Users;
-      default: return Trophy;
-    }
+    // Fallback default trophy when slug unknown
+    if (tierData?.slug === 'premium') return Crown;
+    if (tierData?.slug === 'pelajar') return Users;
+    return Trophy;
   };
 
-  const TierIcon = getTierIcon(product.tierData, product.tier);
+  const TierIcon = getTierIcon(product.tierData);
 
   // Get game title for display
-  const gameTitle = product.gameTitleData?.name || product.gameTitle;
-  const gameTitleSlug = product.gameTitleData?.slug || product.gameTitle?.toLowerCase().replace(/\s+/g, '-');
+  const gameTitle = product.gameTitleData?.name;
+  const gameTitleSlug = product.gameTitleData?.slug;
 
   // Get tier name for display
   const tierName = product.tierData?.name || (
-    product.tier === 'premium' ? 'PREMIUM' : 
-    product.tier === 'pelajar' ? 'PELAJAR' : 'REGULER'
+  product.tierData?.slug?.toUpperCase() || 'REGULER'
   );
 
   return (
@@ -215,7 +186,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </span>
 
             {/* Tier Badge */}
-            {(product.tierData || product.tier) && (
+            {product.tierData && (
               <span 
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border backdrop-blur-sm"
                 style={{

@@ -182,16 +182,15 @@ export const FlashSaleForm: React.FC<FlashSaleFormProps> = ({
             </IOSButton>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="form-section">
             {/* Product Selection */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Produk <span className="text-red-400">*</span>
-              </label>
+            <div className="form-field">
+              <label htmlFor="flash-product" className="form-label required">Produk</label>
               <select
+                id="flash-product"
                 value={formData.product_id}
                 onChange={(e) => handleFieldChange('product_id', e.target.value)}
-                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className={`form-control ${errors.product_id ? 'error' : ''}`}
                 disabled={saving || productsLoading}
               >
                 <option value="">
@@ -204,15 +203,13 @@ export const FlashSaleForm: React.FC<FlashSaleFormProps> = ({
                 ))}
               </select>
               {errors.product_id && (
-                <p className="text-red-400 text-sm mt-1">{errors.product_id}</p>
+                <p className="form-hint error">{errors.product_id}</p>
               )}
             </div>
 
             {/* Discount Settings */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-white">
-                Pengaturan Diskon <span className="text-red-400">*</span>
-              </label>
+            <div className="form-field">
+              <label className="form-label required">Pengaturan Diskon</label>
               
               {/* Discount Type */}
               <div className="grid grid-cols-2 gap-4">
@@ -244,40 +241,38 @@ export const FlashSaleForm: React.FC<FlashSaleFormProps> = ({
 
               {/* Discount Value Input */}
               {formData.discount_type === 'percentage' ? (
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Persentase Diskon (%)
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="discount-percentage" className="form-label">Persentase Diskon (%)</label>
                   <input
+                    id="discount-percentage"
                     type="number"
                     min="0.1"
                     max="99.9"
                     step="0.1"
                     value={formData.discount_percentage || ''}
                     onChange={(e) => handleFieldChange('discount_percentage', parseFloat(e.target.value) || 0)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.discount_percentage ? 'error' : ''}`}
                     placeholder="Contoh: 20"
                   />
                   {errors.discount_percentage && (
-                    <p className="text-red-400 text-sm mt-1">{errors.discount_percentage}</p>
+                    <p className="form-hint error">{errors.discount_percentage}</p>
                   )}
                 </div>
               ) : (
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Nominal Diskon (Rp)
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="discount-amount" className="form-label">Nominal Diskon (Rp)</label>
                   <input
+                    id="discount-amount"
                     type="number"
                     min="1000"
                     step="1000"
                     value={formData.discount_amount || ''}
                     onChange={(e) => handleFieldChange('discount_amount', parseFloat(e.target.value) || 0)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.discount_amount ? 'error' : ''}`}
                     placeholder="Contoh: 100000"
                   />
                   {errors.discount_amount && (
-                    <p className="text-red-400 text-sm mt-1">{errors.discount_amount}</p>
+                    <p className="form-hint error">{errors.discount_amount}</p>
                   )}
                 </div>
               )}
@@ -285,30 +280,30 @@ export const FlashSaleForm: React.FC<FlashSaleFormProps> = ({
 
             {/* Price Preview */}
             {previewData && (
-              <div className="p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-                <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+              <div className="p-4 surface-glass-sm">
+                <h4 className="heading-micro mb-3 flex items-center gap-2 text-primary">
                   <Package className="w-4 h-4" />
                   Preview Harga
                 </h4>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-sm text-gray-400">Harga Asli</div>
-                    <div className="text-lg font-medium text-gray-300 line-through">
+                    <div className="typography-caption-1 text-tertiary">Harga Asli</div>
+                    <div className="typography-headline text-secondary line-through">
                       {formatCurrency(previewData.originalPrice)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400">Harga Sale</div>
-                    <div className="text-lg font-bold text-pink-400">
+                    <div className="typography-caption-1 text-tertiary">Harga Sale</div>
+                    <div className="typography-headline text-accent">
                       {formatCurrency(previewData.salePrice)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400">Hemat</div>
-                    <div className="text-lg font-bold text-green-400">
+                    <div className="typography-caption-1 text-tertiary">Hemat</div>
+                    <div className="typography-headline text-green-400">
                       {formatCurrency(previewData.discountAmount)}
                     </div>
-                    <div className="text-xs text-green-300">
+                    <div className="typography-caption-2 text-green-300">
                       ({previewData.discountPercentage.toFixed(1)}%)
                     </div>
                   </div>
@@ -317,116 +312,103 @@ export const FlashSaleForm: React.FC<FlashSaleFormProps> = ({
             )}
 
             {/* Time Period */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-white">
-                Periode Flash Sale <span className="text-red-400">*</span>
-              </label>
+            <div className="form-field">
+              <label className="form-label required">Periode Flash Sale</label>
               
               <div className="grid grid-cols-2 gap-4">
                 {/* Start Date & Time */}
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Tanggal Mulai
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="start-date" className="form-label">Tanggal Mulai</label>
                   <input
+                    id="start-date"
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => handleFieldChange('start_date', e.target.value)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.start_date ? 'error' : ''}`}
                   />
                   {errors.start_date && (
-                    <p className="text-red-400 text-sm mt-1">{errors.start_date}</p>
+                    <p className="form-hint error">{errors.start_date}</p>
                   )}
                 </div>
                 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Waktu Mulai
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="start-time" className="form-label">Waktu Mulai</label>
                   <input
+                    id="start-time"
                     type="time"
                     value={formData.start_time}
                     onChange={(e) => handleFieldChange('start_time', e.target.value)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.start_time ? 'error' : ''}`}
                   />
                   {errors.start_time && (
-                    <p className="text-red-400 text-sm mt-1">{errors.start_time}</p>
+                    <p className="form-hint error">{errors.start_time}</p>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 {/* End Date & Time */}
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Tanggal Berakhir
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="end-date" className="form-label">Tanggal Berakhir</label>
                   <input
+                    id="end-date"
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => handleFieldChange('end_date', e.target.value)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.end_date ? 'error' : ''}`}
                   />
                   {errors.end_date && (
-                    <p className="text-red-400 text-sm mt-1">{errors.end_date}</p>
+                    <p className="form-hint error">{errors.end_date}</p>
                   )}
                 </div>
                 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">
-                    Waktu Berakhir
-                  </label>
+                <div className="form-field dense">
+                  <label htmlFor="end-time" className="form-label">Waktu Berakhir</label>
                   <input
+                    id="end-time"
                     type="time"
                     value={formData.end_time}
                     onChange={(e) => handleFieldChange('end_time', e.target.value)}
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                    className={`form-control ${errors.end_time ? 'error' : ''}`}
                   />
                   {errors.end_time && (
-                    <p className="text-red-400 text-sm mt-1">{errors.end_time}</p>
+                    <p className="form-hint error">{errors.end_time}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Stock */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Stok Flash Sale
-              </label>
+            <div className="form-field">
+              <label htmlFor="flash-stock" className="form-label">Stok Flash Sale</label>
               <input
+                id="flash-stock"
                 type="number"
                 min="1"
                 value={formData.stock || ''}
                 onChange={(e) => handleFieldChange('stock', parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="form-control"
                 placeholder="Jumlah stok yang tersedia"
               />
             </div>
 
             {/* Active Status */}
-            <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+            <div className="flex items-center justify-between p-4 surface-glass-xs rounded-xl">
               <div>
-                <label className="text-sm font-medium text-white">
+                <label className="form-label">
                   Status Flash Sale
                 </label>
-                <p className="text-xs text-gray-400">
+                <p className="form-hint">
                   Flash sale akan {formData.is_active ? 'aktif' : 'tidak aktif'} setelah disimpan
                 </p>
               </div>
               <button
                 type="button"
+                role="switch"
+                aria-checked={formData.is_active}
                 onClick={() => handleFieldChange('is_active', !formData.is_active)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formData.is_active ? 'bg-pink-600' : 'bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    formData.is_active ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+                className={`toggle ${formData.is_active ? 'active' : ''}`}
+              />
             </div>
 
             {/* Form Actions */}

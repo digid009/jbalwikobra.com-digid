@@ -14,6 +14,7 @@ import {
   Store
 } from 'lucide-react';
 import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
+import ThemeToggle from '../../../components/ui/ThemeToggle';
 import { AdminStats } from '../../../services/adminService';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { AdminTab } from './structure/adminTypes';
@@ -92,12 +93,12 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   return (
     <>
       {/* Header - Fixed positioning */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-gray-700/50">
+  <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-gray-700/50 surface-glass-md">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo & Back to Store */}
             <div className="flex items-center space-x-4">
-              <div className="text-xl font-bold text-pink-600 dark:text-pink-400 tracking-tight">
+              <div className="text-xl font-bold tracking-tight heading-brand">
                 JB Admin
               </div>
               <IOSButton
@@ -112,7 +113,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </div>
 
             {/* Center: Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
+            <nav className="hidden lg:flex items-center space-x-1 cluster-sm">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -166,6 +167,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   })} WIB
                 </div>
               </div>
+
+              {/* Theme Toggle */}
+              <ThemeToggle />
               
               {/* Mobile menu button */}
               <IOSButton

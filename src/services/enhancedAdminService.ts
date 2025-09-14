@@ -25,9 +25,8 @@ export interface CreateProductData {
   original_price?: number;
   image?: string;
   images?: string[];
-  category: string;
-  game_title?: string;
-  account_level?: string;
+  // migrated: category string removed in favor of category_id FK
+  category_id: string; // REQUIRED
   account_details?: string;
   is_flash_sale?: boolean;
   flash_sale_end_time?: string;
@@ -39,6 +38,17 @@ export interface CreateProductData {
   archived_at?: string;
 }
 
+export interface CategoryRef {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -47,9 +57,8 @@ export interface Product {
   original_price?: number;
   image: string;
   images: string[];
-  category: string;
-  game_title?: string;
-  account_level?: string;
+  category_id: string; // FK
+  categoryData?: CategoryRef; // joined data
   account_details?: string;
   is_flash_sale: boolean;
   flash_sale_end_time?: string;
@@ -180,7 +189,7 @@ export interface PaginationParams {
 
 export interface FilterParams {
   search?: string;
-  category?: string;
+  category_id?: string; // new FK based filtering
   status?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -208,6 +217,20 @@ export interface ApiResponse<T> {
 class EnhancedAdminService {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  // Telemetry counters (in-memory only)
+  private telemetry = {
+    productsRelationalSuccess: 0,
+    productsRelationalFallback: 0
+  };
+
+  getTelemetry() {
+    return { ...this.telemetry };
+  }
+
+  resetTelemetry() {
+    this.telemetry.productsRelationalSuccess = 0;
+    this.telemetry.productsRelationalFallback = 0;
+  }
 
   // Cache management
   private getCacheKey(operation: string, params?: any): string {
@@ -329,14 +352,17 @@ class EnhancedAdminService {
     }
 
     return this.handleApiCall(async () => {
-      let query = supabase.from('products').select('*', { count: 'exact' });
+      // Attempt relational join first; fallback to basic select if schema mismatch
+      let relational = true;
+      let query = supabase.from('products').select('*, categories:categories(id,name,slug,description,icon,color,is_active,sort_order)', { count: 'exact' });
 
       // Apply filters
       if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,category.ilike.%${filters.search}%`);
+        // search across name & description only (legacy category removed)
+        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
-      if (filters.category) {
-        query = query.eq('category', filters.category);
+      if (filters.category_id) {
+        query = query.eq('category_id', filters.category_id);
       }
       if (filters.status) {
         query = query.eq('is_active', filters.status === 'active');
@@ -352,12 +378,58 @@ class EnhancedAdminService {
       const to = from + pagination.limit - 1;
       query = query.range(from, to);
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+      let data, error, count;
+      ({ data, error, count } = await query);
+      if (error) {
+        // If join fails (e.g., column/category relation missing), retry without join
+        this.telemetry.productsRelationalFallback++;
+        console.warn('[enhancedAdminService.getProducts] relational select failed, falling back:', error.message);
+        relational = false;
+        const basic = supabase.from('products').select('*', { count: 'exact' })
+          .order(sortBy, { ascending: sortOrder === 'asc' })
+          .range(from, to);
+        ({ data, error, count } = await basic);
+        if (error) throw error;
+      } else {
+        this.telemetry.productsRelationalSuccess++;
+      }
+
+      const mapped: Product[] = (data || []).map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        price: row.price,
+        original_price: row.original_price,
+        image: row.image || '',
+        images: row.images || [],
+        category_id: row.category_id,
+        categoryData: relational && row.categories ? {
+          id: row.categories.id,
+          name: row.categories.name,
+          slug: row.categories.slug,
+          description: row.categories.description,
+          icon: row.categories.icon,
+          color: row.categories.color,
+          is_active: row.categories.is_active,
+          sort_order: row.categories.sort_order
+        } : undefined,
+  // legacy game_title column removed (FK only)
+        account_details: row.account_details,
+        is_flash_sale: row.is_flash_sale || false,
+        flash_sale_end_time: row.flash_sale_end_time,
+        has_rental: row.has_rental || false,
+        stock: row.stock || 0,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        tier_id: row.tier_id,
+        game_title_id: row.game_title_id,
+        is_active: row.is_active,
+        archived_at: row.archived_at
+      }));
 
       const totalPages = Math.ceil((count || 0) / pagination.limit);
       const result: PaginatedResponse<Product> = {
-        data: data || [],
+        data: mapped,
         count: count || 0,
         page: pagination.page,
         limit: pagination.limit,
@@ -381,18 +453,53 @@ class EnhancedAdminService {
     return this.handleApiCall(async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, categories:categories(id,name,slug,description,icon,color,is_active,sort_order)')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      this.setCache(cacheKey, data);
-      return data;
+      const mapped: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        original_price: data.original_price,
+        image: data.image || '',
+        images: data.images || [],
+        category_id: data.category_id,
+        categoryData: data.categories ? {
+          id: data.categories.id,
+            name: data.categories.name,
+            slug: data.categories.slug,
+            description: data.categories.description,
+            icon: data.categories.icon,
+            color: data.categories.color,
+            is_active: data.categories.is_active,
+            sort_order: data.categories.sort_order
+        } : undefined,
+  // legacy game_title column removed (relational-only)
+        account_details: data.account_details,
+        is_flash_sale: data.is_flash_sale || false,
+        flash_sale_end_time: data.flash_sale_end_time,
+        has_rental: data.has_rental || false,
+        stock: data.stock || 0,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        tier_id: data.tier_id,
+        game_title_id: data.game_title_id,
+        is_active: data.is_active,
+        archived_at: data.archived_at
+      };
+      this.setCache(cacheKey, mapped);
+      return mapped;
     }, 'Failed to fetch product');
   }
 
   async createProduct(product: CreateProductData): Promise<ApiResponse<Product>> {
     return this.handleApiCall(async () => {
+      if (!product.category_id) {
+        throw new Error('category_id is required');
+      }
       const { data, error } = await supabase
         .from('products')
         .insert([{
@@ -402,9 +509,9 @@ class EnhancedAdminService {
           original_price: product.original_price,
           image: product.image || '',
           images: product.images || [],
-          category: product.category,
-          game_title: product.game_title,
-          account_level: product.account_level,
+          category_id: product.category_id,
+          // legacy text column removed (only using FK)
+          // game_title omitted intentionally
           account_details: product.account_details,
           is_flash_sale: product.is_flash_sale || false,
           flash_sale_end_time: product.flash_sale_end_time,
@@ -442,9 +549,8 @@ class EnhancedAdminService {
       original_price: 20000,
       image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=TEST+PRODUCT',
       images: ['https://via.placeholder.com/400x300/6366f1/ffffff?text=TEST+PRODUCT'],
-      category: 'debug-tools',
-      game_title: 'Debug Game Testing',
-      account_level: 'Level Testing',
+      category_id: 'sample-cat-debug',
+  // legacy game_title removed
       account_details: 'Account details untuk testing sistem admin. Username: testuser, Password: test123, Server: Debug Server',
       is_flash_sale: false,
       has_rental: false,
@@ -527,3 +633,12 @@ class EnhancedAdminService {
 }
 
 export const enhancedAdminService = new EnhancedAdminService();
+export default enhancedAdminService;
+
+// Dev-only global exposure for quick diagnostics
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  (window as any).__APP_TELEMETRY = {
+    get: () => enhancedAdminService.getTelemetry(),
+    reset: () => enhancedAdminService.resetTelemetry()
+  };
+}

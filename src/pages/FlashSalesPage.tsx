@@ -113,9 +113,9 @@ const FlashSalesPage: React.FC = () => {
     if (filters.searchQuery.trim()) {
       const query = filters.searchQuery.toLowerCase();
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(query) ||
-        product.gameTitle?.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query)
+  product.name.toLowerCase().includes(query) ||
+  product.gameTitleData?.name?.toLowerCase().includes(query) ||
+  product.description?.toLowerCase().includes(query)
       );
     }
 
@@ -127,9 +127,8 @@ const FlashSalesPage: React.FC = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
       filtered = filtered.filter(product => {
-        const slugFromData = product.gameTitleData?.slug;
-        const slugFromName = product.gameTitle ? slugify(product.gameTitle) : undefined;
-        return slugFromData === target || slugFromName === target;
+  const slugFromData = product.gameTitleData?.slug;
+  return slugFromData === target;
       });
     }
 

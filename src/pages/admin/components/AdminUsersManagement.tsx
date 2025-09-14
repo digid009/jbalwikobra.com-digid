@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Users as UsersIcon, Plus } from 'lucide-react';
 import { adminService, User } from '../../../services/adminService';
-import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination, IOSAvatar } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton, IOSSectionHeader, IOSAvatar } from '../../../components/ios/IOSDesignSystem';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
@@ -182,14 +183,12 @@ export const AdminUsersManagement: React.FC = () => {
           
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-white/10 bg-gradient-to-r from-pink-500/5 to-fuchsia-500/5">
-            <IOSPagination
+            <IOSPaginationV2
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalCount}
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
-              showItemsPerPageSelector={true}
-              onItemsPerPageChange={setItemsPerPage}
             />
           </div>
         </div>

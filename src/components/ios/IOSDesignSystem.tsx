@@ -415,7 +415,7 @@ export const IOSContainer: React.FC<IOSContainerProps> = ({
   );
 };
 
-// Export all design tokens and components
-export { IOSPagination } from './IOSPagination';
+// Export all design tokens and components (legacy IOSPagination removed after V2 migration)
+export * from './IOSDesignSystemV2';
 export { IOSAvatar } from './IOSAvatar';
 export { IOSImageUploader } from './IOSImageUploader';

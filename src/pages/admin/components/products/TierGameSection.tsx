@@ -1,6 +1,6 @@
 import React from 'react';
 
-export interface TierGameValues { tier_id: string; game_title: string; account_level: string; account_details: string; }
+export interface TierGameValues { tier_id: string; game_title: string; account_details: string; }
 interface TierGameProps {
   values: TierGameValues;
   tiers: Array<{id:string; name:string}>; games: Array<{id:string; name:string}>;
@@ -27,11 +27,7 @@ export const TierGameSection: React.FC<TierGameProps> = ({ values, tiers, games,
           {games.map(g=> <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-white mb-2">Account Level</label>
-        <input type="text" value={values.account_level} onChange={e=>onChange({ account_level: e.target.value })}
-          className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-black text-white placeholder:text-white/50 focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="e.g., Level 50, Master Rank, Diamond" />
-      </div>
+  {/* Account Level removed */}
       <div>
         <label className="block text-sm font-medium text-white mb-2">Account Details</label>
         <textarea rows={4} value={values.account_details} onChange={e=>onChange({ account_details: e.target.value })}

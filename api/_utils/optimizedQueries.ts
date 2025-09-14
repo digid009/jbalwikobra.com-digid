@@ -35,7 +35,7 @@ export const OPTIMIZED_QUERIES = {
   
   // Products minimal for admin
   PRODUCTS_ADMIN: `
-    id, name, description, price, original_price, account_level,
+    id, name, description, price, original_price,
     is_active, archived_at, created_at, images, game_title_id, tier_id,
     tiers (id, name, slug, color, background_gradient),
     game_titles (id, name, slug, icon)

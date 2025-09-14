@@ -6,7 +6,7 @@ import {
   IOSSectionHeader,
   IOSInputField
 } from '../../../components/ios/IOSDesignSystemV2';
-import { IOSPagination } from '../../../components/ios/IOSDesignSystem';
+import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { IOSImageUploader } from '../../../components/ios/IOSImageUploader';
 import { adminService, type FeedPost } from '../../../services/adminService';
 import { uploadFile } from '../../../services/storageService';
@@ -323,7 +323,7 @@ const AdminFeedManagement: React.FC = () => {
       {/* Pagination (Unified) */}
       {totalPages > 1 && (
         <div className="admin-pagination">
-          <IOSPagination
+          <IOSPaginationV2
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={totalPages * 10}
