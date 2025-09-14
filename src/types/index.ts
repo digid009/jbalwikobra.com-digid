@@ -57,8 +57,6 @@ export interface Product {
   tierData?: Tier; // Populated tier data
   gameTitleData?: GameTitle; // Populated game title data
   categoryData?: Category; // Populated category data
-  accountLevel?: string;
-  accountDetails?: string;
   isFlashSale: boolean;
   flashSaleEndTime?: string;
   hasRental: boolean;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Check, X, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -146,40 +146,46 @@ export const NotificationContainer: React.FC<{
 };
 
 // Hook for managing notifications
-export const useNotifications = () => {
+interface NotificationContextValue {
+  notifications: NotificationProps[];
+  showSuccess: (title: string, message?: string) => void;
+  showError: (title: string, message?: string) => void;
+  showWarning: (title: string, message?: string) => void;
+  showInfo: (title: string, message?: string) => void;
+  removeNotification: (id: string) => void;
+}
+
+const NotificationContext = createContext<NotificationContextValue | undefined>(undefined);
+
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationProps[]>([]);
 
-  const addNotification = (notification: Omit<NotificationProps, 'id'>) => {
+  const addNotification = useCallback((notification: Omit<NotificationProps, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     setNotifications(prev => [...prev, { ...notification, id }]);
-  };
+  }, []);
 
-  const removeNotification = (id: string) => {
+  const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  }, []);
 
-  const showSuccess = (title: string, message?: string) => {
-    addNotification({ type: 'success', title, message });
-  };
+  const showSuccess = useCallback((title: string, message?: string) => addNotification({ type: 'success', title, message }), [addNotification]);
+  const showError = useCallback((title: string, message?: string) => addNotification({ type: 'error', title, message }), [addNotification]);
+  const showWarning = useCallback((title: string, message?: string) => addNotification({ type: 'warning', title, message }), [addNotification]);
+  const showInfo = useCallback((title: string, message?: string) => addNotification({ type: 'info', title, message }), [addNotification]);
 
-  const showError = (title: string, message?: string) => {
-    addNotification({ type: 'error', title, message });
-  };
+  return (
+    <NotificationContext.Provider value={{ notifications, showSuccess, showError, showWarning, showInfo, removeNotification }}>
+      {children}
+      <NotificationContainer notifications={notifications} onRemove={removeNotification} />
+    </NotificationContext.Provider>
+  );
+};
 
-  const showWarning = (title: string, message?: string) => {
-    addNotification({ type: 'warning', title, message });
-  };
-
-  const showInfo = (title: string, message?: string) => {
-    addNotification({ type: 'info', title, message });
-  };
-
-  return {
-    notifications,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    removeNotification
-  };
+export const useNotifications = (): NotificationContextValue => {
+  const ctx = useContext(NotificationContext);
+  if (!ctx) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return ctx;
 };

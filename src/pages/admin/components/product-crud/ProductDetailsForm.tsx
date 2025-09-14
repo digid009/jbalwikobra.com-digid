@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GameTitle } from '../../../../types';
+import { GameTitle, Tier } from '../../../../types';
 import { ProductService } from '../../../../services/productService';
 import { useCategories } from '../../../../hooks/useCategories';
 
@@ -11,7 +11,7 @@ interface ProductDetailsFormProps {
     originalPrice: number;
     categoryId: string;
     gameTitleId: string; // FK only
-    accountDetails: string;
+  tierId: string; // relational tier foreign key
     stock: number;
     isActive: boolean;
     isFlashSale: boolean;
@@ -22,6 +22,8 @@ interface ProductDetailsFormProps {
 export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({ formData, setFormData }) => {
   const [gameTitles, setGameTitles] = useState<GameTitle[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [loadingTiers, setLoadingTiers] = useState(true);
   const { categories, loading: loadingCategories } = useCategories();
 
   // Ensure category preselect after categories loaded (especially when editing)
@@ -52,6 +54,24 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({ formData
         setGameTitles([]);
       } finally {
         setLoadingGames(false);
+      }
+
+      // Fetch tiers
+      try {
+        setLoadingTiers(true);
+        const fetchedTiers = await ProductService.getTiers();
+        const activeTiers = fetchedTiers
+          .filter(t => (t as any).isActive !== false)
+          .sort((a, b) => {
+            const sa = (a as any).sortOrder ?? 0;
+            const sb = (b as any).sortOrder ?? 0;
+            return sa - sb;
+          });
+        setTiers(activeTiers);
+      } catch (e) {
+        setTiers([]);
+      } finally {
+        setLoadingTiers(false);
       }
 
   // Categories handled by hook
@@ -109,7 +129,29 @@ export const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({ formData
             )}
           </select>
         </div>
-  {/* Tier selection removed: system now relies solely on tierId relationally if needed */}
+        <div className="form-field">
+          <label htmlFor="tier" className="form-label">Tier</label>
+          <select
+            id="tier"
+            value={formData.tierId || ''}
+            onChange={(e) => setFormData((prev: any) => ({ ...prev, tierId: e.target.value || '' }))}
+            disabled={loadingTiers}
+            className="select-control control-h-lg"
+          >
+            {loadingTiers ? (
+              <option value="">Loading...</option>
+            ) : (
+              <>
+                <option value="">None</option>
+                {tiers.map(tier => (
+                  <option key={tier.id} value={tier.id} className="bg-gray-800 text-white">
+                    {(tier as any).name || tier.id}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+        </div>
         <div className="form-field">
           <label htmlFor="category" className="form-label required">Category</label>
           <select

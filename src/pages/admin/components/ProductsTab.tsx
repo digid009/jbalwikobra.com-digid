@@ -207,7 +207,6 @@ const ProductsTab: React.FC = () => {
         has_rental: (productData as any).has_rental || false,
         is_flash_sale: (productData as any).is_flash_sale || false,
   original_price: (productData as any).original_price,
-        account_details: productData.account_details,
         flash_sale_end_time: (productData as any).flash_sale_end_time,
         tier_id: productData.tier_id,
         game_title_id: productData.game_title_id,

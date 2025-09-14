@@ -98,8 +98,6 @@ export const testProductCreation = async () => {
       image: '',
       images: [],
       category_id: 'test-cat-id', // requires existing category id in real DB; adjust if needed
-      account_level: null,
-      account_details: null,
       is_flash_sale: false,
       has_rental: false,
       stock: 1,

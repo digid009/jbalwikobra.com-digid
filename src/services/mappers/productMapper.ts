@@ -19,7 +19,6 @@ export interface DbProductRow {
   tier_id?: string | null;  // relational FK (optional)
   tier?: string | null;     // sometimes stored as plain text tier
   game_title_id?: string | null; // relational FK (text column removed)
-  account_details?: string | null;
   stock?: number | null;
   is_active?: boolean | null;
   image?: string | null;
@@ -57,7 +56,6 @@ export interface DomainProduct {
   original_price?: number | null;
   category: string; // UI expects .category always present (fallback chain applied)
   // legacy text game_title removed – access via relation or *_id
-  account_details?: string | null;
   stock: number;
   is_active: boolean;
   created_at?: string;
@@ -119,7 +117,7 @@ export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
   // Category fallback updated: prefer category_id (relational), then legacy category, then tier_id, then game_title
   category: (row as any).category_id || row.category || row.tier_id || row.game_titles?.slug || row.game_titles?.name || 'general',
     // game_title textual value deprecated
-    account_details: row.account_details || null,
+  // account_details removed from schema
     stock: Number(row.stock) || 0,
     is_active: row.is_active !== false, // default true
     created_at: row.created_at,
@@ -149,7 +147,7 @@ export function domainToInsertPayload(input: Partial<DomainProduct>): Record<str
     category: input.category, // keep for legacy support
     tier_id: input.tier_id ?? null,
   game_title_id: input.game_title_id ?? null,
-    account_details: input.account_details ?? null,
+  // account_details removed
     stock: input.stock ?? 0,
     is_active: input.is_active !== false,
     image: input.images && input.images.length > 0 ? input.images[0] : input.image || null,
@@ -172,7 +170,7 @@ export function domainToUpdatePayload(input: Partial<DomainProduct>): Record<str
   assign('category', input.category);
   assign('tier_id', input.tier_id);
   assign('game_title_id', input.game_title_id);
-  assign('account_details', input.account_details);
+  // account_details removed
   assign('stock', input.stock);
   assign('is_active', input.is_active);
   if (input.images) {

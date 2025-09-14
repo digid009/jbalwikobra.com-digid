@@ -4,7 +4,7 @@ import { adminService, Order } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
+import { useNotifications } from '../../../components/ios/NotificationSystem';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
 import { cn } from '../../../utils/cn';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
@@ -476,11 +476,6 @@ export const AdminOrdersManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Notification Container */}
-      <NotificationContainer
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
     </div>
   );
 };

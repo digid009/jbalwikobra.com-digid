@@ -29,9 +29,7 @@ import {
 
 const SellPage: React.FC = () => {
   const [selectedGame, setSelectedGame] = useState('');
-  const [accountLevel, setAccountLevel] = useState('');
   const [estimatedPrice, setEstimatedPrice] = useState('');
-  const [accountDetails, setAccountDetails] = useState('');
   const [gameOptions, setGameOptions] = useState<string[]>([
     'Mobile Legends','PUBG Mobile','Free Fire','Genshin Impact','Call of Duty Mobile','Valorant','Arena of Valor','Clash of Clans','Clash Royale','Honkai Impact','Lainnya'
   ]);
@@ -90,11 +88,8 @@ const SellPage: React.FC = () => {
   const handleSellAccount = () => {
     // Generate detailed message using form data
     const gameInfo = selectedGame || 'Game yang ingin dijual';
-    const levelInfo = accountLevel ? ` (Level/Rank: ${accountLevel})` : '';
-    const priceInfo = estimatedPrice ? ` dengan estimasi harga ${estimatedPrice}` : '';
-    const detailsInfo = accountDetails ? `\n\nDetail akun:\n${accountDetails}` : '';
-    
-    const customMessage = `Halo admin JB Alwikobra! 👋\n\nSaya ingin menjual akun ${gameInfo}${levelInfo}${priceInfo}.${detailsInfo}\n\nMohon bantuan untuk evaluasi dan proses penjualan akun saya. Terima kasih!`;
+  const priceInfo = estimatedPrice ? ` dengan estimasi harga ${estimatedPrice}` : '';
+  const customMessage = `Halo admin JB Alwikobra! 👋\n\nSaya ingin menjual akun ${gameInfo}${priceInfo}.\n\nMohon bantuan untuk evaluasi dan proses penjualan akun saya. Terima kasih!`;
     
     const whatsappUrl = generateWhatsAppUrl(normalizePhoneNumber(whatsappNumber), customMessage);
     window.open(whatsappUrl, '_blank');
@@ -213,13 +208,6 @@ const SellPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Account Level */}
-                <IOSInputField
-                  label="Level/Rank Akun"
-                  value={accountLevel}
-                  onChange={(e) => setAccountLevel(e.target.value)}
-                  placeholder="Contoh: Mythic Glory, Conqueror, dll"
-                />
 
                 {/* Price Estimation */}
                 <IOSInputField
@@ -229,19 +217,7 @@ const SellPage: React.FC = () => {
                   placeholder="Contoh: Rp 2,000,000"
                 />
 
-                {/* Account Details */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Detail Akun
-                  </label>
-                  <textarea
-                    value={accountDetails}
-                    onChange={(e) => setAccountDetails(e.target.value)}
-                    placeholder="Skin, hero, item khusus, dll"
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-600 bg-gray-900 text-white rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-sm resize-none min-h-[88px]"
-                  />
-                </div>
+                {/* accountLevel/accountDetails inputs removed */}
               </div>
 
               {/* CTA Buttons */}

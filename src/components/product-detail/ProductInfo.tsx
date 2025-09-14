@@ -109,21 +109,7 @@ export const ProductInfo = React.memo(({
         </IOSCard>
       )}
 
-      {/* Account Details */}
-      {product.accountLevel && (
-        <IOSCard variant="outlined" className="mb-6 bg-black border-gray-700">
-          <h3 className="font-semibold text-white mb-2 flex items-center space-x-2">
-            <Star className="text-yellow-400" size={16} />
-            <span>Detail Akun</span>
-          </h3>
-          <p className="text-white-secondary">
-            <strong>Level:</strong> {product.accountLevel}
-          </p>
-          {product.accountDetails && (
-            <p className="text-white-secondary mt-1">{product.accountDetails}</p>
-          )}
-        </IOSCard>
-      )}
+  {/* accountLevel/accountDetails removed */}
     </div>
   );
 });

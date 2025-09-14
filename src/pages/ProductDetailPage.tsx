@@ -443,21 +443,7 @@ const ProductDetailPage: React.FC = () => {
 
             <FlashSaleTimer timeRemaining={timeRemaining} />
 
-            {/* Account Details */}
-            {product.accountLevel && (
-              <div className="mb-6 p-4 bg-black border border-gray-700 rounded-xl">
-                <h3 className="font-semibold text-white mb-2 flex items-center space-x-2">
-                  <Star className="text-yellow-400" size={16} />
-                  <span>Detail Akun</span>
-                </h3>
-                <p className="text-white/70">
-                  <strong>Level:</strong> {product.accountLevel}
-                </p>
-                {product.accountDetails && (
-                  <p className="text-white/70 mt-1">{product.accountDetails}</p>
-                )}
-              </div>
-            )}
+            {/* accountLevel/accountDetails removed */}
 
             {/* Rental Options - hidden if user came from flash sale card */}
             <RentalOptions

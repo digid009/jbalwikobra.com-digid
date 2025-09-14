@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { NotificationProvider } from './components/ios/NotificationSystem';
 import { injectCriticalCSS, preloadCriticalResources } from './utils/criticalCSS';
 import { initWebVitalsMonitoring } from './utils/webVitalsMonitor';
 import { FontOptimizer } from './utils/fontOptimizer';
@@ -46,6 +47,8 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <NotificationProvider>
+      <App />
+    </NotificationProvider>
   </React.StrictMode>
 );

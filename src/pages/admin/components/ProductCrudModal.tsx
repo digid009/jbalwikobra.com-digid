@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Product } from '../../../services/adminService';
 import { ProductService } from '../../../services/productService';
 import { IOSButton } from '../../../components/ios/IOSDesignSystemV2';
-import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
+import { useNotifications } from '../../../components/ios/NotificationSystem';
 import { 
   ProductDetailsForm, 
   ProductImagesUpload, 
@@ -34,8 +34,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
     originalPrice: 0,
   categoryId: '',
   gameTitleId: '', // FK only
-  // tier removed (use tierId if needed later)
-    accountDetails: '',
+  tierId: '', // reintroduced relational tier FK
     stock: 0,
     isActive: true,
     isFlashSale: false,
@@ -47,6 +46,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   const [rentalOptions, setRentalOptions] = useState<RentalOption[]>([]);
   const { categories, loading: loadingCategories } = useCategories();
   const [loading, setLoading] = useState(false);
+  const [imagesUploading, setImagesUploading] = useState(false); // track child uploader state
   const [error, setError] = useState<string | null>(null);
   const { notifications, showSuccess, showError, removeNotification } = useNotifications();
 
@@ -69,8 +69,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
           // categoryId: product may have either category_id (snake) or categoryId (camel) depending on fetch path
           categoryId: (product as any).category_id || (product as any).categoryId || '',
           gameTitleId: (product as any).game_title_id || (product as any).gameTitleId || '',
-          // tier removed (migration complete)
-          accountDetails: product.account_details || '',
+          tierId: (product as any).tier_id || (product as any).tierId || '',
           stock: product.stock || 0,
           isActive: product.is_active ?? true,
           isFlashSale: product.is_flash_sale ?? false,
@@ -89,8 +88,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
           originalPrice: 0,
           categoryId: '',
           gameTitleId: '',
-          // tier removed
-          accountDetails: '',
+          tierId: '',
           stock: 0,
           isActive: true,
           isFlashSale: false,
@@ -149,6 +147,18 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         throw new Error('Stock cannot be negative');
       }
 
+      // Block submit if uploads still in progress
+      if (imagesUploading) {
+        throw new Error('Masih mengupload gambar. Mohon tunggu sampai selesai.');
+      }
+
+      // Sanitize images: disallow ANY blob: leftover (stricter)
+      const hasBlob = (formData.images || []).some(img => img.startsWith('blob:'));
+      if (hasBlob) {
+        throw new Error('Ada gambar yang belum selesai diupload. Tunggu atau hapus gambar blob.');
+      }
+      const sanitizedImages = formData.images || [];
+
       // Map form data to both camelCase and snake_case to satisfy both TypeScript and API
       const apiData = {
         name: formData.name.trim(),
@@ -162,9 +172,8 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
   // legacy gameTitle placeholder removed
   gameTitleId: formData.gameTitleId,
   game_title_id: formData.gameTitleId,
-  // tier removed
-        accountDetails: formData.accountDetails?.trim() || null,
-        account_details: formData.accountDetails?.trim() || null,
+  tierId: formData.tierId || null,
+  tier_id: formData.tierId || null,
         stock: formData.stock,
         isActive: formData.isActive,
         is_active: formData.isActive,
@@ -172,8 +181,8 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
         is_flash_sale: formData.isFlashSale,
         hasRental: formData.hasRental,
         has_rental: formData.hasRental,
-        image: formData.images[0] || '',
-        images: formData.images,
+        image: sanitizedImages[0] || '',
+        images: sanitizedImages,
       } as const;
 
       if (isEdit && product) {
@@ -250,6 +259,7 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
             <ProductImagesUpload
               images={formData.images}
               onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+              onUploadingChange={setImagesUploading}
             />
             {/* Product Active Switch Section */}
             <div className="section-block stack-md">
@@ -292,18 +302,14 @@ export const ProductCrudModal: React.FC<ProductCrudModalProps> = ({
               type="submit"
               variant="primary"
               size="md"
-              disabled={loading || !formData.name.trim()}
+              disabled={loading || imagesUploading || !formData.name.trim()}
               className="min-w-[160px]"
             >
-              {loading ? 'Menyimpan...' : (isEdit ? 'Perbarui Produk' : 'Buat Produk')}
+              {loading ? 'Menyimpan...' : imagesUploading ? 'Menunggu Upload...' : (isEdit ? 'Perbarui Produk' : 'Buat Produk')}
             </IOSButton>
           </div>
         </form>
       </div>
-      <NotificationContainer
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
     </div>
   );
 };

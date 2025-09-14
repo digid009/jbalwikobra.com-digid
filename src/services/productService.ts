@@ -122,8 +122,6 @@ const sampleProducts: Product[] = [
     tierData: sampleTiers[2],
     gameTitleData: sampleGameTitles[0],
   categoryId: 'sample-cat-1',
-    accountLevel: 'Mythic Glory',
-    accountDetails: 'All heroes unlocked, 500+ skins, Winrate 75%',
     isFlashSale: true,
     flashSaleEndTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     hasRental: true,
@@ -148,8 +146,6 @@ const sampleProducts: Product[] = [
     tierData: sampleTiers[1],
     gameTitleData: sampleGameTitles[1],
   categoryId: 'sample-cat-1',
-    accountLevel: 'Conqueror',
-    accountDetails: 'KD 4.5, All season rewards, Mythic weapons',
     isFlashSale: false,
     hasRental: true,
     rentalOptions: [
@@ -173,8 +169,6 @@ const sampleProducts: Product[] = [
     tierData: sampleTiers[1],
     gameTitleData: sampleGameTitles[2],
   categoryId: 'sample-cat-1',
-    accountLevel: 'Grandmaster',
-    accountDetails: 'All characters, All pets maxed, Rare gun skins',
     isFlashSale: true,
     flashSaleEndTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     hasRental: false,
@@ -290,7 +284,7 @@ export class ProductService {
             id, name, slug, description, icon, color,
             logo_url, is_popular, is_active, sort_order, created_at, updated_at
           ),
-          categories (
+          categories!fk_products_category (
             id, name, slug, description, icon, color, is_active, sort_order
           )
         `);
@@ -401,46 +395,90 @@ export class ProductService {
     try {
       console.log('[ProductService] getProductById called with id:', id, 'type:', typeof id);
       
+      // Validate input ID
+      if (!id || typeof id !== 'string' || id.trim() === '') {
+        console.error('[ProductService] Invalid product ID provided:', id);
+        return null;
+      }
+
+      const trimmedId = id.trim();
+      
       // Check if Supabase is configured
       if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY) {
-        console.warn('Supabase not configured, using sample data');
-        const sample = sampleProducts.find(p => p.id === id) || null;
+        console.warn('[ProductService] Supabase not configured, using sample data');
+        const sample = sampleProducts.find(p => p.id === trimmedId) || null;
         console.log('[ProductService] Returning sample product:', sample?.id);
         return sample;
       }
 
-  if (!supabase) {
-    const sample = sampleProducts.find(p => p.id === id) || null;
-    console.log('[ProductService] No supabase client, returning sample:', sample?.id);
-    return sample;
-  }
+      if (!supabase) {
+        console.warn('[ProductService] No supabase client available, using sample data');
+        const sample = sampleProducts.find(p => p.id === trimmedId) || null;
+        console.log('[ProductService] No supabase client, returning sample:', sample?.id);
+        return sample;
+      }
 
-  // Prefer single-call with nested rental options to reduce round-trips
-  const { data, error } = await supabase
+      // Add production environment logging
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        console.log('[ProductService] Production environment - fetching product:', trimmedId);
+      }
+
+      // Prefer single-call with nested rental options to reduce round-trips
+      // Fix PGRST201 error by specifying exact relationship
+      const { data, error } = await supabase
         .from('products')
         .select(`
           *,
           rental_options (*),
           tiers (*),
           game_titles (*),
-          categories (*)
+          categories!fk_products_category (*)
         `)
-        .eq('id', id)
+        .eq('id', trimmedId)
         .maybeSingle(); // Use maybeSingle() instead of single() to avoid 406 errors
 
       if (error) {
-        console.error('Supabase error fetching product by ID:', JSON.stringify(error, null, 2));
-        const sample = sampleProducts.find(p => p.id === id) || null;
+        console.error('[ProductService] Supabase error fetching product by ID:', {
+          id: trimmedId,
+          error: JSON.stringify(error, null, 2),
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          isProduction
+        });
+        
+        // In production, provide more detailed error information
+        if (isProduction) {
+          console.error('[ProductService] Production error details:', {
+            supabaseUrl: process.env.REACT_APP_SUPABASE_URL ? 'configured' : 'missing',
+            supabaseKey: process.env.REACT_APP_SUPABASE_ANON_KEY ? 'configured' : 'missing',
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent
+          });
+        }
+        
+        const sample = sampleProducts.find(p => p.id === trimmedId) || null;
         console.log('[ProductService] Error fallback to sample:', sample?.id);
         return sample;
       }
 
       if (!data) {
-        console.log('[ProductService] No product found for id:', id);
+        console.log('[ProductService] No product found for id:', trimmedId);
+        if (isProduction) {
+          console.log('[ProductService] Production: Product not found, this might indicate a routing or database issue');
+        }
         return null;
       }
       
-      console.log('[ProductService] Found product from DB:', { id: data.id, name: data.name, idType: typeof data.id });
+      console.log('[ProductService] Found product from DB:', { 
+        id: data.id, 
+        name: data.name, 
+        idType: typeof data.id,
+        isActive: data.is_active,
+        archivedAt: data.archived_at
+      });
       
       const rentalOptions: any[] = (data as any).rental_options || [];
       const cat = (data as any).categories;
@@ -460,14 +498,30 @@ export class ProductService {
           isActive: cat.is_active ?? cat.isActive,
           sortOrder: cat.sort_order ?? cat.sortOrder,
         } : undefined,
-  categoryId: cat?.id || (data as any).category_id || (data as any).categoryId,
-  // tier string removed
-  // legacy gameTitle removed
+        categoryId: cat?.id || (data as any).category_id || (data as any).categoryId,
+        // Ensure proper boolean conversion for isActive
+        isActive: (data as any).is_active ?? (data as any).isActive ?? true,
+        archivedAt: (data as any).archived_at ?? (data as any).archivedAt ?? null,
       } as any;
-      console.log('[ProductService] Returning final product:', { id: result.id, name: result.name, idType: typeof result.id });
+      
+      console.log('[ProductService] Returning final product:', { 
+        id: result.id, 
+        name: result.name, 
+        idType: typeof result.id,
+        isActive: result.isActive,
+        archivedAt: result.archivedAt
+      });
+      
       return result;
     } catch (error) {
-      console.error('Error fetching product:', error);
+      console.error('[ProductService] Exception in getProductById:', {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        isProduction: process.env.NODE_ENV === 'production',
+        timestamp: new Date().toISOString()
+      });
+      
       const sample = sampleProducts.find(p => p.id === id) || null;
       console.log('[ProductService] Exception fallback to sample:', sample?.id);
       return sample;
@@ -830,11 +884,21 @@ export class ProductService {
 
   static async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> & Record<string, any>): Promise<Product | null> {
     try {
-      console.log('🚀 ProductService.createProduct called with:', {
-        ...product,
-        // Mask sensitive fields
-        accountDetails: product.accountDetails ? '[PRESENT]' : '[EMPTY]'
+      console.log('🚀 ProductService.createProduct called with (sanitized):', {
+        name: product.name,
+        price: product.price,
+        categoryId: product.categoryId,
+        hasRental: product.hasRental,
+        isFlashSale: product.isFlashSale,
       });
+
+      // Server-side defensive guard: prevent any blob: URLs leaking into DB
+      if (Array.isArray(product.images) && product.images.some((img: string) => typeof img === 'string' && img.startsWith('blob:'))) {
+        throw new Error('Blob URL detected in images payload (create). Upload not finished.');
+      }
+      if (typeof product.image === 'string' && product.image.startsWith('blob:')) {
+        throw new Error('Blob URL detected in image cover (create).');
+      }
 
       if (!supabase) {
         console.error('❌ Supabase client not available');
@@ -849,7 +913,6 @@ export class ProductService {
         image: product.image,
         images: product.images ?? [],
         category_id: product.categoryId ?? (product as any).category_id ?? null,
-        account_details: product.accountDetails ?? product.account_details ?? null,
         is_flash_sale: product.isFlashSale ?? false,
         has_rental: product.hasRental ?? false,
         stock: product.stock ?? 1,
@@ -953,12 +1016,16 @@ export class ProductService {
     try {
       console.log('🚀 ProductService.updateProduct called with:', {
         id,
-        updates: {
-          ...updates,
-          // Mask sensitive fields
-          accountDetails: updates.accountDetails ? '[PRESENT]' : '[EMPTY]'
-        }
+        fields: Object.keys(updates)
       });
+
+      // Server-side defensive guard: reject blob placeholders
+      if (Array.isArray((updates as any).images) && (updates as any).images.some((img: string) => typeof img === 'string' && img.startsWith('blob:'))) {
+        throw new Error('Blob URL detected in images payload (update). Upload not finished.');
+      }
+      if (typeof (updates as any).image === 'string' && (updates as any).image.startsWith('blob:')) {
+        throw new Error('Blob URL detected in image cover (update).');
+      }
 
       if (!supabase) {
         console.error('❌ Supabase client not available');
@@ -983,9 +1050,6 @@ export class ProductService {
         stock: (updates as any).stock ?? updates.stock,
         is_active: (updates as any).is_active ?? updates.isActive,
       };
-
-  // Column 'account_details' triggered PGRST204 (schema cache miss / absent column). Omit until migration adds it.
-  delete payload.account_details;
 
       // --- Defensive normalization start (update) ---
       const normalizeFk = (v: any) => (typeof v === 'string' && isUuid(v) ? v : null);

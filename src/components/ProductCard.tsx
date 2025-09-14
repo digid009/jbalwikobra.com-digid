@@ -69,31 +69,46 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return 'JB';
   };
 
-  // Tier styling with dynamic data - optimized for flash sale style
+  // Tier styling with specific colors: blue for pelajar, gray for reguler, gold for premium
   const getTierStyles = (tierData?: any) => {
-    // Use dynamic tier data if available
-    if (tierData?.backgroundGradient) {
-      return {
-        bg: `bg-gradient-to-br ${tierData.backgroundGradient}`,
-        ring: `ring-${tierData.color?.replace('#', '')}/40`,
-        textColor: 'text-white',
-        badge: `bg-opacity-20 border border-opacity-60`,
-        badgeColor: tierData.color,
-        borderColor: tierData.borderColor,
-        cardBorder: `border-${tierData.color?.replace('#', '')}/30`
-      };
-    }
+    // Use tier slug to determine specific colors
+    const tierSlug = tierData?.slug;
     
-    // Default neutral styling when no dynamic tierData
-    return {
-      bg: 'bg-gradient-to-br from-zinc-700/40 via-zinc-700/30 to-gray-700/40',
-      ring: 'ring-gray-300/40',
-      textColor: 'text-white',
-      badge: 'bg-gray-300/20 text-gray-100 border-gray-200/60',
-      badgeColor: '#C0C0C0',
-      borderColor: '#D1D5DB',
-      cardBorder: 'border-gray-500/30'
-    };
+    switch (tierSlug) {
+      case 'pelajar': // Student - Blue
+        return {
+          bg: 'bg-gradient-to-br from-blue-700/40 via-blue-700/30 to-blue-600/40',
+          ring: 'ring-blue-400/40',
+          textColor: 'text-white',
+          badge: 'bg-blue-500/25 text-blue-100 border-blue-400/60',
+          badgeColor: '#3B82F6',
+          borderColor: '#60A5FA',
+          cardBorder: 'border-blue-500/30'
+        };
+      
+      case 'premium': // Premium - Gold
+        return {
+          bg: 'bg-gradient-to-br from-yellow-600/40 via-yellow-600/30 to-amber-600/40',
+          ring: 'ring-yellow-400/40',
+          textColor: 'text-white',
+          badge: 'bg-yellow-500/25 text-yellow-100 border-yellow-400/60',
+          badgeColor: '#EAB308',
+          borderColor: '#FBBF24',
+          cardBorder: 'border-yellow-500/30'
+        };
+      
+      case 'reguler': // General - Gray
+      default:
+        return {
+          bg: 'bg-gradient-to-br from-gray-700/40 via-gray-700/30 to-gray-600/40',
+          ring: 'ring-gray-400/40',
+          textColor: 'text-white',
+          badge: 'bg-gray-500/25 text-gray-100 border-gray-400/60',
+          badgeColor: '#6B7280',
+          borderColor: '#9CA3AF',
+          cardBorder: 'border-gray-500/30'
+        };
+    }
   };
 
   const tierStyle = getTierStyles(product.tierData);

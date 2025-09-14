@@ -27,7 +27,6 @@ export interface CreateProductData {
   images?: string[];
   // migrated: category string removed in favor of category_id FK
   category_id: string; // REQUIRED
-  account_details?: string;
   is_flash_sale?: boolean;
   flash_sale_end_time?: string;
   has_rental?: boolean;
@@ -59,7 +58,6 @@ export interface Product {
   images: string[];
   category_id: string; // FK
   categoryData?: CategoryRef; // joined data
-  account_details?: string;
   is_flash_sale: boolean;
   flash_sale_end_time?: string;
   has_rental: boolean;
@@ -73,7 +71,6 @@ export interface Product {
 }
 
 export interface Order {
-  id: string;
   user_id?: string;
   customer_name: string;
   customer_email?: string;
@@ -413,8 +410,7 @@ class EnhancedAdminService {
           is_active: row.categories.is_active,
           sort_order: row.categories.sort_order
         } : undefined,
-  // legacy game_title column removed (FK only)
-        account_details: row.account_details,
+  // legacy game_title column removed (FK only) - account_details deprecated
         is_flash_sale: row.is_flash_sale || false,
         flash_sale_end_time: row.flash_sale_end_time,
         has_rental: row.has_rental || false,
@@ -478,7 +474,7 @@ class EnhancedAdminService {
             sort_order: data.categories.sort_order
         } : undefined,
   // legacy game_title column removed (relational-only)
-        account_details: data.account_details,
+  // account_details removed
         is_flash_sale: data.is_flash_sale || false,
         flash_sale_end_time: data.flash_sale_end_time,
         has_rental: data.has_rental || false,
@@ -512,7 +508,7 @@ class EnhancedAdminService {
           category_id: product.category_id,
           // legacy text column removed (only using FK)
           // game_title omitted intentionally
-          account_details: product.account_details,
+          // account_details removed
           is_flash_sale: product.is_flash_sale || false,
           flash_sale_end_time: product.flash_sale_end_time,
           has_rental: product.has_rental || false,
@@ -551,7 +547,7 @@ class EnhancedAdminService {
       images: ['https://via.placeholder.com/400x300/6366f1/ffffff?text=TEST+PRODUCT'],
       category_id: 'sample-cat-debug',
   // legacy game_title removed
-      account_details: 'Account details untuk testing sistem admin. Username: testuser, Password: test123, Server: Debug Server',
+  // account_details removed
       is_flash_sale: false,
       has_rental: false,
       stock: 999,

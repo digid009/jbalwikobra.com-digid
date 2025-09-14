@@ -77,7 +77,7 @@ class OptimizedProductService {
         .from('products')
         .select(`
           id, name, description, price, original_price,
-          account_details, images, is_active, archived_at, created_at,
+          images, is_active, archived_at, created_at,
           game_title_id, tier_id, has_rental,
           tiers (
             id, name, slug, color, background_gradient, icon
@@ -246,7 +246,7 @@ class OptimizedProductService {
       archivedAt: product.archived_at ?? product.archivedAt,
       originalPrice: product.original_price ?? product.originalPrice,
   // accountLevel removed
-      accountDetails: product.account_details ?? product.accountDetails,
+  // accountDetails removed (column dropped)
       tierData: product.tiers,
       gameTitleData: product.game_titles,
       hasRental: product.has_rental ?? false,

@@ -28,8 +28,6 @@ type FormState = {
   category?: string;
   gameTitleId?: string;
   tierId?: string;
-  accountLevel?: string;
-  accountDetails?: string;
   images: string[];
   rentals: { id?: string; duration: string; price: number; description?: string }[];
 };
@@ -42,8 +40,6 @@ const emptyForm: FormState = {
   category: 'general',
   gameTitleId: '',
   tierId: '',
-  accountLevel: '',
-  accountDetails: '',
   images: [],
   rentals: [],
 };
@@ -227,8 +223,6 @@ const AdminProducts: React.FC = () => {
       category: (p as any).category || 'general', // Add category field
       gameTitleId: p.gameTitleData?.id || p.gameTitleId || '',
       tierId: p.tierData?.id || p.tierId || '',
-      accountLevel: p.accountLevel,
-      accountDetails: p.accountDetails,
       images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []),
       rentals: (p.rentalOptions || []).map(r=>({ id: r.id, duration: r.duration, price: r.price, description: r.description }))
     });
@@ -280,8 +274,6 @@ const AdminProducts: React.FC = () => {
         category: form.category || 'general', // Add category field
         game_title_id: form.gameTitleId || null,
         tier_id: form.tierId || null,
-        account_level: form.accountLevel?.trim() || null,
-        account_details: form.accountDetails?.trim() || null,
         is_flash_sale: false,
         has_rental: (form.rentals?.length || 0) > 0,
         stock: 1,
@@ -518,7 +510,7 @@ const AdminProducts: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <div className="text-ios-text font-medium line-clamp-1">{p.name}</div>
                         <div className={cn('text-xs text-ios-text-secondary line-clamp-1', standardClasses.flex.rowGap2)}>
-                          <span>{p.accountLevel || '-'}</span>
+                          {/* accountLevel removed */}
                           {((p as any).isActive === false || (p as any).archivedAt) && (
                             <span className="px-2 py-0.5 rounded-full bg-ios-warning/20 text-ios-warning border border-ios-warning/30 text-xs font-medium">
                               Diarsipkan
@@ -678,22 +670,7 @@ const AdminProducts: React.FC = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Level Akun (opsional)</label>
-                  <input 
-                    value={form.accountLevel} 
-                    onChange={(e)=>setForm({...form, accountLevel:e.target.value})} 
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Detail Akun (opsional)</label>
-                  <input 
-                    value={form.accountDetails} 
-                    onChange={(e)=>setForm({...form, accountDetails:e.target.value})} 
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
-                  />
-                </div>
+                {/* accountLevel & accountDetails fields removed */}
               </div>
             </div>
 

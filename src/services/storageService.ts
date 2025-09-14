@@ -8,16 +8,47 @@ export interface UploadResult {
 }
 
 export async function uploadFile(file: File, folder = 'products'): Promise<UploadResult> {
-  if (!supabase) throw new Error('Supabase not initialized');
+  if (!supabase) {
+    const error = new Error('Supabase not initialized');
+    console.error('[StorageService] Supabase client not available:', error);
+    throw error;
+  }
   
   try {
+    // Validate file before upload
+    if (!file || !(file instanceof File)) {
+      throw new Error('Invalid file provided');
+    }
+    
+    if (file.size === 0) {
+      throw new Error('File is empty');
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('File size too large (max 10MB)');
+    }
+    
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`Invalid file type: ${file.type}. Allowed: ${allowedTypes.join(', ')}`);
+    }
+    
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
     const timestamp = Date.now();
     const random = Math.random().toString(36).slice(2);
     const path = `${folder}/${timestamp}_${random}_${safeName}`;
     
-    console.log('Uploading file:', { file: file.name, path, bucket: BUCKET });
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    console.log('[StorageService] Uploading file:', { 
+      fileName: file.name, 
+      fileSize: file.size,
+      fileType: file.type,
+      path, 
+      bucket: BUCKET,
+      isProduction
+    });
     
     const { data: uploadData, error } = await supabase.storage
       .from(BUCKET)
@@ -28,26 +59,65 @@ export async function uploadFile(file: File, folder = 'products'): Promise<Uploa
       });
     
     if (error) {
-      console.error('Upload error:', error);
+      console.error('[StorageService] Upload error:', {
+        error,
+        code: error.message,
+        path,
+        bucket: BUCKET,
+        fileSize: file.size,
+        fileType: file.type,
+        isProduction
+      });
+      
+      // Provide more specific error messages
+      if (error.message?.includes('Bucket not found')) {
+        throw new Error(`Storage bucket '${BUCKET}' not found. Please check Supabase storage configuration.`);
+      }
+      
+      if (error.message?.includes('Insufficient permissions')) {
+        throw new Error('Insufficient permissions to upload files. Please check storage policies.');
+      }
+      
+      if (error.message?.includes('File already exists')) {
+        throw new Error('File with this name already exists. Please try again.');
+      }
+      
       throw error;
+    }
+    
+    if (!uploadData?.path) {
+      throw new Error('Upload succeeded but no path returned');
     }
     
     const { data: urlData } = supabase.storage
       .from(BUCKET)
-      .getPublicUrl(path);
+      .getPublicUrl(uploadData.path);
     
     if (!urlData?.publicUrl) {
-      throw new Error('Failed to get public URL');
+      throw new Error('Failed to get public URL for uploaded file');
     }
     
-    console.log('Upload successful:', { path, url: urlData.publicUrl });
+    console.log('[StorageService] Upload successful:', { 
+      path: uploadData.path, 
+      url: urlData.publicUrl,
+      isProduction
+    });
     
     return {
-      path,
+      path: uploadData.path,
       url: urlData.publicUrl
     };
   } catch (error) {
-    console.error('Upload file error:', error);
+    console.error('[StorageService] Upload file error:', {
+      error: error instanceof Error ? error.message : String(error),
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+      folder,
+      bucket: BUCKET,
+      isProduction: process.env.NODE_ENV === 'production',
+      timestamp: new Date().toISOString()
+    });
     throw error;
   }
 }

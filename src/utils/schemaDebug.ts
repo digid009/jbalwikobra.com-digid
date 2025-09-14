@@ -104,8 +104,6 @@ export const comprehensiveSchemaCheck = async (): Promise<SchemaInfo> => {
       image: '',
       images: [],
   category: 'test', // legacy category fallback; using only relational FKs for game
-      account_level: null,
-      account_details: null,
       is_flash_sale: false,
       has_rental: false,
       stock: 1,
