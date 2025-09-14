@@ -841,6 +841,10 @@ export const adminService = {
   async toggleProductActive(id: string, current: boolean) {
     const service = new AdminService();
     return service.toggleProductActive(id, current);
+  },
+  async deleteProduct(id: string) {
+    const service = new AdminService();
+    return service.deleteProduct(id);
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
       let query = supabase

@@ -34,8 +34,6 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   }, [deferredSearch]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [categoryFilter, setCategoryFilter] = useState(''); // holds category_id
-  const [sortBy, setSortBy] = useState<'name' | 'price' | 'created_at'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,39 +83,18 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
 
     // Apply category filter
     if (categoryFilter) {
-  filtered = filtered.filter(product => (product as any).category_id === categoryFilter);
+      filtered = filtered.filter(product => (product as any).category_id === categoryFilter);
     }
 
-    // Apply sorting
+    // Always sort by created_at desc (newest first) - no sorting controls
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'price':
-          aValue = a.price || 0;
-          bValue = b.price || 0;
-          break;
-        case 'created_at':
-          aValue = new Date(a.created_at || 0);
-          bValue = new Date(b.created_at || 0);
-          break;
-        default:
-          return 0;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
+      const aDate = new Date(a.created_at || 0);
+      const bDate = new Date(b.created_at || 0);
+      return bDate.getTime() - aDate.getTime(); // desc order
     });
 
     return filtered;
-  }, [products, debouncedSearch, statusFilter, categoryFilter, sortBy, sortOrder]);
+  }, [products, debouncedSearch, statusFilter, categoryFilter]);
 
   // keep filteredProducts state for existing pagination logic (optional)
   useEffect(() => { setFilteredProductsState(filteredProducts); }, [filteredProducts]);
@@ -132,15 +109,13 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, categoryFilter, sortBy, sortOrder]);
+  }, [debouncedSearch, statusFilter, categoryFilter]);
 
   // Clear all filters
   const clearAllFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setCategoryFilter('');
-    setSortBy('name');
-    setSortOrder('asc');
   };
 
   // Handle product actions
@@ -265,10 +240,6 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
           onStatusFilterChange={setStatusFilter}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={setCategoryFilter}
-          sortBy={sortBy}
-          onSortByChange={setSortBy}
-          sortOrder={sortOrder}
-          onSortOrderChange={setSortOrder}
           onAddProduct={handleAddProduct}
           onClearFilters={clearAllFilters}
           categories={categories}
@@ -279,16 +250,6 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
       <ProductsTable
         products={paginatedProducts}
         loading={loading}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={(field)=>{
-          if (sortBy === field) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-          } else {
-            setSortBy(field as any);
-            setSortOrder('asc');
-          }
-        }}
         onView={handleViewProduct}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}

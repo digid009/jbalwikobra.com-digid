@@ -37,9 +37,6 @@ export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = (
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20); // default 20 per requirement
-  // Sorting state for table
-  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'created_at'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,15 +136,8 @@ export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = (
     }
   };
 
-  const handleSort = (column: 'name' | 'price' | 'stock' | 'created_at') => {
-    setSortBy(prev => {
-      if (prev === column) {
-        setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'));
-        return prev; // same column toggles order
-      }
-      setSortOrder('asc');
-      return column;
-    });
+  const handleSort = () => {
+    // Removed sorting logic - table always shows newest first
   };
 
   const filteredProducts = useMemo(() => {
@@ -199,23 +189,11 @@ export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = (
       });
     }
 
-    // Apply table sorting
+    // Always sort by created_at desc (newest first) - no sorting controls
     filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-      switch (sortBy) {
-        case 'price':
-          aValue = a.price ?? 0; bValue = b.price ?? 0; break;
-        case 'stock':
-          aValue = a.stock ?? 0; bValue = b.stock ?? 0; break;
-        case 'created_at':
-          aValue = (a as any).created_at || ''; bValue = (b as any).created_at || ''; break;
-        default:
-          aValue = a.name?.toLowerCase() || ''; bValue = b.name?.toLowerCase() || ''; break;
-      }
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
+      const aDate = new Date((a as any).created_at || 0);
+      const bDate = new Date((b as any).created_at || 0);
+      return bDate.getTime() - aDate.getTime(); // desc order
     });
 
     // Enrich with categoryData if missing, using availableCategories map
@@ -236,7 +214,7 @@ export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = (
       return p;
     });
     return enriched;
-  }, [products, availableCategories, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter, sortBy, sortOrder]);
+  }, [products, availableCategories, searchTerm, statusFilter, categoryFilter, tierFilter, gameTitleFilter]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -485,9 +463,6 @@ export const AdminProductsManagement: React.FC<AdminProductsManagementProps> = (
             <div className="p-lg stack-lg">
               <ProductsTable
                 products={paginatedProducts as any}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
                 onView={(p: Product) => navigate(`/products/${p.id}`)}
                 onEdit={handleEditProduct}
                 onDelete={(p: Product) => setProductToDelete(p)}

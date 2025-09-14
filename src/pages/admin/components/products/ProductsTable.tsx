@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { Product } from '../../../../services/adminService';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
-import { Eye, Pencil, Trash2, ArrowUpDown, Check, X } from 'lucide-react';
+import { Eye, Pencil, Trash2, Check, X } from 'lucide-react';
 
 interface ProductsTableProps {
   products: Product[];
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-  onSort: (field: string) => void;
   onView: (p: Product) => void;
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
@@ -18,7 +15,7 @@ interface ProductsTableProps {
 const headerClass = 'px-4 py-2 text-left text-xs font-semibold tracking-wide text-gray-200 uppercase select-none';
 const cellClass = 'px-4 py-2 text-sm text-gray-100';
 
-export const ProductsTable: React.FC<ProductsTableProps> = ({ products, sortBy, sortOrder, onSort, onView, onEdit, onDelete, loading, onQuickUpdate }) => {
+export const ProductsTable: React.FC<ProductsTableProps> = ({ products, onView, onEdit, onDelete, loading, onQuickUpdate }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{price?: string; stock?: string}>({});
   const startEdit = (p: Product) => { setEditingId(p.id); setDraft({ price: String(p.price||0), stock: String(p.stock||0) }); };
@@ -30,19 +27,6 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({ products, sortBy, 
     await onQuickUpdate(id, { price: priceNum, stock: stockNum });
     cancelEdit();
   };
-  const sortable = (field: string, label: string) => (
-    <button
-      type="button"
-      onClick={() => onSort(field)}
-      className="inline-flex items-center gap-1 group"
-    >
-      <span>{label}</span>
-      <ArrowUpDown className={`w-3 h-3 transition-opacity ${sortBy === field ? 'text-pink-400 opacity-100' : 'opacity-30 group-hover:opacity-70'}`} />
-      {sortBy === field && (
-        <span className="text-[10px] font-normal text-pink-300">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
-      )}
-    </button>
-  );
 
   return (
     <div className="relative rounded-xl border border-pink-500/20 bg-gradient-to-br from-black/60 to-gray-900/60 backdrop-blur-sm shadow-inner overflow-hidden">
@@ -50,13 +34,13 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({ products, sortBy, 
         <table className="w-full min-w-[960px] border-separate border-spacing-0">
           <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-900/90 to-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/60">
             <tr>
-              <th className={`${headerClass} first:rounded-tl-xl`}>{sortable('name','Nama')}</th>
-              <th className={headerClass}>{sortable('category','Kategori')}</th>
+              <th className={`${headerClass} first:rounded-tl-xl`}>Nama</th>
+              <th className={headerClass}>Kategori</th>
               <th className={headerClass}>Tier</th>
-              <th className={headerClass}>{sortable('price','Harga')}</th>
-              <th className={headerClass}>{sortable('stock','Stok')}</th>
+              <th className={headerClass}>Harga</th>
+              <th className={headerClass}>Stok</th>
               <th className={headerClass}>Aktif</th>
-              <th className={headerClass + ' hidden xl:table-cell'}>{sortable('created_at','Dibuat')}</th>
+              <th className={headerClass + ' hidden xl:table-cell'}>Dibuat</th>
               <th className={`${headerClass} text-right pr-6 last:rounded-tr-xl`}>Aksi</th>
             </tr>
           </thead>

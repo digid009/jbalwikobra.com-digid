@@ -10,8 +10,6 @@ import {
   Search,
   Filter,
   RefreshCw,
-  ChevronUp,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   X,
@@ -49,8 +47,7 @@ const ProductsTab: React.FC = () => {
     pagination,
     refresh,
     updatePagination,
-    updateFilters,
-    changeSorting
+    updateFilters
   } = useProducts({
     search: searchTerm,
   category_id: selectedCategory || undefined,
@@ -104,10 +101,6 @@ const ProductsTab: React.FC = () => {
   const handleStatusChange = useCallback((status: string) => {
     setSelectedStatus(status);
   }, []);
-
-  const handleSort = useCallback((column: string) => {
-    changeSorting(column);
-  }, [changeSorting]);
 
   const handlePageChange = useCallback((page: number) => {
     updatePagination({ page });
@@ -238,11 +231,6 @@ const ProductsTab: React.FC = () => {
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  const renderSortIcon = (column: string) => {
-    if (pagination.sortBy !== column) return null;
-    return pagination.sortOrder === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
 
   // Loading state

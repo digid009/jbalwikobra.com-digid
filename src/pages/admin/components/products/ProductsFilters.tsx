@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IOSButton, IOSCard } from '../../../../components/ios/IOSDesignSystem';
-import { Search, Filter, Plus, SortDesc, SortAsc, X } from 'lucide-react';
+import { Search, Filter, Plus, X } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface ProductsFiltersProps {
@@ -10,10 +10,6 @@ interface ProductsFiltersProps {
   onStatusFilterChange: (status: 'all' | 'active' | 'inactive') => void;
   categoryFilter: string;
   onCategoryFilterChange: (category: string) => void;
-  sortBy: 'name' | 'price' | 'created_at';
-  onSortByChange: (sortBy: 'name' | 'price' | 'created_at') => void;
-  sortOrder: 'asc' | 'desc';
-  onSortOrderChange: (order: 'asc' | 'desc') => void;
   onAddProduct?: () => void;
   onClearFilters: () => void;
   className?: string;
@@ -27,10 +23,6 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
   onStatusFilterChange,
   categoryFilter,
   onCategoryFilterChange,
-  sortBy,
-  onSortByChange,
-  sortOrder,
-  onSortOrderChange,
   onAddProduct,
   onClearFilters,
   className = '',
@@ -38,7 +30,7 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
 }) => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  const hasActiveFilters = searchTerm || statusFilter !== 'all' || categoryFilter || sortBy !== 'name' || sortOrder !== 'asc';
+  const hasActiveFilters = searchTerm || statusFilter !== 'all' || categoryFilter;
 
   return (
     <IOSCard className={cn(
@@ -121,45 +113,6 @@ export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-            </div>
-
-            {/* Sort By */}
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => onSortByChange(e.target.value as 'name' | 'price' | 'created_at')}
-                className="w-full px-3 py-2 bg-black/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-pink-500/50"
-              >
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-                <option value="created_at">Date Created</option>
-              </select>
-            </div>
-
-            {/* Sort Order */}
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Order</label>
-              <div className="flex gap-2">
-                <IOSButton
-                  variant={sortOrder === 'asc' ? 'primary' : 'ghost'}
-                  size="small"
-                  onClick={() => onSortOrderChange('asc')}
-                  className="flex-1 flex items-center justify-center gap-2"
-                >
-                  <SortAsc className="w-4 h-4" />
-                  Asc
-                </IOSButton>
-                <IOSButton
-                  variant={sortOrder === 'desc' ? 'primary' : 'ghost'}
-                  size="small"
-                  onClick={() => onSortOrderChange('desc')}
-                  className="flex-1 flex items-center justify-center gap-2"
-                >
-                  <SortDesc className="w-4 h-4" />
-                  Desc
-                </IOSButton>
-              </div>
             </div>
           </div>
         )}

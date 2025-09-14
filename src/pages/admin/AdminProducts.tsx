@@ -93,6 +93,7 @@ const AdminProducts: React.FC = () => {
   // Optimized data loading with database-level filtering and pagination
   const loadProducts = useCallback(async () => {
     try {
+      console.log('🔄 Loading products with filters:', { statusFilter, selectedGame, selectedTier, currentPage, debouncedSearch });
       setLoading(true);
       setHasErrors(false);
       setErrorMessage('');
@@ -192,7 +193,12 @@ const AdminProducts: React.FC = () => {
       setGames(gList);
       setTotalProducts(count || 0);
       
-  // Removed verbose product load log for production
+      console.log('✅ Products loaded successfully:', { 
+        count: mappedProducts.length, 
+        total: count, 
+        firstProduct: mappedProducts[0]?.name,
+        filters: { statusFilter, selectedGame, selectedTier, currentPage }
+      });
       
     } catch (error: any) {
       console.error('Error loading products:', error);
@@ -202,11 +208,11 @@ const AdminProducts: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage, push]);
+  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage, supabase]);
 
   useEffect(() => {
     loadProducts();
-  }, [loadProducts]);
+  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage]);
 
   const startCreate = () => {
     setForm(emptyForm);
@@ -339,6 +345,7 @@ const AdminProducts: React.FC = () => {
         await loadProducts(); // Use optimized reload
         setShowForm(false);
         setForm(emptyForm);
+        console.log('✅ Product saved, data reloaded');
         push('Produk disimpan', 'success');
       } else {
         push('Gagal menyimpan produk', 'error');
@@ -384,14 +391,27 @@ const AdminProducts: React.FC = () => {
               {t('common.manageCatalog')}
             </p>
           </div>
-          <IOSButton 
-            onClick={startCreate} 
-            variant="primary"
-            size="sm"
-            className="flex items-center space-x-2"
-          >
-            {t('common.addProduct')}
-          </IOSButton>
+          <div className="flex items-center space-x-3">
+            <IOSButton 
+              onClick={() => {
+                console.log('🔄 Force reloading products...');
+                loadProducts();
+              }} 
+              variant="secondary"
+              size="sm"
+              className="flex items-center space-x-2"
+            >
+              🔄 Refresh
+            </IOSButton>
+            <IOSButton 
+              onClick={startCreate} 
+              variant="primary"
+              size="sm"
+              className="flex items-center space-x-2"
+            >
+              {t('common.addProduct')}
+            </IOSButton>
+          </div>
         </div>
 
         {!showForm && (
