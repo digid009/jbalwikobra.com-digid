@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useTheme } from '../contexts/ThemeContext';
-import { standardClasses, cn } from '../styles/standardClasses';
+// Removed legacy standardClasses helper – using direct utility classes
 
 interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
@@ -82,9 +82,9 @@ const SettingsPage: React.FC = () => {
 
   return (
     <AuthRequired>
-      <div className="min-h-screen bg-ios-background">
+  <div className="min-h-screen bg-black">
         <div className="pt-20 pb-20 px-4 with-bottom-nav">
-          <div className={standardClasses.container.boxed}>
+          <div className="w-full max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex items-center space-x-4 mb-8">
               <div
@@ -99,7 +99,7 @@ const SettingsPage: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">Pengaturan</h1>
-                <p className="text-white-secondary">Kelola preferensi aplikasi Anda</p>
+                <p className="text-white/70">Kelola preferensi aplikasi Anda</p>
               </div>
             </div>
 
@@ -159,7 +159,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white">Email</div>
-                      <div className="text-white-secondary text-sm">
+                      <div className="text-white/70 text-sm">
                         Notifikasi pesanan dan promo via email
                       </div>
                     </div>
@@ -179,7 +179,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white">WhatsApp</div>
-                      <div className="text-white-secondary text-sm">
+                      <div className="text-white/70 text-sm">
                         Konfirmasi pesanan via WhatsApp
                       </div>
                     </div>
@@ -199,7 +199,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white">Push Notification</div>
-                      <div className="text-white-secondary text-sm">
+                      <div className="text-white/70 text-sm">
                         Notifikasi browser (coming soon)
                       </div>
                     </div>
@@ -230,7 +230,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white">Profil Publik</div>
-                      <div className="text-white-secondary text-sm">
+                      <div className="text-white/70 text-sm">
                         Tampilkan profil di leaderboard
                       </div>
                     </div>
@@ -250,7 +250,7 @@ const SettingsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white">Riwayat Pesanan</div>
-                      <div className="text-white-secondary text-sm">
+                      <div className="text-white/70 text-sm">
                         Sembunyikan riwayat pesanan dari publik
                       </div>
                     </div>
@@ -300,10 +300,10 @@ const SettingsPage: React.FC = () => {
 
               {/* App Info */}
               <div className="bg-black backdrop-blur rounded-xl p-4 border border-gray-700 text-center">
-                <div className="text-white-secondary text-sm">
+                <div className="text-white/70 text-sm">
                   JB Alwikobra E-commerce v1.0.0
                 </div>
-                <div className="text-white-secondary text-xs mt-1 opacity-70">
+                <div className="text-white/70 text-xs mt-1 opacity-70">
                   © 2024 All rights reserved
                 </div>
               </div>

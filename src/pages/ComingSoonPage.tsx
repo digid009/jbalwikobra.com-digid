@@ -108,7 +108,7 @@ const ComingSoonPage: React.FC = () => {
           
           <button
             onClick={() => window.history.back()}
-            className="flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-xl text-white hover:text-pink-300 transition-all duration-300"
+            className="flex items-center gap-3 px-6 py-3 interactive-card backdrop-blur-sm rounded-xl text-white hover:text-pink-300 transition-all duration-300"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Halaman Sebelumnya</span>
@@ -157,7 +157,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, descriptio
     <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300" 
          style={{ background: `linear-gradient(135deg, var(--tw-gradient-stops))` }} />
     
-    <div className="relative p-6 bg-white/5 backdrop-blur-sm border border-white/20 rounded-2xl hover:border-white/30 transition-all duration-300 group-hover:bg-white/10">
+  <div className="relative p-6 interactive-card backdrop-blur-sm rounded-2xl transition-all duration-300 group-hover:scale-[1.01]">
       <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${color} mb-4 shadow-lg`}>
         <Icon className="w-6 h-6 text-white" />
       </div>

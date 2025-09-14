@@ -136,7 +136,7 @@ const HelpPage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-ios-background">
+  <div className="min-h-screen bg-black">
       {/* Hero Section */}
       <IOSHero
         title="Pusat Bantuan"
@@ -253,7 +253,7 @@ const HelpPage: React.FC = () => {
                     </div>
                   </button>
                   {open === idx && (
-                    <div className="mt-4 text-white-secondary leading-relaxed text-sm sm:text-base">
+                    <div className="mt-4 text-white/70 leading-relaxed text-sm sm:text-base">
                       {item.a}
                     </div>
                   )}
@@ -263,9 +263,9 @@ const HelpPage: React.FC = () => {
 
             {filteredFaqs.length === 0 && (
               <IOSCard padding="large" className="text-center">
-                <Search className="mx-auto text-white-secondary mb-4" size={48} />
-                <p className="text-white-secondary">Tidak ada FAQ yang cocok dengan pencarian Anda.</p>
-                <p className="text-white-secondary text-sm mt-2">Coba gunakan kata kunci lain atau hubungi support.</p>
+                <Search className="mx-auto text-white/70 mb-4" size={48} />
+                <p className="text-white/70">Tidak ada FAQ yang cocok dengan pencarian Anda.</p>
+                <p className="text-white/70 text-sm mt-2">Coba gunakan kata kunci lain atau hubungi support.</p>
               </IOSCard>
             )}
           </div>
@@ -278,7 +278,7 @@ const HelpPage: React.FC = () => {
                 <MessageSquare className="text-pink-500" />
                 Butuh Bantuan Cepat?
               </h3>
-              <p className="text-white-secondary mb-4">
+              <p className="text-white/70 mb-4">
                 Tim support kami siap membantu Anda 24/7 melalui WhatsApp.
               </p>
               <a
@@ -292,7 +292,7 @@ const HelpPage: React.FC = () => {
                   Chat WhatsApp Support
                 </IOSButton>
               </a>
-              <div className="mt-4 space-y-2 text-sm text-white-secondary">
+              <div className="mt-4 space-y-2 text-sm text-white/70">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-400" />
                   <span>Respon dalam 5 menit</span>
@@ -316,28 +316,28 @@ const HelpPage: React.FC = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-white-secondary">Website</span>
+                  <span className="text-white/70">Website</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Online</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-white-secondary">Pembayaran</span>
+                  <span className="text-white/70">Pembayaran</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Normal</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-white-secondary">Database</span>
+                  <span className="text-white/70">Database</span>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                     <span className="text-green-400 text-sm">Optimal</span>
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-white-secondary mt-4">
+              <p className="text-xs text-white/70 mt-4">
                 Terakhir update: {new Date().toLocaleString('id-ID')}
               </p>
             </IOSCard>
@@ -361,7 +361,7 @@ const HelpPage: React.FC = () => {
                       <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
                         {stepIdx + 1}
                       </div>
-                      <p className="text-white-secondary">{step}</p>
+                      <p className="text-white/70">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -375,7 +375,7 @@ const HelpPage: React.FC = () => {
           <IOSCard padding="large" className="text-center bg-gradient-to-r from-ios-accent/10 to-ios-accent/5">
             <AlertTriangle className="mx-auto text-yellow-400 mb-4" size={48} />
             <h3 className="text-2xl font-bold text-white mb-4">Masih Belum Menemukan Jawaban?</h3>
-            <p className="text-white-secondary mb-6 max-w-2xl mx-auto">
+            <p className="text-white/70 mb-6 max-w-2xl mx-auto">
               Tim support kami siap membantu menyelesaikan masalah spesifik Anda. Jangan ragu untuk menghubungi kami kapan saja.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

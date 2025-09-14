@@ -80,7 +80,7 @@ const WhatsAppConfirmPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-ios-background flex items-center justify-center">
+  <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="max-w-md w-full mx-auto p-6">
           <div className="bg-black rounded-2xl border border-gray-700 p-6">
             <div className="ios-skeleton h-6 w-40 mb-4 rounded"></div>
@@ -96,7 +96,7 @@ const WhatsAppConfirmPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-ios-background flex items-center justify-center">
+  <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="max-w-md w-full mx-auto p-6">
         <div className="bg-black rounded-2xl border border-gray-700 p-6 text-center">
           {isSuccess ? (
@@ -117,7 +117,7 @@ const WhatsAppConfirmPage: React.FC = () => {
             {isSuccess ? 'Success!' : 'Error'}
           </h2>
 
-          <p className="text-white-secondary mb-6">
+          <p className="text-white/70 mb-6">
             {message}
           </p>
 

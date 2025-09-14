@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Database, Wifi, WifiOff } from 'lucide-react';
 import { IOSCard } from './IOSDesignSystem';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 
 interface RLSDiagnosticsProps {
   isConnected?: boolean;

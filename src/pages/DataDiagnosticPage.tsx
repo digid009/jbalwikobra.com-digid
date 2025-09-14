@@ -131,19 +131,19 @@ export const DataDiagnosticPage: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-ios-primary">{diagnostic.stats.totalOrders}</div>
-                    <div className="text-sm text-white-secondary">Total Orders</div>
+                    <div className="text-sm text-white/70">Total Orders</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-ios-success">Rp {diagnostic.stats.totalRevenue.toLocaleString()}</div>
-                    <div className="text-sm text-white-secondary">Revenue</div>
+                    <div className="text-sm text-white/70">Revenue</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-ios-secondary">{diagnostic.stats.totalUsers}</div>
-                    <div className="text-sm text-white-secondary">Total Users</div>
+                    <div className="text-sm text-white/70">Total Users</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-pink-500">{diagnostic.stats.totalProducts}</div>
-                    <div className="text-sm text-white-secondary">Products</div>
+                    <div className="text-sm text-white/70">Products</div>
                   </div>
                 </div>
               </div>
@@ -163,14 +163,14 @@ export const DataDiagnosticPage: React.FC = () => {
                     {diagnostic.orders.sample.map((order, i) => (
                       <div key={i} className="p-2 bg-black rounded">
                         <div className="font-medium">{order.customer_name}</div>
-                        <div className="text-white-secondary">
+                        <div className="text-white/70">
                           Rp {order.amount?.toLocaleString()} - {order.status}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-white-secondary">No orders found</div>
+                  <div className="text-white/70">No orders found</div>
                 )}
               </div>
             </IOSCard>
@@ -186,12 +186,12 @@ export const DataDiagnosticPage: React.FC = () => {
                     {diagnostic.users.sample.map((user, i) => (
                       <div key={i} className="p-2 bg-black rounded">
                         <div className="font-medium">{user.name}</div>
-                        <div className="text-white-secondary">{user.email}</div>
+                        <div className="text-white/70">{user.email}</div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-white-secondary">No users found</div>
+                  <div className="text-white/70">No users found</div>
                 )}
               </div>
             </IOSCard>
@@ -207,14 +207,14 @@ export const DataDiagnosticPage: React.FC = () => {
                     {diagnostic.products.sample.map((product, i) => (
                       <div key={i} className="p-2 bg-black rounded">
                         <div className="font-medium">{product.name}</div>
-                        <div className="text-white-secondary">
+                        <div className="text-white/70">
                           Rp {product.price?.toLocaleString()} - Stock: {product.stock}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-white-secondary">No products found</div>
+                  <div className="text-white/70">No products found</div>
                 )}
               </div>
             </IOSCard>
@@ -230,12 +230,12 @@ export const DataDiagnosticPage: React.FC = () => {
                     {diagnostic.reviews.sample.map((review, i) => (
                       <div key={i} className="p-2 bg-black rounded">
                         <div className="font-medium">{review.rating}/5 ⭐</div>
-                        <div className="text-white-secondary">{review.comment}</div>
+                        <div className="text-white/70">{review.comment}</div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-white-secondary">No reviews found</div>
+                  <div className="text-white/70">No reviews found</div>
                 )}
               </div>
             </IOSCard>

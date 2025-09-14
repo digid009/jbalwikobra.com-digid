@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { standardClasses } from '../../styles/standardClasses';
+const standardClasses = { container:{ boxed:'mx-auto w-full max-w-7xl px-4'} };
 
 export const ProductsLoadingSkeleton = React.memo(() => (
   <div className="min-h-screen bg-black">

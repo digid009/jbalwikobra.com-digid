@@ -2,7 +2,7 @@ import React from 'react';
 import { adminService, Banner } from '../../../../services/adminService';
 import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystem';
 import { Image as ImageIcon, ExternalLink, Calendar, Activity, Eye, Edit2, Trash2 } from 'lucide-react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface BannerCardProps {
   banner: Banner;

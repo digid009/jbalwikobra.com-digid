@@ -15,20 +15,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
 import ProductCard from '../components/ProductCard'; // retained for any remaining usage
-import { standardClasses, cn } from '../styles/standardClasses';
-import { 
-  Zap, 
-  ShoppingBag, 
-  Clock, 
-  Star,
-  TrendingUp,
-  Shield,
-  Headphones,
-  ChevronRight,
-  ArrowRight,
-  Sparkles
-} from 'lucide-react';
-import { IOSHero, IOSButton, IOSContainer } from '../components/ios/IOSDesignSystem';
+// standardClasses import removed (utility not present) – using direct container classes.
+import { Zap, ShoppingBag, Clock, Star, TrendingUp, Shield, Headphones, Sparkles, Heart } from 'lucide-react';
+import { IOSHero, IOSButton } from '../components/ios/IOSDesignSystem';
 import BannerCarousel from '../components/BannerCarousel';
 import HomeFlashSalesSection from '../components/home/HomeFlashSalesSection';
 import HomeFeaturesSection from '../components/home/HomeFeaturesSection';
@@ -69,104 +58,10 @@ interface HomePageState {
   error: string | null;
 }
 
-// Mobile-optimized feature card following card design patterns
-const MobileFeatureCard = React.memo(({ 
-  icon: Icon, 
-  title, 
-  description,
-  delay = 0 
-}: {
-  icon: React.ComponentType<any>;
-  title: string;
-  description: string;
-  delay?: number;
-}) => (
-  <div 
-    className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-6 hover:border-pink-500/30 transition-all duration-300 group"
-    style={{ animationDelay: `${delay}ms` }}
-  >
-    {/* Icon container with proper sizing for mobile */}
-    <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200">
-      <Icon className="text-white" size={28} />
-    </div>
-    
-    {/* Content with optimized typography hierarchy */}
-    <h3 className="text-lg font-semibold text-white mb-2 leading-tight">{title}</h3>
-    <p className="text-zinc-400 text-sm leading-relaxed">{description}</p>
-  </div>
-));
-
-MobileFeatureCard.displayName = 'MobileFeatureCard';
-
-// Mobile-optimized game category card
-const GameCategoryCard = React.memo(({ 
-  game, 
-  index 
-}: { 
-  game: any; 
-  index: number; 
-}) => (
-  <Link
-    to={`/products?game=${encodeURIComponent(game.name)}`}
-    className="block group"
-  >
-    <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-4 hover:border-pink-500/30 transition-all duration-300 group-hover:scale-[1.02]">
-      {/* Game logo with consistent sizing */}
-      <div className="aspect-square w-full bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
-        {game.logoUrl ? (
-          <img 
-            src={game.logoUrl} 
-            alt={game.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <TrendingUp className="text-white" size={24} />
-        )}
-      </div>
-      
-      {/* Game info with proper text hierarchy */}
-      <h3 className="font-medium text-white mb-1 text-sm leading-tight group-hover:text-pink-400 transition-colors">
-        {game.name}
-      </h3>
-      <p className="text-xs text-zinc-500">{game.count} akun</p>
-    </div>
-  </Link>
-));
-
-GameCategoryCard.displayName = 'GameCategoryCard';
-
-// Mobile-optimized loading skeleton
-const MobileLoadingSkeleton = React.memo(() => (
-  <div className="min-h-screen bg-black">
-    {/* Header skeleton */}
-    <div className="px-4 pt-6 pb-4">
-      <div className="h-8 bg-zinc-800 rounded-lg w-3/4 mb-4 animate-pulse"></div>
-      <div className="h-4 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
-    </div>
-    
-    {/* Banner skeleton */}
-    <div className="px-4 mb-6">
-      <div className="h-48 bg-zinc-800 rounded-2xl animate-pulse"></div>
-    </div>
-    
-    {/* Content sections skeleton */}
-    <div className="px-4 space-y-6">
-      {[...Array(3)].map((_, i) => (
-        <div key={i}>
-          <div className="h-6 bg-zinc-800 rounded w-1/3 mb-4 animate-pulse"></div>
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(4)].map((_, j) => (
-              <div key={j} className="h-32 bg-zinc-800 rounded-xl animate-pulse"></div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-));
-
-MobileLoadingSkeleton.displayName = 'MobileLoadingSkeleton';
+// Extracted subcomponents
+import MobileFeatureCard from '../components/public/home/MobileFeatureCard';
+import GameCategoryCard from '../components/public/home/GameCategoryCard';
+import MobileLoadingSkeleton from '../components/public/home/MobileLoadingSkeleton';
 
 const HomePage: React.FC = () => {
   const { showToast } = useToast();
@@ -276,10 +171,10 @@ const HomePage: React.FC = () => {
   if (state.error && state.flashSaleProducts.length === 0 && state.popularGames.length === 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center px-4">
-        <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-8 text-center max-w-md w-full">
+  <div className="bg-surface-alt backdrop-blur-sm border-subtle rounded-2xl p-8 text-center max-w-md w-full">
           <div className="text-6xl mb-4">😔</div>
           <h2 className="text-xl font-bold text-white mb-2">Oops! Terjadi Kesalahan</h2>
-          <p className="text-zinc-400 mb-6 text-sm">{state.error}</p>
+          <p className="text-tertiary mb-6 text-sm">{state.error}</p>
           <button
             onClick={handleRetry}
             className="w-full bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200"
@@ -294,7 +189,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className={standardClasses.container.boxed}>
+    <div className="max-w-7xl mx-auto">
       {/* Error banner for partial failures */}
       {state.error && (state.flashSaleProducts.length > 0 || state.popularGames.length > 0) && (
         <div className="mx-4 mt-4 bg-amber-900/20 border border-amber-600/30 rounded-xl p-4">
@@ -362,34 +257,82 @@ const HomePage: React.FC = () => {
   {/* Features (Modular) */}
   <HomeFeaturesSection />
 
-      {/* Final CTA using IOSHero for consistency */}
-      <IOSHero 
-        title="Siap Memulai Gaming Anda?" 
-        subtitle="Bergabunglah dengan ribuan gamer yang sudah mempercayakan transaksi mereka kepada kami"
-        backgroundGradient="from-pink-700 via-rose-600 to-purple-700"
-        className="rounded-3xl overflow-hidden mx-4 mt-4 mb-8"
+      {/* Pre-Footer Call To Action Section (Adopts ModernFooter UI/UX styling) */}
+      <section 
+        aria-labelledby="prefooter-cta-title" 
+        className="relative mt-8 mb-8 mx-4 rounded-3xl overflow-hidden border border-white/10 bg-black/40 backdrop-blur-xl"
       >
-        <div className="max-w-sm mx-auto space-y-3">
-          <Link to="/products" className="block">
-            <IOSButton 
-              variant="secondary" 
-              size="large" 
-              className="w-full font-semibold"
-            >
-              Mulai Belanja Sekarang
-            </IOSButton>
-          </Link>
-          <Link to="/sell" className="block">
-            <IOSButton 
-              variant="ghost" 
-              size="medium" 
-              className="w-full text-white/90"
-            >
-              Jual Akun Anda
-            </IOSButton>
-          </Link>
+        {/* Background gradient orbs (mirroring ModernFooter style) */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-72 h-72 bg-gradient-to-br from-pink-500/15 to-fuchsia-500/15 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-72 h-72 bg-gradient-to-tr from-purple-500/15 to-blue-500/15 rounded-full blur-3xl" />
         </div>
-      </IOSHero>
+        <div className="relative z-10 pt-10 px-4 pb-4 md:px-10 md:pb-10">
+          {/* Trust badges (extracted concept from footer) */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+            <div className="space-y-3 max-w-xl">
+              <h2 id="prefooter-cta-title" className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+                Siap Memulai Gaming Anda?
+              </h2>
+              <p className="text-tertiary text-sm md:text-base leading-relaxed max-w-lg">
+                Bergabunglah dengan ribuan gamer yang sudah mempercayakan transaksi mereka kepada kami dan rasakan pengalaman marketplace akun game yang aman, cepat, dan premium.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                <Link to="/products" className="flex-1">
+                  <IOSButton 
+                    variant="secondary" 
+                    size="large" 
+                    className="w-full font-semibold"
+                  >
+                    Mulai Belanja Sekarang
+                  </IOSButton>
+                </Link>
+                <Link to="/sell" className="flex-1">
+                  <IOSButton 
+                    variant="ghost" 
+                    size="medium" 
+                    className="w-full text-white/90"
+                  >
+                    Jual Akun Anda
+                  </IOSButton>
+                </Link>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:gap-6 w-full md:w-auto md:min-w-[260px]">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-green-400" />
+                  <span className="text-sm font-medium text-secondary">100% Aman</span>
+                </div>
+                <p className="mt-2 text-xs text-tertiary leading-relaxed">Perlindungan transaksi & jaminan pengembalian.</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Heart className="w-5 h-5 text-pink-400" />
+                  <span className="text-sm font-medium text-secondary">Terpercaya</span>
+                </div>
+                <p className="mt-2 text-xs text-tertiary leading-relaxed">Rating tinggi & dukungan pelanggan 24/7.</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors col-span-2">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-fuchsia-400" />
+                  <span className="text-sm font-medium text-secondary">Premium</span>
+                </div>
+                <p className="mt-2 text-xs text-tertiary leading-relaxed">Kurasi akun berkualitas & penawaran eksklusif.</p>
+              </div>
+            </div>
+          </div>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-6">
+            <p className="text-faint text-xs md:text-sm tracking-wide">© {new Date().getFullYear()} JBalwikobra • Experience the future of trusted game account trading</p>
+            <div className="flex gap-3 text-xs text-tertiary">
+              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Aman</span>
+              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Cepat</span>
+              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Premium</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Bottom spacing for mobile navigation */}
   <div className="h-6"></div>

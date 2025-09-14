@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, AlertTriangle, Info } from 'lucide-react';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 
 export interface NotificationProps {
   id: string;

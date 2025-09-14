@@ -89,7 +89,7 @@ const FloatingNotifications: React.FC = () => {
   if (!items.length) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[1000] space-y-2 max-w-sm">
+    <div className="fixed top-4 right-4 z-[1000] space-y-2 max-w-sm" role="region" aria-live="polite" aria-label="Notifikasi baru">
       {items.map((n) => (
         <div key={n._ts} className="bg-black text-white rounded-lg shadow-lg border-l-4 border-pink-500 overflow-hidden">
           <div className="p-3">

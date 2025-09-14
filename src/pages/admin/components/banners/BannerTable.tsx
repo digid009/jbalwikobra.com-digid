@@ -29,7 +29,7 @@ export const BannerTable: React.FC<BannerTableProps> = ({
     return (
       <IOSCard variant="elevated" padding="none">
         <div className="p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-ios-background flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-black/60 flex items-center justify-center">
             <Image className="w-8 h-8 text-white/40" />
           </div>
           <p className="text-white/60 font-medium mb-1">No banners found</p>
@@ -41,9 +41,9 @@ export const BannerTable: React.FC<BannerTableProps> = ({
 
   return (
     <IOSCard variant="elevated" padding="none">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-ios-background/50 border-b border-gray-700">
+      <div className="overflow-x-auto admin-table-container">
+        <table className="admin-table admin-table-sticky zebra compact w-full">
+          <thead>
             <tr>
               <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                 Banner
@@ -65,9 +65,9 @@ export const BannerTable: React.FC<BannerTableProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-ios-border/30">
+          <tbody>
             {banners.map((banner) => (
-              <tr key={banner.id} className="hover:bg-ios-background/30 transition-colors">
+              <tr key={banner.id} className="hover:bg-white/5 transition-colors">
                 <td className="px-6 py-4">
                   <div className="space-y-1">
                     <div className="text-sm font-semibold text-white">
@@ -116,7 +116,7 @@ export const BannerTable: React.FC<BannerTableProps> = ({
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => onToggleStatus(banner.id, banner.is_active)}
-                      className="p-1 rounded-full hover:bg-ios-background/50 transition-colors"
+                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
                     >
                       {banner.is_active ? (
                         <ToggleRight className="w-5 h-5 text-ios-success" />
@@ -166,10 +166,19 @@ export const BannerTable: React.FC<BannerTableProps> = ({
           </tbody>
         </table>
       </div>
+      <div className="admin-pagination px-6 pb-6">
+        <IOSPagination 
+          totalPages={totalPages} 
+          currentPage={currentPage} 
+          totalItems={banners.length} 
+          itemsPerPage={banners.length} 
+          onPageChange={onPageChange} 
+        />
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
+  <div className="px-6 py-4 border-t border-gray-700/30 bg-black/40">
           <IOSPagination
             currentPage={currentPage}
             totalPages={totalPages}

@@ -15,7 +15,7 @@ import DataDiagnosticPage from '../DataDiagnosticPage';
 import FloatingNotifications from './FloatingNotifications';
 import { RefactoredAdminFlashSalesManagement } from '../../components/admin/flash-sales';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 import { 
   AdminSidebar, 
   AdminMobileHeader, 
@@ -134,8 +134,8 @@ const ModernAdminDashboard: React.FC = () => {
           className="flex-1 min-w-0 bg-gradient-to-br from-black via-gray-950 to-black transition-all duration-300 pt-20 lg:pt-0"
           style={{ marginLeft: '256px' }} // Default desktop margin
         >
-          {/* Main Content with larger padding */}
-          <main className="p-8 lg:p-10">
+          {/* Main Content with standardized spacing token */}
+          <main className="admin-page-container">
             <div className="max-w-7xl mx-auto">
               {renderContent()}
             </div>

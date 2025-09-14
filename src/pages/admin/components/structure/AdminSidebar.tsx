@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { navigationItems } from './navigationConfig';
 import { AdminTab } from './adminTypes';
 import { SettingsService } from '../../../../services/settingsService';

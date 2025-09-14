@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
 import { Product, Customer, RentalOption } from '../types';
-import { standardClasses, cn } from '../styles/standardClasses';
 import {
   formatCurrency, 
   calculateTimeRemaining,
@@ -27,11 +26,20 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { createXenditInvoice } from '../services/paymentService';
-import ResponsiveImage from '../components/ResponsiveImage';
+// Extracted components
+import ProductDetailLoadingSkeleton from '../components/public/product-detail/LoadingSkeleton';
+import BreadcrumbNav from '../components/public/product-detail/BreadcrumbNav';
+import ImageGallery from '../components/public/product-detail/ImageGallery';
+import FlashSaleTimer from '../components/public/product-detail/FlashSaleTimer';
+import RentalOptions from '../components/public/product-detail/RentalOptions';
+import ActionButtons from '../components/public/product-detail/ActionButtons';
+import TrustBadges from '../components/public/product-detail/TrustBadges';
+import DescriptionSection from '../components/public/product-detail/DescriptionSection';
+import CheckoutModal from '../components/public/product-detail/CheckoutModal';
 import { getCurrentUserProfile, isLoggedIn, getAuthUserId } from '../services/authService';
 import { useWishlist } from '../contexts/WishlistContext';
-import PhoneInput from '../components/PhoneInput';
 import { useToast } from '../components/Toast';
+import { Link } from 'react-router-dom';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -343,45 +351,14 @@ const ProductDetailPage: React.FC = () => {
     setShowCheckoutForm(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-ios-background text-white">
-  <div className={standardClasses.container.boxed}>
-          <div className="ios-skeleton h-5 w-64 mb-6"></div>
-          <div className="lg:grid lg:grid-cols-2 lg:gap-12">
-            <div>
-              <div className="ios-skeleton h-[480px] w-full mb-4 rounded-xl"></div>
-              <div className="grid grid-cols-5 gap-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="ios-skeleton h-16 w-full rounded-lg"></div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-8 lg:mt-0">
-              <div className="ios-skeleton h-6 w-3/4 mb-4"></div>
-              <div className="ios-skeleton h-8 w-1/3 mb-6"></div>
-              <div className="space-y-3 mb-6">
-                <div className="ios-skeleton h-4 w-full"></div>
-                <div className="ios-skeleton h-4 w-5/6"></div>
-                <div className="ios-skeleton h-4 w-2/3"></div>
-              </div>
-              <div className="flex gap-3">
-                <div className="ios-skeleton h-12 w-32 rounded-xl"></div>
-                <div className="ios-skeleton h-12 w-40 rounded-xl"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <ProductDetailLoadingSkeleton />;
 
   if (!product) {
     return (
-    <div className="min-h-screen flex items-center justify-center bg-ios-background text-white">
+  <div className="min-h-screen flex items-center justify-center bg-black text-white">
         <div className="text-center">
       <h2 className="text-2xl font-bold text-white mb-2">Produk tidak ditemukan</h2>
-      <p className="text-white-secondary mb-4">Produk yang Anda cari tidak tersedia</p>
+  <p className="text-white/70 mb-4">Produk yang Anda cari tidak tersedia</p>
           <Link
             to="/products"
             className="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700 transition-colors"
@@ -407,75 +384,18 @@ const ProductDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-ios-background text-white">
-      <div className={standardClasses.container.boxed}>
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-white-secondary mb-6">
-          <Link to="/" className="hover:text-white">Beranda</Link>
-          <span>/</span>
-          <button onClick={handleBackToCatalog} className="hover:text-white bg-transparent border-none p-0 text-inherit">Produk</button>
-          <span>/</span>
-          <span className="text-white">{product.name}</span>
-        </nav>
-
-        {/* Back Button */}
-        <button
-          onClick={handleBackToCatalog}
-          className="inline-flex items-center space-x-2 text-white-secondary hover:text-white mb-6 transition-colors min-h-[44px]"
-        >
-          <ChevronLeft size={20} />
-          <span>Kembali ke Katalog</span>
-        </button>
+    <div className="min-h-screen bg-black text-white main-content">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <BreadcrumbNav productName={product.name} onBack={handleBackToCatalog} />
 
         <div className="lg:grid lg:grid-cols-2 lg:gap-12">
-          {/* Image Gallery */}
-          <div>
-                        <div className="relative aspect-[4/5] mb-4 bg-black rounded-xl overflow-hidden border border-gray-700">
-                          <ResponsiveImage
-                            src={images[selectedImage]}
-                            alt={product.name}
-                            className="w-full h-full"
-                            priority={true}
-                            quality={85}
-                            aspectRatio={4/5}
-                            sizes="(max-width: 1024px) 100vw, 50vw"
-                          />
-              
-              {/* Flash Sale Badge */}
-              {isFlashSaleActive && (
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                  <Zap size={14} />
-                  <span>Flash Sale</span>
-                </div>
-              )}
-
-              {/* Stock badge removed: qty is always 1 */}
-            </div>
-
-            {/* Image Thumbnails */}
-            {images.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto" role="listbox" aria-label="Galeri gambar">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    role="option"
-                    aria-selected={selectedImage === index}
-                    aria-label={`Gambar ${index + 1} dari ${images.length}`}
-                    className={`flex-shrink-0 w-24 md:w-20 min-w-[44px] min-h-[44px] aspect-[4/5] rounded-lg overflow-hidden border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ios-accent ${
-                      selectedImage === index ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-700'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ImageGallery
+            images={images}
+            selectedIndex={selectedImage}
+            onSelect={setSelectedImage}
+            isFlashSaleActive={isFlashSaleActive}
+            productName={product.name}
+          />
 
           {/* Product Info */}
           <div className="mt-6">
@@ -510,7 +430,7 @@ const ProductDetailPage: React.FC = () => {
                       -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                     </span>
                   </div>
-                  <span className="text-lg text-white-secondary line-through">
+                  <span className="text-lg text-white/70 line-through">
                     {formatCurrency(product.originalPrice)}
                   </span>
                 </div>
@@ -521,41 +441,7 @@ const ProductDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* Flash Sale Timer */}
-            {isFlashSaleActive && timeRemaining && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-                <div className="flex items-center space-x-2 text-red-300 font-semibold mb-2">
-                  <Clock size={20} />
-                  <span>Flash Sale berakhir dalam:</span>
-                </div>
-                <div className="flex space-x-3">
-                  <div className="text-center">
-                    <div className="bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
-                      {timeRemaining.days.toString().padStart(2, '0')}
-                    </div>
-                    <span className="text-xs text-red-300 mt-1">Hari</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
-                      {timeRemaining.hours.toString().padStart(2, '0')}
-                    </div>
-                    <span className="text-xs text-red-300 mt-1">Jam</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
-                      {timeRemaining.minutes.toString().padStart(2, '0')}
-                    </div>
-                    <span className="text-xs text-red-300 mt-1">Menit</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-red-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
-                      {timeRemaining.seconds.toString().padStart(2, '0')}
-                    </div>
-                    <span className="text-xs text-red-300 mt-1">Detik</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <FlashSaleTimer timeRemaining={timeRemaining} />
 
             {/* Account Details */}
             {product.accountLevel && (
@@ -564,87 +450,34 @@ const ProductDetailPage: React.FC = () => {
                   <Star className="text-yellow-400" size={16} />
                   <span>Detail Akun</span>
                 </h3>
-                <p className="text-white-secondary">
+                <p className="text-white/70">
                   <strong>Level:</strong> {product.accountLevel}
                 </p>
                 {product.accountDetails && (
-                  <p className="text-white-secondary mt-1">{product.accountDetails}</p>
+                  <p className="text-white/70 mt-1">{product.accountDetails}</p>
                 )}
               </div>
             )}
 
             {/* Rental Options - hidden if user came from flash sale card */}
-      {(!cameFromFlashSaleCard) && product.hasRental && product.rentalOptions && product.rentalOptions.length > 0 && (
-              <div className="mb-6">
-        <h3 className="font-semibold text-white mb-3 flex items-center space-x-2">
-                  <Calendar className="text-pink-400" size={16} />
-                  <span>Opsi Rental</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {product.rentalOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setSelectedRental(option)}
-            className={`p-3 border-2 rounded-lg text-left transition-colors ${
-                        selectedRental?.id === option.id
-              ? 'border-pink-500 bg-pink-500/10'
-              : 'border-gray-700 hover:bg-black'
-                      }`}
-                    >
-            <div className="font-medium text-white">{option.duration}</div>
-                      <div className="text-pink-400 font-semibold">
-                        {formatCurrency(option.price)}
-                      </div>
-                      {option.description && (
-            <div className="text-sm text-white-secondary mt-1">{option.description}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <RentalOptions
+              options={product.rentalOptions || []}
+              selected={selectedRental}
+              onSelect={setSelectedRental}
+              hidden={cameFromFlashSaleCard || !product.hasRental}
+            />
 
-            {/* Action Buttons */}
-            <div className="space-y-3 mb-6">
-              {/* Purchase Button */}
-  <button
-                onClick={handlePurchase}
-                disabled={product.stock === 0}
-        className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-colors min-h-[44px] ${
-                  product.stock === 0
-        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-        : 'bg-pink-600 text-white hover:bg-pink-700'
-                }`}
-              >
-                <CreditCard size={20} />
-                <span>
-                  {product.stock === 0 ? 'Stok Habis' : 'Beli Sekarang'}
-                </span>
-              </button>
-
-              {/* Rental Button - hidden if user came from flash sale card */}
-              {(!cameFromFlashSaleCard) && product.hasRental && selectedRental && (
-  <button
-                  onClick={() => handleRental(selectedRental)}
-                  disabled={product.stock === 0}
-      className={`w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold border-2 transition-colors min-h-[44px] ${
-                    product.stock === 0
-          ? 'border-gray-700 text-gray-400 cursor-not-allowed'
-          : 'border-pink-600 text-pink-400 hover:bg-black/5'
-                  }`}
-                >
-                  <Calendar size={20} />
-                  <span>
-                    Rental {selectedRental.duration} - {formatCurrency(selectedRental.price)}
-                  </span>
-                </button>
-              )}
-
-              {/* WhatsApp Contact for rental will be presented in the checkout modal */}
-            </div>
+            <ActionButtons
+              stock={product.stock || 0}
+              hasRental={!!product.hasRental}
+              selectedRental={selectedRental}
+              cameFromFlashSaleCard={cameFromFlashSaleCard}
+              onPurchase={handlePurchase}
+              onRental={handleRental}
+            />
 
             {/* Additional Actions */}
-      <div className="flex items-center space-x-4 text-white-secondary">
+  <div className="flex items-center space-x-4 text-white/70">
               <button 
                 onClick={handleWishlistToggle}
                 className={`flex items-center space-x-1 transition-colors ${
@@ -668,176 +501,29 @@ const ProductDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Trust Badges */}
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2 text-sm text-white-secondary">
-                <Shield className="text-green-500" size={16} />
-                <span>Garansi 100%</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-white-secondary">
-                <CheckCircle className="text-pink-400" size={16} />
-                <span>Akun Terverifikasi</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-white-secondary">
-                <Clock className="text-orange-500" size={16} />
-                <span>Proses 24 Jam</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-white-secondary">
-                <MessageCircle className="text-green-500" size={16} />
-                <span>Support 24/7</span>
-              </div>
-            </div>
+            <TrustBadges />
           </div>
         </div>
 
-        {/* Product Description */}
-        <div className="mt-12 bg-black rounded-xl border border-gray-700 p-6">
-          <h2 className="text-2xl font-bold text-white mb-4">Deskripsi Produk</h2>
-          <div className="max-w-none">
-            <p className="text-white-secondary leading-relaxed">{product.description}</p>
-          </div>
-        </div>
+  <DescriptionSection description={product.description} />
 
-        {/* Checkout Modal */}
-        {showCheckoutForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-black border border-gray-700 rounded-xl max-w-md w-full p-6 text-white">
-              <h3 className="text-xl font-bold text-white mb-4">
-                {checkoutType === 'purchase' ? 'Beli Akun' : 'Rental Akun'}
-              </h3>
-              
-              <div className="mb-4 p-4 bg-black border border-gray-700 rounded-lg">
-                <p className="font-medium text-white">{product.name}</p>
-                <p className="text-pink-400 font-semibold">
-                  {checkoutType === 'rental' && selectedRental
-                    ? `${formatCurrency(selectedRental.price)} (${selectedRental.duration})`
-                    : formatCurrency(effectivePrice)
-                  }
-                </p>
-              </div>
-
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white-secondary mb-1">
-                    Nama Lengkap *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={customer.name}
-                    onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-                    className="w-full px-3 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent min-h-[44px]"
-                    placeholder="Masukkan nama lengkap"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white-secondary mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={customer.email}
-                    onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                    className="w-full px-3 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-ios-accent focus:border-ios-accent min-h-[44px]"
-                    placeholder="Masukkan email"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white-secondary mb-1">
-                    No. WhatsApp *
-                  </label>
-                  <PhoneInput
-                    value={customer.phone}
-                    onChange={(value) => setCustomer({ ...customer, phone: value })}
-                    onValidationChange={setIsPhoneValid}
-                    placeholder="Masukkan Nomor WhatsApp"
-                    required
-                    disableAutoDetection={true}
-                  />
-                </div>
-
-                {checkoutType === 'purchase' && (
-                  <div className="p-3 bg-black border border-gray-700 rounded-lg">
-                    <div className="flex items-center space-x-2 text-white-secondary">
-                      <Info size={16} />
-                      <span className="text-sm">
-                        Pembayaran melalui sistem pembayaran aman dan terjamin. Informasi detail akan di kirim via WhatsApp setelah pembayaran berhasil.
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {checkoutType === 'rental' && (
-                  <div className="p-3 bg-black border border-gray-700 rounded-lg">
-                    <div className="flex items-center space-x-2 text-white-secondary">
-                      <Calendar size={16} />
-                      <span className="text-sm">
-                        Akses rental akan diberikan melalui WhatsApp
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Terms acceptance (required for purchase) */}
-                {checkoutType === 'purchase' && (
-                  <label className="flex items-start space-x-2 text-sm text-white-secondary min-h-[44px]">
-                    <input
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={(e) => setAcceptedTerms(e.target.checked)}
-                      className="mt-0.5 form-checkbox h-4 w-4 text-pink-600 border-gray-700 bg-black rounded"
-                    />
-                    <span>
-                      Saya telah membaca dan menyetujui{' '}
-                      <Link to="/terms" className="text-pink-400 underline hover:text-pink-300" target="_blank" rel="noreferrer">
-                        Syarat & Ketentuan PT ALWI KOBRA INDONESIA
-                      </Link>
-                    </span>
-                  </label>
-                )}
-
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCheckoutForm(false)}
-                    className="flex-1 px-4 border border-gray-700 text-white-secondary rounded-lg hover:bg-black transition-colors min-h-[44px]"
-                  >
-                    Batal
-                  </button>
-
-          {checkoutType === 'purchase' ? (
-                    <button
-                      type="button"
-                      onClick={handleCheckout}
-                      disabled={!acceptedTerms || creatingInvoice}
-                      className={`flex-1 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] ${
-                        acceptedTerms && !creatingInvoice
-                          ? 'bg-pink-600 text-white hover:bg-pink-700'
-                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {creatingInvoice && (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      )}
-                      {creatingInvoice ? 'Memproses...' : 'Bayar Sekarang'}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleWhatsAppContact('rental')}
-                      className="flex-1 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors min-h-[44px]"
-                    >
-                      Lanjut ke WhatsApp
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <CheckoutModal
+          visible={showCheckoutForm}
+          onClose={() => setShowCheckoutForm(false)}
+          checkoutType={checkoutType}
+          productName={product.name}
+          effectivePrice={effectivePrice}
+          selectedRental={selectedRental}
+          customer={customer}
+          setCustomer={setCustomer}
+          isPhoneValid={isPhoneValid}
+          setIsPhoneValid={setIsPhoneValid}
+          acceptedTerms={acceptedTerms}
+          setAcceptedTerms={setAcceptedTerms}
+            creatingInvoice={creatingInvoice}
+          onCheckout={handleCheckout}
+          onWhatsAppRental={() => handleWhatsAppContact('rental')}
+        />
       </div>
     </div>
   );

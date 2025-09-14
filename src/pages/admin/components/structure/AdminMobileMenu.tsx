@@ -3,7 +3,7 @@ import { X, LayoutDashboard } from 'lucide-react';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
 import { navigationItems } from './navigationConfig';
 import { AdminTab } from './adminTypes';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface AdminMobileMenuProps {
   open: boolean;

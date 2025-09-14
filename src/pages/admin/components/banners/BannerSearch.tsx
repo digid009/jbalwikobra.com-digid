@@ -16,9 +16,9 @@ export const BannerSearch: React.FC<BannerSearchProps> = ({
           placeholder="Search banners by title or description..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-ios-background border border-gray-700 rounded-xl 
-                     focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                     transition-colors duration-200 text-white placeholder-ios-text/60"
+          className="w-full pl-10 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                     focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                     transition-colors duration-200 text-white placeholder:text-white/50"
         />
       </div>
     </IOSCard>

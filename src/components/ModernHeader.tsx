@@ -22,7 +22,8 @@ import {
 import { notificationService } from '../services/notificationService';
 import { IOSButton } from './ios/IOSDesignSystem';
 import { SettingsService } from '../services/settingsService';
-import { standardClasses, cn } from '../styles/standardClasses';
+import { cn } from '../utils/cn';
+const standardClasses = { container:{boxed:'mx-auto w-full max-w-7xl px-4'}, flex:{rowGap2:'flex items-center gap-2',rowGap3:'flex items-center gap-3'} };
 import type { WebsiteSettings } from '../types';
 
 interface NavigationItem {

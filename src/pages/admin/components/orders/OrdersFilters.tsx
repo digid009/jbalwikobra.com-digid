@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface OrdersFiltersProps {
   searchTerm: string;

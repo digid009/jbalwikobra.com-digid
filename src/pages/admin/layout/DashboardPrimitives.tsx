@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../../styles/standardClasses';
+import { cn } from '../../../utils/cn';
 
 /* Typography scale tokens (can be extended) */
 export const typeScale = {

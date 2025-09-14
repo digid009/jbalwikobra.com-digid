@@ -66,14 +66,14 @@ export const BannerForm: React.FC<BannerFormProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-ios-background border border-gray-700 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-black border border-gray-700 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">
             {editingBanner ? 'Edit Banner' : 'Create Banner'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-ios-background/50 rounded-xl transition-colors"
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-white/70" />
           </button>
@@ -89,9 +89,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                         transition-colors duration-200 text-white placeholder-ios-text/60"
+              className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                         focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                         transition-colors duration-200 text-white placeholder:text-white/50"
               placeholder="Enter banner title..."
               required
             />
@@ -106,9 +106,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               type="text"
               value={formData.subtitle}
               onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-              className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                         transition-colors duration-200 text-white placeholder-ios-text/60"
+              className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                         focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                         transition-colors duration-200 text-white placeholder:text-white/50"
               placeholder="Enter banner subtitle..."
             />
           </div>
@@ -123,9 +123,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                           focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                           transition-colors duration-200 text-white placeholder-ios-text/60"
+                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                           focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                           transition-colors duration-200 text-white placeholder:text-white/50"
                 placeholder="Enter image URL or upload file..."
                 required
               />
@@ -170,9 +170,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               type="url"
               value={formData.link_url}
               onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
-              className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                         transition-colors duration-200 text-white placeholder-ios-text/60"
+              className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                         focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                         transition-colors duration-200 text-white placeholder:text-white/50"
               placeholder="https://example.com"
             />
           </div>
@@ -186,9 +186,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               type="text"
               value={formData.cta_text}
               onChange={(e) => setFormData(prev => ({ ...prev, cta_text: e.target.value }))}
-              className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                         transition-colors duration-200 text-white placeholder-ios-text/60"
+              className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                         focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                         transition-colors duration-200 text-white placeholder:text-white/50"
               placeholder="Click here to learn more"
             />
           </div>
@@ -202,9 +202,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               type="number"
               value={formData.sort_order}
               onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 1 }))}
-              className="w-full px-4 py-3 bg-ios-background/50 border border-gray-700 rounded-xl 
-                         focus:ring-2 focus:ring-ios-primary focus:border-pink-500 
-                         transition-colors duration-200 text-white placeholder-ios-text/60"
+              className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl 
+                         focus:ring-2 focus:ring-pink-500 focus:border-pink-500 
+                         transition-colors duration-200 text-white placeholder:text-white/50"
               min="1"
             />
           </div>
@@ -219,7 +219,7 @@ export const BannerForm: React.FC<BannerFormProps> = ({
                 className="sr-only"
               />
               <div className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
-                formData.is_active ? 'bg-ios-primary' : 'bg-gray-600'
+                formData.is_active ? 'bg-pink-600' : 'bg-black/50'
               }`}>
                 <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
                   formData.is_active ? 'translate-x-6' : 'translate-x-1'

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { X, Search } from 'lucide-react';
 import { AdminTab } from './structure/adminTypes';
-import { cn } from '../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface CommandPaletteProps {
   open: boolean;

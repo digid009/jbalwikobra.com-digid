@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Clock, Star, Headphones } from 'lucide-react';
+import HomeSectionHeader from './shared/HomeSectionHeader';
 
 interface Feature { icon: any; title: string; description: string; }
 
@@ -13,18 +14,22 @@ const FEATURES: Feature[] = [
 const HomeFeaturesSection: React.FC = () => {
   return (
     <section className="px-4 py-8">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">Mengapa Pilih Kami?</h2>
-        <p className="text-zinc-400 text-sm">Platform tepercaya dengan keamanan terbaik</p>
-      </div>
+      <HomeSectionHeader
+        title="Mengapa Pilih Kami?"
+        subtitle="Platform tepercaya dengan keamanan terbaik"
+        align="center"
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         {FEATURES.map((f, i) => (
-          <div key={f.title} className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-6 hover:border-pink-500/30 transition-all duration-300">
-            <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mb-4">
+          <div
+            key={f.title}
+            className={`interactive-card rounded-2xl p-6 transition-all duration-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.06)] anim-fade-scale stagger-${(i%10)+1}`}
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-pink-600 via-pink-500 to-fuchsia-600 rounded-2xl flex items-center justify-center mb-4 border border-pink-500/30 shadow-inner">
               <f.icon className="text-white" size={28} />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2 leading-tight">{f.title}</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">{f.description}</p>
+            <h3 className="text-lg font-semibold text-white mb-2 leading-tight tracking-wide">{f.title}</h3>
+            <p className="text-tertiary text-sm leading-relaxed">{f.description}</p>
           </div>
         ))}
       </div>

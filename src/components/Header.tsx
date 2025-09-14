@@ -5,8 +5,20 @@ import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag, Arro
 import { notificationService } from '../services/notificationService';
 import { IOSButton } from './ios/IOSDesignSystem';
 import { SettingsService } from '../services/settingsService';
-import { standardClasses, cn } from '../styles/standardClasses';
 import type { WebsiteSettings } from '../types';
+
+// Minimal utility replacements for deprecated standardClasses/cn (to be fully removed in later refactor)
+import { cn } from '../utils/cn';
+const standardClasses = {
+  container: { boxed: 'mx-auto w-full max-w-7xl px-4' },
+  flex: {
+    between: 'flex items-center justify-between',
+    rowGap3: 'flex items-center gap-3',
+    center: 'flex items-center justify-center',
+    rowGap2: 'flex items-center gap-2',
+    row: 'flex'
+  }
+};
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -99,7 +111,15 @@ const Header = () => {
 
   return (
     <>
-      <header data-fixed="header" className="header-fixed bg-ios-background/95 backdrop-blur-xl border-b border-gray-700 shadow-sm">
+      {/* Main Header - Hidden on mobile for better mobile-first experience */}
+      <header 
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 transition-all duration-300",
+          // Hide header on all mobile screens for mobile-first design
+          "hidden lg:block mobile-hide-header"
+        )}
+        data-component="header"
+      >
         <div className={standardClasses.container.boxed}>
           <div className={cn(standardClasses.flex.between, 'h-16 lg:h-18')}>
             {/* Logo Section */}
@@ -138,7 +158,7 @@ const Header = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-black transition-all duration-300 text-sm lg:text-base"
+                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-black transition-all duration-300 text-sm lg:text-base"
                   />
                 </div>
               </form>
@@ -192,7 +212,7 @@ const Header = () => {
                   )}
                   </IOSButton>
                 {isNotifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-ios-background border border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
+                  <div className="absolute right-0 mt-2 w-80 bg-black border border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-black/50">
                       <span className="text-sm font-semibold text-white">Notifikasi</span>
                       <div className="flex items-center gap-2">
@@ -321,7 +341,7 @@ const Header = () => {
                   </IOSButton>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-ios-background border border-gray-700 rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-black border border-gray-700 rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-gray-700">
                         <div className="flex items-center space-x-3">
@@ -430,7 +450,7 @@ const Header = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-12 pr-12 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
+                  className="w-full pl-12 pr-12 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
                 />
                 <button
                   type="button"
@@ -446,7 +466,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden bg-ios-background/95 backdrop-blur-xl border-t border-gray-700">
+          <div className="lg:hidden bg-black/90 backdrop-blur-xl border-t border-gray-700">
             <div className="px-4 py-4 space-y-4">
               {/* Mobile Search */}
               <form onSubmit={handleSearch}>
@@ -457,7 +477,7 @@ const Header = () => {
                     placeholder="Cari produk atau layanan..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder-ios-text-secondary focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                    className="w-full pl-12 pr-4 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
                   />
                 </div>
               </form>

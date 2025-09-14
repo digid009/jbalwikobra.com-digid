@@ -3,12 +3,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import ModernHeader from './components/ModernHeader';
-import ModernMobileNavigation from './components/ModernMobileNavigation';
+import ModernMobileNavigation from './components/ModernMobileNavigationV2';
 import ScrollToTop from './components/ScrollToTop';
 import ModernFooter from './components/ModernFooter';
 import './App.css';
-import './styles/mobile-first.css';
-import './styles/navigation-fixes.css';
+import './styles/global-design-system.css';
+import './styles/public-pages.css';
+import './styles/bottom-navigation.css';
 import { forceFixedPositioning } from './utils/forceFixedPositioning';
 import RequireAdmin from './components/RequireAdmin';
 import { ToastProvider } from './components/Toast';
@@ -50,7 +51,7 @@ const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
 
 // Optimized loading component for better perceived performance (iOS skeleton)
 const PageLoader = () => (
-  <div className="min-h-screen bg-ios-background text-white flex items-center justify-center px-6">
+  <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
     <div className="w-full max-w-md">
       <div className="ios-skeleton h-6 w-40 mb-4"></div>
       <div className="ios-skeleton h-4 w-full mb-2"></div>

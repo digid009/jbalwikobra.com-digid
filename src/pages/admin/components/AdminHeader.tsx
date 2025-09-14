@@ -18,7 +18,8 @@ import {
 import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { ThemeToggle } from '../../../components/ios/ThemeToggle';
 import { AdminStats } from '../../../services/adminService';
-import { cn } from '../../../styles/standardClasses';
+// Temporary local cn util (legacy helper removed)
+import { cn } from '../../../utils/cn';
 
 export type AdminTab = 
   | 'overview' 
@@ -89,7 +90,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-ios-background/95 backdrop-blur-md border-b border-gray-700/30 shadow-lg shadow-black/50">
+  <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-700/30 shadow-lg shadow-black/50">
       {/* Main Header */}
       <div className="container mx-auto px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
@@ -201,7 +202,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Search orders, users, products..."
-                    className={adminInputWithLeftIcon + ' placeholder-ios-text-secondary'}
+                    className={adminInputWithLeftIcon + ' placeholder:text-white/50'}
                   />
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
                   <IOSButton
@@ -242,7 +243,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-ios-background rounded-2xl shadow-lg border border-gray-700 z-50">
+                <div className="absolute right-0 top-full mt-2 w-80 bg-black rounded-2xl shadow-lg border border-gray-700 z-50">
                   <div className="p-4 border-b border-gray-700">
                     <h3 className="font-semibold text-white">Notifications</h3>
                   </div>
@@ -300,7 +301,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Search..."
-                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-ios-primary focus:border-pink-500 bg-black text-white placeholder-ios-text-secondary"
+                  className="w-full pl-10 pr-20 py-2 border border-gray-700 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-black text-white placeholder:text-white/50"
                 />
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-200" />
                 <IOSButton

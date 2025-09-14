@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 
 interface IOSToggleProps {
   checked: boolean;

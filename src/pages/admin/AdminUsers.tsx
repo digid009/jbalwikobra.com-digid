@@ -156,7 +156,7 @@ const AdminUsers: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Users & Roles</h1>
-          <p className="text-white-secondary mt-2">Kelola pengguna dan peran dalam sistem</p>
+          <p className="text-white/70 mt-2">Kelola pengguna dan peran dalam sistem</p>
         </div>
         <button
           onClick={load}

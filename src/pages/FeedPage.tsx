@@ -1,18 +1,42 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter, Users, Sparkles, Calendar, Clock } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Star, Edit2, Save, X, ArrowLeft, ChevronLeft, ChevronRight, Filter, Users, Sparkles, Calendar, Clock, Zap, TrendingUp } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
 import { reviewService, type UserReview } from '../services/reviewService';
 import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero, IOSBadge } from '../components/ios/IOSDesignSystem';
+import { iosDesignTokens } from '../components/ios/IOSDesignSystemV2';
 import { ConsistentLayout, PageWrapper, ContentSection } from '../components/layout/ConsistentLayout';
 import { ModernFeedCard } from '../components/ModernFeedCard';
 import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import { standardClasses, cn } from '../styles/standardClasses';
+// Removed legacy standardClasses & cn helper – using a minimal local cls combiner
+const cls = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 import { scrollToPaginationContent } from '../utils/scrollUtils';
 
-// Mobile-first constants
-const MIN_TOUCH_TARGET = 44; // iOS HIG minimum 44pt touch target
+// Mobile-first constants following iOS design guidelines
+const MOBILE_CONSTANTS = {
+  // iOS/Android recommended touch target sizes
+  MIN_TOUCH_TARGET: 44, // 44dp/pt minimum touch target
+  CONTENT_PADDING: 16,   // Standard content padding
+  SECTION_SPACING: 24,   // Section spacing
+  CARD_SPACING: 12,      // Card spacing
+  
+  // Performance optimizations
+  ITEMS_PER_PAGE: 10,
+  CACHE_DURATION: 5 * 60 * 1000,
+  
+  // Animation timing following platform standards
+  ANIMATIONS: {
+    FAST: 200,    // Quick interactions
+    STANDARD: 300, // Standard transitions
+    SLOW: 500,    // Complex transitions
+  },
+  
+  // Safe area considerations
+  HEADER_HEIGHT_MOBILE: 0,     // Hide header on mobile
+  HEADER_HEIGHT_DESKTOP: 80,   // Standard header height on desktop
+  BOTTOM_NAV_HEIGHT: 80,       // Bottom navigation height
+} as const;
 
 // Tab filter type
 type FeedFilter = 'semua' | 'pengumuman' | 'review';
@@ -32,7 +56,7 @@ interface TabProps {
 const Tab: React.FC<TabProps> = ({ label, isActive, onClick, count }) => (
   <button
     onClick={onClick}
-    className={cn(
+  className={cls(
       'relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 flex-1 text-sm backdrop-blur-xl border',
       isActive 
         ? 'bg-gradient-to-r from-pink-500/30 to-fuchsia-500/30 text-pink-100 border-pink-500/30 shadow-lg shadow-pink-500/10' 
@@ -89,33 +113,33 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   };
 
   return (
-    <div className={cn(standardClasses.flex.center, 'gap-1 sm:gap-2 mt-8')}>
+    <div className="flex items-center justify-center gap-1 sm:gap-2 mt-8">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1 || loading}
-        className={cn(
-          standardClasses.flex.center,
-          `min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg transition-all duration-200`,
-          currentPage === 1 || loading 
-            ? 'bg-black/50 text-white-secondary/50 cursor-not-allowed' 
+        className={cls(
+          'flex items-center justify-center',
+          `min-h-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] min-w-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] rounded-lg transition-all duration-200`,
+          (currentPage === 1 || loading)
+            ? 'bg-black/50 text-white/50 cursor-not-allowed'
             : 'bg-black text-white hover:bg-black/80'
         )}
       >
         <ChevronLeft size={20} />
       </button>
 
-      <div className={cn(standardClasses.flex.row, 'gap-1 mx-2')}>
+      <div className="flex flex-row gap-1 mx-2">
         {getPageNumbers().map((pageNum, index) => (
           <button
             key={index}
             onClick={() => typeof pageNum === 'number' ? onPageChange(pageNum) : undefined}
             disabled={pageNum === '...' || loading}
             className={`
-              min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base
+              min-h-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] min-w-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base
               ${pageNum === currentPage
                 ? 'bg-pink-500 text-white shadow-lg'
                 : pageNum === '...'
-                ? 'text-white-secondary cursor-default bg-transparent'
+                ? 'text-white/70 cursor-default bg-transparent'
                 : 'bg-black text-white hover:bg-black/80 disabled:opacity-50'
               }
             `}
@@ -123,15 +147,15 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             {pageNum}
           </button>
         ))}
-      </div>
+  </div>
 
-      <button
+  <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages || loading}
         className={`
-          min-h-[${MIN_TOUCH_TARGET}px] min-w-[${MIN_TOUCH_TARGET}px] rounded-lg flex items-center justify-center transition-all duration-200
+          min-h-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] min-w-[${MOBILE_CONSTANTS.MIN_TOUCH_TARGET}px] rounded-lg flex items-center justify-center transition-all duration-200
           ${currentPage === totalPages || loading 
-            ? 'bg-black/50 text-white-secondary/50 cursor-not-allowed' 
+            ? 'bg-black/50 text-white/50 cursor-not-allowed' 
             : 'bg-black text-white hover:bg-black/80'
           }
         `}
@@ -169,6 +193,7 @@ function timeAgo(iso: string) {
 
 export default function FeedPage() {
   const { user } = useAuth();
+  
   // State management
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
@@ -190,6 +215,17 @@ export default function FeedPage() {
 
   const ITEMS_PER_PAGE = 12;
   const navigate = useNavigate();
+
+  // Set body attribute for CSS targeting and mobile optimizations
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'feed');
+    document.body.classList.add('feed-mobile-optimized', 'ios-scroll');
+    
+    return () => {
+      document.body.removeAttribute('data-page');
+      document.body.classList.remove('feed-mobile-optimized', 'ios-scroll');
+    };
+  }, []);
 
   const loadInitialData = useCallback(async () => {
     try {
@@ -365,32 +401,71 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      {/* Modern Hero Section with Glass Effect */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-fuchsia-500/20 to-purple-500/20"></div>
-        <div className="absolute inset-0 bg-black/40"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 page-content-mobile">
+      {/* Mobile-Optimized Hero Section */}
+      <div className="relative overflow-hidden lg:block">
+        {/* Background Effects */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-fuchsia-500/20 to-purple-500/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        </div>
+        
+        {/* Hero Content - Optimized for mobile */}
         <div className="relative backdrop-blur-xl border-b border-white/10">
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 rounded-2xl flex items-center justify-center border border-pink-500/30">
-                <Sparkles className="w-6 h-6 text-pink-400" />
+          <div className="max-w-4xl mx-auto px-4 py-6 lg:px-6 lg:py-8">
+            <div className="flex items-center gap-3 lg:gap-4 mb-3 lg:mb-4">
+              {/* Icon with improved mobile sizing */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 rounded-2xl flex items-center justify-center border border-pink-500/30">
+                <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-pink-400" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+              
+              {/* Title and Subtitle */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent truncate">
                   Feed Komunitas
                 </h1>
-                <p className="text-gray-400 mt-1">Bergabung dalam diskusi dan dapatkan update terbaru</p>
+                <p className="text-gray-400 text-sm lg:text-base mt-0.5 lg:mt-1 line-clamp-2">
+                  Bergabung dalam diskusi dan dapatkan update terbaru
+                </p>
+              </div>
+              
+              {/* Mobile: Quick Stats */}
+              <div className="lg:hidden flex flex-col items-end text-right">
+                <div className="flex items-center gap-2 text-pink-300">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-sm font-medium">{totalCounts.semua}</span>
+                </div>
+                <span className="text-xs text-gray-400">Total Posts</span>
+              </div>
+            </div>
+            
+            {/* Desktop: Extended stats */}
+            <div className="hidden lg:flex items-center gap-6 pt-4 border-t border-white/5">
+              <div className="flex items-center gap-2 text-pink-300">
+                <Zap className="w-4 h-4" />
+                <span className="text-sm font-medium">{totalCounts.pengumuman} Pengumuman</span>
+              </div>
+              <div className="flex items-center gap-2 text-blue-300">
+                <Star className="w-4 h-4" />
+                <span className="text-sm font-medium">{totalCounts.review} Review</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-300">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">Update terbaru</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Modern Tab Navigation with Glass Effect */}
-        <div id="content-tabs" className="bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl mb-8">
-          <div className="flex gap-3">
+      {/* Main Content Container */}
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 lg:py-8 pb-24 lg:pb-8">
+        {/* Modern Tab Navigation - Mobile Optimized */}
+        <div 
+          id="content-tabs" 
+          className="bg-black/40 backdrop-blur-xl rounded-2xl p-3 lg:p-4 border border-white/10 shadow-2xl mb-6 lg:mb-8"
+        >
+          <div className="flex gap-2 lg:gap-3">
             <Tab
               label="Semua"
               isActive={activeFilter === 'semua'}
@@ -521,12 +596,13 @@ export default function FeedPage() {
                       <div className="text-sm font-medium">{review.user_name || 'Anonymous'}</div>
                       <div className="flex items-center gap-2">
                         <div className="flex">{renderStars(review.rating)}</div>
-                        <span className="text-xs text-white-secondary">
+                        <span className="text-xs text-white/70">
+                          {/* normalized from text-white-secondary */}
                           {getTimeAgo(review.created_at)}
                         </span>
                       </div>
                       {review.product_name && (
-                        <div className="text-xs text-white-secondary mt-1">
+                        <div className="text-xs text-white/70 mt-1">
                           Review untuk: {review.product_name}
                         </div>
                       )}
@@ -599,7 +675,7 @@ export default function FeedPage() {
                       <p className="text-base leading-relaxed">{review.comment}</p>
                     )}
                     {review.canEdit && editingReview !== review.id && (
-                      <p className="text-xs text-white-secondary mt-2">Review dapat diedit dalam 5 menit</p>
+                      <p className="text-xs text-white/70 mt-2">Review dapat diedit dalam 5 menit</p>
                     )}
                   </div>
                 </div>
@@ -630,13 +706,13 @@ export default function FeedPage() {
         {/* Empty State */}
         {!isLoading && feedPosts.length === 0 && userReviews.length === 0 && (
           <div className="text-center py-12">
-            <MessageCircle className="h-12 w-12 text-white-secondary mx-auto mb-4" />
+            <MessageCircle className="h-12 w-12 text-white/70 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">
               {activeFilter === 'semua' ? 'Belum ada postingan' : 
                activeFilter === 'pengumuman' ? 'Belum ada pengumuman' : 
                'Belum ada review'}
             </h3>
-            <p className="text-white-secondary">
+            <p className="text-white/70">
               {activeFilter === 'review' 
                 ? 'Belum ada review untuk ditampilkan'
                 : 'Jadilah yang pertama untuk berbagi di komunitas ini!'
@@ -646,7 +722,7 @@ export default function FeedPage() {
         )}
 
         {/* Refresh Button */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-4 pb-6 lg:pb-4">
           <IOSButton 
             onClick={loadInitialData} 
             disabled={isLoading}
@@ -660,6 +736,9 @@ export default function FeedPage() {
             ) : 'Muat ulang'}
           </IOSButton>
         </div>
+        
+        {/* Extra spacing for mobile navigation */}
+        <div className="h-20 lg:hidden" />
       </div>
     </div>
   );

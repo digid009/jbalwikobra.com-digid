@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService } from '../../../services/adminService';
 import { IOSButton } from '../../../components/ios/IOSDesignSystem';
 import { RotateCcw } from 'lucide-react';
-import { cn } from '../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { MetricsGrid, defaultStats } from './metrics/index';
 
 export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => {

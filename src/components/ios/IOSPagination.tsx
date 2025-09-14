@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { IOSButton } from './IOSDesignSystem';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 import { scrollToPaginationContent } from '../../utils/scrollUtils';
 
 interface IOSPaginationProps {

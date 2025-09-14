@@ -4,7 +4,7 @@ import { adminService, Review } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../../components/ios/IOSDesignSystem';
 import { IOSAvatar } from '../../../components/ios/IOSAvatar';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { cn } from '../../../styles/standardClasses';
+import { cn } from '../../../utils/cn';
 import { getUserAvatarUrl, getUserDisplayName } from '../../../utils/avatarUtils';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
 
@@ -89,7 +89,7 @@ export const AdminReviewsManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+  <div className="space-y-6 p-6 bg-black min-h-screen">
       <RLSDiagnosticsBanner 
         hasErrors={hasErrors}
         errorMessage={errorMessage}
@@ -143,7 +143,7 @@ export const AdminReviewsManagement: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn(
                   'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                  'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
+                  'bg-black border border-gray-700 text-white placeholder:text-white/50',
                   'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
                 )}
               />
@@ -219,96 +219,77 @@ export const AdminReviewsManagement: React.FC = () => {
             <p className="text-gray-200 font-medium">Loading reviews...</p>
           </div>
         ) : reviews.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={cn(
-                'bg-black border-b border-gray-700'
-              )}>
+          <div className="overflow-x-auto admin-table-container">
+            <table className="admin-table admin-table-sticky zebra compact w-full">
+              <thead>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Review
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-200 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="text-left">Customer</th>
+                  <th className="text-left">Product</th>
+                  <th className="text-left">Rating</th>
+                  <th className="text-left">Review</th>
+                  <th className="text-left">Date</th>
+                  <th className="text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ios-border">
+              <tbody>
                 {reviews.map((review) => (
-                  <tr key={review.id} className="hover:bg-black transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={review.id}>
+                    <td className="whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-white">
                           {review.user_name || 'Anonymous'}
                         </div>
                         {review.user_id ? (
-                          <div className="text-sm text-gray-200">
-                            ID: {review.user_id.slice(-8)}
-                          </div>
+                          <div className="text-xs text-white/60">ID: {review.user_id.slice(-8)}</div>
                         ) : (
-                          <div className="text-sm text-gray-200 italic">No User ID</div>
+                          <div className="text-xs text-white/50 italic">No User ID</div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-white">
                           {review.product_name || 'Unknown Product'}
                         </div>
                         {review.product_id ? (
-                          <div className="text-sm text-gray-200">
-                            ID: {review.product_id.slice(-8)}
-                          </div>
+                          <div className="text-xs text-white/60">ID: {review.product_id.slice(-8)}</div>
                         ) : (
-                          <div className="text-sm text-gray-200 italic">No Product ID</div>
+                          <div className="text-xs text-white/50 italic">No Product ID</div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <div className="flex items-center">
                           {renderStars(review.rating)}
                         </div>
                         <span className={`text-sm font-medium ${
-                          review.rating >= 4 ? 'text-ios-success' : 
+                          review.rating >= 4 ? 'text-ios-success' :
                           review.rating >= 3 ? 'text-ios-warning' : 'text-ios-error'
                         }`}>
                           {review.rating}/5
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-white max-w-xs">
+                    <td>
+                      <div className="text-sm text-white/80 max-w-xs">
                         {review.comment ? (
                           <p className="truncate" title={review.comment}>
-                            {review.comment.length > 100 
-                              ? `${review.comment.substring(0, 100)}...` 
-                              : review.comment
-                            }
+                            {review.comment.length > 100
+                              ? `${review.comment.substring(0, 100)}...`
+                              : review.comment}
                           </p>
                         ) : (
-                          <span className="text-gray-200 italic">No comment</span>
+                          <span className="text-white/50 italic">No comment</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-200">
+                    <td className="whitespace-nowrap">
+                      <span className="text-sm text-white/60">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <IOSButton variant="ghost" size="small">
                           <ThumbsUp className="w-4 h-4 text-ios-success" />

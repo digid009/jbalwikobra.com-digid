@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { Camera, X, Upload, Image as ImageIcon } from 'lucide-react';
-import { cn } from '../../styles/standardClasses';
 
 interface IOSImageUploaderProps {
   images: string[];
@@ -112,10 +111,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
         {images.map((src, idx) => (
           <div
             key={`${src}-${idx}`}
-            className={cn(
-              'relative w-full aspect-square rounded-xl overflow-hidden bg-black border border-gray-700',
-              'hover:shadow-lg transition-all duration-200 cursor-move group'
-            )}
+            className="relative w-full aspect-square rounded-xl overflow-hidden bg-black border border-gray-700 hover:shadow-lg transition-all duration-200 cursor-move group"
             draggable
             onDragStart={onDragStart(idx)}
             onDragOver={onDragOver(idx)}
@@ -141,11 +137,7 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
             <button
               type="button"
               onClick={() => removeImage(idx)}
-              className={cn(
-                'absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center',
-                'bg-ios-error text-white hover:bg-ios-error/90 transition-colors opacity-0 group-hover:opacity-100',
-                'focus:outline-none focus:ring-2 focus:ring-ios-error/50 focus:opacity-100'
-              )}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center bg-ios-error text-white hover:bg-ios-error/90 transition-colors opacity-0 group-hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ios-error/50 focus:opacity-100"
               title="Remove image"
             >
               <X className="w-3 h-3" />
@@ -156,12 +148,11 @@ export const IOSImageUploader: React.FC<IOSImageUploaderProps> = ({
         {/* Add More Button */}
         {images.length < max && (
           <div
-            className={cn(
-              'w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 flex flex-col items-center justify-center',
+            className={`w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 flex flex-col items-center justify-center ${
               dragOver || uploading
                 ? 'border-ios-primary bg-ios-primary/10 scale-[1.02]'
-                : 'border-gray-700 bg-black hover:bg-ios-background hover:border-ios-primary/50'
-            )}
+                : 'border-gray-700 bg-black hover:bg-black/60 hover:border-ios-primary/50'
+            }`}
             style={{ aspectRatio: '1 / 1' }}
             onDragEnter={(e) => {
               e.preventDefault();

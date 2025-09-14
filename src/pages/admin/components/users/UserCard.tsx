@@ -3,7 +3,7 @@ import { User } from '../../../../services/adminService';
 import { IOSAvatar } from '../../../../components/ios/IOSAvatar';
 import { formatShortDate } from '../../../../utils/format';
 import { Shield, Mail, Phone, Calendar } from 'lucide-react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface UserCardProps {
   user: User;

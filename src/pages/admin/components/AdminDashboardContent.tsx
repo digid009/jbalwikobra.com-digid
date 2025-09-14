@@ -6,7 +6,7 @@ import { DashboardMetricsOverview } from './DashboardMetricsOverview';
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { AdminPerformanceMonitor } from './AdminPerformanceMonitor';
-import { cn } from '../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import './AdminDashboardContent.css';
 
 interface AdminDashboardContentProps {

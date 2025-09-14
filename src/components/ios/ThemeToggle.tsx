@@ -2,7 +2,7 @@ import React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { IOSButton } from './IOSDesignSystem';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 
 interface ThemeToggleProps {
   className?: string;

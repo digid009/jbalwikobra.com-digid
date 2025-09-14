@@ -1,6 +1,6 @@
 import React from 'react';
 import { User } from 'lucide-react';
-import { cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
 import { 
   AvatarProps, 
   getUserAvatarUrl, 

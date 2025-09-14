@@ -3,7 +3,7 @@ import { TrendingUp, Users, Package, Star, Clock, Zap } from 'lucide-react';
 import { AdminStats } from '../../../../services/adminService';
 import { MetricCard } from './MetricCard';
 import { formatMetrics, getMetricAccentColor } from './metricsUtils';
-import { cn } from '../../../../styles/standardClasses';
+import { cn } from '../../../../utils/cn';
 
 interface MetricsGridProps {
   stats: AdminStats;

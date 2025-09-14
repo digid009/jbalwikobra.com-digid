@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { standardClasses, cn } from '../styles/standardClasses';
+// Removed legacy standardClasses & cn helper – using direct utilities
 import { 
   IOSContainer, 
   IOSCard, 
@@ -44,7 +44,7 @@ const PlaceholderComponent: React.FC<{ name: string; description: string; childr
   <div className="border-2 border-dashed border-gray-700 rounded-lg p-4 bg-black/50">
     <div className="text-center space-y-2">
       <h4 className="font-semibold text-white">{name}</h4>
-      <p className="text-sm text-white-secondary">{description}</p>
+  <p className="text-sm text-white/70">{description}</p>
       {children && <div className="mt-4">{children}</div>}
     </div>
   </div>
@@ -55,11 +55,11 @@ const DesignSystemShowcase: React.FC = () => {
 
   return (
     <IOSContainer className="py-8">
-      <div className={cn(standardClasses.container.boxed, 'space-y-8')}>
+  <div className="w-full max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white">iOS Design System Showcase</h1>
-          <p className="text-white-secondary text-lg">
+          <p className="text-white/70 text-lg">
             Complete component library and design patterns for consistent UI
           </p>
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded-lg inline-block">
@@ -69,7 +69,7 @@ const DesignSystemShowcase: React.FC = () => {
 
         {/* Navigation Tabs */}
         <IOSCard>
-          <div className="flex flex-wrap gap-2 p-2 bg-ios-background rounded-lg">
+          <div className="flex flex-wrap gap-2 p-2 bg-black rounded-lg">
             {['overview', 'colors', 'typography', 'buttons', 'forms'].map(tab => (
               <button
                 key={tab}
@@ -77,7 +77,7 @@ const DesignSystemShowcase: React.FC = () => {
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === tab 
                     ? 'bg-pink-500 text-white' 
-                    : 'text-white-secondary hover:text-white hover:bg-black'
+                    : 'text-white/70 hover:text-white hover:bg-black'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -93,7 +93,7 @@ const DesignSystemShowcase: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-white">Implemented</h3>
-                <ul className="text-sm text-white-secondary space-y-1">
+                <ul className="text-sm text-white/70 space-y-1">
                   <li>✅ Buttons (Primary, Secondary, Ghost)</li>
                   <li>✅ Cards (Multiple padding options)</li>
                   <li>✅ Container (Responsive layout)</li>
@@ -103,7 +103,7 @@ const DesignSystemShowcase: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-white">Future Components</h3>
-                <ul className="text-sm text-white-secondary space-y-1">
+                <ul className="text-sm text-white/70 space-y-1">
                   <li>🔄 Form Controls (Input, Select, etc.)</li>
                   <li>🔄 Navigation (Tabs, Breadcrumb)</li>
                   <li>🔄 Feedback (Alert, Toast, Progress)</li>
@@ -140,32 +140,32 @@ const DesignSystemShowcase: React.FC = () => {
               <div className="space-y-2">
                 <div className="w-full h-16 bg-pink-500 rounded-lg shadow-sm"></div>
                 <p className="text-sm font-medium text-white">ios-accent</p>
-                <p className="text-xs text-white-secondary">Primary brand color</p>
+                <p className="text-xs text-white/70">Primary brand color</p>
               </div>
               <div className="space-y-2">
-                <div className="w-full h-16 bg-ios-background rounded-lg border border-gray-700"></div>
+                <div className="w-full h-16 bg-black rounded-lg border border-gray-700"></div>
                 <p className="text-sm font-medium text-white">ios-background</p>
-                <p className="text-xs text-white-secondary">Main background</p>
+                <p className="text-xs text-white/70">Main background</p>
               </div>
               <div className="space-y-2">
                 <div className="w-full h-16 bg-black rounded-lg"></div>
                 <p className="text-sm font-medium text-white">ios-surface</p>
-                <p className="text-xs text-white-secondary">Card backgrounds</p>
+                <p className="text-xs text-white/70">Card backgrounds</p>
               </div>
               <div className="space-y-2">
                 <div className="w-full h-16 border-2 border-gray-700 rounded-lg"></div>
                 <p className="text-sm font-medium text-white">ios-border</p>
-                <p className="text-xs text-white-secondary">Border elements</p>
+                <p className="text-xs text-white/70">Border elements</p>
               </div>
               <div className="space-y-2">
                 <div className="w-full h-16 bg-ios-text rounded-lg"></div>
                 <p className="text-sm font-medium text-white">ios-text</p>
-                <p className="text-xs text-white-secondary">Primary text</p>
+                <p className="text-xs text-white/70">Primary text</p>
               </div>
               <div className="space-y-2">
                 <div className="w-full h-16 bg-ios-text-secondary rounded-lg"></div>
                 <p className="text-sm font-medium text-white">ios-text-secondary</p>
-                <p className="text-xs text-white-secondary">Secondary text</p>
+                <p className="text-xs text-white/70">Secondary text</p>
               </div>
             </div>
           </IOSCard>
@@ -178,23 +178,23 @@ const DesignSystemShowcase: React.FC = () => {
             <div className="space-y-4">
               <div className="border-b border-gray-700 pb-4">
                 <h1 className="text-4xl font-bold text-white">Display Large</h1>
-                <p className="text-sm text-white-secondary mt-1">text-4xl font-bold</p>
+                <p className="text-sm text-white/70 mt-1">text-4xl font-bold</p>
               </div>
               <div className="border-b border-gray-700 pb-4">
                 <h2 className="text-3xl font-bold text-white">Display Medium</h2>
-                <p className="text-sm text-white-secondary mt-1">text-3xl font-bold</p>
+                <p className="text-sm text-white/70 mt-1">text-3xl font-bold</p>
               </div>
               <div className="border-b border-gray-700 pb-4">
                 <h3 className="text-2xl font-semibold text-white">Display Small</h3>
-                <p className="text-sm text-white-secondary mt-1">text-2xl font-semibold</p>
+                <p className="text-sm text-white/70 mt-1">text-2xl font-semibold</p>
               </div>
               <div className="border-b border-gray-700 pb-4">
                 <p className="text-base text-white">Body Large - Default paragraph text</p>
-                <p className="text-sm text-white-secondary mt-1">text-base</p>
+                <p className="text-sm text-white/70 mt-1">text-base</p>
               </div>
               <div>
-                <p className="text-sm text-white-secondary">Caption - Small text for metadata</p>
-                <p className="text-xs text-white-secondary mt-1">text-sm text-white-secondary</p>
+                <p className="text-sm text-white/70">Caption - Small text for metadata</p>
+                <p className="text-xs text-white/70 mt-1">text-sm text-white/70</p>
               </div>
             </div>
           </IOSCard>
@@ -244,17 +244,17 @@ const DesignSystemShowcase: React.FC = () => {
             <h2 className="text-2xl font-bold text-white mb-6">Form Components (Future)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <PlaceholderComponent name="IOSInput" description="Text input with iOS styling">
-                <input className="w-full px-3 py-2 bg-ios-background border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent" placeholder="Text Input Preview" />
+                  <input className="w-full px-3 py-2 bg-black border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent" placeholder="Text Input Preview" />
               </PlaceholderComponent>
 
               <PlaceholderComponent name="IOSSelect" description="Dropdown select with iOS styling">
-                <select className="w-full px-3 py-2 bg-ios-background border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent">
+                  <select className="w-full px-3 py-2 bg-black border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent">
                   <option>Select Preview</option>
                 </select>
               </PlaceholderComponent>
 
               <PlaceholderComponent name="IOSTextarea" description="Multi-line text input">
-                <textarea className="w-full px-3 py-2 bg-ios-background border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent" rows={3} placeholder="Textarea Preview"></textarea>
+                  <textarea className="w-full px-3 py-2 bg-black border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-ios-accent focus:border-transparent" rows={3} placeholder="Textarea Preview"></textarea>
               </PlaceholderComponent>
 
               <PlaceholderComponent name="IOSCheckbox + IOSRadio" description="Form controls with iOS styling">

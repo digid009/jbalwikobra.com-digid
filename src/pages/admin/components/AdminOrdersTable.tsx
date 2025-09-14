@@ -1,7 +1,7 @@
 import React from 'react';
 import { IOSCard, IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
-import { cn } from '../../../styles/standardClasses';
+import { cn } from '../../../utils/cn';
 import { Order } from '../../../services/adminService';
 
 interface AdminOrdersTableProps {
@@ -28,17 +28,17 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({ orders, load
     );
   }
   return (
-    <IOSCard className="p-0 overflow-hidden">
+    <IOSCard className="p-0 overflow-hidden admin-table-container">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-800">
-          <thead className="bg-black/60">
+        <table className="admin-table admin-table-sticky zebra compact min-w-full">
+          <thead>
             <tr>
               {['Order ID','Product Name','Product Link','Buyer Name','Buyer Email','Buyer WhatsApp','Status','Price','Date','Action'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+          <tbody>
             {orders.map(o => (
               <tr key={o.id} className="hover:bg-black/40 transition-colors">
                 <td className="px-4 py-3 text-sm font-mono text-white">{o.id.slice(-8)}</td>

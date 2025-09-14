@@ -169,7 +169,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <AuthRequired>
-      <div className="min-h-screen bg-ios-background text-white">
+  <div className="min-h-screen bg-black text-white">
         <IOSContainer maxWidth="lg" className="pt-20 pb-20">
             {/* Profile Hero Section */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500/15 via-purple-500/15 to-indigo-500/15 border border-gray-700 backdrop-blur-sm mb-8">
@@ -197,11 +197,11 @@ const ProfilePage: React.FC = () => {
                       <h1 className="text-3xl font-bold text-white mb-2">
                         {profile.name || 'Pengguna Baru'}
                       </h1>
-                      <p className="text-white-secondary mb-1 flex items-center">
-                        <Mail size={16} className="mr-2 text-white-secondary" />
+                      <p className="text-white/70 mb-1 flex items-center">
+                        <Mail size={16} className="mr-2 text-white/70" />
                         {profile.email}
                       </p>
-                      <p className="text-white-secondary text-sm flex items-center">
+                      <p className="text-white/70 text-sm flex items-center">
                         <Star size={16} className="mr-2 text-yellow-400" />
                         Member sejak {profile.joinDate}
                       </p>
@@ -231,7 +231,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-white">{profile.totalOrders}</div>
-                        <div className="text-white-secondary text-sm">Pesanan</div>
+                        <div className="text-white/70 text-sm">Pesanan</div>
                       </div>
                     </div>
                   </div>
@@ -243,7 +243,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-white">{profile.wishlistCount}</div>
-                        <div className="text-white-secondary text-sm">Wishlist</div>
+                        <div className="text-white/70 text-sm">Wishlist</div>
                       </div>
                     </div>
                   </div>
@@ -255,7 +255,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-white">0</div>
-                        <div className="text-white-secondary text-sm">Poin</div>
+                        <div className="text-white/70 text-sm">Poin</div>
                       </div>
                     </div>
                   </div>
@@ -267,7 +267,7 @@ const ProfilePage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-white">Basic</div>
-                        <div className="text-white-secondary text-sm">Level</div>
+                        <div className="text-white/70 text-sm">Level</div>
                       </div>
                     </div>
                   </div>
@@ -285,7 +285,7 @@ const ProfilePage: React.FC = () => {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-white-secondary mb-3">
+                    <label className="block text-sm font-medium text-white/70 mb-3">
                       <User size={16} className="inline mr-2" />
                       Nama Lengkap
                     </label>
@@ -293,13 +293,13 @@ const ProfilePage: React.FC = () => {
                       type="text"
                       value={profile.name}
                       onChange={(e) => setProfile({...profile, name: e.target.value})}
-                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white/70 focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
                       placeholder="Masukkan nama lengkap"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white-secondary mb-3">
+                    <label className="block text-sm font-medium text-white/70 mb-3">
                       <Mail size={16} className="inline mr-2" />
                       Email
                     </label>
@@ -307,13 +307,13 @@ const ProfilePage: React.FC = () => {
                       type="email"
                       value={profile.email}
                       onChange={(e) => setProfile({...profile, email: e.target.value})}
-                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white-secondary focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white/70 focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
                       placeholder="Masukkan email"
                     />
                   </div>
 
                   <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-white-secondary mb-3">
+                    <label className="block text-sm font-medium text-white/70 mb-3">
                       <Phone size={16} className="inline mr-2" />
                       Nomor WhatsApp
                     </label>
@@ -366,11 +366,11 @@ const ProfilePage: React.FC = () => {
                             {item.label}
                           </h3>
                           {item.count !== undefined && (
-                            <p className="text-white-secondary text-sm">{item.count} item</p>
+                            <p className="text-white/70 text-sm">{item.count} item</p>
                           )}
                         </div>
                       </div>
-                      <ChevronRight size={20} className="text-white-secondary group-hover:text-white transition-colors transform group-hover:translate-x-1" />
+                      <ChevronRight size={20} className="text-white/70 group-hover:text-white transition-colors transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 </Link>
@@ -392,10 +392,10 @@ const ProfilePage: React.FC = () => {
                     <h3 className="text-white font-semibold transition-colors">
                       Bantuan & Dukungan
                     </h3>
-                    <p className="text-white-secondary text-sm">FAQ, Kontak Support, Panduan</p>
+                    <p className="text-white/70 text-sm">FAQ, Kontak Support, Panduan</p>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-white-secondary transition-colors" />
+                <ChevronRight size={20} className="text-white/70 transition-colors" />
               </Link>
 
               {/* Logout Button */}

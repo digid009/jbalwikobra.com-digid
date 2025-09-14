@@ -5,7 +5,8 @@
 
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { standardClasses, cn } from '../../styles/standardClasses';
+import { cn } from '../../utils/cn';
+const standardClasses = { container:{boxed:'mx-auto w-full max-w-7xl px-4'} };
 
 // iOS Design System Types
 export interface IOSColors {

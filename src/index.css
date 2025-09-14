@@ -2,12 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import mobile-first styles */
-@import './styles/mobile-first.css';
-
-/* Import iOS and Android compatibility layers */
-@import './styles/ios-compatibility.css';
-@import './styles/android-compatibility.css';
+/* Legacy compatibility & mobile-first layer imports removed.
+  Rationale: All tokens & utilities consolidated into:
+  - ./styles/global-design-system.css (base primitives)
+  - ./styles/public-pages.css (public page specific layout)
+  - ./styles/admin-design-system.css (admin refinements)
+  - ./styles/bottom-navigation.css (mobile nav)
+  The previous mobile-first.css, ios-compatibility.css, android-compatibility.css
+  were deprecated during dark theme + design system unification. */
 
 /* Dark mode support - Black & Pink Theme */
 :root {

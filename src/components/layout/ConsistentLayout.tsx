@@ -37,7 +37,7 @@ export const PageWrapper: React.FC<{ children: React.ReactNode; className?: stri
   children,
   className = ''
 }) => (
-  <div className={`min-h-screen bg-ios-background text-white ${className}`}>
+  <div className={`min-h-screen bg-black text-white ${className}`}>
     {children}
   </div>
 );

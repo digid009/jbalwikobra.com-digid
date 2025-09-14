@@ -1,7 +1,7 @@
 import React from 'react';
 import { Order } from '../../../../services/adminService';
 import { OrderTableRow } from './OrderTableRow';
-import { cn } from '../../../../styles/standardClasses';
+import { cn } from '../../../../utils/cn';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -52,11 +52,11 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
   }
 
   return (
-    <div className={cn('rounded-2xl overflow-hidden border border-pink-500/20 bg-gradient-to-br from-black/50 to-gray-950/50 backdrop-blur-sm', className)}>
+    <div className={cn('rounded-2xl overflow-hidden admin-table-container border-token backdrop-blur-sm', className)}>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="admin-table admin-table-sticky zebra compact w-full">
           <thead>
-            <tr className="bg-gradient-to-r from-pink-500/20 to-fuchsia-600/20 border-b border-pink-500/30">
+            <tr>
               <th className="px-4 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">
                 Order ID
               </th>

@@ -6,6 +6,7 @@ import {
   IOSSectionHeader,
   IOSInputField
 } from '../../../components/ios/IOSDesignSystemV2';
+import { IOSPagination } from '../../../components/ios/IOSDesignSystem';
 import { IOSImageUploader } from '../../../components/ios/IOSImageUploader';
 import { adminService, type FeedPost } from '../../../services/adminService';
 import { uploadFile } from '../../../services/storageService';
@@ -219,83 +220,87 @@ const AdminFeedManagement: React.FC = () => {
 
       {/* Posts Table */}
       <IOSCard padding="none">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-zinc-900/50 border-b border-zinc-800">
+        <div className="overflow-x-auto admin-table-container">
+          <table className="admin-table admin-table-sticky zebra compact w-full text-sm">
+            <thead>
               <tr>
-                <th className="px-6 py-4 font-medium text-zinc-400">Judul</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Tipe</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Gambar</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Likes</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Comments</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Tanggal</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Pin</th>
-                <th className="px-6 py-4 font-medium text-zinc-400">Aksi</th>
+                <th className="text-left">Judul</th>
+                <th className="text-left">Tipe</th>
+                <th className="text-left">Gambar</th>
+                <th className="text-left">Likes</th>
+                <th className="text-left">Comments</th>
+                <th className="text-left">Tanggal</th>
+                <th className="text-left">Pin</th>
+                <th className="text-left">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filteredPosts.map((post) => (
-                <tr key={post.id} className="border-b border-zinc-800 hover:bg-zinc-900/30 transition-colors">
-                  <td className="px-6 py-4">
+                <tr key={post.id}>
+                  <td>
                     <div>
                       <div className="font-medium text-white">{post.title || 'Untitled'}</div>
-                      <div className="text-sm text-zinc-400 mt-1 truncate max-w-xs">
-                        {post.content}
-                      </div>
+                      <div className="text-xs text-white/50 mt-1 truncate max-w-xs">{post.content}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       post.type === 'announcement'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        : 'bg-green-500/20 text-green-300 border border-green-500/30'
                     }`}>
                       {post.type === 'announcement' ? 'Pengumuman' : 'Post'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     {post.image_url ? (
                       <div className="flex items-center gap-1 text-emerald-400">
                         <ImageIcon size={16} />
                         <span>Ada</span>
                       </div>
                     ) : (
-                      <span className="text-zinc-500">-</span>
+                      <div className="text-white/40 text-sm">Tidak</div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-zinc-300">{post.likes_count}</td>
-                  <td className="px-6 py-4 text-zinc-300">{post.comments_count}</td>
-                  <td className="px-6 py-4 text-zinc-300">
-                    {new Date(post.created_at).toLocaleDateString('id-ID')}
+                  <td>
+                    <div className="text-sm font-medium text-white/80">{post.likes_count}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
+                    <div className="text-sm font-medium text-white/80">{post.comments_count}</div>
+                  </td>
+                  <td>
+                    <div className="text-sm text-white/70">{new Date(post.created_at).toLocaleDateString('id-ID')}</div>
+                  </td>
+                  <td>
                     <button
                       onClick={() => handleTogglePin(post)}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
                         post.is_pinned
-                          ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20'
-                          : 'text-zinc-500 hover:text-yellow-400 hover:bg-yellow-500/20'
+                          ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+                          : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
                       }`}
                     >
-                      {post.is_pinned ? <Pin size={16} /> : <PinOff size={16} />}
+                      {post.is_pinned ? 'Pinned' : 'Pin'}
                     </button>
                   </td>
-                  <td className="px-6 py-4">
+                  <td>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(post)}
-                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-lg transition-colors"
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 transition-colors"
+                        aria-label="Edit post"
                       >
-                        <Edit size={16} />
+                        Edit
                       </button>
                       <button
                         onClick={() => {
                           setDeletingPost(post);
                           setShowDeleteModal(true);
                         }}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                        aria-label="Delete post"
                       >
-                        <Trash2 size={16} />
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -315,29 +320,17 @@ const AdminFeedManagement: React.FC = () => {
         )}
       </IOSCard>
 
-      {/* Pagination */}
+      {/* Pagination (Unified) */}
       {totalPages > 1 && (
-        <IOSCard padding="md">
-          <div className="flex justify-between items-center">
-            <IOSButton
-              variant="secondary"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </IOSButton>
-            <span className="text-zinc-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <IOSButton
-              variant="secondary"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </IOSButton>
-          </div>
-        </IOSCard>
+        <div className="admin-pagination">
+          <IOSPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalPages * 10}
+            itemsPerPage={10}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       )}
 
       {/* Create/Edit Modal */}

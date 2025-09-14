@@ -69,7 +69,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
   };
 
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+  <div className="space-y-6 p-6 bg-black min-h-screen">
       <RLSDiagnosticsBanner 
         hasErrors={!!error}
         errorMessage={error || ''}

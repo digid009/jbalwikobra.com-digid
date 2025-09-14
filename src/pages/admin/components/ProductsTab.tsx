@@ -19,7 +19,7 @@ import {
   Tag,
   Calendar
 } from 'lucide-react';
-import { IOSButton, IOSCard, IOSBadge } from '../../../components/ios/IOSDesignSystem';
+import { IOSButton, IOSCard, IOSBadge, IOSPagination } from '../../../components/ios/IOSDesignSystem';
 import { useProducts, useCrudOperations, useBulkOperations } from '../../../hooks/useAdminData';
 import { enhancedAdminService, Product, CreateProductData } from '../../../services/enhancedAdminService';
 import ProductDialog from './ProductDialog';
@@ -551,33 +551,14 @@ const ProductsTab: React.FC = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between border-t border-gray-700 pt-4">
-                <div className="text-sm text-gray-100">
-                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, totalCount)} of {totalCount} results
-                </div>
-                <div className="flex items-center space-x-2">
-                  <IOSButton
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
-                    variant="secondary"
-                    size="small"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
-                  </IOSButton>
-                  <span className="text-sm text-gray-100">
-                    Page {pagination.page} of {totalPages}
-                  </span>
-                  <IOSButton
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === totalPages}
-                    variant="secondary"
-                    size="small"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </IOSButton>
-                </div>
+              <div className="mt-6 border-t border-gray-700">
+                <IOSPagination
+                  currentPage={pagination.page}
+                  totalPages={totalPages}
+                  totalItems={totalCount}
+                  itemsPerPage={pagination.limit}
+                  onPageChange={(page) => handlePageChange(page)}
+                />
               </div>
             )}
           </div>

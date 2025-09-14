@@ -72,7 +72,7 @@ const NotFoundPage: React.FC = () => {
                 <Link
                   key={action.path}
                   to={action.path}
-                  className="group relative p-6 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 hover:border-pink-500/30 rounded-2xl transition-all duration-300 hover:scale-105"
+                  className="group relative p-6 interactive-card backdrop-blur-sm rounded-2xl transition-all duration-300 hover:scale-105"
                 >
                   <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${action.color} rounded-xl mb-3 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className="w-6 h-6 text-white" />
@@ -91,7 +91,7 @@ const NotFoundPage: React.FC = () => {
             <IOSButton
               onClick={() => window.history.back()}
               variant="ghost"
-              className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+              className="interactive-card text-white px-6 py-3"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Kembali

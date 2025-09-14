@@ -4,8 +4,8 @@ import { adminService, User } from '../../../services/adminService';
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination, IOSAvatar } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { cn } from '../../../styles/standardClasses';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
+import { cn } from '../../../utils/cn';
 
 export const AdminUsersManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -127,21 +127,20 @@ export const AdminUsersManagement: React.FC = () => {
               <p className="text-gray-400 text-sm mt-1">Fetching user data from database</p>
             </div>
           ) : filteredUsers.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full" role="table" aria-label="Users table">
-                <thead className="bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 backdrop-blur-sm border-b border-pink-500/20">
+            <div className="overflow-x-auto admin-table-container">
+              <table className="admin-table admin-table-sticky zebra compact w-full" role="table" aria-label="Users table">
+                <thead>
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">User</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">Email</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">Phone</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">Joined</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="text-left">User</th>
+                    <th scope="col" className="text-left">Phone</th>
+                    <th scope="col" className="text-left">Joined</th>
+                    <th scope="col" className="text-left">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5" role="rowgroup">
+                <tbody role="rowgroup">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-pink-500/5 transition-all duration-300 group" role="row">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={user.id} className="group" role="row">
+                      <td className="whitespace-nowrap">
                         <div className="flex items-center">
                           <IOSAvatar user={user} size="medium" />
                           <div className="ml-4">
@@ -150,18 +149,15 @@ export const AdminUsersManagement: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-white">{user.email}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap">
                         <span className="text-sm text-white">{user.phone || 'Not provided'}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap">
                         <span className="text-sm text-gray-400">
                           {new Date(user.created_at).toLocaleDateString()}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap">
                         <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-200 border border-emerald-500/30">
                           Active
                         </span>

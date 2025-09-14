@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { IOSButton, IOSBadge } from '../../../components/ios/IOSDesignSystem';
 import { AdminStats } from '../../../services/adminService';
-import { cn } from '../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { AdminTab } from './structure/adminTypes';
 
 interface NavigationItem {

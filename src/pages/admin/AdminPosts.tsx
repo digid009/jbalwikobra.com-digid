@@ -182,7 +182,7 @@ const AdminPosts: React.FC = () => {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white-secondary mb-2">
+                <label className="block text-sm font-medium text-white/70 mb-2">
                   Tipe Post
                 </label>
                 <select
@@ -199,7 +199,7 @@ const AdminPosts: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-white-secondary mb-2">
+                <label className="block text-sm font-medium text-white/70 mb-2">
                   Judul (Opsional)
                 </label>
                 <input
@@ -213,7 +213,7 @@ const AdminPosts: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Konten *
               </label>
               <textarea
@@ -228,7 +228,7 @@ const AdminPosts: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white-secondary mb-2">
+                <label className="block text-sm font-medium text-white/70 mb-2">
                   URL Gambar (Opsional)
                 </label>
                 <input
@@ -255,7 +255,7 @@ const AdminPosts: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-white-secondary mb-2">
+                <label className="block text-sm font-medium text-white/70 mb-2">
                   Rating (1-5, Opsional)
                 </label>
                 <input
@@ -303,7 +303,7 @@ const AdminPosts: React.FC = () => {
       <IOSCard padding="none">
         <div className="p-4 border-b border-gray-700">
           <h2 className="font-semibold text-white">Semua Feed Posts</h2>
-          <p className="text-sm text-white-secondary">
+          <p className="text-sm text-white/70">
             {posts.filter(p => !p.is_deleted).length} posts aktif
           </p>
         </div>
@@ -353,11 +353,11 @@ const AdminPosts: React.FC = () => {
                         )}
                       </div>
                       
-                      <p className="text-sm text-white-secondary mb-2 line-clamp-2">
+                      <p className="text-sm text-white/70 mb-2 line-clamp-2">
                         {post.content}
                       </p>
                       
-                      <div className="flex items-center gap-4 text-xs text-white-secondary">
+                      <div className="flex items-center gap-4 text-xs text-white/70">
                         <span>{formatDate(post.created_at)}</span>
                         <span>{post.counts.likes} likes</span>
                         <span>{post.counts.comments} comments</span>
@@ -374,7 +374,7 @@ const AdminPosts: React.FC = () => {
                       variant="ghost"
                       size="small"
                       onClick={() => togglePin(post.id, post.is_pinned || false)}
-                      className="text-white-secondary hover:text-white"
+                      className="text-white/70 hover:text-white"
                     >
                       {post.is_pinned ? <PinOff size={16} /> : <Pin size={16} />}
                     </IOSButton>
@@ -383,7 +383,7 @@ const AdminPosts: React.FC = () => {
                       variant="ghost"
                       size="small"
                       onClick={() => window.open(`/feed`, '_blank')}
-                      className="text-white-secondary hover:text-white"
+                      className="text-white/70 hover:text-white"
                     >
                       <Eye size={16} />
                     </IOSButton>
@@ -402,7 +402,7 @@ const AdminPosts: React.FC = () => {
             ))}
             
             {posts.filter(p => !p.is_deleted).length === 0 && (
-              <div className="p-8 text-center text-white-secondary">
+              <div className="p-8 text-center text-white/70">
                 <p>Belum ada posts. Buat post pertama!</p>
               </div>
             )}

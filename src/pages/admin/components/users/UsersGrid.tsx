@@ -1,7 +1,7 @@
 import React from 'react';
 import { User } from '../../../../services/adminService';
 import { UserCard } from './UserCard';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface UsersGridProps {
   users: User[];

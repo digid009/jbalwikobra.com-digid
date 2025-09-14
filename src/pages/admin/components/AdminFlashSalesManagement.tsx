@@ -4,7 +4,7 @@ import { adminService, FlashSale, PaginatedResponse } from '../../../services/ad
 import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { IOSPagination } from '../../../components/ios/IOSPagination';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { cn } from '../../../styles/standardClasses';
+import { cn } from '../../../utils/cn';
 import { supabase } from '../../../services/supabase';
 
 interface AdminFlashSalesManagementProps {
@@ -225,7 +225,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   );
 
   return (
-    <div className="space-y-6 p-6 bg-ios-background min-h-screen">
+  <div className="space-y-6 p-6 bg-black min-h-screen">
       <RLSDiagnosticsBanner 
         hasErrors={!!error}
         errorMessage={error || ''}
@@ -282,7 +282,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
                 'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                'bg-black border border-gray-700 text-white placeholder-ios-text-secondary',
+                'bg-black border border-gray-700 text-white placeholder:text-white/50',
                 'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
               )}
             />
@@ -470,7 +470,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                         max="100"
                         className={cn(
                           'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                          'text-white placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          'text-white placeholder:text-white/50 focus:ring-2 focus:ring-pink-500 focus:border-pink-500',
                           formData.discount_type === 'percentage' ? 'ring-2 ring-ios-primary' : ''
                         )}
                       />
@@ -509,7 +509,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                         min="0"
                         className={cn(
                           'flex-1 px-4 py-3 rounded-xl border border-gray-700 bg-black',
-                          'text-white placeholder-ios-text-secondary focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
+                          'text-white placeholder:text-white/50 focus:ring-2 focus:ring-pink-500 focus:border-pink-500',
                           formData.discount_type === 'fixed' ? 'ring-2 ring-ios-primary' : ''
                         )}
                       />
@@ -663,7 +663,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-ios-background/50 border-b border-gray-700">
+                <thead className="bg-black/40 border-b border-gray-700">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
                       Product
@@ -692,7 +692,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
                     const discount = calculateDiscount(sale.original_price, sale.sale_price);
                     
                     return (
-                      <tr key={sale.id} className="hover:bg-ios-background/30 transition-colors">
+                      <tr key={sale.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-4">
                             {sale.product?.image && (
@@ -777,7 +777,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-700/30 bg-ios-background/50">
+              <div className="px-6 py-4 border-t border-gray-700/30 bg-black/40">
                 <IOSPagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -790,7 +790,7 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
           </>
         ) : (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-ios-background flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-black/60 flex items-center justify-center">
               <Zap className="w-8 h-8 text-white/40" />
             </div>
             <p className="text-white/60 font-medium mb-1">No flash sales found</p>

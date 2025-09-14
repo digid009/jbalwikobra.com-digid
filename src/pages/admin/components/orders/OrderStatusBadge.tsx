@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Clock, XCircle, Package, Truck } from 'lucide-react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface OrderStatusBadgeProps {
   status: string;

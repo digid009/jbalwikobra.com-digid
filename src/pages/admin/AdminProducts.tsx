@@ -8,7 +8,9 @@ import ImageUploader from '../../components/ImageUploader';
 import { uploadFiles } from '../../services/storageService';
 import { formatNumberID, parseNumberID } from '../../utils/helpers';
 import { useToast } from '../../components/Toast';
-import { standardClasses, cn } from '../../styles/standardClasses';
+// Legacy standardClasses/cn removed—minimal replacements
+import { cn } from '../../utils/cn';
+const standardClasses = { flex:{rowGap3:'flex items-center gap-3',rowGap2:'flex items-center gap-2',row:'flex'}, spacing:{section:'space-y-6'} };
 import { IOSCard, IOSButton, IOSSectionHeader, IOSPagination } from '../../components/ios/IOSDesignSystem';
 import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 import { scrollToPaginationContent } from '../../utils/scrollUtils';

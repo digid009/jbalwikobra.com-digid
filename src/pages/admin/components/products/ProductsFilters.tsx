@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IOSButton, IOSCard } from '../../../../components/ios/IOSDesignSystem';
 import { Search, Filter, Plus, SortDesc, SortAsc, X } from 'lucide-react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface ProductsFiltersProps {
   searchTerm: string;

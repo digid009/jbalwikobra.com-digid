@@ -58,7 +58,7 @@ const AdminSettings: React.FC = () => {
   if (loading) {
     return (
       <IOSContainer className="py-6">
-        <div className="flex items-center justify-center gap-2 text-white-secondary">
+  <div className="flex items-center justify-center gap-2 text-white/70">
           <Loader2 className="animate-spin" size={18} /> 
           Memuat pengaturan...
         </div>
@@ -70,7 +70,7 @@ const AdminSettings: React.FC = () => {
     <IOSContainer maxWidth="full" className="py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Pengaturan Website</h1>
-        <p className="text-white-secondary">Kelola informasi dan konfigurasi website</p>
+  <p className="text-white/70">Kelola informasi dan konfigurasi website</p>
       </div>
 
       <div className="space-y-6">
@@ -79,7 +79,7 @@ const AdminSettings: React.FC = () => {
           <h2 className="text-lg font-semibold text-white mb-4">Informasi Situs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Nama Situs
               </label>
               <input 
@@ -91,7 +91,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Email Kontak
               </label>
               <input 
@@ -104,7 +104,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 WhatsApp
               </label>
               <PhoneInput
@@ -118,7 +118,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Alamat
               </label>
               <textarea 
@@ -137,7 +137,7 @@ const AdminSettings: React.FC = () => {
           <h2 className="text-lg font-semibold text-white mb-4">Hero Section</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Hero Title
               </label>
               <input 
@@ -149,7 +149,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Hero Subtitle
               </label>
               <input 
@@ -167,7 +167,7 @@ const AdminSettings: React.FC = () => {
           <h2 className="text-lg font-semibold text-white mb-4">Media Sosial</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Facebook URL
               </label>
               <input 
@@ -180,7 +180,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Instagram URL
               </label>
               <input 
@@ -193,7 +193,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 TikTok URL
               </label>
               <input 
@@ -206,7 +206,7 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 YouTube URL
               </label>
               <input 
@@ -225,12 +225,12 @@ const AdminSettings: React.FC = () => {
           <h2 className="text-lg font-semibold text-white mb-4">Brand Assets</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Logo Website
               </label>
               <div className="flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg hover:bg-black cursor-pointer transition-colors">
-                  <ImageIcon size={16} className="text-white-secondary" /> 
+                  <ImageIcon size={16} className="text-white/70" /> 
                   Pilih Logo
                   <input 
                     type="file" 
@@ -254,12 +254,12 @@ const AdminSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-white-secondary mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Favicon
               </label>
               <div className="flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 px-4 py-2 border border-gray-700 rounded-lg hover:bg-black cursor-pointer transition-colors">
-                  <ImageIcon size={16} className="text-white-secondary" /> 
+                  <ImageIcon size={16} className="text-white/70" /> 
                   Pilih Favicon
                   <input 
                     type="file" 

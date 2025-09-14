@@ -178,7 +178,7 @@ const NotificationsPage: React.FC = () => {
                   </span>
                 )}
               </h1>
-              <p className="text-white-secondary mt-1">
+              <p className="text-white/70 mt-1">
                 Kelola semua notifikasi Anda di sini
               </p>
             </div>
@@ -227,11 +227,11 @@ const NotificationsPage: React.FC = () => {
             {filteredNotifications.length === 0 ? (
               <IOSCard>
                 <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 mx-auto text-white-secondary mb-3" />
+                  <Bell className="w-12 h-12 mx-auto text-white/70 mb-3" />
                   <h3 className="text-lg font-medium text-white mb-2">
                     Tidak ada notifikasi
                   </h3>
-                  <p className="text-white-secondary">
+                  <p className="text-white/70">
                     {filter === 'unread' 
                       ? 'Semua notifikasi sudah dibaca'
                       : 'Belum ada notifikasi untuk kategori ini'
@@ -250,17 +250,17 @@ const NotificationsPage: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className={`font-semibold ${!notification.isRead ? 'text-white' : 'text-white-secondary'}`}>
+                            <h3 className={`font-semibold ${!notification.isRead ? 'text-white' : 'text-white/70'}`}>
                               {notification.title}
                             </h3>
                             {!notification.isRead && (
                               <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
                             )}
                           </div>
-                          <p className="text-white-secondary text-sm mb-2 leading-relaxed">
+                          <p className="text-white/70 text-sm mb-2 leading-relaxed">
                             {notification.message}
                           </p>
-                          <div className="flex items-center space-x-4 text-xs text-white-secondary">
+                          <div className="flex items-center space-x-4 text-xs text-white/70">
                             <span className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
                               {formatTimestamp(notification.timestamp)}
@@ -280,7 +280,7 @@ const NotificationsPage: React.FC = () => {
                         {!notification.isRead && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="p-1 text-white-secondary hover:text-pink-500 transition-colors"
+                            className="p-1 text-white/70 hover:text-pink-500 transition-colors"
                             title="Tandai sudah dibaca"
                           >
                             <Check className="w-4 h-4" />
@@ -288,7 +288,7 @@ const NotificationsPage: React.FC = () => {
                         )}
                         <button
                           onClick={() => deleteNotification(notification.id)}
-                          className="p-1 text-white-secondary hover:text-ios-destructive transition-colors"
+                          className="p-1 text-white/70 hover:text-ios-destructive transition-colors"
                           title="Hapus notifikasi"
                         >
                           <X className="w-4 h-4" />
@@ -307,7 +307,7 @@ const NotificationsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-white">Pengaturan Notifikasi</h3>
-                  <p className="text-sm text-white-secondary">
+                  <p className="text-sm text-white/70">
                     Kelola preferensi notifikasi Anda
                   </p>
                 </div>

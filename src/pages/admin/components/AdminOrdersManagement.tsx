@@ -6,7 +6,7 @@ import { IOSPagination } from '../../../components/ios/IOSPagination';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { NotificationContainer, useNotifications } from '../../../components/ios/NotificationSystem';
 import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
-import { cn } from '../../../styles/standardClasses';
+import { cn } from '../../../utils/cn';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
 
 export const AdminOrdersManagement: React.FC = () => {

@@ -22,9 +22,9 @@ const AdminLayout: React.FC = () => {
   if (isSuper) links.push({ to: '/admin/users', label: 'Users', icon: Users } as any);
 
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
+  <div className="min-h-screen bg-black text-ios-text">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-ios-background/95 backdrop-blur border-b border-ios-border pt-safe-top">
+  <header className="sticky top-0 z-30 bg-black/90 backdrop-blur border-b border-ios-border pt-safe-top">
         <div className="h-16 px-4 md:px-6 flex items-center justify-between">
           <button onClick={() => setOpen(!open)} className="md:hidden text-ios-text p-2 rounded-lg hover:bg-ios-surface transition-colors" aria-label="Menu">
             <Menu size={20} />
@@ -61,7 +61,7 @@ const AdminLayout: React.FC = () => {
                   key={l.to}
                   to={l.to}
                   end={(l as any).end}
-                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 mb-1 text-sm font-medium rounded-xl transition-all duration-200 ${isActive ? 'text-ios-accent bg-ios-accent/10 border border-ios-accent/20' : 'text-ios-text-secondary hover:text-ios-text hover:bg-ios-background'}`}
+                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 mb-1 text-sm font-medium rounded-xl transition-all duration-200 ${isActive ? 'text-ios-accent bg-ios-accent/10 border border-ios-accent/20' : 'text-ios-text-secondary hover:text-ios-text hover:bg-black/50'}`}
                 >
                   <Icon size={18} />
                   <span>{l.label}</span>

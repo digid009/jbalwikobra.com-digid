@@ -3,7 +3,8 @@ import { Search, Filter, Plus, Package, AlertCircle, Loader2, RefreshCw, Grid, L
 import { adminService, Product } from '../../../services/adminService';
 import { ProductService } from '../../../services/productService';
 import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystemV2';
-import { cn } from '../../../styles/standardClasses';
+import { IOSPagination } from '../../../components/ios/IOSDesignSystem';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { ProductCrudModal } from './ProductCrudModal';
 import { ProductCard } from './products/ProductCard';
 import { ProductCardList } from './products/ProductCardList';
@@ -382,32 +383,13 @@ export const AdminProductsManagement: React.FC = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="mt-8 pt-6 border-t border-white/10">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">
-                      Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
-                    </span>
-                    <div className="flex gap-2">
-                      <IOSButton
-                        size="sm"
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-2"
-                      >
-                        Previous
-                      </IOSButton>
-                      <span className="px-4 py-2 bg-pink-500/20 text-pink-200 rounded-lg border border-pink-500/30 text-sm font-medium">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <IOSButton
-                        size="sm"
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2"
-                      >
-                        Next
-                      </IOSButton>
-                    </div>
-                  </div>
+                  <IOSPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredProducts.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={(p) => setCurrentPage(p)}
+                  />
                 </div>
               )}
             </div>

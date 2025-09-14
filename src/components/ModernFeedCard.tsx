@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Calendar, Clock, Star, Sparkles } from 'lucide-react';
 import { IOSButton, IOSBadge } from '../components/ios/IOSDesignSystem';
-import { cn } from '../styles/standardClasses';
+import { cn } from '../utils/cn';
 import LinkifyText from '../components/LinkifyText';
 
 interface ModernFeedCardProps {

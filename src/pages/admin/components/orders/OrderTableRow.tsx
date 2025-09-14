@@ -2,7 +2,7 @@ import React from 'react';
 import { Order } from '../../../../services/adminService';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { formatCurrencyIDR, formatShortDate } from '../../../../utils/format';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface OrderTableRowProps {
   order: Order;

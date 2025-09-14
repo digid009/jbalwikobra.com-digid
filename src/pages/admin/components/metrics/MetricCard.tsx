@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface MetricCardProps {
   label: string;

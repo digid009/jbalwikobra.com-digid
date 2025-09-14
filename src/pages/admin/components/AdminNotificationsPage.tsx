@@ -17,7 +17,7 @@ import {
   MessageSquare,
   ShoppingBag
 } from 'lucide-react';
-import { cn } from '../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { DashboardSection } from '../layout/DashboardPrimitives';
 import { adminNotificationService, AdminNotification } from '../../../services/adminNotificationService';
 

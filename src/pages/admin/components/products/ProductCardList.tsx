@@ -2,7 +2,7 @@ import React from 'react';
 import { Product } from '../../../../services/adminService';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
 import { Package, Edit, Crown, Users, Trophy } from 'lucide-react';
-import { cn } from '../../../../styles/standardClasses';
+const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import { Tier, GameTitle } from '../../../../types';
 
 interface ProductCardListProps {
