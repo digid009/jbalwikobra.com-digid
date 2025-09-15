@@ -218,6 +218,72 @@ export const useProductDetail = () => {
     }));
   }, []);
 
+  // Checkout handlers
+  const handleCheckout = useCallback(async () => {
+    if (!state.product) return;
+    
+    try {
+      setCheckoutState(prev => ({ ...prev, creatingInvoice: true }));
+      
+      const { createXenditInvoice } = await import('../services/paymentService');
+      
+      const externalId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Calculate effective price
+      const isFlashSaleActive = Boolean(state.product?.flashSaleEndTime && state.product.isFlashSale);
+      const calculatedEffectivePrice = (isFlashSaleActive && state.product?.originalPrice && state.product.originalPrice > state.product.price) 
+        ? state.product.price 
+        : (state.product?.originalPrice && state.product.originalPrice > 0 
+          ? state.product.originalPrice 
+          : state.product?.price || 0);
+      
+      const amount = checkoutState.checkoutType === 'rental' && rentalState.selectedRental 
+        ? rentalState.selectedRental.price 
+        : calculatedEffectivePrice;
+      
+      const invoiceData = await createXenditInvoice({
+        externalId,
+        amount,
+        payerEmail: checkoutState.customer.email,
+        description: `Pembelian ${state.product.name}`,
+        successRedirectUrl: `${window.location.origin}/payment-status?status=success`,
+        failureRedirectUrl: `${window.location.origin}/payment-status?status=failed`,
+        customer: {
+          given_names: checkoutState.customer.name,
+          email: checkoutState.customer.email,
+          mobile_number: checkoutState.customer.phone,
+        },
+        order: {
+          product_id: state.product.id,
+          customer_name: checkoutState.customer.name,
+          customer_email: checkoutState.customer.email,
+          customer_phone: checkoutState.customer.phone,
+          order_type: checkoutState.checkoutType,
+          amount,
+          rental_duration: checkoutState.checkoutType === 'rental' ? rentalState.selectedRental?.duration : null,
+        }
+      });
+      
+      // Redirect to payment page
+      window.location.href = invoiceData.invoice_url;
+      
+    } catch (error) {
+      console.error('Checkout error:', error);
+      showToast('Gagal membuat invoice. Silakan coba lagi.', 'error');
+    } finally {
+      setCheckoutState(prev => ({ ...prev, creatingInvoice: false }));
+    }
+  }, [state.product, checkoutState, rentalState.selectedRental, showToast]);
+
+  const handleWhatsAppRental = useCallback(() => {
+    if (!state.product || !rentalState.selectedRental) return;
+    
+    const message = `Halo! Saya tertarik untuk rental ${state.product.name} dengan durasi ${rentalState.selectedRental.duration}. Mohon info lebih lanjut.`;
+    const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    closeCheckout();
+  }, [state.product, rentalState.selectedRental, whatsappNumber, closeCheckout]);
+
   // Wishlist handlers
   const handleWishlistToggle = useCallback(() => {
     if (!state.product) return;
@@ -304,6 +370,8 @@ export const useProductDetail = () => {
     handleRentalSelect,
     handlePurchase,
     handleRental,
+    handleCheckout,
+    handleWhatsAppRental,
     closeCheckout,
     handleWishlistToggle,
     handleShare,

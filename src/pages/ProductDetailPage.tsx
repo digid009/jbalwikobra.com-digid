@@ -22,6 +22,7 @@ import {
   ProductActions,
   ProductDescription
 } from '../components/product-detail';
+import CheckoutModal from '../components/public/product-detail/CheckoutModal';
 
 const ProductDetailPage: React.FC = () => {
   const {
@@ -45,9 +46,19 @@ const ProductDetailPage: React.FC = () => {
     rentalState,
     handleRentalSelect,
     
+    // Checkout state
+    checkoutState,
+    closeCheckout,
+    setCheckoutState,
+    
+    // WhatsApp
+    whatsappNumber,
+    
     // Actions
     handlePurchase,
     handleRental,
+    handleCheckout,
+    handleWhatsAppRental,
     handleWishlistToggle,
     handleShare,
     
@@ -137,6 +148,33 @@ const ProductDetailPage: React.FC = () => {
           description={product.description || 'Tidak ada deskripsi tersedia.'}
         />
       </div>
+
+      {/* Checkout Modal */}
+      {checkoutState.showCheckoutForm && (
+        <CheckoutModal
+          visible={checkoutState.showCheckoutForm}
+          onClose={closeCheckout}
+          checkoutType={checkoutState.checkoutType}
+          productName={product.name}
+          effectivePrice={effectivePrice}
+          selectedRental={rentalState.selectedRental}
+          customer={checkoutState.customer}
+          setCustomer={(customer) => 
+            setCheckoutState(prev => ({ ...prev, customer }))
+          }
+          isPhoneValid={checkoutState.isPhoneValid}
+          setIsPhoneValid={(isPhoneValid) => 
+            setCheckoutState(prev => ({ ...prev, isPhoneValid }))
+          }
+          acceptedTerms={checkoutState.acceptedTerms}
+          setAcceptedTerms={(acceptedTerms) => 
+            setCheckoutState(prev => ({ ...prev, acceptedTerms }))
+          }
+          creatingInvoice={checkoutState.creatingInvoice}
+          onCheckout={handleCheckout}
+          onWhatsAppRental={handleWhatsAppRental}
+        />
+      )}
     </div>
   );
 };
