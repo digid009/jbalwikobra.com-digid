@@ -169,7 +169,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {showBest && (
           <div className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-red-500/90 text-white text-xs font-bold px-2 py-1 backdrop-blur border border-red-400/50 shadow-lg animate-pulse">
             <Zap size={10} />
-            <span className="text-xs">{isFlashSaleActive ? 'FLASH SALE' : 'TERLARIS'}</span>
+            <span className="text-xs">{isFlashSaleActive ? 'FLASH SALE' : 'TERBARU'}</span>
           </div>
         )}
 

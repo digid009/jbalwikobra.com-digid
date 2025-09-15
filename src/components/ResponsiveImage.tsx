@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface ResponsiveImageProps {
-  src: string;
+  src?: string;
   alt: string;
   className?: string;
   sizes?: string;
@@ -49,7 +49,7 @@ class ImageOptimizer {
   private static readonly CDN_BASE = 'https://images.unsplash.com/';
 
   static optimizeUrl(
-    originalUrl: string,
+    originalUrl?: string,
     options: {
       width?: number;
       quality?: number;
@@ -57,22 +57,31 @@ class ImageOptimizer {
       dpr?: number;
     } = {}
   ): string {
+    // Guard against undefined or empty URLs
+    if (!originalUrl || typeof originalUrl !== 'string' || originalUrl.trim() === '') {
+      return '';
+    }
     // If it's an Unsplash image, use their optimization API
     if (originalUrl.includes('unsplash.com')) {
-      const url = new URL(originalUrl);
-      const params = new URLSearchParams(url.search);
-      
-      if (options.width) params.set('w', options.width.toString());
-      if (options.quality) params.set('q', options.quality.toString());
-      if (options.format && options.format !== 'auto') params.set('fm', options.format);
-      if (options.dpr) params.set('dpr', options.dpr.toString());
-      
-      // Add optimization flags
-      params.set('auto', 'format,compress');
-      params.set('fit', 'crop');
-      
-      url.search = params.toString();
-      return url.toString();
+      try {
+        const url = new URL(originalUrl);
+        const params = new URLSearchParams(url.search);
+        
+        if (options.width) params.set('w', options.width.toString());
+        if (options.quality) params.set('q', options.quality.toString());
+        if (options.format && options.format !== 'auto') params.set('fm', options.format);
+        if (options.dpr) params.set('dpr', options.dpr.toString());
+        
+        // Add optimization flags
+        params.set('auto', 'format,compress');
+        params.set('fit', 'crop');
+        
+        url.search = params.toString();
+        return url.toString();
+      } catch {
+        // If URL parsing fails, return the original URL
+        return originalUrl;
+      }
     }
 
     // For other images, return as-is (could be extended with other CDN support)
@@ -80,10 +89,13 @@ class ImageOptimizer {
   }
 
   static generateSrcSet(
-    originalUrl: string,
+    originalUrl?: string,
     breakpoints: number[] = [320, 640, 768, 1024, 1280, 1920],
     format?: 'webp' | 'avif'
   ): string {
+    if (!originalUrl || typeof originalUrl !== 'string' || originalUrl.trim() === '') {
+      return '';
+    }
     return breakpoints
       .map(width => {
         const optimizedUrl = this.optimizeUrl(originalUrl, { width, quality: 80, format });
@@ -106,6 +118,9 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
   onLoad,
   onError
 }) => {
+  // Transparent 1x1 GIF as a safe, tiny fallback when src is missing
+  const FALLBACK_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(priority);
   const [error, setError] = useState(false);
@@ -168,11 +183,12 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
 
   // Generate optimized URLs
   const getOptimizedSrc = (format?: 'webp' | 'avif') => {
-    return ImageOptimizer.optimizeUrl(src, { quality, format: format || 'auto' });
+  const optimized = ImageOptimizer.optimizeUrl(src, { quality, format: format || 'auto' });
+  return optimized || (placeholder === 'blur' ? (blurDataURL || FALLBACK_DATA_URL) : FALLBACK_DATA_URL);
   };
 
   const getSrcSet = (format?: 'webp' | 'avif') => {
-    return ImageOptimizer.generateSrcSet(src, undefined, format);
+  return ImageOptimizer.generateSrcSet(src, undefined, format);
   };
 
   // Generate blur placeholder
@@ -188,7 +204,7 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
       }}
     >
       {/* Placeholder */}
-      {!isLoaded && placeholder === 'blur' && (
+  {!isLoaded && placeholder === 'blur' && (
         <img
           src={defaultBlurDataURL}
           alt=""
@@ -201,7 +217,7 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
       )}
 
       {/* Progressive Enhancement: Multiple Sources */}
-      {isVisible && (
+  {isVisible && (
         <picture>
           {/* AVIF Source */}
           {formats.supportsAvif && !error && (
@@ -225,7 +241,7 @@ const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
           <img
             ref={imgRef}
             src={error ? defaultBlurDataURL : getOptimizedSrc()}
-            srcSet={error ? undefined : getSrcSet()}
+    srcSet={error ? undefined : getSrcSet() || undefined}
             sizes={sizes}
             alt={alt}
             loading={priority ? 'eager' : 'lazy'}

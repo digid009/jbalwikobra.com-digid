@@ -95,12 +95,18 @@ export const ordersService = {
         throw error;
       }
 
-  const totalOrders = orders?.length || 0;
-  // Business rule update: revenue counts only PAID + COMPLETED
-  const revenueSourceStatuses = new Set(['paid','completed']);
-  const totalRevenue = orders?.filter(o => revenueSourceStatuses.has(o.status)).reduce((sum, order) => sum + (order.amount || 0), 0) || 0;
-  const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
-  const completedOrders = orders?.filter(order => order.status === 'completed').length || 0;
+      const totalOrders = orders?.length || 0;
+      // Business rule update: revenue counts only PAID + COMPLETED
+      const revenueSourceStatuses = new Set(['paid','completed']);
+      const revenueOrders = orders?.filter(o => revenueSourceStatuses.has(o.status)) || [];
+      
+      const totalRevenue = revenueOrders.reduce((sum, order) => {
+        const amount = order.amount || 0;
+        return sum + amount;
+      }, 0);
+      
+      const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
+      const completedOrders = orders?.filter(order => order.status === 'completed').length || 0;
 
       return {
         totalOrders,

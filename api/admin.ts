@@ -58,7 +58,16 @@ async function dashboardStats() {
     .select('amount,status')
     .limit(5000);
   let revenue = 0, completedRevenue = 0, completed = 0, pending = 0;
-  (revRows||[]).forEach(r => { revenue += r.amount||0; if (r.status === 'completed' || r.status === 'paid') { completed++; completedRevenue += r.amount||0; } else if (r.status === 'pending') pending++; });
+  (revRows||[]).forEach(r => { 
+    // Business rule: revenue counts only PAID + COMPLETED orders
+    if (r.status === 'completed' || r.status === 'paid') { 
+      completed++; 
+      revenue += r.amount||0; // Use same value for both revenue and completedRevenue
+      completedRevenue += r.amount||0; 
+    } else if (r.status === 'pending') {
+      pending++; 
+    }
+  });
   return {
     orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
     users: { count: usersRes.count||0 },

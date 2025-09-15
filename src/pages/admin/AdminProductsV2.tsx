@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Package, Search, Filter, RefreshCw, Plus, Edit, Trash2, Eye, ShoppingCart, DollarSign, Archive, Calendar, Tag } from 'lucide-react';
 import { adminService, Product } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
@@ -63,6 +64,7 @@ const AdminProductsV2: React.FC = () => {
   });
 
   const { push } = useToast();
+  const navigate = useNavigate();
 
   // Use actual stats from database instead of calculated from visible data
   const stats = productStats;
@@ -108,10 +110,17 @@ const AdminProductsV2: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  // Reset to first page when filters or items per page change
+  // Reset to first page when non-search filters or items per page change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, itemsPerPage]);
+  }, [
+    filters.status,
+    filters.category,
+    filters.gameTitle,
+    filters.tier,
+    filters.priceRange,
+    itemsPerPage
+  ]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -184,11 +193,7 @@ const AdminProductsV2: React.FC = () => {
   };
 
   const handleViewProduct = (product: Product) => {
-    setModalState({
-      isOpen: true,
-      mode: 'view',
-      product
-    });
+    navigate(`/products/${product.id}`);
   };
 
   const handleToggleStatus = async (product: Product) => {

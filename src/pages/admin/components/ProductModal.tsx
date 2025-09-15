@@ -88,49 +88,66 @@ const ProductModal: React.FC<ProductModalProps> = ({
   // Load dropdown data and populate form
   useEffect(() => {
     if (isOpen) {
-      loadDropdownData();
-      if (product && (mode === 'edit' || mode === 'view')) {
-        const productImages = product.images || (product.image ? [product.image] : []);
-        setFormData({
-          name: product.name || '',
-          description: product.description || '',
-          price: product.price || 0,
-          original_price: product.original_price || 0,
-          category_id: product.category_id || '',
-          game_title_id: product.game_title_id || '',
-          tier_id: product.tier_id || '',
-          image: product.image || '',
-          images: productImages,
-          stock: product.stock || 1,
-          is_active: product.is_active ?? true,
-          has_rental: product.has_rental || false,
-          rental_options: (product as any).rentalOptions || []
-        });
-        
-        // Initialize image items for display
-        setImageItems(productImages.map((url, index) => ({
-          id: `existing-${index}`,
-          url
-        })));
-      } else if (mode === 'create') {
-        // Reset form for new product
-        setFormData({
-          name: '',
-          description: '',
-          price: 0,
-          original_price: 0,
-          category_id: '',
-          game_title_id: '',
-          tier_id: '',
-          image: '',
-          images: [],
-          stock: 1,
-          is_active: true,
-          has_rental: false,
-          rental_options: []
-        });
-        setImageItems([]);
-      }
+      const initializeModal = async () => {
+        try {
+          // First load dropdown data
+          await loadDropdownData();
+          
+          // Small delay to ensure state is updated
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Then populate form data if editing/viewing
+          if (product && (mode === 'edit' || mode === 'view')) {
+            // Handle different category field names
+            const categoryId = product.category_id || (product as any).category || (product as any).categoryId || '';
+            
+            const productImages = product.images || (product.image ? [product.image] : []);
+            setFormData({
+              name: product.name || '',
+              description: product.description || '',
+              price: product.price || 0,
+              original_price: product.original_price || 0,
+              category_id: categoryId,
+              game_title_id: product.game_title_id || '',
+              tier_id: product.tier_id || '',
+              image: product.image || '',
+              images: productImages,
+              stock: product.stock || 1,
+              is_active: product.is_active ?? true,
+              has_rental: product.has_rental || false,
+              rental_options: (product as any).rentalOptions || []
+            });
+            
+            // Initialize image items for display
+            setImageItems(productImages.map((url, index) => ({
+              id: `existing-${index}`,
+              url
+            })));
+          } else if (mode === 'create') {
+            // Reset form for new product
+            setFormData({
+              name: '',
+              description: '',
+              price: 0,
+              original_price: 0,
+              category_id: '',
+              game_title_id: '',
+              tier_id: '',
+              image: '',
+              images: [],
+              stock: 1,
+              is_active: true,
+              has_rental: false,
+              rental_options: []
+            });
+            setImageItems([]);
+          }
+        } catch (error) {
+          console.error('Error initializing modal:', error);
+        }
+      };
+      
+      initializeModal();
     }
   }, [isOpen, product, mode]);
 
@@ -144,6 +161,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       
       setDropdownData({ categories, gameTitles, tiers });
     } catch (error: any) {
+      console.error('Error loading dropdown data:', error);
       push(`Failed to load dropdown data: ${error.message}`, 'error');
     }
   };
@@ -283,6 +301,32 @@ const ProductModal: React.FC<ProductModalProps> = ({
     return `Rp ${price.toLocaleString('id-ID')}`;
   };
 
+  // Helper functions for thousand separator in inputs
+  const formatNumberWithSeparator = (num: number | string) => {
+    if (!num && num !== 0) return '';
+    const numValue = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
+    if (isNaN(numValue)) return '';
+    return numValue.toLocaleString('id-ID');
+  };
+
+  const parseNumberFromFormatted = (formattedStr: string) => {
+    if (!formattedStr) return 0;
+    const cleaned = formattedStr.replace(/[^\d]/g, '');
+    return cleaned ? parseInt(cleaned, 10) : 0;
+  };
+
+  const handlePriceChange = (value: string, field: 'price' | 'original_price') => {
+    const numericValue = parseNumberFromFormatted(value);
+    if (field === 'original_price') {
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: value === '' || numericValue === 0 ? undefined : numericValue 
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: numericValue }));
+    }
+  };
+
   if (!isOpen) return null;
 
   const isReadOnly = mode === 'view';
@@ -347,12 +391,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   Price *
                 </label>
                 <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  type="text"
+                  value={formatNumberWithSeparator(formData.price)}
+                  onChange={(e) => handlePriceChange(e.target.value, 'price')}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="0"
-                  min="0"
                   required
                   disabled={isReadOnly}
                 />
@@ -367,12 +410,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   Original Price
                 </label>
                 <input
-                  type="number"
-                  value={formData.original_price || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, original_price: Number(e.target.value) || undefined }))}
+                  type="text"
+                  value={formData.original_price ? formatNumberWithSeparator(formData.original_price) : ''}
+                  onChange={(e) => handlePriceChange(e.target.value, 'original_price')}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="0"
-                  min="0"
                   disabled={isReadOnly}
                 />
                 {isReadOnly && formData.original_price && (
@@ -452,18 +494,27 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
               {/* Rental Options */}
               <div className="md:col-span-2">
-                <div className="flex items-center space-x-3 mb-4">
-                  <input
-                    type="checkbox"
-                    id="has_rental"
-                    checked={formData.has_rental}
-                    onChange={(e) => setFormData(prev => ({ ...prev, has_rental: e.target.checked }))}
-                    className="w-4 h-4 text-pink-500 bg-gray-800 border-gray-600 rounded focus:ring-pink-500"
-                    disabled={isReadOnly}
-                  />
+                <div className="flex items-center justify-between mb-4">
                   <label htmlFor="has_rental" className="text-sm font-medium text-gray-300">
                     Enable Rental Options
                   </label>
+                  {/* Modern Toggle Switch */}
+                  <button
+                    type="button"
+                    onClick={() => !isReadOnly && setFormData(prev => ({ ...prev, has_rental: !prev.has_rental }))}
+                    disabled={isReadOnly}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                      formData.has_rental 
+                        ? 'bg-pink-500' 
+                        : 'bg-gray-600'
+                    } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-opacity-80'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                        formData.has_rental ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 {formData.has_rental && (
