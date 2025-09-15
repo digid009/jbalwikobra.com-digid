@@ -284,6 +284,20 @@ Ada pertanyaan? Balas pesan ini! 💬`;
       return true;
     }
 
+    // Special handling for woo-wa (NotifAPI) - check for success message pattern
+    if (provider.name === 'woo-wa' && responseData.results) {
+      const message = responseData.results.message || '';
+      if (message.includes('Message success sent to')) {
+        return true;
+      }
+    }
+
+    // Additional fallback: check for common success indicators
+    if (responseData.results && responseData.results.id_message) {
+      // If we have a message ID, it's likely successful
+      return true;
+    }
+
     return false;
   }
 
@@ -301,6 +315,11 @@ Ada pertanyaan? Balas pesan ini! 💬`;
     // Check nested results
     if (responseData.results && responseData.results[messageIdField]) {
       return responseData.results[messageIdField];
+    }
+
+    // Special handling for woo-wa (NotifAPI)
+    if (provider.name === 'woo-wa' && responseData.results && responseData.results.id_message) {
+      return responseData.results.id_message;
     }
 
     // Fallback fields

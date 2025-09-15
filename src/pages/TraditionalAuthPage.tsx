@@ -40,6 +40,7 @@ const AuthPage: React.FC = () => {
 
   // Signup form state
   const [signupData, setSignupData] = useState({
+    name: '',
     phone: '',
     password: '',
     confirmPassword: ''
@@ -98,6 +99,16 @@ const AuthPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!signupData.name.trim()) {
+      showToast('Nama lengkap harus diisi', 'error');
+      return;
+    }
+
+    if (!signupData.phone.trim()) {
+      showToast('Nomor WhatsApp harus diisi', 'error');
+      return;
+    }
+
     if (signupData.password !== signupData.confirmPassword) {
       showToast('Password tidak cocok', 'error');
       return;
@@ -111,7 +122,7 @@ const AuthPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const result = await signup(signupData.phone, signupData.password);
+      const result = await signup(signupData.phone, signupData.password, signupData.name);
       
       if (result.error) {
         showToast(result.error, 'error');
@@ -312,6 +323,23 @@ const AuthPage: React.FC = () => {
           {/* Signup Form */}
           {mode === 'signup' && (
             <form onSubmit={handleSignup} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  value={signupData.name}
+                  onChange={(e) => setSignupData({ 
+                    ...signupData, 
+                    name: e.target.value
+                  })}
+                  className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-white/70 focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
+                  placeholder="Masukkan nama lengkap"
+                  required
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-2">
                   Nomor WhatsApp

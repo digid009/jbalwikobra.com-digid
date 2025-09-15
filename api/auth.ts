@@ -145,21 +145,22 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
 
     // Find user by phone or email
     console.log('Attempting to find user in database...');
-    const { data: user, error: userError } = await supabaseClient
+    const { data: users, error: userError } = await supabaseClient
       .from('users')
       .select('*')
-      .or(`phone.eq.${identifier},email.eq.${identifier}`)
-      .single();
+      .or(`phone.eq.${identifier},email.eq.${identifier}`);
 
     if (userError) {
       console.error('Database error when finding user:', userError);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    if (!user) {
+    if (!users || users.length === 0) {
       console.log('User not found for identifier');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    const user = users[0];
 
     console.log('User found, verifying password...');
 
@@ -238,7 +239,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { phone, password } = req.body;
+    const { phone, password, name } = req.body;
 
     if (!phone) {
       return res.status(400).json({ error: 'Phone number is required' });
@@ -248,16 +249,21 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Password is required' });
     }
 
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
     // Check if user already exists
-    const { data: existingUser } = await getSupabase()
+    const { data: existingUsers } = await getSupabase()
       .from('users')
       .select('id, phone_verified')
-      .eq('phone', phone)
-      .single();
+      .eq('phone', phone);
+
+    const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
 
     if (existingUser && existingUser.phone_verified) {
       return res.status(400).json({ error: 'User already exists and verified' });
@@ -275,6 +281,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
         .insert({
           phone,
           password_hash: passwordHash,
+          name: name.trim(),
           is_active: true,
           phone_verified: false,
           profile_completed: false
@@ -289,10 +296,13 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
       userId = newUser.id;
     } else {
-      // Update existing unverified user with new password
+      // Update existing unverified user with new password and name
       const { error: updateError } = await getSupabase()
         .from('users')
-        .update({ password_hash: passwordHash })
+        .update({ 
+          password_hash: passwordHash,
+          name: name.trim()
+        })
         .eq('id', existingUser.id);
 
       if (updateError) {
@@ -309,10 +319,10 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
         // TODO: Re-enable when adminNotificationService module resolution is fixed
         // await adminNotificationService.createUserSignupNotification(
         //   userId,
-        //   'New User', // Default name since name might not be provided yet
+        //   name.trim(),
         //   phone
         // );
-        console.log('[Admin] User signup notification skipped (service temporarily disabled)');
+        console.log(`[Admin] User signup notification skipped (service temporarily disabled) - ${name.trim()}`);
       } catch (notificationError) {
         console.error('[Admin] Failed to create user signup notification:', notificationError);
       }
@@ -347,7 +357,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
     // Send WhatsApp verification
     try {
       console.log('Sending WhatsApp verification code to:', phone);
-      const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService');
+      const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService.js');
       const whatsappService = new DynamicWhatsAppService();
       const result = await whatsappService.sendVerificationCode(phone, verificationCode);
       
@@ -388,17 +398,18 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
     }
 
     // Find verification record
-    const { data: verification, error: verificationError } = await getSupabase()
+    const { data: verifications, error: verificationError } = await getSupabase()
       .from('phone_verifications')
       .select('*')
       .eq('user_id', user_id)
       .eq('verification_code', verification_code)
-      .eq('is_used', false)
-      .single();
+      .eq('is_used', false);
 
-    if (verificationError || !verification) {
+    if (verificationError || !verifications || verifications.length === 0) {
       return res.status(400).json({ error: 'Invalid verification code' });
     }
+
+    const verification = verifications[0];
 
     // Check if expired
     if (new Date(verification.expires_at) < new Date()) {
@@ -543,7 +554,7 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Session token is required' });
     }
 
-    const { data: session, error: sessionError } = await getSupabase()
+    const { data: sessions, error: sessionError } = await getSupabase()
       .from('user_sessions')
       .select(`
         *,
@@ -553,12 +564,13 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
         )
       `)
       .eq('session_token', session_token)
-      .eq('is_active', true)
-      .single();
+      .eq('is_active', true);
 
-    if (sessionError || !session) {
+    if (sessionError || !sessions || sessions.length === 0) {
       return res.status(401).json({ error: 'Invalid session' });
     }
+
+    const session = sessions[0];
 
     // Check if session is expired
     if (new Date(session.expires_at) < new Date()) {

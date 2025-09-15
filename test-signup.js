@@ -4,6 +4,7 @@ async function testSignup() {
     console.log('Testing signup...');
     
     const testData = {
+      name: 'Test User',
       phone: '+6282242417799',
       password: 'testpass123'
     };
