@@ -216,10 +216,18 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { phone } = req.body;
+    const { phone, password } = req.body;
 
     if (!phone) {
       return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
     // Check if user already exists
@@ -235,12 +243,16 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
     let userId = existingUser?.id;
 
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
     // Create user if doesn't exist
     if (!existingUser) {
       const { data: newUser, error: userError } = await getSupabase()
         .from('users')
         .insert({
           phone,
+          password_hash: passwordHash,
           is_active: true,
           phone_verified: false,
           profile_completed: false
@@ -249,16 +261,32 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
         .single();
 
       if (userError) {
+        console.error('Failed to create user:', userError);
         return res.status(500).json({ error: 'Failed to create user' });
       }
 
       userId = newUser.id;
+    } else {
+      // Update existing unverified user with new password
+      const { error: updateError } = await getSupabase()
+        .from('users')
+        .update({ password_hash: passwordHash })
+        .eq('id', existingUser.id);
 
-      // Create admin notification for new user signup
+      if (updateError) {
+        console.error('Failed to update user password:', updateError);
+        return res.status(500).json({ error: 'Failed to update user' });
+      }
+
+      userId = existingUser.id;
+    }
+
+    // Create admin notification for new user signup (only for new users)
+    if (!existingUser) {
       try {
         // TODO: Re-enable when adminNotificationService module resolution is fixed
         // await adminNotificationService.createUserSignupNotification(
-        //   newUser.id,
+        //   userId,
         //   'New User', // Default name since name might not be provided yet
         //   phone
         // );

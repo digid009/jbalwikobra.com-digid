@@ -69,9 +69,17 @@ const AdminProductsV2: React.FC = () => {
   // Use actual stats from database instead of calculated from visible data
   const stats = productStats;
 
-  // Filter products for display (client-side filtering on current page)
+  // Client-side filtering for all products
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesName = product.name?.toLowerCase().includes(searchLower);
+        const matchesDescription = product.description?.toLowerCase().includes(searchLower);
+        if (!matchesName && !matchesDescription) return false;
+      }
+
       // Status filter
       if (filters.status === 'active' && (!product.is_active || product.archived_at)) return false;
       if (filters.status === 'archived' && (product.is_active && !product.archived_at)) return false;
@@ -103,7 +111,7 @@ const AdminProductsV2: React.FC = () => {
     });
   }, [products, filters]);
 
-  // Pagination calculations - use filtered products count
+  // Client-side pagination calculations
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentPageProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -122,18 +130,57 @@ const AdminProductsV2: React.FC = () => {
     itemsPerPage
   ]);
 
-  const loadProducts = async () => {
+  // Add cache for filtered results to avoid repeated server calls
+  const [cachedResults, setCachedResults] = useState<Map<string, { data: Product[], count: number, timestamp: number }>>(new Map());
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+
+  // Generate cache key from current filters
+  const getCacheKey = (filters: ProductFilters) => {
+    return `${filters.status}-${filters.category}-${filters.gameTitle}-${filters.tier}-${filters.priceRange}-${filters.search}`;
+  };
+
+  const loadProducts = async (forceRefresh = false) => {
     setLoading(true);
     setError('');
+    
     try {
-      // Build search term from filters
-      const searchTerm = filters.search || undefined;
+      const cacheKey = getCacheKey(filters);
+      const cachedResult = cachedResults.get(cacheKey);
+      const now = Date.now();
       
-      // Load products and stats in parallel
+      // Use cache if available and not expired (unless forced refresh)
+      if (!forceRefresh && cachedResult && (now - cachedResult.timestamp) < CACHE_DURATION) {
+        setProducts(cachedResult.data);
+        setTotalCount(cachedResult.count);
+        setLoading(false);
+        return;
+      }
+
+      // Build optimized query parameters for server-side filtering
+      const queryParams: any = {
+        page: 1,
+        limit: 500, // Reasonable limit to avoid huge payloads
+      };
+
+      // Add search term if present
+      if (filters.search.trim()) {
+        queryParams.search = filters.search.trim();
+      }
+
+      // For now, load with search only - we'll extend the API later for other filters
       const [productsResult, statsResult] = await Promise.all([
-        adminService.getProducts(currentPage, itemsPerPage, searchTerm),
+        adminService.getProducts(queryParams.page, queryParams.limit, queryParams.search),
         adminService.getProductStats()
       ]);
+
+      // Cache the result
+      const newCachedResults = new Map(cachedResults);
+      newCachedResults.set(cacheKey, {
+        data: productsResult.data,
+        count: productsResult.count,
+        timestamp: now
+      });
+      setCachedResults(newCachedResults);
 
       setProducts(productsResult.data);
       setTotalCount(productsResult.count);
@@ -166,10 +213,26 @@ const AdminProductsV2: React.FC = () => {
   useEffect(() => {
     loadProducts();
     loadDropdownData();
-  }, [currentPage, itemsPerPage, filters.search]); // Reload when pagination or search changes
+  }, []); // Load products only once on component mount
+
+  // Reload when search or major filters change (with caching)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadProducts(); // This will use cache if available
+    }, 300); // Debounce to avoid too many requests while typing
+
+    return () => clearTimeout(timeoutId);
+  }, [filters.search, filters.status]); // Only reload for search and status changes
+
+  // Reset to first page when filters or items per page change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, itemsPerPage]);
 
   const handleRefresh = () => {
-    loadProducts();
+    // Clear cache and force refresh
+    setCachedResults(new Map());
+    loadProducts(true);
   };
 
   const handleEditProduct = (product: Product) => {
@@ -185,7 +248,8 @@ const AdminProductsV2: React.FC = () => {
       try {
         await adminService.deleteProduct(product.id);
         push(`Product "${product.name}" has been archived successfully`, 'success');
-        loadProducts(); // Reload the products list
+        setCachedResults(new Map()); // Clear cache
+        loadProducts(true); // Force reload the products list
       } catch (error: any) {
         push(`Failed to archive product: ${error.message}`, 'error');
       }
@@ -204,7 +268,8 @@ const AdminProductsV2: React.FC = () => {
       });
       
       push(`Product ${newStatus ? 'activated' : 'deactivated'} successfully!`, 'success');
-      loadProducts(); // Reload to see changes
+      setCachedResults(new Map()); // Clear cache
+      loadProducts(true); // Force reload to see changes
     } catch (error: any) {
       push(`Failed to update product status: ${error.message}`, 'error');
     }
@@ -227,7 +292,9 @@ const AdminProductsV2: React.FC = () => {
   };
 
   const handleModalSuccess = () => {
-    loadProducts(); // Reload products after successful create/edit
+    // Clear cache and reload products after successful create/edit
+    setCachedResults(new Map());
+    loadProducts(true);
   };
 
   const formatPrice = (price?: number) => {
@@ -317,6 +384,22 @@ const AdminProductsV2: React.FC = () => {
             Add Product
           </button>
         </div>
+
+        {/* Cache Status Indicator */}
+        {(() => {
+          const cacheKey = getCacheKey(filters);
+          const cachedResult = cachedResults.get(cacheKey);
+          const isUsingCache = cachedResult && (Date.now() - cachedResult.timestamp) < CACHE_DURATION;
+          
+          return isUsingCache && !loading ? (
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                Showing cached data • Click refresh for latest
+              </div>
+            </div>
+          ) : null;
+        })()}
 
         {/* Error Display */}
         {error && (
@@ -510,7 +593,7 @@ const AdminProductsV2: React.FC = () => {
                       </td>
                     </tr>
                   ))
-                ) : filteredProducts.length === 0 ? (
+                ) : currentPageProducts.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center">
                       <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
