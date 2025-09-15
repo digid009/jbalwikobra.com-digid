@@ -8,24 +8,26 @@ export const BannerHeader: React.FC<BannerHeaderProps> = ({
   onCreateBanner 
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="flex items-center justify-between">
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-white">Banner Management</h2>
-        <p className="text-sm text-white/70 mt-1">Manage homepage banners and promotional content</p>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+          Banner Management
+        </h1>
+        <p className="text-gray-400 mt-1">Manage homepage banners and promotional content</p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center space-x-3">
         <button 
           type="button"
           onClick={onRefresh}
-          className="btn btn-secondary btn-sm flex items-center gap-2"
           disabled={loading}
+          className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
         </button>
         <button 
           type="button"
-          className="btn btn-primary btn-sm flex items-center gap-2"
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 shadow-lg hover:shadow-pink-500/25"
           onClick={onCreateBanner}
         >
           <Plus className="w-4 h-4" />

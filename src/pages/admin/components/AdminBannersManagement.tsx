@@ -67,7 +67,8 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
   };
 
   return (
-  <div className="space-y-6 p-6 bg-black min-h-screen">
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Diagnostics banner removed as part of DS migration */}
 
       {/* Header */}
@@ -77,15 +78,15 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
         onCreateBanner={handleCreateBanner}
       />
 
-      {/* Error Banner */}
-      {error && (
-  <div className="dashboard-data-panel padded rounded-xl p-stack-lg border border-red-500/20 bg-red-900/10">
-          <div className="flex items-center gap-3 text-red-400">
-            <div className="w-2 h-2 rounded-full bg-red-400"></div>
-            <span className="text-sm font-medium">{error}</span>
+        {/* Error Banner */}
+        {error && (
+          <div className="group relative overflow-hidden bg-black border border-red-500/30 rounded-2xl p-6 hover:border-red-500/50 transition-all duration-300">
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="w-2 h-2 rounded-full bg-red-400"></div>
+              <span className="text-sm font-medium">{error}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Search */}
       <BannerSearch
@@ -120,6 +121,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
         onSubmit={handleSubmitBanner}
         submitting={submitting}
       />
+      </div>
     </div>
   );
 };

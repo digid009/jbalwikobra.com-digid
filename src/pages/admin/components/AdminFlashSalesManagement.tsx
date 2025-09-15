@@ -399,20 +399,22 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   if (error && flashSales.length === 0) {
     return (
-      <div className="space-y-8 min-h-screen">
-        <div className="flex items-center justify-center py-24">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">⚠️</span>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-500/20 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Error Loading Flash Sales</h2>
+              <p className="text-red-400 mb-6">{error}</p>
+              <button
+                onClick={handleRefresh}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 shadow-lg hover:shadow-pink-500/25"
+              >
+                Try Again
+              </button>
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Error Loading Flash Sales</h2>
-            <p className="text-red-400 mb-6">{error}</p>
-            <button
-              onClick={handleRefresh}
-              className="px-6 py-3 bg-pink-600 text-white rounded-xl font-semibold hover:bg-pink-700 transition-colors"
-            >
-              Try Again
-            </button>
           </div>
         </div>
       </div>
@@ -420,64 +422,60 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
   }
 
   return (
-    <div className="space-y-8 min-h-screen">
-      {/* Modern Header with Glass Effect */}
-      <div className="bg-gradient-to-r from-black via-gray-950 to-black backdrop-blur-xl border-b border-white/10 p-6">
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
               Flash Sales Management
             </h1>
             <p className="text-gray-400 mt-1">Create and manage flash sale campaigns</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center space-x-3">
             {onRefresh && (
               <button
                 onClick={handleRefresh}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30 rounded-xl text-pink-200 font-medium transition-all duration-200"
+                className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200"
               >
                 <Clock className="w-4 h-4" />
-                Refresh
+                <span>Refresh</span>
               </button>
             )}
             <button
               onClick={handleCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 rounded-xl text-green-200 font-medium transition-all duration-200"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 shadow-lg hover:shadow-pink-500/25"
             >
               <Zap className="w-4 h-4" />
-              Buat Flash Sale
+              <span>Create Flash Sale</span>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="space-y-8">
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="group relative overflow-hidden bg-black border border-red-500/30 rounded-2xl p-6 hover:border-red-500/50 transition-all duration-300">
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="w-2 h-2 rounded-full bg-red-400"></div>
+              <span className="text-sm font-medium">{error}</span>
+            </div>
           </div>
         )}
 
         {/* Stats Section */}
-        <div className="mb-8">
-          <FlashSaleStatsComponent
-            stats={stats}
-            loading={loading}
-          />
-        </div>
+        <FlashSaleStatsComponent
+          stats={stats}
+          loading={loading}
+        />
 
         {/* Filters Section */}
-        <div className="mb-8">
-          <FlashSaleFiltersComponent
-            filters={filters}
-            onFiltersChange={setFilters}
-            showFilters={showFilters}
-            onToggleFilters={() => setShowFilters(!showFilters)}
-            resultCount={filteredAndSortedFlashSales.length}
-          />
-        </div>
+        <FlashSaleFiltersComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          resultCount={filteredAndSortedFlashSales.length}
+        />
 
         {/* Flash Sales Table */}
         <FlashSaleTable

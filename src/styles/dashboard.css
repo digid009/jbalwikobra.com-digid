@@ -94,3 +94,12 @@ html:not(.dark) .command-button kbd { background:rgba(255,255,255,0.6); }
 /* Focus ring utility */
 .focus-ring { outline:none; box-shadow:var(--dash-focus-ring); }
 .focus-ring:focus-visible { box-shadow:var(--dash-focus-ring); }
+
+/* Line clamp utility */
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}

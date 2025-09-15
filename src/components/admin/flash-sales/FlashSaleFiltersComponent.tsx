@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, Filter, X, SortAsc, SortDesc } from 'lucide-react';
-import { IOSCard, IOSButton } from '../../ios/IOSDesignSystemV2';
 import { FlashSaleFilters } from '../../../types/flashSales';
 
 interface FlashSaleFiltersComponentProps {
@@ -50,7 +49,7 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
   };
 
   return (
-    <IOSCard variant="elevated" className="space-y-4">
+    <div className="bg-black border border-gray-800 rounded-2xl p-6 space-y-6">
       {/* Search Bar and Toggle */}
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search Input */}
@@ -58,10 +57,10 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Cari produk, ID flash sale, atau deskripsi..."
+            placeholder="Search flash sales, products, or descriptions..."
             value={filters.searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+            className="w-full pl-12 pr-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
           />
           {filters.searchTerm && (
             <button
@@ -75,15 +74,18 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
 
         {/* Filter Toggle Button */}
         <div className="flex items-center gap-3">
-          <IOSButton
-            variant={showFilters ? 'primary' : 'secondary'}
+          <button
             onClick={onToggleFilters}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+              showFilters
+                ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+            }`}
           >
             <Filter className="w-4 h-4" />
             Filter
             {hasActiveFilters && (
-              <span className="ml-1 px-2 py-1 text-xs bg-pink-500 text-white rounded-full">
+              <span className="ml-1 px-2 py-1 text-xs bg-white/20 text-white rounded-full">
                 {[
                   filters.searchTerm && 'search',
                   filters.statusFilter !== 'all' && 'status',
@@ -91,54 +93,53 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
                 ].filter(Boolean).length}
               </span>
             )}
-          </IOSButton>
+          </button>
           
           {hasActiveFilters && (
-            <IOSButton
-              variant="ghost"
+            <button
               onClick={clearAllFilters}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 border border-gray-700 transition-all duration-200"
             >
               <X className="w-4 h-4" />
               Clear
-            </IOSButton>
+            </button>
           )}
         </div>
       </div>
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="pt-4 border-t border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="pt-6 border-t border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-3">
                 Status
               </label>
               <select
                 value={filters.statusFilter}
                 onChange={(e) => handleFilterChange('statusFilter', e.target.value)}
-                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               >
-                <option value="all">Semua Status</option>
-                <option value="active">Aktif</option>
-                <option value="scheduled">Terjadwal</option>
-                <option value="expired">Berakhir</option>
-                <option value="inactive">Tidak Aktif</option>
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="expired">Expired</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
 
             {/* Discount Range Filter */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Range Diskon
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Discount Range
               </label>
               <select
                 value={filters.discountFilter}
                 onChange={(e) => handleFilterChange('discountFilter', e.target.value)}
-                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               >
-                <option value="all">Semua Diskon</option>
+                <option value="all">All Discounts</option>
                 <option value="low">1% - 25%</option>
                 <option value="medium">26% - 50%</option>
                 <option value="high">51% - 75%</option>
@@ -148,54 +149,53 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
 
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Urutkan Berdasarkan
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Sort By
               </label>
               <select
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               >
-                <option value="created_at">Tanggal Dibuat</option>
-                <option value="start_time">Waktu Mulai</option>
-                <option value="end_time">Waktu Berakhir</option>
-                <option value="discount_percentage">Persentase Diskon</option>
+                <option value="created_at">Date Created</option>
+                <option value="start_time">Start Time</option>
+                <option value="end_time">End Time</option>
+                <option value="discount_percentage">Discount Percentage</option>
               </select>
             </div>
 
             {/* Sort Order */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">
-                Urutan
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Order
               </label>
-              <IOSButton
-                variant="secondary"
+              <button
                 onClick={toggleSortOrder}
-                className="w-full flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 border border-gray-700 transition-all duration-200"
               >
                 {filters.sortOrder === 'asc' ? (
                   <>
                     <SortAsc className="w-4 h-4" />
-                    A-Z / Lama-Baru
+                    A-Z / Oldest First
                   </>
                 ) : (
                   <>
                     <SortDesc className="w-4 h-4" />
-                    Z-A / Baru-Lama
+                    Z-A / Newest First
                   </>
                 )}
-              </IOSButton>
+              </button>
             </div>
           </div>
 
           {/* Results Count */}
           {typeof resultCount === 'number' && (
-            <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-700">
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-700">
               <div className="text-sm text-gray-400">
                 {resultCount === 0 ? (
-                  'Tidak ada flash sales yang cocok dengan filter'
+                  'No flash sales match the current filters'
                 ) : (
-                  `Ditemukan ${resultCount} flash sales`
+                  `Found ${resultCount} flash sales`
                 )}
               </div>
               
@@ -221,7 +221,7 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
                 
                 {filters.discountFilter !== 'all' && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
-                    Diskon: {filters.discountFilter}
+                    Discount: {filters.discountFilter}
                     <button onClick={() => handleFilterChange('discountFilter', 'all')}>
                       <X className="w-3 h-3" />
                     </button>
@@ -232,6 +232,6 @@ export const FlashSaleFiltersComponent: React.FC<FlashSaleFiltersComponentProps>
           )}
         </div>
       )}
-    </IOSCard>
+    </div>
   );
 };

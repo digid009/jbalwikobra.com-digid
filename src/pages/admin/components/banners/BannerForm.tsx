@@ -64,64 +64,68 @@ export const BannerForm: React.FC<BannerFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-black border border-gray-700 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-black border border-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">
-            {editingBanner ? 'Edit Banner' : 'Create Banner'}
+          <h2 className="text-xl font-bold text-white">
+            {editingBanner ? 'Edit Banner' : 'Create New Banner'}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-ghost btn-sm p-2 rounded-xl"
+            className="p-2 bg-gray-800 border border-gray-700 text-gray-400 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="form-section compact">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
-          <div className="form-field">
-            <label htmlFor="banner-title" className="form-label required">Title</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Title *
+            </label>
             <input
-              id="banner-title"
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="form-control"
+              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               placeholder="Enter banner title..."
               required
             />
           </div>
 
           {/* Subtitle */}
-          <div className="form-field">
-            <label htmlFor="banner-subtitle" className="form-label">Subtitle</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Subtitle
+            </label>
             <input
-              id="banner-subtitle"
               type="text"
               value={formData.subtitle}
               onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-              className="form-control"
+              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               placeholder="Enter banner subtitle..."
             />
           </div>
 
           {/* Image Upload */}
-          <div className="form-field">
-            <label htmlFor="banner-image-url" className="form-label required">Banner Image</label>
-            <div className="stack-sm">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Banner Image *
+            </label>
+            <div className="space-y-4">
               <input
-                id="banner-image-url"
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                className="form-control"
+                className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
                 placeholder="Enter image URL or upload file..."
                 required
               />
-              <div className="cluster-sm items-center">
-                <span className="text-secondary typography-caption-1">or</span>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-400 text-sm">or</span>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -132,101 +136,118 @@ export const BannerForm: React.FC<BannerFormProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="btn btn-secondary btn-sm cluster-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white transition-all duration-200"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>Upload Image</span>
+                  Upload Image
                 </button>
               </div>
               {formData.image_url && (
-                <img
-                  src={formData.image_url}
-                  alt="Preview"
-                  className="w-full h-32 object-cover rounded-xl border-subtle"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                <div className="rounded-lg overflow-hidden border border-gray-700">
+                  <img
+                    src={formData.image_url}
+                    alt="Preview"
+                    className="w-full h-32 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
 
           {/* Link URL */}
-          <div className="form-field">
-            <label htmlFor="banner-link" className="form-label">Link URL</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Link URL
+            </label>
             <input
-              id="banner-link"
               type="url"
               value={formData.link_url}
               onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
-              className="form-control"
+              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               placeholder="https://example.com"
             />
           </div>
 
           {/* CTA Text */}
-          <div className="form-field">
-            <label htmlFor="banner-cta" className="form-label">Call to Action Text</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Call to Action Text
+            </label>
             <input
-              id="banner-cta"
               type="text"
               value={formData.cta_text}
               onChange={(e) => setFormData(prev => ({ ...prev, cta_text: e.target.value }))}
-              className="form-control"
+              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               placeholder="Click here to learn more"
             />
           </div>
 
           {/* Sort Order */}
-          <div className="form-field">
-            <label htmlFor="banner-sort" className="form-label">Sort Order</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Sort Order
+            </label>
             <input
-              id="banner-sort"
               type="number"
               value={formData.sort_order}
               onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 1 }))}
-              className="form-control"
+              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-xl text-white placeholder:text-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
               min="1"
             />
           </div>
 
           {/* Active Status */}
-          <div className="form-field">
-            <label className="form-label">Active Banner</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Status
+            </label>
             <button
               type="button"
-              role="switch"
-              aria-checked={formData.is_active}
               onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
-              className={`toggle ${formData.is_active ? 'active' : ''}`}
-            />
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 ${
+                formData.is_active 
+                  ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' 
+                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded-full ${formData.is_active ? 'bg-emerald-400' : 'bg-gray-400'}`} />
+              {formData.is_active ? 'Active' : 'Inactive'}
+            </button>
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="btn btn-ghost btn-sm"
+              className="px-6 py-3 bg-gray-800 border border-gray-700 text-gray-300 rounded-xl hover:bg-gray-700 hover:text-white transition-all duration-200 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !formData.title || !formData.image_url}
-              className="btn btn-primary btn-sm flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : editingBanner ? (
-                <Edit className="w-4 h-4" />
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2 inline-block" />
+                  Saving...
+                </>
               ) : (
-                <Plus className="w-4 h-4" />
+                <>
+                  {editingBanner ? (
+                    <Edit className="w-4 h-4 mr-2 inline-block" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2 inline-block" />
+                  )}
+                  {editingBanner ? 'Update Banner' : 'Create Banner'}
+                </>
               )}
-              <span>
-                {submitting ? 'Saving...' : editingBanner ? 'Update Banner' : 'Create Banner'}
-              </span>
             </button>
           </div>
         </form>

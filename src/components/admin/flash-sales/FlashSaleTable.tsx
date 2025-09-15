@@ -1,6 +1,5 @@
 import React from 'react';
 import { Edit, Trash2, Clock, CheckCircle, XCircle, Calendar, Eye, EyeOff, Package, Percent, DollarSign } from 'lucide-react';
-import { IOSCard, IOSButton } from '../../ios/IOSDesignSystemV2';
 import { FlashSaleData, FlashSaleStatusInfo } from '../../../types/flashSales';
 import { formatCurrency } from '../../../utils/helpers';
 
@@ -26,43 +25,43 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
 
     if (!sale.is_active) {
       return {
-        status: 'Tidak Aktif',
+        status: 'Inactive',
         color: 'bg-red-500/10 text-red-400 border-red-500/30',
         icon: XCircle,
-        description: 'Flash sale dinonaktifkan'
+        description: 'Flash sale disabled'
       };
     } else if (now < startTime) {
       return {
-        status: 'Terjadwal',
+        status: 'Scheduled',
         color: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
         icon: Calendar,
-        description: 'Belum dimulai'
+        description: 'Not started yet'
       };
     } else if (now <= endTime) {
       return {
-        status: 'Aktif',
+        status: 'Active',
         color: 'bg-green-500/10 text-green-400 border-green-500/30',
         icon: CheckCircle,
-        description: 'Sedang berlangsung'
+        description: 'Currently running'
       };
     } else {
       return {
-        status: 'Berakhir',
+        status: 'Expired',
         color: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
         icon: Clock,
-        description: 'Waktu habis'
+        description: 'Time expired'
       };
     }
   };
 
   const handleDelete = (flashSale: FlashSaleData) => {
-    if (window.confirm(`Hapus flash sale "${flashSale.product?.name || 'Produk'}"?`)) {
+    if (window.confirm(`Delete flash sale "${flashSale.product?.name || 'Product'}"?`)) {
       onDelete(flashSale.id);
     }
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -73,29 +72,29 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
 
   if (loading) {
     return (
-      <IOSCard variant="elevated" className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-700 rounded-lg mb-4"></div>
+      <div className="bg-black border border-gray-800 rounded-2xl p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-700 rounded-lg"></div>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-gray-800 rounded-lg mb-3"></div>
+            <div key={i} className="h-16 bg-gray-800 rounded-lg"></div>
           ))}
         </div>
-      </IOSCard>
+      </div>
     );
   }
 
   if (flashSales.length === 0) {
     return (
-      <IOSCard variant="elevated" className="p-12 text-center">
+      <div className="bg-black border border-gray-800 rounded-2xl p-12 text-center">
         <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">Belum ada flash sales</h3>
-        <p className="text-gray-400 mb-6">Mulai dengan membuat flash sale pertama Anda</p>
-      </IOSCard>
+        <h3 className="text-xl font-semibold text-white mb-2">No flash sales yet</h3>
+        <p className="text-gray-400 mb-6">Start by creating your first flash sale</p>
+      </div>
     );
   }
 
   return (
-    <IOSCard variant="elevated" padding="none" className="overflow-hidden">
+    <div className="bg-black border border-gray-800 rounded-2xl overflow-hidden">
       {/* Desktop Table View */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
@@ -103,22 +102,22 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
             <thead className="bg-gray-900/50 border-b border-gray-700">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Produk
+                  Product
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Harga & Diskon
+                  Price & Discount
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Periode
+                  Period
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Stok
+                  Stock
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                  Aksi
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -148,7 +147,7 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-white truncate">
-                            {flashSale.product?.name || 'Produk Tidak Ditemukan'}
+                            {flashSale.product?.name || 'Product Not Found'}
                           </div>
                           <div className="text-xs text-gray-400">
                             ID: {flashSale.id.substring(0, 8)}...
@@ -172,7 +171,7 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                           {formatCurrency(flashSale.sale_price)}
                         </div>
                         <div className="text-xs text-green-400">
-                          Hemat {formatCurrency(discountAmount)}
+                          Save {formatCurrency(discountAmount)}
                         </div>
                       </div>
                     </td>
@@ -180,11 +179,11 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                     {/* Period */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="space-y-1">
-                        <div className="text-xs text-gray-400">Mulai</div>
+                        <div className="text-xs text-gray-400">Start</div>
                         <div className="text-sm text-white">
                           {formatDateTime(flashSale.start_time)}
                         </div>
-                        <div className="text-xs text-gray-400">Berakhir</div>
+                        <div className="text-xs text-gray-400">End</div>
                         <div className="text-sm text-white">
                           {formatDateTime(flashSale.end_time)}
                         </div>
@@ -217,36 +216,30 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                     {/* Actions */}
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <IOSButton
-                          variant="ghost"
-                          size="sm"
+                        <button
                           onClick={() => onToggleStatus(flashSale.id, flashSale.is_active)}
-                          className="p-2"
+                          className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
                         >
                           {flashSale.is_active ? (
                             <EyeOff className="w-4 h-4" />
                           ) : (
                             <Eye className="w-4 h-4" />
                           )}
-                        </IOSButton>
+                        </button>
 
-                        <IOSButton
-                          variant="secondary"
-                          size="sm"
+                        <button
                           onClick={() => onEdit(flashSale)}
-                          className="p-2"
+                          className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
                         >
                           <Edit className="w-4 h-4" />
-                        </IOSButton>
+                        </button>
 
-                        <IOSButton
-                          variant="destructive"
-                          size="sm"
+                        <button
                           onClick={() => handleDelete(flashSale)}
-                          className="p-2"
+                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </IOSButton>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -283,7 +276,7 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-white truncate mb-1">
-                    {flashSale.product?.name || 'Produk Tidak Ditemukan'}
+                    {flashSale.product?.name || 'Product Not Found'}
                   </div>
                   <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${statusInfo.color}`}>
                     <StatusIcon className="w-3 h-3 mr-1" />
@@ -295,13 +288,13 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
               {/* Mobile Pricing */}
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <div className="text-xs text-gray-400 mb-1">Harga Asli</div>
+                  <div className="text-xs text-gray-400 mb-1">Original Price</div>
                   <div className="text-sm text-gray-300 line-through">
                     {formatCurrency(flashSale.original_price)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400 mb-1">Harga Sale</div>
+                  <div className="text-xs text-gray-400 mb-1">Sale Price</div>
                   <div className="text-sm font-semibold text-pink-400">
                     {formatCurrency(flashSale.sale_price)}
                   </div>
@@ -314,65 +307,59 @@ export const FlashSaleTable: React.FC<FlashSaleTableProps> = ({
                   <div className="text-xs font-bold text-red-400">
                     -{flashSale.discount_percentage.toFixed(1)}%
                   </div>
-                  <div className="text-xs text-gray-400">Diskon</div>
+                  <div className="text-xs text-gray-400">Discount</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs font-bold text-green-400">
                     {formatCurrency(discountAmount)}
                   </div>
-                  <div className="text-xs text-gray-400">Hemat</div>
+                  <div className="text-xs text-gray-400">Save</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs font-bold text-white">
                     {flashSale.stock || 0}
                   </div>
-                  <div className="text-xs text-gray-400">Stok</div>
+                  <div className="text-xs text-gray-400">Stock</div>
                 </div>
               </div>
 
               {/* Mobile Actions */}
               <div className="flex items-center gap-2">
-                <IOSButton
-                  variant="secondary"
-                  size="sm"
+                <button
                   onClick={() => onToggleStatus(flashSale.id, flashSale.is_active)}
-                  className="flex-1 flex items-center justify-center gap-2"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-200"
                 >
                   {flashSale.is_active ? (
                     <>
                       <EyeOff className="w-4 h-4" />
-                      Nonaktifkan
+                      Disable
                     </>
                   ) : (
                     <>
                       <Eye className="w-4 h-4" />
-                      Aktifkan
+                      Enable
                     </>
                   )}
-                </IOSButton>
+                </button>
 
-                <IOSButton
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => onEdit(flashSale)}
-                  className="p-2"
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
                 >
                   <Edit className="w-4 h-4" />
-                </IOSButton>
+                </button>
 
-                <IOSButton
-                  variant="destructive"
-                  size="sm"
+                <button
                   onClick={() => handleDelete(flashSale)}
-                  className="p-2"
+                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                 >
                   <Trash2 className="w-4 h-4" />
-                </IOSButton>
+                </button>
               </div>
             </div>
           );
         })}
       </div>
-    </IOSCard>
+    </div>
   );
 };

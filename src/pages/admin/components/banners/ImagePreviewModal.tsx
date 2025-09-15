@@ -9,19 +9,18 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   if (!imageUrl) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative max-w-4xl max-h-4xl p-4">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 z-10 p-2 bg-black/60 hover:bg-black/80 
-                     text-white rounded-full transition-colors backdrop-blur-sm"
+          className="absolute top-2 right-2 z-10 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all duration-200 backdrop-blur-sm border border-gray-700 hover:border-gray-600"
         >
           <X className="w-5 h-5" />
         </button>
         <img
           src={imageUrl}
           alt="Full size preview"
-          className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+          className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-gray-800"
           onClick={onClose}
         />
       </div>

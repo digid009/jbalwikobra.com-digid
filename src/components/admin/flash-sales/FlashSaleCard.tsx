@@ -1,6 +1,5 @@
 import React from 'react';
 import { Edit, Trash2, Clock, CheckCircle, XCircle, Calendar, Eye, EyeOff, Percent, Package, DollarSign } from 'lucide-react';
-import { IOSCard, IOSButton } from '../../ios/IOSDesignSystemV2';
 import { FlashSaleData, FlashSaleStatusInfo } from '../../../types/flashSales';
 import { formatCurrency } from '../../../utils/helpers';
 
@@ -84,11 +83,11 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
   const timeRemaining = statusInfo.status === 'Aktif' ? getTimeRemaining() : null;
 
   return (
-    <IOSCard variant="elevated" className="p-stack-lg surface-glass-md hover:border-surface-tint-pink/30 transition-colors">
+    <div className="bg-black border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-all duration-200">
       {/* Product Header */}
-      <div className="flex items-start gap-stack-md mb-stack-md">
+      <div className="flex items-start gap-4 mb-4">
         {/* Product Image */}
-        <div className="w-16 h-16 surface-glass-sm rounded-xl overflow-hidden shrink-0">
+        <div className="w-16 h-16 bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden shrink-0">
           {flashSale.product?.image ? (
             <img
               src={flashSale.product.image}
@@ -97,23 +96,23 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-6 h-6 text-surface-tint-gray" />
+              <Package className="w-6 h-6 text-gray-400" />
             </div>
           )}
         </div>
 
         {/* Product Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="heading-md text-white truncate mb-1">
+          <h3 className="text-lg font-semibold text-white truncate mb-2">
             {flashSale.product?.name || 'Produk Tidak Ditemukan'}
           </h3>
-          <div className="flex items-center gap-cluster-xs">
-            <span className={`inline-flex items-center px-2 py-1 rounded-md fs-sm font-medium border ${statusInfo.color}`}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium border ${statusInfo.color}`}>
               <StatusIcon className="w-3 h-3 mr-1" />
               {statusInfo.status}
             </span>
             {timeRemaining && (
-              <span className="fs-xs text-surface-tint-orange surface-tint-orange/10 px-2 py-1 rounded-md border border-surface-tint-orange/30">
+              <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/30">
                 {timeRemaining}
               </span>
             )}
@@ -122,58 +121,58 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
       </div>
 
       {/* Pricing Information */}
-      <div className="grid grid-cols-2 gap-stack-md mb-stack-md">
-        <div className="space-y-stack-xs">
-          <div className="fs-sm text-surface-tint-gray">Harga Asli</div>
-          <div className="heading-sm text-surface-tint-gray line-through">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-400">Harga Asli</div>
+          <div className="text-base text-gray-400 line-through">
             {formatCurrency(flashSale.original_price)}
           </div>
         </div>
-        <div className="space-y-stack-xs">
-          <div className="fs-sm text-surface-tint-gray">Harga Flash Sale</div>
-          <div className="heading-sm font-bold text-surface-tint-pink">
+        <div className="space-y-1">
+          <div className="text-sm text-gray-400">Harga Flash Sale</div>
+          <div className="text-lg font-bold text-pink-400">
             {formatCurrency(flashSale.sale_price)}
           </div>
         </div>
       </div>
 
       {/* Discount & Stock Info */}
-      <div className="grid grid-cols-3 gap-stack-md mb-stack-md p-stack-sm surface-glass-sm rounded-xl">
+      <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-800/30 border border-gray-700 rounded-xl">
         <div className="text-center">
           <div className="flex items-center justify-center mb-1">
-            <Percent className="w-4 h-4 text-surface-tint-red" />
+            <Percent className="w-4 h-4 text-red-400" />
           </div>
-          <div className="fs-sm font-bold text-surface-tint-red">
+          <div className="text-sm font-bold text-red-400">
             {discountPercentage.toFixed(1)}%
           </div>
-          <div className="fs-xs text-surface-tint-gray">Diskon</div>
+          <div className="text-xs text-gray-400">Diskon</div>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center mb-1">
-            <DollarSign className="w-4 h-4 text-surface-tint-green" />
+            <DollarSign className="w-4 h-4 text-green-400" />
           </div>
-          <div className="fs-sm font-bold text-surface-tint-green">
+          <div className="text-sm font-bold text-green-400">
             {formatCurrency(discountAmount)}
           </div>
-          <div className="fs-xs text-surface-tint-gray">Hemat</div>
+          <div className="text-xs text-gray-400">Hemat</div>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center mb-1">
-            <Package className="w-4 h-4 text-surface-tint-blue" />
+            <Package className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="fs-sm font-bold text-white">
+          <div className="text-sm font-bold text-white">
             {flashSale.stock || 0}
           </div>
-          <div className="fs-xs text-surface-tint-gray">Stok</div>
+          <div className="text-xs text-gray-400">Stok</div>
         </div>
       </div>
 
       {/* Time Period */}
-      <div className="mb-stack-md p-stack-sm surface-glass-sm rounded-xl">
-        <div className="grid grid-cols-2 gap-stack-md">
+      <div className="mb-4 p-4 bg-gray-800/30 border border-gray-700 rounded-xl">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="fs-xs text-surface-tint-gray mb-1">Mulai</div>
-            <div className="fs-sm font-medium text-white">
+            <div className="text-xs text-gray-400 mb-1">Mulai</div>
+            <div className="text-sm font-medium text-white">
               {new Date(flashSale.start_time).toLocaleDateString('id-ID', {
                 day: '2-digit',
                 month: 'short',
@@ -184,8 +183,8 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
             </div>
           </div>
           <div>
-            <div className="fs-xs text-surface-tint-gray mb-1">Berakhir</div>
-            <div className="fs-sm font-medium text-white">
+            <div className="text-xs text-gray-400 mb-1">Berakhir</div>
+            <div className="text-sm font-medium text-white">
               {new Date(flashSale.end_time).toLocaleDateString('id-ID', {
                 day: '2-digit',
                 month: 'short',
@@ -199,12 +198,10 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-cluster-xs">
-        <IOSButton
-          variant="secondary"
-          size="sm"
+      <div className="flex items-center gap-2">
+        <button
           onClick={() => onToggleStatus(flashSale.id, flashSale.is_active)}
-          className="flex items-center gap-cluster-xs flex-1"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 text-gray-300 rounded-xl font-medium hover:bg-gray-700 transition-all duration-200"
         >
           {flashSale.is_active ? (
             <>
@@ -217,30 +214,26 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
               Aktifkan
             </>
           )}
-        </IOSButton>
+        </button>
 
-        <IOSButton
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => onEdit(flashSale)}
-          className="p-stack-sm"
+          className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
         >
           <Edit className="w-4 h-4" />
-        </IOSButton>
+        </button>
 
-        <IOSButton
-          variant="destructive"
-          size="sm"
+        <button
           onClick={handleDelete}
-          className="p-stack-sm"
+          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
         >
           <Trash2 className="w-4 h-4" />
-        </IOSButton>
+        </button>
       </div>
 
       {/* Created Date */}
-      <div className="mt-stack-sm pt-stack-sm border-t border-surface-tint-gray/30">
-        <div className="fs-xs text-surface-tint-gray">
+      <div className="mt-4 pt-4 border-t border-gray-700">
+        <div className="text-xs text-gray-400">
           Dibuat: {new Date(flashSale.created_at).toLocaleDateString('id-ID', {
             day: '2-digit',
             month: 'short',
@@ -248,6 +241,6 @@ export const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
           })}
         </div>
       </div>
-    </IOSCard>
+    </div>
   );
 };
