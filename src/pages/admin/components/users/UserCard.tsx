@@ -1,6 +1,5 @@
 import React from 'react';
 import { User } from '../../../../services/adminService';
-import { IOSAvatar } from '../../../../components/ios/IOSAvatar';
 import { formatShortDate } from '../../../../utils/format';
 import { Shield, Mail, Phone, Calendar } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
@@ -35,11 +34,18 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onUserClick, className
         {/* User Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <IOSAvatar
-              user={user}
-              size="medium"
-              className="ring-2 ring-pink-500/30 group-hover:ring-pink-500/50 transition-all duration-300"
-            />
+            <div className="w-12 h-12 rounded-xl bg-pink-500/20 border border-pink-500/30 ring-2 ring-pink-500/30 group-hover:ring-pink-500/50 transition-all duration-300 overflow-hidden flex items-center justify-center text-pink-200 font-semibold">
+              {user && (user as any).avatar_url ? (
+                <img src={(user as any).avatar_url} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                (user.name || user.email || '?')
+                  .split(' ')
+                  .map(p=>p[0])
+                  .join('')
+                  .slice(0,2)
+                  .toUpperCase()
+              )}
+            </div>
             <div>
               <h3 className="font-bold text-white group-hover:text-pink-100 transition-colors">
                 {user.name}

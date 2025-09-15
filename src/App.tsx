@@ -2,12 +2,13 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import ModernHeader from './components/ModernHeader';
-import ModernMobileNavigation from './components/ModernMobileNavigationV2';
+import Header from './components/Header';
+import MobileNavigation from './components/MobileNavigation';
 import ScrollToTop from './components/ScrollToTop';
-import ModernFooter from './components/ModernFooter';
+import Footer from './components/Footer';
 import './App.css';
 import './styles/global-design-system.css';
+import './styles/admin-design-system.css';
 import './styles/public-pages.css';
 import './styles/bottom-navigation.css';
 import { forceFixedPositioning } from './utils/forceFixedPositioning';
@@ -173,7 +174,7 @@ function App() {
                 {/* Public routes with global layout */}
                 <Route path="*" element={
                   <div className="App min-h-screen flex flex-col bg-black text-white relative">
-                    <ModernHeader />
+                    <Header />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />
                     <main className="flex-1 pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
@@ -217,8 +218,8 @@ function App() {
                         </Routes>
                       </Suspense>
                     </main>
-                    <ModernFooter />
-                    <ModernMobileNavigation />
+                    <Footer />
+                    <MobileNavigation />
                   </div>
                 } />
               </Routes>

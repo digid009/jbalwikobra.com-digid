@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { adminService, AdminStats } from '../../services/adminService';
 import { adminCache } from '../../services/adminCache';
-import { IOSCard } from '../ios/IOSDesignSystem';
+import { IOSCard, IOSButton } from '../ios/IOSDesignSystemV2';
 
 export const OptimizedAdminStats: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -92,25 +92,25 @@ export const OptimizedAdminStats: React.FC = () => {
     color: string;
     loading?: boolean;
   }) => (
-    <IOSCard className="h-full">
-      <div className="p-4">
+    <IOSCard className="h-full surface-glass-md">
+      <div className="p-stack-md">
         <div className="flex items-center justify-between">
           <div className={`p-2 rounded-lg ${color}`}>
             <Icon className="w-5 h-5 text-white" />
           </div>
           {cardLoading && (
-            <div className="w-4 h-4 border-2 border-gray-700 border-t-pink-500 rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-surface-tint-pink border-t-surface-tint-pink/30 rounded-full animate-spin"></div>
           )}
         </div>
-        <div className="mt-4">
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+        <div className="mt-stack-md">
+          <h3 className="fs-sm font-medium text-surface-tint-gray">{title}</h3>
           {cardLoading ? (
-            <div className="h-6 bg-gray-200 rounded animate-pulse mt-1"></div>
+            <div className="h-6 surface-glass-sm rounded animate-pulse mt-1"></div>
           ) : (
-            <p className="text-2xl font-semibold text-white mt-1">{value}</p>
+            <p className="heading-lg text-white mt-1">{value}</p>
           )}
           {subValue && !cardLoading && (
-            <p className="text-xs text-gray-500 mt-1">{subValue}</p>
+            <p className="fs-xs text-surface-tint-gray mt-1">{subValue}</p>
           )}
         </div>
       </div>
@@ -118,36 +118,37 @@ export const OptimizedAdminStats: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-stack-lg">
       {/* Header with refresh */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Dashboard Overview</h2>
-        <div className="flex items-center space-x-3">
+        <h2 className="heading-lg text-white">Dashboard Overview</h2>
+        <div className="flex items-center gap-cluster-md">
           {lastUpdated && (
-            <span className="text-sm text-gray-500 flex items-center">
-              <Clock className="w-4 h-4 mr-1" />
+            <span className="fs-sm text-surface-tint-gray flex items-center gap-cluster-xs">
+              <Clock className="w-4 h-4" />
               {formatLastUpdated()}
             </span>
           )}
-          <button
+          <IOSButton
+            variant="secondary"
+            size="sm"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-white hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-            title="Refresh statistics"
+            className="flex items-center gap-cluster-xs"
           >
-            <RefreshCw className={`w-4 h-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
-          </button>
+          </IOSButton>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-stack-md">
         <StatCard
           icon={Users}
           title="Total Users"
           value={stats?.totalUsers || 0}
-          color="bg-gray-9000"
+          color="surface-tint-gray"
           loading={loading}
         />
         
@@ -156,7 +157,7 @@ export const OptimizedAdminStats: React.FC = () => {
           title="Total Orders"
           value={stats?.totalOrders || 0}
           subValue={`${stats?.pendingOrders || 0} pending`}
-          color="bg-green-500"
+          color="surface-tint-green"
           loading={loading}
         />
         
@@ -164,7 +165,7 @@ export const OptimizedAdminStats: React.FC = () => {
           icon={DollarSign}
           title="Total Revenue"
           value={stats ? formatCurrency(stats.totalRevenue) : formatCurrency(0)}
-          color="bg-purple-500"
+          color="surface-tint-purple"
           loading={loading}
         />
         
@@ -172,19 +173,19 @@ export const OptimizedAdminStats: React.FC = () => {
           icon={Package}
           title="Total Products"
           value={stats?.totalProducts || 0}
-          color="bg-orange-500"
+          color="surface-tint-orange"
           loading={loading}
         />
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-stack-md">
         <StatCard
           icon={Star}
           title="Reviews"
           value={stats?.totalReviews || 0}
           subValue={stats?.averageRating ? `${stats.averageRating} avg rating` : 'No reviews'}
-          color="bg-yellow-500"
+          color="surface-tint-yellow"
           loading={loading}
         />
         
@@ -193,7 +194,7 @@ export const OptimizedAdminStats: React.FC = () => {
           title="Completed Orders"
           value={stats?.completedOrders || 0}
           subValue={stats ? `${((stats.completedOrders / Math.max(stats.totalOrders, 1)) * 100).toFixed(1)}% completion rate` : ''}
-          color="bg-green-600"
+          color="surface-tint-green"
           loading={loading}
         />
         
@@ -202,13 +203,13 @@ export const OptimizedAdminStats: React.FC = () => {
           title="Pending Orders"
           value={stats?.pendingOrders || 0}
           subValue={stats ? `${((stats.pendingOrders / Math.max(stats.totalOrders, 1)) * 100).toFixed(1)}% pending` : ''}
-          color="bg-red-500"
+          color="surface-tint-red"
           loading={loading}
         />
       </div>
 
       {/* Cache Performance Indicator */}
-      <div className="text-xs text-gray-500 text-center">
+      <div className="fs-xs text-surface-tint-gray text-center">
         📈 Data is cached for optimal performance • Auto-refreshes every 2 minutes
       </div>
     </div>

@@ -4,7 +4,15 @@ import { ProductService } from '../../services/productService';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/Toast';
 import { gameLogoStorage } from '../../services/storageService';
-import { Plus, Pencil, Trash2, RefreshCw, Upload, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Upload, X, Gamepad2, Eye, Edit, Image as ImageIcon } from 'lucide-react';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  AdminDataTable, 
+  StatusBadge 
+} from './components/ui';
+import type { AdminFiltersConfig, TableColumn, TableAction } from './components/ui';
 
 type FormState = {
   id?: string;
@@ -41,6 +49,171 @@ const AdminGameTitles: React.FC = () => {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Filter state for our AdminFilters component
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    search: '',
+    status: 'all',
+    sortBy: 'sort_order',
+    sortOrder: 'asc'
+  });
+
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search game titles by name or description...',
+    filters: [
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'sort_order', label: 'Sort Order' },
+      { value: 'name', label: 'Name' },
+      { value: 'created_at', label: 'Date Created' },
+      { value: 'updated_at', label: 'Last Updated' }
+    ]
+  };
+
+  // Filter handling
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues(filters);
+  };
+
+  // Apply filters to game titles
+  const filteredItems = items.filter(item => {
+    // Search filter
+    if (filterValues.search) {
+      const searchTerm = filterValues.search.toLowerCase();
+      if (
+        !item.name?.toLowerCase().includes(searchTerm) &&
+        !item.description?.toLowerCase().includes(searchTerm)
+      ) {
+        return false;
+      }
+    }
+
+    // Status filter
+    if (filterValues.status !== 'all') {
+      if (filterValues.status === 'active' && !item.isActive) return false;
+      if (filterValues.status === 'inactive' && item.isActive) return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    const sortBy = filterValues.sortBy;
+    const order = filterValues.sortOrder === 'desc' ? -1 : 1;
+    
+    if (sortBy === 'sort_order') {
+      return ((a.sortOrder || 0) - (b.sortOrder || 0)) * order;
+    }
+    
+    if (sortBy === 'created_at' || sortBy === 'updated_at') {
+      const aDate = new Date(a.createdAt || a.updatedAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.updatedAt || 0).getTime();
+      return (aDate - bDate) * order;
+    }
+    
+    const aValue = a[sortBy as keyof GameTitle] || '';
+    const bValue = b[sortBy as keyof GameTitle] || '';
+    return String(aValue).localeCompare(String(bValue)) * order;
+  });
+
+  // Statistics calculation
+  const stats = {
+    total: items.length,
+    active: items.filter(item => item.isActive).length,
+    inactive: items.filter(item => !item.isActive).length,
+    withLogos: items.filter(item => item.logoUrl).length
+  };
+
+  // Table columns configuration
+  const columns: TableColumn<GameTitle>[] = [
+    {
+      key: 'logo',
+      label: 'Logo',
+      render: (item) => (
+        <div className="flex items-center justify-center w-10 h-10 bg-gray-500/20 rounded-lg overflow-hidden">
+          {item.logoUrl ? (
+            <img src={item.logoUrl} alt={item.name} className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon size={20} className="text-gray-400" />
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'name',
+      label: 'Game Title',
+      render: (item) => (
+        <div>
+          <div className="font-medium text-ds-text">{item.name}</div>
+          <div className="text-sm text-ds-text-secondary">{item.slug}</div>
+        </div>
+      )
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      render: (item) => (
+        <div className="max-w-xs truncate text-ds-text-secondary">
+          {item.description || 'No description'}
+        </div>
+      )
+    },
+    {
+      key: 'sortOrder',
+      label: 'Sort Order',
+      render: (item) => item.sortOrder || 0
+    },
+    {
+      key: 'isActive',
+      label: 'Status',
+      render: (item) => (
+        <StatusBadge
+          status={item.isActive ? 'active' : 'inactive'}
+        />
+      )
+    },
+    {
+      key: 'createdAt',
+      label: 'Created',
+      render: (item) => item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : 'N/A'
+    }
+  ];
+
+  // Table actions configuration
+  const actions: TableAction<GameTitle>[] = [
+    {
+      label: 'View',
+      icon: <Eye size={16} />,
+      onClick: (item) => {
+        push(`Viewing game title: ${item.name}`, 'info');
+      }
+    },
+    {
+      label: 'Edit',
+      icon: <Edit size={16} />,
+      onClick: (item) => {
+        startEdit(item);
+      }
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 size={16} />,
+      onClick: (item) => {
+        if (confirm(`Are you sure you want to delete game title: ${item.name}?`)) {
+          remove(item.id!);
+        }
+      },
+      variant: 'danger'
+    }
+  ];
 
   const load = async () => {
     setLoading(true);
@@ -245,175 +418,200 @@ const AdminGameTitles: React.FC = () => {
     }
   };
 
+  const handleRefresh = () => {
+    load();
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Game Titles</h1>
-          <p className="text-gray-400">Kelola daftar game yang tampil di katalog, jual akun, dan filter.</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-800 hover:bg-black/5 text-sm"><RefreshCw size={16}/> Refresh</button>
-          <button onClick={startCreate} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-sm"><Plus size={16}/> Tambah</button>
-        </div>
+      {/* Page Header */}
+      <AdminPageHeaderV2
+        title="Game Titles"
+        subtitle="Kelola daftar game yang tampil di katalog, jual akun, dan filter"
+        icon={Gamepad2}
+        actions={[
+          {
+            key: 'refresh',
+            label: 'Refresh',
+            onClick: handleRefresh,
+            variant: 'secondary',
+            icon: RefreshCw,
+            loading: loading
+          },
+          {
+            key: 'add',
+            label: 'Add Game Title',
+            onClick: () => setShowForm(true),
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard
+          title="Total Game Titles"
+          value={stats.total}
+          icon={Gamepad2}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Active Games"
+          value={stats.active}
+          icon={RefreshCw}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Inactive Games"
+          value={stats.inactive}
+          icon={X}
+          iconColor="text-red-400"
+          iconBgColor="bg-red-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="With Logos"
+          value={stats.withLogos}
+          icon={ImageIcon}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+          loading={loading}
+        />
       </div>
 
-      {/* List */}
-      <div className="bg-black/60 border border-pink-500/30 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-12 text-xs uppercase text-gray-400 px-4 py-2 border-b border-pink-500/20">
-          <div className="col-span-4">Nama</div>
-          <div className="col-span-3">Slug</div>
-          <div className="col-span-2">Status</div>
-          <div className="col-span-3 text-right">Aksi</div>
-        </div>
-        {loading ? (
-          <div className="p-4 text-gray-400">Memuat…</div>
-        ) : items.length === 0 ? (
-          <div className="p-4 text-gray-400">Belum ada data.</div>
-        ) : items.map(gt => (
-          <div key={gt.id} className="grid grid-cols-12 items-center px-4 py-3 border-b border-pink-500/10">
-            <div className="col-span-4 text-white">
-              <div className="font-medium flex items-center gap-2">
-                {gt.logoUrl ? (
-                  <img src={gt.logoUrl} alt={gt.name} className="w-6 h-6 rounded"/>
-                ) : (
-                  <div className="w-6 h-6 rounded bg-gray-900/20 border border-gray-700" />
-                )}
-                <span>{gt.name}</span>
-              </div>
-              {gt.description && <div className="text-xs text-gray-400 line-clamp-1">{gt.description}</div>}
-            </div>
-            <div className="col-span-3 text-gray-300">{gt.slug}</div>
-            <div className="col-span-2 text-gray-300">{gt.isActive ? 'Aktif' : 'Nonaktif'}</div>
-            <div className="col-span-3 text-right">
-              <button className="inline-flex items-center gap-1 text-xs px-2 py-1 border border-gray-700 rounded text-white hover:bg-black/5 mr-2" onClick={()=>startEdit(gt)}><Pencil size={14}/> Edit</button>
-              <button className="inline-flex items-center gap-1 text-xs px-2 py-1 border border-red-500/40 text-red-300 rounded hover:bg-red-500/10" onClick={()=>remove(gt.id)}><Trash2 size={14}/> Hapus</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Filters */}
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={items.length}
+        filteredItems={filteredItems.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
 
-      {/* Form */}
+      {/* Game Titles Table */}
+      <AdminDataTable
+        data={filteredItems}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="No game titles found"
+        showRowNumbers={true}
+      />
+
+      {/* Game Title Form Modal */}
       {showForm && (
-        <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-          <h2 className="text-lg font-semibold text-white mb-3">{form.id ? 'Edit' : 'Tambah'} Game Title</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Nama</label>
-              <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Mobile Legends"/>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Slug</label>
-              <input value={form.slug} onChange={e=>setForm({...form, slug: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="mobile-legends"/>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm text-gray-400 mb-1">Deskripsi</label>
-              <input value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Deskripsi singkat"/>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Icon (lucide)</label>
-              <input value={form.icon} onChange={e=>setForm({...form, icon: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="Zap"/>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Warna</label>
-              <input value={form.color} onChange={e=>setForm({...form, color: e.target.value})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white" placeholder="#f472b6"/>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm text-gray-400 mb-1">Logo Game</label>
-              
-              {/* Current Logo Display */}
-              {(form.logo_preview || form.logo_url) && (
-                <div className="mb-3 p-2 border border-gray-700 rounded bg-black/40">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={form.logo_preview || form.logo_url} 
-                      alt="Logo preview" 
-                      className="w-12 h-12 object-cover rounded border border-gray-700"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm text-white">
-                        {form.logo_file ? 'File baru dipilih' : 'Logo saat ini'}
-                      </p>
-                      {form.logo_file && (
-                        <p className="text-xs text-gray-400">{form.logo_file.name}</p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={clearFile}
-                      className="p-1 text-red-400 hover:text-red-300"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* File Upload */}
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="logo-upload"
-                />
-                <label
-                  htmlFor="logo-upload"
-                  className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer hover:border-pink-500/50 hover:bg-pink-600/200/5 transition-colors"
-                >
-                  <Upload size={20} className="text-gray-400" />
-                  <span className="text-sm text-gray-400">
-                    {form.logo_file ? 'Ganti logo' : 'Pilih file logo'}
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500">
-                  Format: JPEG, PNG, GIF, WebP • Maksimal 5MB
-                </p>
-              </div>
-
-              {/* Alternative URL Input */}
-              <div className="mt-3">
-                <label className="block text-sm text-gray-400 mb-1">Atau gunakan URL</label>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-surface-glass-light border border-surface-tint-light rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-ds-text mb-4">{form.id ? 'Edit' : 'Tambah'} Game Title</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Nama Game</label>
                 <input 
-                  value={form.logo_url} 
-                  onChange={e=>setForm({...form, logo_url: e.target.value, logo_file: null, logo_preview: ''})} 
-                  className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white text-sm" 
+                  value={form.name} 
+                  onChange={e=>setForm({...form, name: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text" 
+                  placeholder="Mobile Legends"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Slug</label>
+                <input 
+                  value={form.slug} 
+                  onChange={e=>setForm({...form, slug: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text" 
+                  placeholder="mobile-legends"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm text-ds-text-secondary mb-1">Deskripsi</label>
+                <input 
+                  value={form.description} 
+                  onChange={e=>setForm({...form, description: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text" 
+                  placeholder="Deskripsi singkat game"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Icon (lucide)</label>
+                <input 
+                  value={form.icon} 
+                  onChange={e=>setForm({...form, icon: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text" 
+                  placeholder="Zap"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Warna</label>
+                <input 
+                  type="color"
+                  value={form.color} 
+                  onChange={e=>setForm({...form, color: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm text-ds-text-secondary mb-1">Logo URL</label>
+                <input 
+                  value={form.logo_url || ''} 
+                  onChange={e=>setForm({...form, logo_url: e.target.value})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text" 
                   placeholder="https://example.com/logo.png"
                 />
+                {form.logo_preview && <img src={form.logo_preview} alt="Preview" className="w-16 h-16 mt-2 rounded"/>}
+              </div>
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Sort Order</label>
+                <input 
+                  type="number" 
+                  value={form.sort_order || 0} 
+                  onChange={e=>setForm({...form, sort_order: Number(e.target.value)})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-ds-text-secondary mb-1">Status</label>
+                <select 
+                  value={form.is_active ? '1' : '0'} 
+                  onChange={e=>setForm({...form, is_active: e.target.value==='1'})} 
+                  className="w-full bg-surface-dark border border-surface-tint-light rounded px-3 py-2 text-ds-text"
+                >
+                  <option value="1">Aktif</option>
+                  <option value="0">Nonaktif</option>
+                </select>
               </div>
             </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Urutan</label>
-              <input type="number" value={form.sort_order} onChange={e=>setForm({...form, sort_order: Number(e.target.value)})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white"/>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Status</label>
-              <select value={form.is_active ? '1' : '0'} onChange={e=>setForm({...form, is_active: e.target.value==='1'})} className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white">
-                <option value="1">Aktif</option>
-                <option value="0">Nonaktif</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-gray-700 text-white hover:bg-gray-900/20">Batal</button>
-            <button 
-              onClick={save} 
-              disabled={saving || uploading} 
-              className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60 flex items-center gap-2"
-            >
-              {uploading ? (
-                <>
-                  <Upload size={16} className="animate-pulse" />
-                  Mengupload logo...
-                </>
-              ) : saving ? (
-                'Menyimpan...'
-              ) : (
-                'Simpan'
-              )}
-            </button>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button 
+                onClick={cancelForm} 
+                className="px-4 py-2 rounded-lg border border-surface-tint-light text-ds-text hover:bg-surface-dark"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={save} 
+                disabled={saving || uploading} 
+                className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60 flex items-center gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Upload size={16} className="animate-pulse" />
+                    Mengupload logo...
+                  </>
+                ) : saving ? (
+                  'Menyimpan...'
+                ) : (
+                  'Simpan'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

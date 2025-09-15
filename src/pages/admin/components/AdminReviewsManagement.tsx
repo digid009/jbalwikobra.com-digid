@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus, Search, Filter, X } from 'lucide-react';
+import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { adminService, Review } from '../../../services/adminService';
-import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
-import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
-import { IOSAvatar } from '../../../components/ios/IOSAvatar';
 import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { cn } from '../../../utils/cn';
 import { getUserAvatarUrl, getUserDisplayName } from '../../../utils/avatarUtils';
 import { scrollToPaginationContent } from '../../../utils/scrollUtils';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminDataTable, 
+  AdminFilters, 
+  StatusBadge 
+} from './ui';
+import type { 
+  TableColumn, 
+  TableAction, 
+  AdminFiltersConfig 
+} from './ui';
 
 export const AdminReviewsManagement: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -19,20 +28,153 @@ export const AdminReviewsManagement: React.FC = () => {
   const [hasErrors, setHasErrors] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [ratingFilter, setRatingFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('all');
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    search: '',
+    rating: 'all',
+    date: 'all'
+  });
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Handle page change with scroll to admin content
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    scrollToPaginationContent();
+  // Statistics calculation
+  const stats = {
+    total: reviews.length,
+    highRated: reviews.filter(review => review.rating >= 4).length,
+    lowRated: reviews.filter(review => review.rating <= 2).length,
+    recent: reviews.filter(review => {
+      const reviewDate = new Date(review.created_at);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return reviewDate > weekAgo;
+    }).length
   };
+
+  // Filter configuration
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search reviews...',
+    filters: [
+      {
+        key: 'rating',
+        label: 'Rating',
+        options: [
+          { value: 'all', label: 'All Ratings' },
+          { value: '5', label: '5 Stars' },
+          { value: '4', label: '4 Stars' },
+          { value: '3', label: '3 Stars' },
+          { value: '2', label: '2 Stars' },
+          { value: '1', label: '1 Star' }
+        ]
+      },
+      {
+        key: 'date',
+        label: 'Period',
+        options: [
+          { value: 'all', label: 'All Time' },
+          { value: 'week', label: 'This Week' },
+          { value: 'month', label: 'This Month' },
+          { value: 'quarter', label: 'This Quarter' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'created_at', label: 'Date Created' },
+      { value: 'rating', label: 'Rating' },
+      { value: 'user_id', label: 'Customer' }
+    ]
+  };
+
+  // Table columns configuration
+  const columns: TableColumn<Review>[] = [
+    {
+      key: 'user',
+      label: 'Customer',
+      render: (review) => {
+        const uid = (review as any)?.user_id || '';
+        const avatar = uid ? getUserAvatarUrl(uid) : undefined;
+        const name = uid ? getUserDisplayName(uid) : 'Unknown User';
+        return (
+          <div className="flex items-center gap-3">
+            {avatar ? (
+              <img src={avatar} alt="User" className="w-8 h-8 rounded-full" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-700/50 flex items-center justify-center text-xs text-gray-300">?
+              </div>
+            )}
+            <span className="font-medium">{name}</span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'product',
+      label: 'Product',
+      render: (review) => (
+        <span className="font-medium">{review.product?.name || 'Unknown Product'}</span>
+      )
+    },
+    {
+      key: 'rating',
+      label: 'Rating',
+      render: (review) => (
+        <div className="flex items-center gap-1">
+          {[...Array(5)].map((_, i) => (
+            <Star 
+              key={i} 
+              className={cn(
+                "w-4 h-4",
+                i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+              )}
+            />
+          ))}
+          <span className="ml-1 text-sm text-gray-600">({review.rating})</span>
+        </div>
+      )
+    },
+    {
+      key: 'comment',
+      label: 'Review',
+      render: (review) => (
+        <div className="max-w-xs">
+          <p className="text-sm text-gray-700 truncate">{review.comment}</p>
+        </div>
+      )
+    },
+    {
+      key: 'created_at',
+      label: 'Date',
+      render: (review) => (
+        <span className="text-sm text-gray-600">
+          {new Date(review.created_at).toLocaleDateString()}
+        </span>
+      )
+    }
+  ];
+
+  // Table actions
+  const actions: TableAction<Review>[] = [
+    {
+      label: 'View',
+      icon: <Eye size={16} />,
+      onClick: (review) => console.log('View review:', review.id)
+    },
+    {
+      label: 'Edit',
+      icon: <Edit size={16} />,
+      onClick: (review) => console.log('Edit review:', review.id)
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 size={16} />,
+      onClick: (review) => console.log('Delete review:', review.id),
+      variant: 'danger'
+    }
+  ];
 
   useEffect(() => {
     loadReviews();
-  }, [currentPage, searchTerm, ratingFilter, dateFilter]);
+  }, [currentPage, filters.search, filters.rating, filters.date]);
 
   const loadReviews = async () => {
     try {
@@ -42,18 +184,18 @@ export const AdminReviewsManagement: React.FC = () => {
       setErrorMessage('');
       const result = await adminService.getReviews(currentPage, itemsPerPage);
       setReviews(result.data);
-      setTotalCount(result.count);
+      setTotalCount(result.count || 0);
       setTableExists(true);
     } catch (error: any) {
       console.error('Error loading reviews:', error);
-      setHasErrors(true);
-      if (error.message?.includes('reviews') && error.message?.includes('schema cache')) {
+      if (error.code === 'PGRST116') {
         setTableExists(false);
-        setError('Reviews table not found. Click "Setup Reviews" to initialize the reviews system.');
-        setErrorMessage('Reviews table not found');
+        setHasErrors(true);
+        setErrorMessage('Reviews table does not exist. Click "Setup Reviews" to create it.');
       } else {
-        setError(error.message || 'Failed to load reviews');
-        setErrorMessage(error.message || 'Failed to load reviews');
+        setError('Failed to load reviews');
+        setHasErrors(true);
+        setErrorMessage(`Error loading reviews: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -63,266 +205,108 @@ export const AdminReviewsManagement: React.FC = () => {
   const setupReviewsTable = async () => {
     try {
       setLoading(true);
-      // Create some sample reviews data
-      await adminService.createSampleReviews();
+      // Setup functionality would go here
       await loadReviews();
     } catch (error: any) {
-      setError(error.message || 'Failed to setup reviews table');
+      console.error('Error setting up reviews table:', error);
+      setError('Failed to setup reviews table');
+      setHasErrors(true);
+      setErrorMessage(`Error setting up table: ${error.message}`);
+    } finally {
       setLoading(false);
     }
   };
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-        }`}
-      />
-    ));
+  const handleFiltersChange = (newFilters: Record<string, any>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 4) return 'text-green-600';
-    if (rating >= 3) return 'text-yellow-600';
-    return 'text-red-600';
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
   };
 
   return (
-  <div className="space-y-6 p-6 bg-black min-h-screen">
+    <div className="w-full h-full overflow-auto bg-gray-50">
       <RLSDiagnosticsBanner 
         hasErrors={hasErrors}
         errorMessage={errorMessage}
         statsLoaded={!loading}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <IOSSectionHeader title="Reviews Management" subtitle="Manage customer reviews and feedback" />
-        <div className="flex items-center space-x-2">
-          {!tableExists && (
-            <IOSButton 
-              onClick={setupReviewsTable} 
-              variant="primary"
-              className="flex items-center space-x-2"
-              disabled={loading}
-            >
-              <Plus className="w-4 h-4" />
-              <span>Setup Reviews</span>
-            </IOSButton>
-          )}
-          <IOSButton onClick={loadReviews} className="flex items-center space-x-2" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </IOSButton>
+      <AdminPageHeaderV2
+        title="Reviews Management"
+        subtitle="Manage customer reviews and feedback"
+        icon={Star}
+        actions={[
+          {
+            key: 'refresh',
+            label: 'Refresh',
+            onClick: loadReviews,
+            variant: 'secondary',
+            icon: RefreshCw,
+            loading: loading
+          }
+        ]}
+      />
+
+      <div className="flex flex-col gap-6 p-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AdminStatCard
+            title="Total Reviews"
+            value={stats.total}
+            icon={Star}
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-100"
+          />
+          <AdminStatCard
+            title="High Rated (4-5★)"
+            value={stats.highRated}
+            icon={ThumbsUp}
+            iconColor="text-green-600"
+            iconBgColor="bg-green-100"
+          />
+          <AdminStatCard
+            title="Low Rated (1-2★)"
+            value={stats.lowRated}
+            icon={ThumbsDown}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+          />
+          <AdminStatCard
+            title="Recent (This Week)"
+            value={stats.recent}
+            icon={AlertCircle}
+            iconColor="text-orange-600"
+            iconBgColor="bg-orange-100"
+          />
         </div>
-      </div>
 
-      {error && (
-        <IOSCard variant="elevated" padding="medium" className="bg-ios-warning/10 border border-ios-warning/20">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-ios-warning flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-semibold text-ios-warning mb-1">Setup Required</h3>
-              <p className="text-sm text-gray-200">{error}</p>
-            </div>
-          </div>
-        </IOSCard>
-      )}
-
-      {/* Filters */}
-      {!error && (
-        <IOSCard variant="elevated" padding="medium">
-          <div className="space-y-4">
-            {/* First Row - Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-200" />
-              <input
-                type="text"
-                placeholder="Search reviews by customer name, product name, or review text..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={cn(
-                  'w-full pl-10 pr-4 py-3 rounded-xl transition-colors duration-200',
-                  'bg-black border border-gray-700 text-white placeholder:text-white/50',
-                  'focus:ring-2 focus:ring-ios-primary focus:border-pink-500'
-                )}
-              />
-            </div>
-
-            {/* Second Row - Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Rating Filter */}
-              <div className="flex items-center space-x-3 min-w-[140px]">
-                <Filter className="w-4 h-4 text-gray-200" />
-                <select
-                  value={ratingFilter}
-                  onChange={(e) => setRatingFilter(e.target.value)}
-                  className={cn(
-                    'border border-gray-700 rounded-xl px-4 py-2 bg-black',
-                    'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                    'transition-colors duration-200 text-white'
-                  )}
-                >
-                  <option value="all">All Ratings</option>
-                  <option value="5">5 Stars</option>
-                  <option value="4">4 Stars</option>
-                  <option value="3">3 Stars</option>
-                  <option value="2">2 Stars</option>
-                  <option value="1">1 Star</option>
-                  <option value="high">4+ Stars</option>
-                  <option value="low">3 or Less</option>
-                </select>
-              </div>
-
-              {/* Date Filter */}
-              <div className="flex items-center space-x-3 min-w-[140px]">
-                <span className="text-sm font-medium text-gray-200">Date:</span>
-                <select
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className={cn(
-                    'border border-gray-700 rounded-xl px-4 py-2 bg-black',
-                    'focus:ring-2 focus:ring-ios-primary focus:border-pink-500',
-                    'transition-colors duration-200 text-white'
-                  )}
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="quarter">This Quarter</option>
-                </select>
-              </div>
-
-              {/* Clear Filters */}
-              <IOSButton 
-                variant="ghost" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setRatingFilter('all');
-                  setDateFilter('all');
-                }}
-                className="flex items-center space-x-2"
-              >
-                <X className="w-4 h-4" />
-                <span>Clear</span>
-              </IOSButton>
-            </div>
-          </div>
-        </IOSCard>
-      )}
-
-      <IOSCard variant="elevated" padding="none">
-        {loading ? (
-          <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-pink-500" />
-            <p className="text-gray-200 font-medium">Loading reviews...</p>
-          </div>
-        ) : reviews.length > 0 ? (
-          <div className="overflow-x-auto admin-table-container">
-            <table className="admin-table admin-table-sticky zebra compact w-full">
-              <thead>
-                <tr>
-                  <th className="text-left">Customer</th>
-                  <th className="text-left">Product</th>
-                  <th className="text-left">Rating</th>
-                  <th className="text-left">Review</th>
-                  <th className="text-left">Date</th>
-                  <th className="text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reviews.map((review) => (
-                  <tr key={review.id}>
-                    <td className="whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-white">
-                          {review.user_name || 'Anonymous'}
-                        </div>
-                        {review.user_id ? (
-                          <div className="text-xs text-white/60">ID: {review.user_id.slice(-8)}</div>
-                        ) : (
-                          <div className="text-xs text-white/50 italic">No User ID</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-white">
-                          {review.product_name || 'Unknown Product'}
-                        </div>
-                        {review.product_id ? (
-                          <div className="text-xs text-white/60">ID: {review.product_id.slice(-8)}</div>
-                        ) : (
-                          <div className="text-xs text-white/50 italic">No Product ID</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
-                          {renderStars(review.rating)}
-                        </div>
-                        <span className={`text-sm font-medium ${
-                          review.rating >= 4 ? 'text-ios-success' :
-                          review.rating >= 3 ? 'text-ios-warning' : 'text-ios-error'
-                        }`}>
-                          {review.rating}/5
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="text-sm text-white/80 max-w-xs">
-                        {review.comment ? (
-                          <p className="truncate" title={review.comment}>
-                            {review.comment.length > 100
-                              ? `${review.comment.substring(0, 100)}...`
-                              : review.comment}
-                          </p>
-                        ) : (
-                          <span className="text-white/50 italic">No comment</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap">
-                      <span className="text-sm text-white/60">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <IOSButton variant="ghost" size="small">
-                          <ThumbsUp className="w-4 h-4 text-ios-success" />
-                        </IOSButton>
-                        <IOSButton variant="ghost" size="small">
-                          <ThumbsDown className="w-4 h-4 text-ios-error" />
-                        </IOSButton>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="w-8 h-8 text-gray-200" />
-            </div>
-            <p className="text-gray-200 font-medium">No reviews found</p>
-            <p className="text-gray-200/70 text-sm">Reviews will appear here once customers leave feedback</p>
-          </div>
-        )}
-
-        <IOSPaginationV2
-          currentPage={currentPage}
-          totalPages={totalPages}
+        {/* Filters */}
+        <AdminFilters
+          config={filtersConfig}
+          values={filters}
+          onFiltersChange={handleFiltersChange}
           totalItems={totalCount}
-          itemsPerPage={itemsPerPage}
+          filteredItems={reviews.length}
+          loading={loading}
+          defaultCollapsed={true}
+        />
+
+        {/* Data Table */}
+        <AdminDataTable
+          data={reviews}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          currentPage={currentPage}
+          totalItems={totalCount}
+          pageSize={itemsPerPage}
           onPageChange={handlePageChange}
         />
-      </IOSCard>
+      </div>
     </div>
   );
 };

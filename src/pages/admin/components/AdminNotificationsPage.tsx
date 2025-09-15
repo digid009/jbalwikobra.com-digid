@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton } from '../../../components/ios/IOSDesignSystemV2';
 import { 
   Bell, 
   Settings, 
@@ -350,7 +350,7 @@ export const AdminNotificationsPage: React.FC = () => {
                         {!notification.is_read && (
                           <IOSButton
                             variant="ghost"
-                            size="small"
+                            size="sm"
                             onClick={() => markAsRead(notification.id)}
                             className="border-green-500/30 hover:bg-green-500/20 text-green-400"
                           >
@@ -361,7 +361,7 @@ export const AdminNotificationsPage: React.FC = () => {
                         
                         <IOSButton
                           variant="ghost"
-                          size="small"
+                          size="sm"
                           onClick={() => deleteNotification(notification.id)}
                           className="border-red-500/30 hover:bg-red-500/20 text-red-400"
                         >

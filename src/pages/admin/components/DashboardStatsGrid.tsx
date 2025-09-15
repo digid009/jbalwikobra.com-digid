@@ -1,6 +1,6 @@
 import React from 'react';
 import { DollarSign, Users, Package, TrendingUp, BarChart3 } from 'lucide-react';
-import { IOSCard } from '../../../components/ios/IOSDesignSystem';
+import { IOSCard } from '../../../components/ios/IOSDesignSystemV2';
 import { DashboardStats } from '../types';
 
 interface StatCardProps {
@@ -19,10 +19,10 @@ const StatCard: React.FC<StatCardProps> = ({
   color = 'primary' 
 }) => {
   const colorClasses = {
-    primary: 'text-ios-primary',
-    success: 'text-ios-success',
-    warning: 'text-ios-warning',
-    destructive: 'text-ios-destructive'
+  primary: 'text-blue-400',
+  success: 'text-emerald-400',
+  warning: 'text-amber-400',
+  destructive: 'text-rose-400'
   };
 
   return (

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { 
-  RefactoredAdminFlashSalesManagement,
+  AdminFlashSalesManagement,
   FlashSaleStatsComponent,
   FlashSaleTable,
   FlashSaleFiltersComponent 
@@ -32,7 +32,7 @@ export const CompleteFlashSalesExample: React.FC = () => {
 
   return (
     <div className="p-6">
-      <RefactoredAdminFlashSalesManagement 
+      <AdminFlashSalesManagement 
         onRefresh={handleRefresh}
       />
     </div>
@@ -161,7 +161,7 @@ export const NextJSPageExample = () => {
       </head>
       
       <main className="min-h-screen bg-black">
-        <RefactoredAdminFlashSalesManagement />
+        <AdminFlashSalesManagement />
       </main>
     </>
   );
@@ -214,7 +214,7 @@ class FlashSalesErrorBoundary extends React.Component<
 export const ErrorBoundaryExample: React.FC = () => {
   return (
     <FlashSalesErrorBoundary>
-      <RefactoredAdminFlashSalesManagement />
+      <AdminFlashSalesManagement />
     </FlashSalesErrorBoundary>
   );
 };

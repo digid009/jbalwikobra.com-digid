@@ -41,7 +41,7 @@ interface NavigationItem {
 }
 
 /**
- * ModernMobileNavigation - iOS Design System V2
+ * MobileNavigation - iOS Design System V2
  * 
  * Features:
  * - Mobile-first responsive design
@@ -51,7 +51,7 @@ interface NavigationItem {
  * - Smooth micro-interactions
  * - Safe area support for modern devices
  */
-const ModernMobileNavigation: React.FC = () => {
+const MobileNavigation: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
 
@@ -105,4 +105,4 @@ const ModernMobileNavigation: React.FC = () => {
   );
 };
 
-export default ModernMobileNavigation;
+export default MobileNavigation;

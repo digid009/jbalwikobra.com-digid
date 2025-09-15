@@ -1,5 +1,5 @@
 import React from 'react';
-import { IOSToggle } from '../../../../components/ios/IOSToggle';
+// Replaced IOSToggle with native checkbox styled for DS
 
 export interface RentalValues {
   is_active: boolean; is_rental: boolean; rental_duration_hours: number; rental_unit: string; rental_price_per_hour: number; rental_deposit: number;
@@ -13,10 +13,16 @@ export const SettingsRentalSection: React.FC<SettingsRentalProps> = ({ values, o
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Settings & Options</h3>
       <div className="space-y-4">
-        <IOSToggle checked={values.is_active} onChange={checked=>onChange({ is_active: checked })}
-          label="Active Product" description="Uncheck to create as draft" />
-        <IOSToggle checked={values.is_rental} onChange={checked=>onChange({ is_rental: checked })}
-          label="Enable Rental Option" description="Allow customers to rent this account temporarily" />
+        <label className="flex items-center gap-2 text-white">
+          <input type="checkbox" checked={values.is_active} onChange={e=>onChange({ is_active: e.target.checked })} className="form-checkbox h-4 w-4 text-blue-500" />
+          <span className="text-sm">Active Product</span>
+          <span className="ml-2 text-xs text-white/60">Uncheck to create as draft</span>
+        </label>
+        <label className="flex items-center gap-2 text-white">
+          <input type="checkbox" checked={values.is_rental} onChange={e=>onChange({ is_rental: e.target.checked })} className="form-checkbox h-4 w-4 text-blue-500" />
+          <span className="text-sm">Enable Rental Option</span>
+          <span className="ml-2 text-xs text-white/60">Allow customers to rent this account temporarily</span>
+        </label>
       </div>
       {values.is_rental && (
         <div className="space-y-3 mt-6">
@@ -26,12 +32,12 @@ export const SettingsRentalSection: React.FC<SettingsRentalProps> = ({ values, o
               <div>
                 <label className="block text-xs font-medium text-white mb-1">Duration</label>
                 <input type="number" value={values.rental_duration_hours} min={1} onChange={e=>onChange({ rental_duration_hours: Number(e.target.value) })}
-                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500" />
+                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-white mb-1">Unit</label>
                 <select value={values.rental_unit} onChange={e=>onChange({ rental_unit: e.target.value })}
-                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500">
+                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500">
                   <option value="Hours">Hours</option>
                   <option value="Day">Day</option>
                   <option value="Week">Week</option>
@@ -41,13 +47,13 @@ export const SettingsRentalSection: React.FC<SettingsRentalProps> = ({ values, o
               <div>
                 <label className="block text-xs font-medium text-white mb-1">Price</label>
                 <input type="number" value={values.rental_price_per_hour} min={0} onChange={e=>onChange({ rental_price_per_hour: Number(e.target.value) })}
-                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500" />
+                  className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500" />
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-white mb-1">Deposit</label>
               <input type="number" value={values.rental_deposit} min={0} onChange={e=>onChange({ rental_deposit: Number(e.target.value) })}
-                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-ios-primary focus:border-pink-500" />
+                className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500" />
             </div>
           </div>
         </div>

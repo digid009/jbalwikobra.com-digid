@@ -1,23 +1,24 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Product, Tier, GameTitle, ProductTier } from '../../types';
+import { Product, Tier, GameTitle } from '../../types';
 import { ProductService } from '../../services/productService';
 import { OptimizedProductService } from '../../services/optimizedProductService';
 import { supabase } from '../../services/supabase';
-import ImageUploader from '../../components/ImageUploader';
 import { uploadFiles } from '../../services/storageService';
 import { formatNumberID, parseNumberID } from '../../utils/helpers';
 import { useToast } from '../../components/Toast';
-// Legacy standardClasses/cn removed—minimal replacements
-import { cn } from '../../utils/cn';
-const standardClasses = { flex:{rowGap3:'flex items-center gap-3',rowGap2:'flex items-center gap-2',row:'flex'}, spacing:{section:'space-y-6'} };
-// Migrated to Design System V2 components & new pagination
-import { IOSCard, IOSButton, IOSSectionHeader } from '../../components/ios/IOSDesignSystemV2';
-import { IOSPaginationV2 } from '../../components/ios/IOSPaginationV2';
 import { t } from '../../i18n/strings';
-import { RLSDiagnosticsBanner } from '../../components/ios/RLSDiagnosticsBanner';
 import { scrollToPaginationContent } from '../../utils/scrollUtils';
-// Admin page cleaned: diagnostics imports removed
+// Removed AdminLayout import as we now use reusable components directly
+import { ProductForm } from './components/products';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  StatusBadge 
+} from './components/ui';
+import { AdminDSTable, type DSTableColumn, type DSTableAction } from './components/ui/AdminDSTable';
+import type { AdminFiltersConfig } from './components/ui';
+import { RefreshCw, Plus, Package, Archive, ShoppingCart, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
 
 type FormState = {
   id?: string;
@@ -56,17 +57,66 @@ const AdminProducts: React.FC = () => {
   const [hasErrors, setHasErrors] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   
-  // Filter and pagination states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGame, setSelectedGame] = useState('');
-  const [selectedTier, setSelectedTier] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // all, active, archived
+  // Filter state using our reusable pattern
+  const [filterValues, setFilterValues] = useState({
+    searchTerm: '',
+    gameTitle: '',
+    tier: '',
+    status: 'all',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
+  
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20); // Increased default to 20
-  const [totalProducts, setTotalProducts] = useState(0); // Track total for pagination
-  const [debouncedSearch, setDebouncedSearch] = useState(''); // Debounced search
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalProducts, setTotalProducts] = useState(0);
+  
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // UI state for toggles
+  // Removed showFilters and showStats as we now always show them in the new design
 
-  // Handle page change with scroll to admin content
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search products by name or description...',
+    filters: [
+      {
+        key: 'gameTitle',
+        label: 'Game Title',
+        options: [
+          { value: '', label: 'All Games' },
+          ...games.map(game => ({ value: game.id, label: game.name }))
+        ]
+      },
+      {
+        key: 'tier',
+        label: 'Tier',
+        options: [
+          { value: '', label: 'All Tiers' },
+          ...tiers.map(tier => ({ value: tier.id, label: tier.name }))
+        ]
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'archived', label: 'Archived' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'created_at', label: 'Date Created' },
+      { value: 'name', label: 'Product Name' },
+      { value: 'price', label: 'Price' }
+    ],
+    showSortOrder: true
+  };
+
+  // Handle page change with scroll
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     scrollToPaginationContent();
@@ -74,36 +124,41 @@ const AdminProducts: React.FC = () => {
 
   // Debounced search effect
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    const timer = setTimeout(() => setDebouncedSearch(filterValues.searchTerm), 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [filterValues.searchTerm]);
 
-  // Products are now filtered at database level, so this is simplified
-  const filteredProducts = products; // Already filtered by database
+  // Products are already filtered/paginated by database
+  const filteredProducts = products;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
-  const paginatedProducts = filteredProducts; // Already paginated by database
 
   // Reset pagination when filters change
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, itemsPerPage]);
+  }, [debouncedSearch, filterValues.gameTitle, filterValues.tier, filterValues.status, itemsPerPage]);
 
   // Optimized data loading with database-level filtering and pagination
   const loadProducts = useCallback(async () => {
     try {
-      console.log('🔄 Loading products with filters:', { statusFilter, selectedGame, selectedTier, currentPage, debouncedSearch });
+      console.log('🔄 Loading products with filters:', { 
+        status: filterValues.status, 
+        gameTitle: filterValues.gameTitle, 
+        tier: filterValues.tier, 
+        currentPage, 
+        debouncedSearch 
+      });
       setLoading(true);
       setHasErrors(false);
       setErrorMessage('');
       
       if (!supabase) {
-        // Fallback: Use OptimizedProductService for better performance
+        // Fallback: Use OptimizedProductService
         const [paginatedResponse, tList, gList] = await Promise.all([
           OptimizedProductService.getProductsPaginated(
-            { includeArchived: true }, // filters
-            { limit: 1000 } // pagination - large limit for admin view
+            { includeArchived: true },
+            { limit: 1000 }
           ),
           ProductService.getTiers(),
           ProductService.getGameTitles()
@@ -116,20 +171,21 @@ const AdminProducts: React.FC = () => {
         return;
       }
 
-      // OPTIMIZED: Build query with database-level filtering
-      let query = supabase
+      // Build query with database-level filtering
+    let query = supabase
         .from('products')
         .select(`
           id, name, description, price, original_price,
-          is_active, archived_at, created_at, images, game_title_id, tier_id,
-          tiers (id, name, slug, color, background_gradient),
-          game_titles (id, name, slug, icon)
+      is_active, archived_at, created_at, images, game_title_id, tier_id, category_id,
+      tiers (id, name, slug, color, background_gradient),
+      game_titles (id, name, slug, icon),
+      categories (id, name, slug)
         `, { count: 'exact' });
 
-      // Apply filters at DATABASE level (not client-side)
-      if (statusFilter === 'active') {
+      // Apply filters at DATABASE level
+      if (filterValues.status === 'active') {
         query = query.eq('is_active', true).is('archived_at', null);
-      } else if (statusFilter === 'archived') {
+      } else if (filterValues.status === 'archived') {
         query = query.or('is_active.eq.false,archived_at.not.is.null');
       }
 
@@ -137,15 +193,15 @@ const AdminProducts: React.FC = () => {
         query = query.or(`name.ilike.%${debouncedSearch.trim()}%,description.ilike.%${debouncedSearch.trim()}%`);
       }
 
-      if (selectedGame !== 'all' && selectedGame) {
-        query = query.eq('game_title_id', selectedGame);
+      if (filterValues.gameTitle !== 'all' && filterValues.gameTitle) {
+        query = query.eq('game_title_id', filterValues.gameTitle);
       }
 
-      if (selectedTier !== 'all' && selectedTier) {
-        query = query.eq('tier_id', selectedTier);
+      if (filterValues.tier !== 'all' && filterValues.tier) {
+        query = query.eq('tier_id', filterValues.tier);
       }
 
-      // CRITICAL: Database-level pagination (not client-side)
+      // Database-level pagination
       const offset = (currentPage - 1) * itemsPerPage;
       query = query
         .order('created_at', { ascending: false })
@@ -155,7 +211,7 @@ const AdminProducts: React.FC = () => {
 
       if (productError) throw productError;
 
-      // Load filter options separately (these can be cached)
+      // Load filter options separately
       const [tList, gList] = await Promise.all([
         ProductService.getTiers(),
         ProductService.getGameTitles()
@@ -170,17 +226,17 @@ const AdminProducts: React.FC = () => {
         originalPrice: product.original_price,
         image: product.images?.[0] || '',
         images: product.images || [],
-  categoryId: (product as any).category_id || 'sample-cat-1',
-  // legacy gameTitle removed
-  // tier string removed
+        categoryId: (product as any).category_id || (product as any).categoryId || undefined,
         tierId: product.tier_id,
         gameTitleId: product.game_title_id,
         tierData: product.tiers?.[0] as any,
         gameTitleData: product.game_titles?.[0] as any,
-  // accountLevel removed
-        isFlashSale: false, // default
-        hasRental: false, // default
-        stock: 1, // default
+        // Enrich category for rendering
+        // Note: Supabase relational select may return object or array depending on FK; handle both
+        ...(product as any).categories ? { categoryData: Array.isArray((product as any).categories) ? (product as any).categories[0] : (product as any).categories } : {},
+        isFlashSale: false,
+        hasRental: false,
+        stock: 1,
         isActive: product.is_active !== false,
         archivedAt: product.archived_at,
         createdAt: product.created_at,
@@ -197,40 +253,216 @@ const AdminProducts: React.FC = () => {
         count: mappedProducts.length, 
         total: count, 
         firstProduct: mappedProducts[0]?.name,
-        filters: { statusFilter, selectedGame, selectedTier, currentPage }
       });
-      
     } catch (error: any) {
-      console.error('Error loading products:', error);
+      console.error('❌ Error loading products:', error);
       setHasErrors(true);
-      setErrorMessage(error.message || 'Failed to load products');
-      push('Gagal memuat data', 'error');
+      setErrorMessage(error.message || 'Unknown error occurred');
+      push(`Error loading products: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage, supabase]);
+  }, [currentPage, itemsPerPage, debouncedSearch, filterValues.gameTitle, filterValues.tier, filterValues.status, push]);
 
+  // Load data on mount and filter changes
   useEffect(() => {
     loadProducts();
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage]);
+  }, [loadProducts]);
 
-  const startCreate = () => {
-    setForm(emptyForm);
-    setShowForm(true);
+  // Handle filter changes
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues({
+      searchTerm: filters.searchTerm || '',
+      gameTitle: filters.gameTitle || '',
+      tier: filters.tier || '',
+      status: filters.status || 'all',
+      sortBy: filters.sortBy || 'created_at',
+      sortOrder: filters.sortOrder || 'desc'
+    });
   };
 
-  const startEdit = (p: Product) => {
+  // Calculate statistics for AdminStatCard
+  const stats = {
+    total: products.length,
+    active: products.filter(p => (p as any).isActive !== false && !(p as any).archivedAt).length,
+    archived: products.filter(p => (p as any).isActive === false || (p as any).archivedAt).length,
+    totalValue: products.reduce((sum, p) => sum + (p.price || 0), 0),
+    averagePrice: products.length > 0 ? products.reduce((sum, p) => sum + (p.price || 0), 0) / products.length : 0
+  };
+
+  // Table columns configuration
+  const columns: DSTableColumn<Product>[] = [
+    {
+      key: 'name',
+      header: 'Produk',
+      sortable: true,
+      render: (value, product) => (
+        <div className="flex items-center space-x-3">
+          {product.image && (
+            <img 
+              src={product.image} 
+              alt={product.name}
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+          )}
+          <div>
+            <div className="font-medium text-ds-text">{product.name}</div>
+            <div className="text-sm text-ds-text-secondary truncate max-w-[200px]">
+              {product.description}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'price',
+  header: 'Harga',
+      sortable: true,
+      render: (value, product) => (
+        <div className="text-right">
+          <div className="font-semibold text-ds-text">
+            Rp {product.price?.toLocaleString('id-ID') || '0'}
+          </div>
+          {product.originalPrice && product.originalPrice > (product.price || 0) && (
+            <div className="text-sm text-ds-text-secondary line-through">
+              Rp {product.originalPrice.toLocaleString('id-ID')}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'gameTitleData',
+      header: 'Game',
+      sortable: false,
+      render: (value, product) => (
+        product.gameTitleData?.name ? (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            {product.gameTitleData.name}
+          </span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">No game</span>
+        )
+      )
+    },
+    {
+      key: 'categoryData',
+      header: 'Kategori',
+      sortable: false,
+      render: (value, product) => (
+        (product as any).categoryData?.name ? (
+          <span className="text-sm text-ds-text-secondary">{(product as any).categoryData.name}</span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">Tidak ada</span>
+        )
+      )
+    },
+    {
+      key: 'tierData',
+    header: 'Tier',
+      sortable: false,
+      render: (value, product) => (
+        product.tierData?.name ? (
+          <span 
+            className="px-2 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: product.tierData.color + '20',
+              color: product.tierData.color
+            }}
+          >
+            {product.tierData.name}
+          </span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">No tier</span>
+        )
+      )
+    },
+    {
+      key: 'isActive',
+  header: 'Status',
+      sortable: true,
+      render: (value, product) => {
+        const isArchived = !!(product as any).archivedAt;
+        const isActive = (product as any).isActive !== false;
+        
+        if (isArchived) {
+          return <StatusBadge status="archived" customLabel="Archived" />;
+        } else if (isActive) {
+          return <StatusBadge status="active" customLabel="Active" />;
+        } else {
+          return <StatusBadge status="inactive" customLabel="Inactive" />;
+        }
+      }
+    },
+    {
+      key: 'createdAt',
+  header: 'Tanggal Posting',
+      sortable: true,
+      render: (value, product) => (
+        <div className="text-sm text-ds-text-secondary">
+          {new Date(product.createdAt || '').toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })}
+        </div>
+      )
+    }
+  ];
+
+  // Table actions
+  const actions: DSTableAction<Product>[] = [
+    {
+    key: 'view',
+      label: 'View Details',
+      icon: Eye,
+      onClick: (product) => {
+        push(`Viewing product: ${product.name}`, 'info');
+      },
+      variant: 'primary'
+    },
+    {
+    key: 'edit',
+      label: 'Edit Product',
+      icon: Edit,
+      onClick: (product) => {
+        startEdit(product);
+      },
+      variant: 'primary'
+    },
+    {
+    key: 'archive',
+      label: 'Archive',
+    icon: Archive,
+      onClick: (product) => {
+        handleArchive(product);
+      },
+      variant: 'danger',
+      disabled: (product) => !!(product as any).archivedAt
+    },
+    {
+    key: 'delete',
+      label: 'Delete',
+    icon: Trash2,
+      onClick: (product) => {
+        handleDelete(product);
+      },
+      variant: 'danger'
+    }
+  ];
+
+  const startEdit = (product: Product) => {
     setForm({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price,
-      originalPrice: p.originalPrice,
-      category: (p as any).category || 'general', // Add category field
-      gameTitleId: p.gameTitleData?.id || p.gameTitleId || '',
-      tierId: p.tierData?.id || p.tierId || '',
-      images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []),
-      rentals: (p.rentalOptions || []).map(r=>({ id: r.id, duration: r.duration, price: r.price, description: r.description }))
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price || 0,
+      originalPrice: product.originalPrice,
+      category: product.categoryId,
+      gameTitleId: product.gameTitleId,
+      tierId: product.tierId,
+      images: product.images || [],
+      rentals: product.rentalOptions || [],
     });
     setShowForm(true);
   };
@@ -241,62 +473,24 @@ const AdminProducts: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!form.name.trim() || form.price <= 0) {
+      push('Nama produk dan harga harus diisi', 'error');
+      return;
+    }
+
     setSaving(true);
     try {
-      // Validate required fields
-      if (!form.name?.trim()) {
-        push('Nama produk wajib diisi', 'error');
-        return;
-      }
-      if (!form.description?.trim()) {
-        push('Deskripsi produk wajib diisi', 'error');
-        return;
-      }
-      if (!form.price || form.price <= 0) {
-        push('Harga produk harus lebih dari 0', 'error');
-        return;
-      }
-
-      // Validate game title and tier selection - ensure they exist in our reference data
-      if (form.gameTitleId && !games.find(g => g.id === form.gameTitleId)) {
-        console.warn('⚠️ Selected game title not found in loaded games, clearing selection');
-        setForm(prev => ({ ...prev, gameTitleId: '' }));
-      }
-
-      if (form.tierId && !tiers.find(t => t.id === form.tierId)) {
-        console.warn('⚠️ Selected tier not found in loaded tiers, clearing selection');
-        setForm(prev => ({ ...prev, tierId: '' }));
-      }
-
-      // Basic payload mapping; in real DB schema, tier/gameTitle should use FKs
-      const primaryImage = form.images[0] || '';
-      const payload: any = {
+      const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        price: Number(form.price) || 0,
-        original_price: Number(form.originalPrice) || null,
-        image: primaryImage,
-        images: form.images || [],
-        category: form.category || 'general', // Add category field
-        game_title_id: form.gameTitleId || null,
-        tier_id: form.tierId || null,
-        is_flash_sale: false,
-        has_rental: (form.rentals?.length || 0) > 0,
-        stock: 1,
+        price: form.price,
+        originalPrice: form.originalPrice,
+        categoryId: form.category || 'general',
+        gameTitleId: form.gameTitleId || null,
+        tierId: form.tierId || null,
+        images: form.images,
+        rentalOptions: form.rentals || [],
       };
-
-      // Include legacy text column game_title whenever a game is selected
-      if (form.gameTitleId) {
-        const selectedGame = games.find(g => g.id === form.gameTitleId);
-        if (selectedGame) payload.game_title = selectedGame.name;
-      }
-
-      // Clean up undefined values that might cause issues
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === undefined) {
-          payload[key] = null;
-        }
-      });
 
       let saved: Product | null = null;
       const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
@@ -312,18 +506,17 @@ const AdminProducts: React.FC = () => {
       }
 
       if (saved) {
-        // Save rentals if provided (simple implementation: delete and recreate)
+        // Save rentals if provided
         if (form.rentals?.length && supabase) {
           try {
             const productId = saved.id;
             if (canUpdate) {
               const { error: deleteError } = await supabase.from('rental_options').delete().eq('product_id', productId);
               if (deleteError) {
-                // Non-fatal
+                console.warn('Failed to delete existing rentals:', deleteError);
               }
             }
             
-            // Validate rental options before inserting
             const validRentals = form.rentals.filter(r => r.duration?.trim() && r.price > 0);
             if (validRentals.length > 0) {
               const inserts = validRentals.map(r => ({
@@ -342,7 +535,7 @@ const AdminProducts: React.FC = () => {
             push('Produk disimpan, tetapi gagal memproses opsi rental', 'info');
           }
         }
-        await loadProducts(); // Use optimized reload
+        await loadProducts();
         setShowForm(false);
         setForm(emptyForm);
         console.log('✅ Product saved, data reloaded');
@@ -357,402 +550,180 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (product: Product) => {
     if (!confirm('Hapus produk ini?')) return;
-    const target = products.find(p => p.id === id);
-    const allImages = target ? (target.images && target.images.length ? target.images : (target.image ? [target.image] : [])) : [];
-    const ok = await ProductService.deleteProduct(id, { images: allImages });
+    const allImages = product.images && product.images.length ? product.images : (product.image ? [product.image] : []);
+    const ok = await ProductService.deleteProduct(product.id, { images: allImages });
     if (ok) {
-      await loadProducts(); // Use optimized reload
+      await loadProducts();
       push('Produk dihapus', 'success');
     } else {
       push('Gagal menghapus produk', 'error');
     }
   };
 
-  // Diagnostics helpers removed from cleaned admin page
+  const handleArchive = async (product: Product) => {
+    if (!confirm('Arsipkan produk ini?')) return;
+    if (!supabase) return;
+    
+    try {
+      await supabase.from('products').update({ 
+        is_active: false, 
+        archived_at: new Date().toISOString() 
+      }).eq('id', product.id);
+      await loadProducts();
+      push('Produk diarsipkan', 'success');
+    } catch (e: any) {
+      push(`Gagal mengarsipkan produk: ${e.message}`, 'error');
+    }
+  };
+
+  const handleRestore = async (product: Product) => {
+    if (!supabase) return;
+    
+    try {
+      await supabase.from('products').update({ 
+        is_active: true, 
+        archived_at: null 
+      }).eq('id', product.id);
+      await loadProducts();
+      push('Produk dipulihkan dari arsip', 'success');
+    } catch (e: any) {
+      push(`Gagal memulihkan produk: ${e.message}`, 'error');
+    }
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 Force reloading products...');
+    loadProducts();
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div className="space-y-8 p-8">
-        <RLSDiagnosticsBanner 
-          hasErrors={hasErrors}
-          errorMessage={errorMessage}
-          statsLoaded={!loading}
+    <div className="space-y-6">
+  {/* Diagnostics banner removed as part of DS migration */}
+
+      {/* Page Header */}
+      <AdminPageHeaderV2
+        title={t('common.productsManagement')}
+        subtitle={t('common.manageCatalog')}
+        icon={Package}
+        actions={[
+          {
+            key: 'refresh',
+            label: 'Refresh',
+            onClick: handleRefresh,
+            variant: 'secondary',
+            icon: RefreshCw,
+            loading: loading
+          },
+          {
+            key: 'add',
+            label: 'Add Product',
+            onClick: () => setShowForm(true),
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard
+          title="Total Products"
+          value={stats.total}
+          icon={Package}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+          loading={loading}
         />
-        
-        {/* Modern Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
-              {t('common.productsManagement')}
-            </h1>
-            <p className="text-gray-400 font-medium">
-              {t('common.manageCatalog')}
-            </p>
+        <AdminStatCard
+          title="Active Products"
+          value={stats.active}
+          icon={ShoppingCart}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Archived Products"
+          value={stats.archived}
+          icon={Archive}
+          iconColor="text-yellow-400"
+          iconBgColor="bg-yellow-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Average Price"
+          value={`Rp ${stats.averagePrice.toLocaleString('id-ID')}`}
+          icon={DollarSign}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+          subtitle={`Total Value: Rp ${stats.totalValue.toLocaleString('id-ID')}`}
+          loading={loading}
+        />
+      </div>
+
+      {/* Filters */}
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={totalProducts}
+        filteredItems={filteredProducts.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
+
+      {/* Products Table */}
+      <AdminDSTable
+        data={filteredProducts}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="No products found"
+        currentPage={currentPage}
+        pageSize={itemsPerPage}
+        totalItems={totalProducts}
+        onPageChange={handlePageChange}
+        footerStart={(
+          <div className="flex items-center gap-2">
+            <select
+              className="input input-sm"
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            >
+              {[20, 50, 100].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center space-x-3">
-            <IOSButton 
-              onClick={() => {
-                console.log('🔄 Force reloading products...');
-                loadProducts();
-              }} 
-              variant="secondary"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              🔄 Refresh
-            </IOSButton>
-            <IOSButton 
-              onClick={startCreate} 
-              variant="primary"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              {t('common.addProduct')}
-            </IOSButton>
+        )}
+        statusTextRenderer={({ total, pageSize }) => (
+          <>Melihat {Math.min(pageSize, total)} / {total}</>
+        )}
+        previousLabel="Sebelumnya"
+        nextLabel="Sesudah"
+        pageLabel={({ currentPage, totalPages }) => (
+          <>Halaman {currentPage} dari {totalPages}</>
+        )}
+      />
+
+      {/* Product Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <ProductForm
+              form={form}
+              games={games}
+              tiers={tiers}
+              saving={saving}
+              onFormChange={setForm}
+              onSave={handleSave}
+              onCancel={cancelForm}
+            />
           </div>
         </div>
-
-        {!showForm && (
-          <>
-            {/* Modern Filters and Search */}
-            <div className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Search */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Search Products</label>
-                  <input
-                    type="text"
-                    placeholder="Name, description, level..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
-                  />
-                </div>
-                
-                {/* Game Filter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Filter by Game</label>
-                  <select
-                    value={selectedGame}
-                    onChange={(e) => setSelectedGame(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
-                  >
-                    <option value="">All Games</option>
-                    {games.map(game => (
-                      <option key={game.id} value={game.id}>{game.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Tier Filter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Filter by Tier</label>
-                  <select
-                    value={selectedTier}
-                    onChange={(e) => setSelectedTier(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
-                  >
-                    <option value="">All Tiers</option>
-                    {tiers.map(tier => (
-                      <option key={tier.id} value={tier.id}>{tier.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Status Filter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">Status</label>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-colors"
-                  >
-                    <option value="all">All</option>
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Results Info */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-700/50">
-                <div className="text-sm text-gray-400">
-                  Showing {paginatedProducts.length} of {filteredProducts.length} products
-                  {filteredProducts.length !== products.length && ` (filtered from ${products.length} total)`}
-                </div>
-              </div>
-            </div>
-
-            {/* Modern Product List */}
-            <div id="admin-content" className="bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
-              <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-400 px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
-                <div className="col-span-5">Product Name</div>
-                <div className="col-span-2">Game</div>
-                <div className="col-span-2">Price</div>
-                <div className="col-span-3 text-right">Actions</div>
-              </div>
-            {loading ? (
-              <div className="p-12 text-center">
-                <div className="w-8 h-8 border-2 border-ios-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-ios-text-secondary font-medium">Memuat produk...</p>
-              </div>
-            ) : paginatedProducts.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="w-16 h-16 bg-ios-surface rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-ios-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <p className="text-ios-text-secondary font-medium mb-2">
-                  {filteredProducts.length === 0 && products.length > 0 
-                    ? t('common.noMatchingProducts')
-                    : t('common.noProducts')
-                  }
-                </p>
-                <p className="text-ios-text-secondary/70 text-sm">Produk yang ditambahkan akan muncul di sini</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-ios-border">
-                {paginatedProducts.map(p => (
-                  <div key={p.id} className="grid grid-cols-12 items-center px-6 py-4 hover:bg-ios-surface transition-colors duration-200">
-                    <div className={cn('col-span-5', standardClasses.flex.rowGap3)}>
-                      <img 
-                        src={p.image} 
-                        alt={p.name} 
-                        className="w-12 h-12 rounded-lg object-cover border border-ios-border" 
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/placeholder-product.png';
-                        }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-ios-text font-medium line-clamp-1">{p.name}</div>
-                        <div className={cn('text-xs text-ios-text-secondary line-clamp-1', standardClasses.flex.rowGap2)}>
-                          {/* accountLevel removed */}
-                          {((p as any).isActive === false || (p as any).archivedAt) && (
-                            <span className="px-2 py-0.5 rounded-full bg-ios-warning/20 text-ios-warning border border-ios-warning/30 text-xs font-medium">
-                              Diarsipkan
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-span-2 text-ios-text">{p.gameTitleData?.name || '-'}</div>
-                    <div className="col-span-2 text-ios-text font-semibold">Rp {Number(p.price||0).toLocaleString('id-ID')}</div>
-                    <div className="col-span-3 text-right space-x-2">
-                      <IOSButton 
-                        onClick={() => startEdit(p)} 
-                        variant="tertiary" 
-                        size="sm"
-                        className="text-pink-400 border border-pink-400/30 hover:bg-pink-500/10"
-                      >
-                        Edit
-                      </IOSButton>
-                      {(p as any).isActive === false || (p as any).archivedAt ? (
-                        <IOSButton 
-                          onClick={async()=>{
-                            if (!supabase) return; 
-                            await (supabase as any).from('products').update({ is_active: true, archived_at: null }).eq('id', p.id);
-                            await loadProducts();
-                            push('Produk dipulihkan dari arsip', 'success');
-                          }} 
-                          variant="tertiary" 
-                          size="sm"
-                          className="text-green-400 border border-green-400/30 hover:bg-green-500/10"
-                        >
-                          Pulihkan
-                        </IOSButton>
-                      ) : (
-                        <IOSButton 
-                          onClick={async()=>{
-                            if (!confirm('Arsipkan produk ini?')) return;
-                            if (!supabase) return; 
-                            await (supabase as any).from('products').update({ is_active: false, archived_at: new Date().toISOString() }).eq('id', p.id);
-                            await loadProducts();
-                            push('Produk diarsipkan', 'success');
-                          }} 
-                          variant="tertiary" 
-                          size="sm"
-                          className="text-amber-400 border border-amber-400/30 hover:bg-amber-500/10"
-                        >
-                          Arsipkan
-                        </IOSButton>
-                      )}
-                      <IOSButton 
-                        onClick={() => handleDelete(p.id)} 
-                        variant="destructive" 
-                        size="sm"
-                        className="border border-red-500/40 hover:bg-red-600/20"
-                      >
-                        Hapus
-                      </IOSButton>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            <div className="px-6 py-4 border-t border-gray-700/40 space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300">
-                <span className="text-gray-400">Items per page:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e)=>{ setItemsPerPage(Number(e.target.value)); handlePageChange(1); }}
-                  className="bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                >
-                  {[10,20,50,100].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-                <span className="text-gray-500">Total {totalProducts}</span>
-              </div>
-              <IOSPaginationV2
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalProducts}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
-              />
-            </div>
-            </div>
-          </>
-        )}
-
-      {showForm && (
-        <IOSCard variant="elevated" padding="lg"
-          className="bg-ios-surface"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={cn('md:col-span-2', standardClasses.spacing.section)}>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Nama Produk</label>
-                <input 
-                  value={form.name} 
-                  onChange={(e)=>setForm({...form, name:e.target.value})} 
-                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Deskripsi</label>
-                <textarea 
-                  value={form.description} 
-                  onChange={(e)=>setForm({...form, description:e.target.value})} 
-                  rows={6} 
-                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" 
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.price ? formatNumberID(form.price) : ''}
-                    onChange={(e)=>setForm({...form, price: parseNumberID(e.target.value)})}
-                    placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga Asli (opsional)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.originalPrice ? formatNumberID(form.originalPrice) : ''}
-                    onChange={(e)=>setForm({...form, originalPrice: parseNumberID(e.target.value)})}
-                    placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Game</label>
-                  <select 
-                    value={form.gameTitleId} 
-                    onChange={(e)=>setForm({...form, gameTitleId:e.target.value})} 
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  >
-                    <option value="">-- pilih game --</option>
-                    {games.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Tier</label>
-                  <select 
-                    value={form.tierId} 
-                    onChange={(e)=>setForm({...form, tierId:e.target.value})} 
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  >
-                    <option value="">-- pilih tier --</option>
-                    {tiers.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* accountLevel & accountDetails fields removed */}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm text-gray-400">Gambar Produk</label>
-              <ImageUploader
-                images={form.images}
-                onChange={(imgs)=>setForm({...form, images: imgs})}
-                onUpload={async (files, onProgress) => {
-                  const results = await uploadFiles(files, 'products', onProgress);
-                  return results.map(result => result.url).filter(Boolean);
-                }}
-                max={15}
-              />
-              <p className="text-xs text-gray-500">Urutkan dengan drag & drop. Gambar pertama menjadi cover.</p>
-
-              {/* Rental options moved below */}
-            </div>
-          </div>
-
-          {/* Rental section now below the entire form */}
-          <div className="mt-8 border-t border-white/10 pt-6">
-            <div className="text-sm text-gray-400 mb-2">Rental Options</div>
-            <div className="space-y-3">
-              {(form.rentals || []).map((r, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-2 items-center">
-                  <input className="col-span-2 bg-black border border-white/20 rounded px-2 py-1 text-white" placeholder="Durasi (mis. 1 Hari)" value={r.duration} onChange={(e)=>{
-                    const next = [...form.rentals]; next[idx] = { ...r, duration: e.target.value }; setForm({...form, rentals: next});
-                  }} />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="col-span-2 bg-black border border-white/20 rounded px-2 py-1 text-white"
-                    placeholder="Harga"
-                    value={r.price ? formatNumberID(r.price) : ''}
-                    onChange={(e)=>{
-                      const next = [...form.rentals]; next[idx] = { ...r, price: parseNumberID(e.target.value) }; setForm({...form, rentals: next});
-                    }}
-                  />
-                  <button className="text-red-300 border border-red-500/40 rounded px-2 py-1 hover:bg-red-500/10" onClick={()=>{
-                    const next = [...form.rentals]; next.splice(idx,1); setForm({...form, rentals: next});
-                  }}>Hapus</button>
-                  <input className="col-span-5 bg-black border border-white/20 rounded px-2 py-1 text-white" placeholder="Deskripsi (opsional)" value={r.description || ''} onChange={(e)=>{
-                    const next = [...form.rentals]; next[idx] = { ...r, description: e.target.value }; setForm({...form, rentals: next});
-                  }} />
-                </div>
-              ))}
-              <button className="text-pink-300 border border-pink-500/40 rounded px-2 py-1 hover:bg-pink-600/20 transition-colors" onClick={()=>setForm({...form, rentals:[...(form.rentals||[]), { duration:'', price:0 }]})}>Tambah Rental</button>
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-2">
-            <IOSButton onClick={cancelForm} variant="tertiary" size="sm">
-              {t('common.cancel')}
-            </IOSButton>
-            <IOSButton onClick={handleSave} variant="primary" size="sm" disabled={saving}>
-              {saving ? t('common.saving') : t('common.save')}
-            </IOSButton>
-          </div>
-        </IOSCard>
       )}
-      </div>
     </div>
   );
 };

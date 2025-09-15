@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { IOSButton, IOSCard } from '../../../components/ios/IOSDesignSystem';
+// DS migration: use DS panel and buttons
 import { FeedPost } from '../types';
 
 interface FeedPostDialogProps {
@@ -57,20 +57,18 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <IOSCard className="w-full max-w-2xl">
+  <div className="dashboard-data-panel padded rounded-xl p-stack-lg w-full max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-ios-separator">
+  <div className="flex items-center justify-between p-6 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">
             {post ? 'Edit Post' : 'Create New Post'}
           </h2>
-          <IOSButton
-            variant="secondary"
-            size="small"
+          <button
             onClick={onClose}
-            className="p-2"
+            className="btn btn-ghost btn-sm p-2"
           >
             <X className="w-4 h-4" />
-          </IOSButton>
+          </button>
         </div>
 
         {/* Form */}
@@ -88,7 +86,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                   value="post"
                   checked={formData.type === 'post'}
                   onChange={(e) => handleInputChange('type', e.target.value as 'post' | 'announcement')}
-                  className="mr-2 text-ios-primary"
+                  className="mr-2 text-blue-500"
                 />
                 <span className="text-white">Regular Post</span>
               </label>
@@ -99,7 +97,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                   value="announcement"
                   checked={formData.type === 'announcement'}
                   onChange={(e) => handleInputChange('type', e.target.value as 'post' | 'announcement')}
-                  className="mr-2 text-ios-primary"
+                  className="mr-2 text-blue-500"
                 />
                 <span className="text-white">Announcement</span>
               </label>
@@ -115,7 +113,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
               value={formData.content || ''}
               onChange={(e) => handleInputChange('content', e.target.value)}
               rows={8}
-              className="w-full p-3 border border-ios-separator rounded-2xl bg-black focus:border-ios-primary focus:outline-none resize-none"
+              className="w-full p-3 border border-white/10 rounded-2xl bg-black focus:border-blue-500 focus:outline-none resize-none"
               placeholder="Write your post content here..."
               required
             />
@@ -130,9 +128,9 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
               <label className="block text-sm font-medium text-white mb-2">
                 Preview
               </label>
-              <div className="p-4 border border-ios-separator rounded-2xl bg-black-secondary">
+              <div className="p-4 border border-white/10 rounded-2xl bg-black-secondary">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-ios-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                     A
                   </div>
                   <div>
@@ -140,7 +138,7 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
                     <p className="text-xs text-gray-200">Just now</p>
                   </div>
                   {formData.type === 'announcement' && (
-                    <span className="ml-auto bg-ios-warning text-white text-xs px-2 py-1 rounded">
+                    <span className="ml-auto bg-amber-500 text-white text-xs px-2 py-1 rounded">
                       Announcement
                     </span>
                   )}
@@ -153,27 +151,25 @@ const FeedPostDialog: React.FC<FeedPostDialogProps> = ({
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-ios-separator">
-            <IOSButton
+          <div className="flex gap-3 pt-4 border-t border-white/10">
+            <button
               type="button"
-              variant="secondary"
               onClick={onClose}
-              className="flex-1"
+              className="btn btn-ghost flex-1"
               disabled={saving}
             >
               Cancel
-            </IOSButton>
-            <IOSButton
+            </button>
+            <button
               type="submit"
-              variant="primary"
-              className="flex-1"
+              className="btn btn-primary flex-1"
               disabled={saving}
             >
               {saving ? 'Saving...' : post ? 'Update Post' : 'Create Post'}
-            </IOSButton>
+            </button>
           </div>
         </form>
-      </IOSCard>
+      </div>
     </div>
   );
 };

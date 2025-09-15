@@ -1,6 +1,5 @@
 import React from 'react';
 import { RefreshCw, Plus } from 'lucide-react';
-import { IOSButton, IOSSectionHeader } from '../../../../components/ios/IOSDesignSystem';
 import { BannerHeaderProps } from './types';
 
 export const BannerHeader: React.FC<BannerHeaderProps> = ({ 
@@ -10,28 +9,28 @@ export const BannerHeader: React.FC<BannerHeaderProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <IOSSectionHeader
-        title="Banner Management"
-        subtitle="Manage homepage banners and promotional content"
-      />
-      <div className="flex items-center space-x-3">
-        <IOSButton 
-          variant="ghost" 
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Banner Management</h2>
+        <p className="text-sm text-white/70 mt-1">Manage homepage banners and promotional content</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <button 
+          type="button"
           onClick={onRefresh}
-          className="flex items-center space-x-2"
+          className="btn btn-secondary btn-sm flex items-center gap-2"
           disabled={loading}
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
-        </IOSButton>
-        <IOSButton 
-          variant="primary" 
-          className="flex items-center space-x-2"
+        </button>
+        <button 
+          type="button"
+          className="btn btn-primary btn-sm flex items-center gap-2"
           onClick={onCreateBanner}
         >
           <Plus className="w-4 h-4" />
           <span>Add Banner</span>
-        </IOSButton>
+        </button>
       </div>
     </div>
   );

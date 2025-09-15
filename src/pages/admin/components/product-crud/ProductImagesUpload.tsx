@@ -151,7 +151,7 @@ export const ProductImagesUpload: React.FC<ProductImagesUploadProps> = ({ images
 
   return (
     <div className="section-block stack-lg">
-      <div className="section-title">Gambar <span className="text-xs text-white/50">({images.length}/{MAX_IMAGES})</span></div>
+  <div className="section-title">Gambar <span className="text-xs text-ds-text-tertiary">({images.length}/{MAX_IMAGES})</span></div>
   <div className="images-grid-8x2">
         {slots.map(slotIndex => {
           if (slotIndex === 0) {
@@ -159,17 +159,17 @@ export const ProductImagesUpload: React.FC<ProductImagesUploadProps> = ({ images
               <label
                 key={slotIndex}
                 htmlFor="image-upload"
-                className={`relative aspect-square rounded-xl flex items-center justify-center bg-black/40 border border-white/8 transition-soft group ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-pink-500/50 hover:bg-black/50'}`}
+                className={`relative aspect-square rounded-xl flex items-center justify-center bg-[var(--bg-tertiary)] border border-token transition-soft group ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-ds-pink hover:bg-[var(--bg-secondary)]'}`}
               >
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-pink-500/25 text-pink-300 group-hover:bg-pink-500/35 group-hover:text-pink-200 transition-colors">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-tertiary)] border border-token text-ds-pink group-hover:border-ds-pink group-hover:bg-[var(--bg-secondary)] transition-colors">
                     <Cloud className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] text-white/55 tracking-wide">Upload Max {MAX_IMAGES}</span>
+                  <span className="text-[10px] text-ds-text-tertiary tracking-wide">Upload Max {MAX_IMAGES}</span>
                 </div>
                 <input id="image-upload" type="file" multiple accept="image/*" onChange={handleFileUpload} className="hidden" disabled={uploading || images.length>=MAX_IMAGES} />
                 {uploading && (
-                  <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-white/70 bg-black/60 rounded-xl">
+                  <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-ds-text bg-[rgba(0,0,0,0.6)] rounded-xl">
                     Mengupload...
                   </div>
                 )}
@@ -185,7 +185,7 @@ export const ProductImagesUpload: React.FC<ProductImagesUploadProps> = ({ images
               key={slotIndex}
               className={
                 image
-                  ? `relative aspect-square rounded-xl overflow-hidden group border ${isActive ? 'border-pink-500 shadow-[0_0_0_1px_rgba(236,72,153,0.4)]' : 'border-white/15 hover:border-pink-400/60'} transition-soft cursor-move`
+                  ? `relative aspect-square rounded-xl overflow-hidden group border ${isActive ? 'border-ds-pink ring-1 ring-ds-pink/40' : 'border-token hover:border-ds-pink'} transition-soft cursor-move`
                   : 'relative aspect-square rounded-xl bg-transparent border border-transparent cursor-default'
               }
               draggable={!!image}
@@ -199,30 +199,30 @@ export const ProductImagesUpload: React.FC<ProductImagesUploadProps> = ({ images
                 <>
                   <img src={image} alt={`Image ${imgIndex+1}`} className="w-full h-full object-cover" />
                   {local && local.status !== 'success' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/70 text-[10px] text-white tracking-wide">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[rgba(0,0,0,0.7)] text-[10px] text-ds-text tracking-wide">
                       {local.status === 'uploading' && (
                         <>
                           <span>Mengupload {local.progress}%</span>
-                          <div className="w-10 h-1 bg-white/20 rounded overflow-hidden">
-                            <div className="h-full bg-pink-500 transition-all" style={{ width: `${local.progress}%` }} />
+                          <div className="w-10 h-1 bg-[var(--bg-tertiary)] rounded overflow-hidden">
+                            <div className="h-full bg-ds-pink transition-all" style={{ width: `${local.progress}%` }} />
                           </div>
                         </>
                       )}
                       {local.status === 'error' && (
-                        <button type="button" onClick={(e)=>{ e.stopPropagation(); retryImage(imgIndex); }} className="flex items-center gap-1 px-2 py-1 bg-red-600/80 hover:bg-red-500 rounded text-[10px]">
+                        <button type="button" onClick={(e)=>{ e.stopPropagation(); retryImage(imgIndex); }} className="flex items-center gap-1 px-2 py-1 rounded text-[10px] border border-token text-rose-400 hover:border-rose-400 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)]">
                           <RefreshCw className="w-3 h-3" /> Retry
                         </button>
                       )}
                       {local.status === 'pending' && <span>Menunggu...</span>}
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-1.5">
+                  <div className="absolute inset-0 bg-[rgba(0,0,0,0.5)] opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-1.5">
                     <button
                       type="button"
                       onClick={(e)=>{ e.stopPropagation(); removeImage(imgIndex); }}
-                      className="p-1 rounded-md bg-black/60 hover:bg-red-500/80 border border-white/10 hover:border-red-400/70 transition-soft"
+                      className="p-1 rounded-md bg-[rgba(0,0,0,0.6)] hover:bg-[rgba(0,0,0,0.6)] border border-token hover:border-rose-400 transition-soft"
                     >
-                      <X className="w-3 h-3 text-white" />
+                      <X className="w-3 h-3 text-ds-text" />
                     </button>
                   </div>
                 </>

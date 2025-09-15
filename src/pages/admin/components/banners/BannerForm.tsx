@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, RefreshCw, Plus, Edit, Upload } from 'lucide-react';
-import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
 import { BannerFormProps, BannerFormData } from './types';
 
 export const BannerForm: React.FC<BannerFormProps> = ({
@@ -72,10 +71,11 @@ export const BannerForm: React.FC<BannerFormProps> = ({
             {editingBanner ? 'Edit Banner' : 'Create Banner'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+            className="btn btn-ghost btn-sm p-2 rounded-xl"
           >
-            <X className="w-5 h-5 text-white/70" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -129,15 +129,14 @@ export const BannerForm: React.FC<BannerFormProps> = ({
                   accept="image/*"
                   className="hidden"
                 />
-                <IOSButton
+                <button
                   type="button"
-                  variant="ghost"
                   onClick={() => fileInputRef.current?.click()}
-                  className="cluster-sm"
+                  className="btn btn-secondary btn-sm cluster-sm"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Upload Image</span>
-                </IOSButton>
+                </button>
               </div>
               {formData.image_url && (
                 <img
@@ -204,20 +203,19 @@ export const BannerForm: React.FC<BannerFormProps> = ({
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4">
-            <IOSButton
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button
               type="button"
-              variant="ghost"
               onClick={onClose}
               disabled={submitting}
+              className="btn btn-ghost btn-sm"
             >
               Cancel
-            </IOSButton>
-            <IOSButton
+            </button>
+            <button
               type="submit"
-              variant="primary"
               disabled={submitting || !formData.title || !formData.image_url}
-              className="flex items-center space-x-2"
+              className="btn btn-primary btn-sm flex items-center gap-2"
             >
               {submitting ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -229,7 +227,7 @@ export const BannerForm: React.FC<BannerFormProps> = ({
               <span>
                 {submitting ? 'Saving...' : editingBanner ? 'Update Banner' : 'Create Banner'}
               </span>
-            </IOSButton>
+            </button>
           </div>
         </form>
       </div>

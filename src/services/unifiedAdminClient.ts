@@ -141,7 +141,9 @@ class UnifiedAdminClient {
     }
 
     const cacheKey = `admin:${endpoint}`;
-    const { skipCache = false, timeout = this.DEFAULT_TIMEOUT, retries = 2 } = options;
+  const { skipCache = false, timeout = this.DEFAULT_TIMEOUT, retries = 2 } = options;
+  // In local dev, avoid multiple failing attempts to reduce console noise
+  const effectiveRetries = this.isLocalDev() ? 0 : retries;
 
     // Try cache first (unless skipped)
     if (!skipCache) {
@@ -165,7 +167,7 @@ class UnifiedAdminClient {
     // Make API request with retries
     let lastError: Error;
     
-    for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= effectiveRetries; attempt++) {
       try {
         this.stats.apiCalls++;
         this.stats.cacheMisses++;
@@ -206,6 +208,18 @@ class UnifiedAdminClient {
       }
     } catch (error) {
       // Ignore cache errors
+    }
+
+    // Development fallback: return mock data locally to avoid noisy 400s when /api is not running
+    if (this.isLocalDev()) {
+      const mock = this.getMockDataForEndpoint<T>(endpoint);
+      if (mock !== undefined) {
+        // Cache mock to reduce repeated generation
+        try { this.setCacheWithTTL(cacheKey, mock, endpoint); } catch {}
+        // Only warn once for visibility
+        console.warn(`Using mock admin data for ${endpoint} (local dev fallback)`);
+        return mock as T;
+      }
     }
 
     throw lastError!;
@@ -288,6 +302,99 @@ class UnifiedAdminClient {
       backgroundRefresh: true,
       ...options
     });
+  }
+
+  /**
+   * Local-dev detection to provide graceful fallbacks without serverless API
+   */
+  private isLocalDev(): boolean {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname;
+    const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+    const devEnv = process.env.NODE_ENV === 'development';
+    // Allow opt-out via env flag
+    const forceApi = (process.env.REACT_APP_ENABLE_ADMIN_API || '').toLowerCase() === 'true';
+    return devEnv && isLocalhost && !forceApi;
+  }
+
+  /**
+   * Generate mock responses for known endpoints during local development
+   */
+  private getMockDataForEndpoint<T>(endpoint: string): T | undefined {
+    if (!endpoint.startsWith('?')) return undefined;
+    const usp = new URLSearchParams(endpoint.substring(1));
+    const action = usp.get('action') || '';
+
+    // Dashboard stats mock
+    if (action === 'dashboard' || action === 'dashboard-stats') {
+      const data = {
+        orders: { count: 42, completed: 30, pending: 10, revenue: 12500000, completedRevenue: 9800000 },
+        users: { count: 1234 },
+        products: { count: 256 },
+        flashSales: { count: 3 },
+        reviews: { count: 80, averageRating: 4.6 },
+      } as AdminDashboardStats;
+      return data as unknown as T;
+    }
+
+    // Notifications mock
+    if (action === 'notifications' || action === 'recent-notifications') {
+      const limit = parseInt(usp.get('limit') || '5', 10);
+      const types: Array<'new_order'|'paid_order'|'cancelled_order'|'new_user'|'low_stock'> = ['new_order','paid_order','cancelled_order','new_user','low_stock'];
+      const now = Date.now();
+      const data = Array.from({ length: Math.max(1, Math.min(10, limit)) }).map((_, i) => ({
+        id: `mock-${i+1}`,
+        type: types[i % types.length],
+        title: `Mock notification ${i+1}`,
+        message: 'This is a local dev notification.',
+        isRead: i > 1,
+        createdAt: new Date(now - i * 3600_000).toISOString(),
+        metadata: {}
+      }));
+      return { data } as unknown as T;
+    }
+
+    // Time-series mock
+    if (action === 'time-series') {
+      const daysParam = usp.get('days');
+      const startDate = usp.get('startDate');
+      const endDate = usp.get('endDate');
+
+      let dates: string[] = [];
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          dates.push(new Date(d).toISOString().slice(0,10));
+        }
+      } else {
+        const n = Math.max(1, parseInt(daysParam || '7', 10) || 7);
+        for (let i = n - 1; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          dates.push(d.toISOString().slice(0,10));
+        }
+      }
+
+      const series = dates.map((date, idx) => {
+        // simple deterministic pseudo-random for stability across renders
+        const base = 10 + ((idx * 7) % 6);
+        const completed = Math.max(0, base - 2);
+        const pending = Math.max(0, 2 - (idx % 3));
+        const cancelled = idx % 5 === 0 ? 1 : 0;
+        const paid = Math.max(0, completed - 1);
+        const total = completed + pending + cancelled + paid;
+        return { date, pending, completed, cancelled, paid, total } as OrderStatusTimeSeries;
+      });
+      return { data: series } as unknown as T;
+    }
+
+    // Orders/users/products minimal mock shape (empty) to avoid crashes if called
+    if (action === 'orders' || action === 'users' || action === 'products') {
+      return { data: [], count: 0, page: 1 } as unknown as T;
+    }
+
+    return undefined;
   }
 
   /**

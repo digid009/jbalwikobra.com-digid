@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Banner } from '../../../services/adminService';
-import { IOSCard } from '../../../components/ios/IOSDesignSystem';
-import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
 import { 
   BannerHeader, 
   BannerSearch, 
@@ -70,11 +68,7 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
 
   return (
   <div className="space-y-6 p-6 bg-black min-h-screen">
-      <RLSDiagnosticsBanner 
-        hasErrors={!!error}
-        errorMessage={error || ''}
-        statsLoaded={!loading}
-      />
+      {/* Diagnostics banner removed as part of DS migration */}
 
       {/* Header */}
       <BannerHeader
@@ -85,12 +79,12 @@ export const AdminBannersManagement: React.FC<AdminBannersManagementProps> = ({ 
 
       {/* Error Banner */}
       {error && (
-        <IOSCard variant="elevated" padding="medium" className="border-ios-error/20 bg-ios-error/5">
-          <div className="flex items-center space-x-3 text-ios-error">
-            <div className="w-2 h-2 rounded-full bg-ios-error"></div>
+  <div className="dashboard-data-panel padded rounded-xl p-stack-lg border border-red-500/20 bg-red-900/10">
+          <div className="flex items-center gap-3 text-red-400">
+            <div className="w-2 h-2 rounded-full bg-red-400"></div>
             <span className="text-sm font-medium">{error}</span>
           </div>
-        </IOSCard>
+        </div>
       )}
 
       {/* Search */}

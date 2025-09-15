@@ -1,6 +1,6 @@
 import React from 'react';
 import { Package, ShoppingCart, Users, MessageSquare } from 'lucide-react';
-import { IOSButton } from '../../../components/ios/IOSDesignSystem';
+import { IOSButton } from '../../../components/ios/IOSDesignSystemV2';
 import { AdminTab } from '../types';
 
 interface AdminTabNavigationProps {
@@ -41,11 +41,11 @@ const AdminTabNavigation: React.FC<AdminTabNavigationProps> = ({
         <IOSButton
           key={tab.id}
           variant={activeTab === tab.id ? 'primary' : 'secondary'}
-          size="medium"
+          size="md"
           onClick={() => onTabChange(tab.id)}
           className={`flex items-center gap-2 transition-all duration-200 ${
             activeTab === tab.id 
-              ? 'bg-ios-primary text-white shadow-lg' 
+              ? 'bg-blue-600 text-white shadow-lg' 
               : 'bg-transparent text-gray-200 hover:bg-black-tertiary'
           }`}
         >

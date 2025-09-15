@@ -3,9 +3,10 @@ import { Clock, TrendingUp, AlertCircle, RotateCcw, Calendar, Activity, Bell, Ba
 import { adminClient, AdminDashboardStats, AdminNotification, OrderStatusTimeSeries } from '../../../services/unifiedAdminClient';
 import { prefetchManager } from '../../../services/intelligentPrefetch';
 import { DashboardMetricsOverview } from './DashboardMetricsOverview';
-import { IOSCard, IOSButton, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
 import { DashboardSection, DataPanel } from '../layout/DashboardPrimitives';
 import { AdminPerformanceMonitor } from './AdminPerformanceMonitor';
+import { AdminPageHeaderV2, AdminStatCard, AdminFilters } from './ui';
+import type { AdminFiltersConfig } from './ui';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 import './AdminDashboardContent.css';
 
@@ -114,17 +115,17 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const getNotificationColor = (type: AdminNotification['type']) => {
     switch (type) {
       case 'new_order':
-        return 'bg-ios-primary/10 border-ios-primary/20';
+  return 'bg-blue-500/10 border-blue-500/20';
       case 'paid_order':
-        return 'bg-ios-success/10 border-ios-success/20';
+  return 'bg-emerald-500/10 border-emerald-500/20';
       case 'cancelled_order':
-        return 'bg-ios-danger/10 border-ios-danger/20';
+  return 'bg-rose-500/10 border-rose-500/20';
       case 'new_user':
-        return 'bg-ios-secondary/10 border-ios-secondary/20';
+  return 'bg-violet-500/10 border-violet-500/20';
       case 'low_stock':
-        return 'bg-ios-warning/10 border-ios-warning/20';
+  return 'bg-amber-500/10 border-amber-500/20';
       default:
-        return 'bg-black/50 border-ios-primary/20';
+  return 'bg-black/50 border-blue-500/20';
     }
   };
 
@@ -132,10 +133,49 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
   const maxTotal = useMemo(() => Math.max(1, ...series.map(s => s.total)), [series]);
   const maxCompleted = useMemo(() => Math.max(1, ...series.map(s => s.completed)), [series]);
 
-  const handleRangeChange = (val: '7d'|'14d'|'30d') => {
-    setRange(val); setCustomStart(''); setCustomEnd('');
+  const [filterValues, setFilterValues] = useState({
+    searchTerm: '',
+    range: range,
+    sortBy: '',
+    sortOrder: 'desc'
+  });
+
+  // Filter configuration for date range selection
+  const analyticsFiltersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search analytics...',
+    filters: [
+      {
+        key: 'range',
+        label: 'Time Range',
+        options: [
+          { value: '7d', label: '7 days' },
+          { value: '14d', label: '14 days' },
+          { value: '30d', label: '30 days' }
+        ]
+      }
+    ],
+    sortOptions: [],
+    showSortOrder: false
   };
-  const applyCustomRange = () => { if (customStart && customEnd) loadDashboardData(); };
+
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues({
+      searchTerm: filters.searchTerm || '',
+      range: filters.range || range,
+      sortBy: filters.sortBy || '',
+      sortOrder: filters.sortOrder || 'desc'
+    });
+    
+    if (filters.range && filters.range !== range) {
+      setRange(filters.range as '7d' | '14d' | '30d');
+      setCustomStart('');
+      setCustomEnd('');
+    }
+  };
+
+  const applyCustomRange = () => { 
+    if (customStart && customEnd) loadDashboardData(); 
+  };
 
   return (
     <div className="space-y-8">
@@ -143,48 +183,37 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
 
       <DashboardSection title="" subtitle="" dense>
         <DataPanel>
-          {/* Analytics Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30">
-                <Calendar className="w-5 h-5 text-pink-400" />
-              </div>
-              <span className="typescale-h4">Analytics</span>
-            </div>
-            <IOSButton 
-              size="small" 
-              variant="ghost" 
-              onClick={handleRefresh} 
-              disabled={refreshing || loading}
-              className="flex items-center space-x-2 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl"
-            >
-              <RotateCcw className={cn('w-4 h-4 text-pink-500', (refreshing || loading) && 'animate-spin')} /> 
-              <span className="hidden sm:inline text-pink-300">Refresh</span>
-            </IOSButton>
-          </div>
+          {/* Analytics Header with Actions */}
+          <AdminPageHeaderV2
+            title="Analytics"
+            subtitle="Track order creation and completion trends"
+            icon={Calendar}
+            actions={[
+              {
+                key: 'refresh',
+                label: 'Refresh',
+                onClick: handleRefresh,
+                variant: 'secondary',
+                icon: RotateCcw,
+                loading: refreshing || loading
+              }
+            ]}
+          />
 
           {/* Date Range Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 p-6 bg-gradient-to-r from-black/40 via-gray-900/50 to-black/40 rounded-2xl border border-white/10 backdrop-blur-sm">
-            <div className="flex items-center space-x-4">
-              <h3 className="text-lg font-bold text-white">Time Range</h3>
-              <div className="flex bg-black/60 backdrop-blur-sm rounded-xl border border-gray-600/50 overflow-hidden shadow-lg">
-                {(['7d','14d','30d'] as const).map(opt => (
-                  <button 
-                    key={opt} 
-                    onClick={() => handleRangeChange(opt)} 
-                    className={cn(
-                      'px-5 py-2.5 text-sm font-semibold transition-all duration-300',
-                      range === opt 
-                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-500/25' 
-                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                    )}
-                  >
-                    {opt.replace('d', ' days')}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
+          <div className="mb-8">
+            <AdminFilters
+              config={analyticsFiltersConfig}
+              values={filterValues}
+              onFiltersChange={handleFilterChange}
+              totalItems={series.length}
+              filteredItems={series.length}
+              loading={loading}
+              defaultCollapsed={true}
+            />
+            
+            {/* Custom Date Range */}
+            <div className="mt-4 flex items-center space-x-3">
               <div className="flex items-center space-x-3 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-gray-600/50">
                 <input 
                   type="date" 
@@ -202,14 +231,17 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                   placeholder="End date"
                 />
               </div>
-              <IOSButton 
-                size="small" 
-                onClick={applyCustomRange} 
+              <button
+                type="button"
+                onClick={applyCustomRange}
                 disabled={!customStart || !customEnd}
-                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50"
+                className={cn(
+                  'btn btn-primary btn-sm',
+                  'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50'
+                )}
               >
                 Apply
-              </IOSButton>
+              </button>
             </div>
           </div>
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, Filter, X, UserCheck, UserX } from 'lucide-react';
-import { IOSButton } from '../../../../components/ios/IOSDesignSystem';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
 interface UsersSearchProps {
@@ -104,15 +103,13 @@ export const UsersSearch: React.FC<UsersSearchProps> = ({
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <IOSButton
-            variant="ghost"
-            size="small"
+          <button
             onClick={onClearFilters}
-            className="flex items-center gap-2 hover:bg-pink-500/20 border border-pink-500/30 text-pink-300"
+            className="btn btn-ghost btn-sm flex items-center gap-2 hover:bg-pink-500/20 border border-pink-500/30 text-pink-300"
           >
             <X className="w-4 h-4" />
             Clear Filters
-          </IOSButton>
+          </button>
         )}
       </div>
     </div>

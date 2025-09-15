@@ -1,6 +1,6 @@
 import React from 'react';
 import { adminService, Banner } from '../../../../services/adminService';
-import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystem';
+import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
 import { Image as ImageIcon, ExternalLink, Calendar, Activity, Eye, Edit2, Trash2 } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
 
@@ -124,7 +124,7 @@ export const BannerCard: React.FC<BannerCardProps> = ({
             {/* View Button */}
             <IOSButton
               variant="ghost"
-              size="small"
+              size="sm"
               onClick={() => onView?.(banner)}
               className="flex-1 mr-2 border-blue-500/30 hover:bg-blue-500/20 text-blue-400"
             >
@@ -137,7 +137,7 @@ export const BannerCard: React.FC<BannerCardProps> = ({
               {/* Edit */}
               <IOSButton
                 variant="ghost"
-                size="small"
+                size="sm"
                 onClick={() => onEdit?.(banner)}
                 className="border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-400"
               >
@@ -147,7 +147,7 @@ export const BannerCard: React.FC<BannerCardProps> = ({
               {/* Delete */}
               <IOSButton
                 variant="ghost"
-                size="small"
+                size="sm"
                 onClick={() => onDelete?.(banner)}
                 className="border-red-500/30 hover:bg-red-500/20 text-red-400"
               >

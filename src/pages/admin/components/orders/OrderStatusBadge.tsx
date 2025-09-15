@@ -9,42 +9,18 @@ interface OrderStatusBadgeProps {
 
 const getStatusConfig = (status: string) => {
   const configs = {
-    pending: {
-      color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
-      icon: Clock,
-      label: 'Pending'
-    },
-    confirmed: {
-      color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
-      icon: CheckCircle,
-      label: 'Confirmed'
-    },
-    preparing: {
-      color: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
-      icon: Package,
-      label: 'Preparing'
-    },
-    ready: {
-      color: 'bg-green-500/20 text-green-300 border-green-500/40',
-      icon: Truck,
-      label: 'Ready'
-    },
-    completed: {
-      color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-      icon: CheckCircle,
-      label: 'Completed'
-    },
-    cancelled: {
-      color: 'bg-red-500/20 text-red-300 border-red-500/40',
-      icon: XCircle,
-      label: 'Cancelled'
-    }
-  };
-  
+    pending:   { icon: Clock,      label: 'Pending',   iconColor: 'text-amber-500' },
+    confirmed: { icon: CheckCircle, label: 'Confirmed', iconColor: 'text-blue-500' },
+    preparing: { icon: Package,     label: 'Preparing', iconColor: 'text-pink-400' },
+    ready:     { icon: Truck,       label: 'Ready',     iconColor: 'text-emerald-500' },
+    completed: { icon: CheckCircle, label: 'Completed', iconColor: 'text-emerald-500' },
+    cancelled: { icon: XCircle,     label: 'Cancelled', iconColor: 'text-rose-500' }
+  } as const;
+
   return configs[status as keyof typeof configs] || {
-    color: 'bg-gray-500/20 text-gray-300 border-gray-500/40',
     icon: AlertCircle,
-    label: status || 'Unknown'
+    label: status || 'Unknown',
+    iconColor: 'text-ds-text-secondary'
   };
 };
 
@@ -54,11 +30,10 @@ export const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status, clas
 
   return (
     <span className={cn(
-      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border backdrop-blur-sm',
-      config.color,
+      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border border-token bg-[var(--bg-tertiary)] text-ds-text',
       className
     )}>
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className={cn('w-3.5 h-3.5', config.iconColor)} />
       {config.label}
     </span>
   );

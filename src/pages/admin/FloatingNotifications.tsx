@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, ShoppingCart, CreditCard, XCircle, User, Star, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/TraditionalAuthContext';
 import { adminNotificationService, AdminNotification } from '../../services/adminNotificationService';
-import { IOSCard, IOSButton } from '../../components/ios/IOSDesignSystemV2';
 import { supabase } from '../../services/supabase';
 
 type NotificationItem = AdminNotification & { 
@@ -48,7 +47,6 @@ const FloatingNotifications: React.FC = () => {
       } catch { /* ignore */ }
 
       if (canRealtime && supabase) {
-        // Subscribe to new admin notification inserts
         channel = supabase
           .channel('public:admin_notifications:insert')
           .on(
@@ -113,16 +111,13 @@ const FloatingNotifications: React.FC = () => {
   };
 
   const dismissNotification = (id: string) => {
-    // Clear any existing reappear timer
     const existingTimer = reappearTimersRef.current.get(id);
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
 
-    // Remove from UI immediately
     setItems(prev => prev.filter(n => n.id !== id));
     
-    // Track dismissal time
     const dismissalTime = Date.now();
     setDismissedNotifications(prev => new Map(prev.set(id, dismissalTime)));
 
@@ -154,7 +149,7 @@ const FloatingNotifications: React.FC = () => {
                 ...notification, 
                 _ts: Date.now(),
                 _reappearCount: reappearCount + 1
-              };
+              } as NotificationItem;
               return [newNotif, ...prev.slice(0, 4)];
             });
             
@@ -347,11 +342,10 @@ const FloatingNotifications: React.FC = () => {
         const isReappeared = (notification._reappearCount || 0) > 0;
         
         return (
-          <IOSCard 
-            key={`${notification.id}-${notification._ts}`} 
-            variant="elevated" 
-            padding="md"
+          <div
+            key={`${notification.id}-${notification._ts}`}
             className={`
+              dashboard-data-panel padded
               relative overflow-hidden transition-all duration-300 
               bg-gradient-to-br ${config.bgGradient} 
               backdrop-blur-xl border ${config.borderColor}
@@ -360,10 +354,7 @@ const FloatingNotifications: React.FC = () => {
               ${isReappeared ? 'ring-2 ring-pink-400/50 shadow-pink-400/30' : ''}
             `}
           >
-
-            {/* Notification Content */}
             <div className="flex items-start gap-4">
-              {/* Icon */}
               <div className={`
                 p-3 rounded-xl text-white shadow-lg shrink-0
                 ${config.iconBg} 
@@ -373,7 +364,6 @@ const FloatingNotifications: React.FC = () => {
                 {config.icon}
               </div>
               
-              {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h4 className={`font-bold text-lg leading-tight ${config.titleColor}`}>
@@ -416,15 +406,11 @@ const FloatingNotifications: React.FC = () => {
               </div>
             </div>
             
-            {/* Action Button */}
             <div className="mt-4">
-              <IOSButton 
-                variant="ghost"
-                size="sm"
-                fullWidth
+              <button
                 onClick={() => markAsRead(notification.id)}
                 className={`
-                  transition-all duration-200
+                  btn btn-ghost btn-sm w-full transition-all duration-200
                   ${isReappeared 
                     ? 'bg-pink-400/10 hover:bg-pink-400/20 active:bg-pink-400/30 border border-pink-400/30 hover:border-pink-400/50 text-pink-300 font-bold animate-bounce shadow-lg shadow-pink-400/20'
                     : 'bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/20 hover:border-white/30 text-white font-medium'
@@ -432,9 +418,9 @@ const FloatingNotifications: React.FC = () => {
                 `}
               >
                 {isReappeared ? '⚠️ Tandai Sudah Dibaca (Penting!)' : 'Tandai Sudah Dibaca'}
-              </IOSButton>
+              </button>
             </div>
-          </IOSCard>
+          </div>
         );
       })}
     </div>

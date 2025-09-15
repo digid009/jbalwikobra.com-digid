@@ -4,7 +4,7 @@ import { IOSButton, IOSBadge } from '../components/ios/IOSDesignSystem';
 import { cn } from '../utils/cn';
 import LinkifyText from '../components/LinkifyText';
 
-interface ModernFeedCardProps {
+interface FeedCardProps {
   post: {
     id: string;
     title: string;
@@ -28,7 +28,7 @@ interface ModernFeedCardProps {
   canInteract?: boolean;
 }
 
-export const ModernFeedCard: React.FC<ModernFeedCardProps> = ({
+export const FeedCard: React.FC<FeedCardProps> = ({
   post,
   onLike,
   onComment,

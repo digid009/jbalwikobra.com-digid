@@ -1,5 +1,5 @@
 import React from 'react';
-import { IOSImageUploader } from '../../../../components/ios/IOSDesignSystem';
+import ImageUploader from '../../../../components/ImageUploader';
 
 interface ImagesSectionProps {
   images: string[];
@@ -10,7 +10,7 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images, onChange, 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Product Images</h3>
-  <IOSImageUploader images={images} onChange={onChange} onUpload={(files, progress)=> onUpload(files, progress)} max={15} label="Product Images" />
+  <ImageUploader images={images} onChange={onChange} onUpload={(files, progress)=> onUpload(files, progress)} max={15} />
     </div>
   );
 };

@@ -1,8 +1,7 @@
 import React from 'react';
-import { RefreshCw, Image, Eye, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystem';
-import { IOSPaginationV2 } from '../../../../components/ios/IOSPaginationV2';
+import { Eye, Edit, Trash2, ToggleLeft, ToggleRight, Image as ImageIcon } from 'lucide-react';
 import { BannerTableProps } from './types';
+import { AdminDSTable, DSTableColumn, DSTableAction } from '../ui/AdminDSTable';
 
 export const BannerTable: React.FC<BannerTableProps> = ({
   banners,
@@ -15,170 +14,123 @@ export const BannerTable: React.FC<BannerTableProps> = ({
   onEditBanner,
   onImagePreview
 }) => {
-  if (loading) {
-    return (
-      <IOSCard variant="elevated" padding="none">
-        <div className="p-12 text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-white/60" />
-          <p className="text-white/60 font-medium">Loading banners...</p>
+  const columns: DSTableColumn<typeof banners[number]>[] = [
+    {
+      key: 'title',
+      header: 'Banner',
+      render: (_, banner) => (
+        <div className="space-y-1">
+          <div className="text-sm font-semibold text-ds-text">{banner.title}</div>
+          <div className="text-sm text-ds-text-secondary">{banner.subtitle}</div>
+          {banner.link_url && (
+            <div className="text-xs text-blue-400 truncate max-w-xs">{banner.link_url}</div>
+          )}
         </div>
-      </IOSCard>
-    );
-  }
+      ),
+    },
+    {
+      key: 'preview',
+      header: 'Preview',
+      render: (_, banner) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={banner.image_url}
+            alt={banner.title}
+            className="w-16 h-10 rounded-2xl object-cover cursor-pointer border border-surface-tint-light"
+            onClick={() => onImagePreview(banner.image_url)}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <button type="button" className="btn btn-ghost btn-sm p-2" onClick={() => onImagePreview(banner.image_url)}>
+            <Eye className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+    {
+      key: 'sort_order',
+      header: 'Order',
+      render: (value) => (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-400/20">
+          #{value}
+        </span>
+      ),
+      width: '120px',
+      align: 'center',
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (value, banner) => (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onToggleStatus(banner.id, banner.is_active)}
+            className="p-1 rounded-full hover:bg-white/10 transition-colors"
+          >
+            {banner.is_active ? (
+              <ToggleRight className="w-5 h-5 text-emerald-400" />
+            ) : (
+              <ToggleLeft className="w-5 h-5 text-white/40" />
+            )}
+          </button>
+          <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${
+            value
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-400/30'
+              : 'bg-rose-500/10 text-rose-400 border-rose-400/30'
+          }`}>
+            {value ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      ),
+      width: '160px',
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (value) => <span className="text-sm text-ds-text-secondary">{new Date(value).toLocaleDateString()}</span>,
+      width: '140px',
+    },
+  ];
 
-  if (banners.length === 0) {
-    return (
-      <IOSCard variant="elevated" padding="none">
-        <div className="p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-black/60 flex items-center justify-center">
-            <Image className="w-8 h-8 text-white/40" />
-          </div>
-          <p className="text-white/60 font-medium mb-1">No banners found</p>
-          <p className="text-white/40 text-sm">Try adjusting your search or add your first banner</p>
-        </div>
-      </IOSCard>
-    );
-  }
+  const actions: DSTableAction<typeof banners[number]>[] = [
+    {
+      key: 'preview',
+      label: 'Preview',
+      icon: Eye,
+      onClick: (b) => onImagePreview(b.image_url),
+      variant: 'secondary',
+    },
+    {
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: (b) => onEditBanner(b),
+      variant: 'secondary',
+    },
+    {
+      key: 'delete',
+      label: 'Delete',
+      icon: Trash2,
+      onClick: (b) => onDeleteBanner(b.id),
+      variant: 'danger',
+    },
+  ];
 
   return (
-    <IOSCard variant="elevated" padding="none">
-      <div className="overflow-x-auto admin-table-container">
-        <table className="admin-table admin-table-sticky zebra compact w-full">
-          <thead>
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Banner
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Preview
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Order
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {banners.map((banner) => (
-              <tr key={banner.id} className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold text-white">
-                      {banner.title}
-                    </div>
-                    <div className="text-sm text-white/70">
-                      {banner.subtitle}
-                    </div>
-                    {banner.link_url && (
-                      <div className="text-xs text-ios-primary truncate max-w-xs">
-                        {banner.link_url}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-16 h-10 rounded-2xl object-cover cursor-pointer hover:opacity-80 
-                                 transition-all duration-200 border border-gray-700/30
-                                 hover:border-ios-primary/50"
-                      onClick={() => onImagePreview(banner.image_url)}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <IOSButton
-                      variant="ghost"
-                      size="small"
-                      onClick={() => onImagePreview(banner.image_url)}
-                      className="p-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </IOSButton>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium 
-                                   bg-ios-primary/10 text-ios-primary border border-ios-primary/20">
-                    #{banner.sort_order}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => onToggleStatus(banner.id, banner.is_active)}
-                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                    >
-                      {banner.is_active ? (
-                        <ToggleRight className="w-5 h-5 text-ios-success" />
-                      ) : (
-                        <ToggleLeft className="w-5 h-5 text-white/40" />
-                      )}
-                    </button>
-                    <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border ${
-                      banner.is_active 
-                        ? 'bg-ios-success/10 text-ios-success border-ios-success/30' 
-                        : 'bg-ios-error/10 text-ios-error border-ios-error/30'
-                    }`}>
-                      {banner.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-white/70">
-                    {new Date(banner.created_at).toLocaleDateString()}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
-                    <IOSButton variant="ghost" size="small" className="p-2">
-                      <Eye className="w-4 h-4 text-white/70" />
-                    </IOSButton>
-                    <IOSButton 
-                      variant="ghost" 
-                      size="small" 
-                      className="p-2"
-                      onClick={() => onEditBanner(banner)}
-                    >
-                      <Edit className="w-4 h-4 text-white/70" />
-                    </IOSButton>
-                    <IOSButton 
-                      variant="ghost" 
-                      size="small" 
-                      className="p-2"
-                      onClick={() => onDeleteBanner(banner.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-ios-error hover:text-ios-error/80" />
-                    </IOSButton>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {totalPages > 1 && (
-        <div className="px-6 pb-6">
-          <IOSPaginationV2
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={banners.length}
-            itemsPerPage={10}
-            onPageChange={onPageChange}
-            compact
-          />
-        </div>
-      )}
-    </IOSCard>
+    <AdminDSTable
+      data={banners}
+      columns={columns}
+      actions={actions}
+      loading={loading}
+      emptyMessage="No banners found"
+      emptyIcon={ImageIcon}
+      currentPage={currentPage}
+      pageSize={10}
+      totalItems={banners.length}
+      onPageChange={onPageChange}
+      stickyHeader
+    />
   );
 };

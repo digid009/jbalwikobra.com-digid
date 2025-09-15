@@ -1,481 +1,516 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, RefreshCw, X, AlertCircle, CheckCircle, Clock, XCircle, Check } from 'lucide-react';
-import { adminService, Order } from '../../../services/adminService';
-import { IOSCard, IOSButton, IOSSectionHeader, IOSBadge } from '../../../components/ios/IOSDesignSystem';
-import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
-import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { useNotifications } from '../../../components/ios/NotificationSystem';
-import { formatCurrencyIDR, formatShortDate } from '../../../utils/format';
+import React, { useState, useEffect } from 'react';
+import { 
+  ShoppingCart, 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  Truck, 
+  Eye, 
+  Edit, 
+  Filter,
+  Download,
+  RefreshCw,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Search
+} from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import { scrollToPaginationContent } from '../../../utils/scrollUtils';
+import { DataPanel } from '../layout/DashboardPrimitives';
+import { AdminDSTable, DSTableColumn, DSTableAction } from './ui/AdminDSTable';
+import { adminInputBase, adminSelectBase } from './ui/InputStyles';
+import { adminService } from '../../../services/adminService';
 
-export const AdminOrdersManagement: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    imageUrl?: string;
+  }[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  estimatedDelivery?: string;
+  trackingNumber?: string;
+}
+
+interface OrderFilters {
+  searchTerm: string;
+  statusFilter: 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentFilter: 'all' | 'pending' | 'paid' | 'failed' | 'refunded';
+  dateRange: 'all' | 'today' | 'week' | 'month' | 'custom';
+  sortBy: 'created_at' | 'total' | 'customer_name' | 'status';
+  sortOrder: 'asc' | 'desc';
+}
+
+// Using shared input tokens from InputStyles for consistency across admin
+
+const AdminOrdersManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('all');
-  const [amountFilter, setAmountFilter] = useState<string>('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [completingOrders, setCompletingOrders] = useState<Set<string>>(new Set());
-  const { notifications, showSuccess, showError, showInfo, removeNotification } = useNotifications();
-  const itemsPerPage = 20;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const [filters, setFilters] = useState<OrderFilters>({
+    searchTerm: '',
+    statusFilter: 'all',
+    paymentFilter: 'all',
+    dateRange: 'all',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
 
-  // Handle page change with scroll to admin content
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    scrollToPaginationContent();
-  };
-
+  // Fetch orders from adminService with server-side pagination
   useEffect(() => {
-    loadOrders();
-  }, [currentPage, statusFilter]);
-
-  // Separate effect for client-side filtering - no need to reload data
-  useEffect(() => {
-    setCurrentPage(1); // Reset to first page when filtering changes
-  }, [searchTerm, dateFilter, amountFilter]);
-
-  const loadOrders = async () => {
-    try {
+    const loadOrders = async () => {
       setLoading(true);
-      setError(null);
-      
-      // Build filter parameters
-      const filters: any = {};
-      
-      if (statusFilter !== 'all') {
-        filters.status = statusFilter;
+      try {
+        const statusParam = filters.statusFilter !== 'all' ? filters.statusFilter : undefined;
+        const resp = await adminService.getOrders(currentPage, itemsPerPage, statusParam as any);
+        // Map service rows to local display type
+        const mapped: Order[] = (resp.data || []).map((o: any) => ({
+          id: o.id,
+          orderNumber: o.id || '-',
+          customerName: o.customer_name || 'Unknown Customer',
+          customerEmail: o.customer_email || '',
+          customerPhone: o.customer_phone || '',
+          status: (['pending','processing','shipped','delivered','cancelled'].includes(o.status) ? o.status : 'pending') as Order['status'],
+          paymentStatus: 'pending',
+          items: [],
+          subtotal: Number(o.amount) || 0,
+          shipping: 0,
+          tax: 0,
+          total: Number(o.amount) || 0,
+          shippingAddress: {
+            street: o.shipping_street || '',
+            city: o.shipping_city || '',
+            state: o.shipping_state || '',
+            zipCode: o.shipping_zip || '',
+            country: o.shipping_country || 'Indonesia'
+          },
+          createdAt: o.created_at || new Date().toISOString(),
+          updatedAt: o.updated_at || o.created_at || new Date().toISOString(),
+          estimatedDelivery: undefined,
+          trackingNumber: o.tracking_number
+        }));
+        setOrders(mapped);
+        setFilteredOrders(mapped);
+        setTotalItems(resp.count || 0);
+        setTotalPages(resp.totalPages || 1);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        setOrders([]);
+        setFilteredOrders([]);
+        setTotalItems(0);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
       }
-      
-      if (searchTerm.trim()) {
-        filters.search = searchTerm.trim();
-      }
-      
-      if (dateFilter !== 'all') {
-        filters.dateFilter = dateFilter;
-      }
-      
-      if (amountFilter !== 'all') {
-        filters.amountFilter = amountFilter;
-      }
+    };
+    void loadOrders();
+  }, [currentPage, itemsPerPage, filters.statusFilter]);
 
-      const result = await adminService.getOrders(
-        currentPage, 
-        itemsPerPage, 
-        statusFilter === 'all' ? undefined : statusFilter
-      );
-      setOrders(result.data);
-      setTotalCount(result.count);
-      setTotalPages(Math.ceil(result.count / itemsPerPage));
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...orders];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-200 border border-amber-500/30';
-      case 'paid':
-        return 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-200 border border-blue-500/30';
-      case 'completed':
-        return 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-200 border border-emerald-500/30';
-      case 'cancelled':
-        return 'bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-200 border border-red-500/30';
-      default:
-        return 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 text-gray-200 border border-gray-500/30';
-    }
-  };
-
-  const handleCompleteOrder = async (orderId: string) => {
-    // Add to completing set for immediate UI feedback
-    setCompletingOrders(prev => new Set([...prev, orderId]));
-    
-    try {
-      // Optimistically update the order status in the UI
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
-          ? { ...order, status: 'completed' as any }
-          : order
-      ));
-      
-      // Call adminService to complete the order
-      await adminService.completeOrder(orderId);
-      
-      showSuccess('Order Completed', 'Order has been successfully completed.');
-      
-      // Reload orders to sync with server (in background)
-      setTimeout(() => loadOrders(), 1000);
-    } catch (error) {
-      console.error('Error completing order:', error);
-      
-      // Revert the optimistic update on error
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
-          ? { ...order, status: 'paid' as any }
-          : order
-      ));
-      
-      showError('Failed to Complete Order', 'Please try again or contact support.');
-    } finally {
-      // Remove from completing set
-      setCompletingOrders(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(orderId);
-        return newSet;
-      });
-    }
-  };
-
-  const handleRefresh = async () => {
-    showInfo('Refreshing Orders', 'Loading latest order data...');
-    await loadOrders();
-    showSuccess('Orders Refreshed', 'Order data has been updated.');
-  };
-
-  const filteredOrders = useMemo(() => {
-    let filtered = orders;
-
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(order => 
-        order.customer_name?.toLowerCase().includes(searchLower) ||
-        order.customer_email?.toLowerCase().includes(searchLower) ||
-        order.id.toLowerCase().includes(searchLower)
+    // Search
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(order =>
+        order.orderNumber.toLowerCase().includes(searchLower) ||
+        order.customerName.toLowerCase().includes(searchLower) ||
+        order.customerEmail.toLowerCase().includes(searchLower) ||
+        order.customerPhone.includes(filters.searchTerm)
       );
     }
 
-    // Apply date filter
-    if (dateFilter !== 'all') {
-      const now = new Date();
-      const startDate = new Date();
-      
-      switch (dateFilter) {
-        case 'today':
-          startDate.setHours(0, 0, 0, 0);
+    // Status filter
+    if (filters.statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === filters.statusFilter);
+    }
+
+    // Payment filter
+    if (filters.paymentFilter !== 'all') {
+      filtered = filtered.filter(order => order.paymentStatus === filters.paymentFilter);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (filters.sortBy) {
+        case 'customer_name':
+          aValue = a.customerName.toLowerCase();
+          bValue = b.customerName.toLowerCase();
           break;
-        case 'week':
-          startDate.setDate(now.getDate() - 7);
+        case 'total':
+          aValue = a.total;
+          bValue = b.total;
           break;
-        case 'month':
-          startDate.setMonth(now.getMonth() - 1);
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
           break;
-        case 'quarter':
-          startDate.setMonth(now.getMonth() - 3);
-          break;
+        case 'created_at':
+        default:
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
       }
-      
-      filtered = filtered.filter(order => 
-        new Date(order.created_at) >= startDate
-      );
-    }
 
-    // Apply amount filter
-    if (amountFilter !== 'all') {
-      filtered = filtered.filter(order => {
-        const amount = order.amount;
-        switch (amountFilter) {
-          case 'low':
-            return amount < 100000;
-          case 'medium':
-            return amount >= 100000 && amount <= 500000;
-          case 'high':
-            return amount >= 500000 && amount <= 1000000;
-          case 'premium':
-            return amount > 1000000;
-          default:
-            return true;
-        }
-      });
-    }
+      if (filters.sortOrder === 'desc') {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      } else {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      }
+    });
 
-    return filtered;
-  }, [orders, searchTerm, dateFilter, amountFilter]);
+    setFilteredOrders(filtered);
+    setCurrentPage(1);
+  }, [orders, filters]);
+
+  const updateFilter = (key: keyof OrderFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: Order['status']) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-500/20 text-yellow-700', icon: Clock, label: 'Menunggu' },
+      processing: { color: 'bg-blue-500/20 text-blue-700', icon: Package, label: 'Diproses' },
+      shipped: { color: 'bg-purple-500/20 text-purple-700', icon: Truck, label: 'Dikirim' },
+      delivered: { color: 'bg-green-500/20 text-green-700', icon: CheckCircle, label: 'Sampai' },
+      cancelled: { color: 'bg-red-500/20 text-red-700', icon: XCircle, label: 'Dibatalkan' }
+    };
+
+    const config = statusConfig[status];
+    const IconComponent = config.icon;
+
+    return (
+      <span className={cn('inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium', config.color)}>
+        <IconComponent className="w-3 h-3" />
+        {config.label}
+      </span>
+    );
+  };
+
+  const getPaymentBadge = (paymentStatus: Order['paymentStatus']) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-500/20 text-yellow-700', label: 'Menunggu' },
+      paid: { color: 'bg-green-500/20 text-green-700', label: 'Lunas' },
+      failed: { color: 'bg-red-500/20 text-red-700', label: 'Gagal' },
+      refunded: { color: 'bg-gray-500/20 text-gray-700', label: 'Refund' }
+    };
+
+    const config = statusConfig[paymentStatus];
+
+    return (
+      <span className={cn('inline-flex items-center px-2 py-1 rounded text-xs font-medium', config.color)}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = filteredOrders; // already server-paginated
+
+  // Calculate stats
+  const stats = {
+    totalOrders: orders.length,
+    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    completedOrders: orders.filter(o => o.status === 'delivered').length
+  };
+
+  if (loading) {
+    return (
+  <div className="dashboard-data-panel padded rounded-xl p-stack-lg">
+        <div className="flex items-center justify-center py-16">
+          <div className="flex items-center gap-3 text-ds-text">
+            <RefreshCw className="w-6 h-6 animate-spin" />
+            <span>Memuat pesanan...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 min-h-screen">
-      {/* Modern Header with Glass Effect */}
-      <div className="bg-gradient-to-r from-black via-gray-950 to-black backdrop-blur-xl border-b border-white/10 p-6">
-        <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <ShoppingCart className="w-6 h-6 text-ds-pink" />
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
-              Orders Management
-            </h1>
-            <p className="text-gray-400 mt-1">Track and manage all customer orders</p>
+            <h2 className="text-xl font-semibold text-ds-text">Manajemen Pesanan</h2>
+            <p className="text-sm text-ds-text-secondary">
+              Kelola pesanan dan status pengiriman
+            </p>
           </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className="btn btn-secondary btn-sm flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            {showFilters ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <DataPanel>
           <div className="flex items-center gap-3">
-            <IOSButton 
-              onClick={handleRefresh} 
-              className="flex items-center space-x-2 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30" 
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </IOSButton>
-          </div>
-        </div>
-      </div>
-
-      {/* Diagnostic Banner */}
-      <div className="px-6">
-        <RLSDiagnosticsBanner 
-          hasErrors={!!error}
-          errorMessage={error || ''}
-          statsLoaded={!loading}
-        />
-      </div>
-
-      {/* Error Banner */}
-      {error && (
-        <div className="px-6">
-          <RLSDiagnosticsBanner
-            hasErrors={true}
-            errorMessage={error}
-            isConnected={!error.includes('network')}
-            className="mb-4"
-          />
-        </div>
-      )}
-
-      {/* Modern Filters Section */}
-      <div className="px-6">
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
-          <div className="space-y-6">
-            {/* First Row - Search and Status */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pink-400/60" />
-                <input
-                  type="text"
-                  placeholder="Search orders by customer name, email, or order ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white placeholder-gray-400 focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                />
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex items-center space-x-3 min-w-[160px]">
-                <Filter className="w-5 h-5 text-pink-400/60" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="paid">Paid</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <ShoppingCart className="w-6 h-6 text-blue-500" />
             </div>
-
-            {/* Second Row - Date and Amount Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Date Filter */}
-              <div className="flex items-center space-x-3 min-w-[160px]">
-                <span className="text-sm font-medium text-pink-200/80">Date:</span>
-                <select
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="quarter">This Quarter</option>
-                </select>
-              </div>
-
-              {/* Amount Filter */}
-              <div className="flex items-center space-x-3 min-w-[160px]">
-                <span className="text-sm font-medium text-pink-200/80">Amount:</span>
-                <select
-                  value={amountFilter}
-                  onChange={(e) => setAmountFilter(e.target.value)}
-                  className="flex-1 px-4 py-2 rounded-xl bg-black/50 backdrop-blur-sm border border-pink-500/20 text-white focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20 transition-all duration-300"
-                >
-                  <option value="all">All Amounts</option>
-                  <option value="low">Under Rp 100,000</option>
-                  <option value="medium">Rp 100,000 - 500,000</option>
-                  <option value="high">Rp 500,000 - 1,000,000</option>
-                  <option value="premium">Over Rp 1,000,000</option>
-                </select>
-              </div>
-
-              {/* Clear Filters */}
-              <IOSButton 
-                variant="ghost" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                  setDateFilter('all');
-                  setAmountFilter('all');
-                  setCurrentPage(1);
-                }}
-                className="flex items-center space-x-2 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border-pink-500/20 hover:from-pink-500/20 hover:to-fuchsia-500/20"
-              >
-                <X className="w-4 h-4" />
-                <span>Clear</span>
-              </IOSButton>
+            <div>
+              <p className="text-2xl font-bold text-ds-text">{stats.totalOrders}</p>
+              <p className="text-sm text-ds-text-secondary">Total Pesanan</p>
             </div>
           </div>
-        </div>
+        </DataPanel>
+
+        <DataPanel>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-green-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ds-text">{formatCurrency(stats.totalRevenue)}</p>
+              <p className="text-sm text-ds-text-secondary">Total Revenue</p>
+            </div>
+          </div>
+        </DataPanel>
+
+        <DataPanel>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-yellow-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ds-text">{stats.pendingOrders}</p>
+              <p className="text-sm text-ds-text-secondary">Menunggu</p>
+            </div>
+          </div>
+        </DataPanel>
+
+        <DataPanel>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ds-text">{stats.completedOrders}</p>
+              <p className="text-sm text-ds-text-secondary">Selesai</p>
+            </div>
+          </div>
+        </DataPanel>
       </div>
 
-      {/* Modern Orders Table */}
-      <div className="px-6">
-        <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center">
-              <div className="relative">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                  <RefreshCw className="w-8 h-8 animate-spin text-pink-400" />
-                </div>
-                <div className="absolute inset-0 rounded-full bg-pink-500/10 animate-pulse"></div>
-              </div>
-              <p className="text-white font-medium">Loading orders...</p>
-              <p className="text-gray-400 text-sm mt-1">Fetching order data from database</p>
-            </div>
-          ) : filteredOrders.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 backdrop-blur-sm border-b border-pink-500/20">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Order ID
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-pink-200 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-pink-500/5 transition-all duration-300 group">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span className="text-sm font-mono font-medium bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 text-pink-200 px-3 py-1 rounded-full border border-pink-500/20">
-                            #{order.id.slice(-8)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-white group-hover:text-pink-200 transition-colors duration-300">{order.customer_name}</span>
-                          {order.customer_email && (
-                            <span className="text-xs text-gray-400">{order.customer_email}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                          Rp {order.amount.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-white">
-                            {new Date(order.created_at).toLocaleDateString()}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {new Date(order.created_at).toLocaleTimeString()}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.status === 'paid' && !completingOrders.has(order.id) && (
-                          <IOSButton
-                            size="small"
-                            onClick={() => handleCompleteOrder(order.id)}
-                            className="flex items-center space-x-2 bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/30 hover:from-emerald-500/30 hover:to-green-500/30"
-                          >
-                            <Check className="w-4 h-4" />
-                            <span>Complete</span>
-                          </IOSButton>
-                        )}
-                        {order.status === 'paid' && completingOrders.has(order.id) && (
-                          <IOSButton
-                            size="small"
-                            disabled
-                            className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600/30 to-green-600/30 border-emerald-600/50"
-                          >
-                            <CheckCircle className="w-4 h-4 animate-pulse" />
-                            <span>Completing...</span>
-                          </IOSButton>
-                        )}
-                        {order.status === 'completed' && (
-                          <IOSButton
-                            size="small"
-                            disabled
-                            className="flex items-center space-x-2 bg-gradient-to-r from-green-600/40 to-emerald-600/40 border-green-600/60"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Completed</span>
-                          </IOSButton>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-12 text-center">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-pink-400/60" />
-                </div>
-                <div className="absolute inset-0 rounded-full bg-pink-500/5 animate-pulse"></div>
-              </div>
-              <p className="text-white font-medium">No orders found</p>
-              <p className="text-gray-400 text-sm">Try adjusting your search or filter criteria</p>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-white/10 bg-gradient-to-r from-pink-500/5 to-fuchsia-500/5">
-              <IOSPaginationV2
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalCount}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
+      {/* Filters */}
+      {showFilters && (
+        <DataPanel>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-ds-text flex items-center gap-2">
+              <Filter className="w-5 h-5 text-ds-pink" />
+              Filter Pesanan
+            </h3>
+            
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ds-text-tertiary" />
+              <input
+                type="text"
+                placeholder="Cari berdasarkan nomor pesanan, nama, email, atau telepon..."
+                value={filters.searchTerm}
+                onChange={(e) => updateFilter('searchTerm', e.target.value)}
+                className={cn(adminInputBase, "pl-12")}
               />
             </div>
-          )}
-        </div>
-      </div>
 
+            {/* Filter Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Status Pesanan
+                </label>
+                <select
+                  value={filters.statusFilter}
+                  onChange={(e) => updateFilter('statusFilter', e.target.value)}
+                  className={adminSelectBase}
+                >
+                  <option value="all">Semua Status</option>
+                  <option value="pending">Menunggu</option>
+                  <option value="processing">Diproses</option>
+                  <option value="shipped">Dikirim</option>
+                  <option value="delivered">Sampai</option>
+                  <option value="cancelled">Dibatalkan</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Status Pembayaran
+                </label>
+                <select
+                  value={filters.paymentFilter}
+                  onChange={(e) => updateFilter('paymentFilter', e.target.value)}
+                  className={adminSelectBase}
+                >
+                  <option value="all">Semua Pembayaran</option>
+                  <option value="pending">Menunggu</option>
+                  <option value="paid">Lunas</option>
+                  <option value="failed">Gagal</option>
+                  <option value="refunded">Refund</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Urutkan
+                </label>
+                <select
+                  value={`${filters.sortBy}-${filters.sortOrder}`}
+                  onChange={(e) => {
+                    const [sortBy, sortOrder] = e.target.value.split('-');
+                    updateFilter('sortBy', sortBy);
+                    updateFilter('sortOrder', sortOrder);
+                  }}
+                  className={adminSelectBase}
+                >
+                  <option value="created_at-desc">Terbaru</option>
+                  <option value="created_at-asc">Terlama</option>
+                  <option value="total-desc">Total Tertinggi</option>
+                  <option value="total-asc">Total Terendah</option>
+                  <option value="customer_name-asc">Nama A-Z</option>
+                  <option value="customer_name-desc">Nama Z-A</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </DataPanel>
+      )}
+
+      {/* Orders Table (Unified DS) */}
+      <DataPanel>
+        {(() => {
+          type Row = Order;
+          const columns: DSTableColumn<Row>[] = [
+            {
+              key: 'orderNumber',
+              header: 'Pesanan',
+              render: (_, o) => (
+                <div>
+                  <p className="font-medium text-ds-text">{o.orderNumber}</p>
+                  <p className="text-sm text-ds-text-secondary">{o.items.length} item(s)</p>
+                </div>
+              ),
+            },
+            {
+              key: 'customer',
+              header: 'Pelanggan',
+              render: (_, o) => (
+                <div>
+                  <p className="font-medium text-ds-text">{o.customerName}</p>
+                  <p className="text-sm text-ds-text-secondary">{o.customerEmail}</p>
+                </div>
+              ),
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (v: Row['status']) => getStatusBadge(v),
+              width: '140px',
+            },
+            {
+              key: 'paymentStatus',
+              header: 'Pembayaran',
+              render: (v: Row['paymentStatus']) => getPaymentBadge(v),
+              width: '140px',
+            },
+            {
+              key: 'total',
+              header: 'Total',
+              render: (v: number) => <p className="font-medium text-ds-text">{formatCurrency(v)}</p>,
+              width: '140px',
+              align: 'right',
+            },
+            {
+              key: 'createdAt',
+              header: 'Tanggal',
+              render: (v: string) => (
+                <p className="text-sm text-ds-text">{new Date(v).toLocaleDateString('id-ID')}</p>
+              ),
+              width: '160px',
+            },
+          ];
+
+          const actions: DSTableAction<Row>[] = [
+            { key: 'view', label: 'View', icon: Eye, onClick: () => {}, variant: 'secondary' },
+            { key: 'edit', label: 'Edit', icon: Edit, onClick: () => {}, variant: 'secondary' },
+          ];
+
+          return (
+            <AdminDSTable<Row>
+              data={paginatedOrders}
+              columns={columns}
+              actions={actions}
+              currentPage={currentPage}
+              pageSize={itemsPerPage}
+              totalItems={totalItems}
+              onPageChange={setCurrentPage}
+              emptyMessage="Belum ada pesanan"
+            />
+          );
+        })()}
+      </DataPanel>
     </div>
   );
 };
+
+export default AdminOrdersManagement;

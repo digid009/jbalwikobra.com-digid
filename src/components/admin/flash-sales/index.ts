@@ -63,7 +63,7 @@
  */
 
 // Main refactored component
-export { default as RefactoredAdminFlashSalesManagement } from '../../../pages/admin/components/RefactoredAdminFlashSalesManagement';
+export { default as AdminFlashSalesManagement } from '../../../pages/admin/components/AdminFlashSalesManagement';
 
 // Individual components for custom compositions
 export { FlashSaleStatsComponent } from './FlashSaleStatsComponent';

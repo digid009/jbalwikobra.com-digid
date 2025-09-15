@@ -1,24 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import { Bell, Search, Menu, X, User, Settings, LogOut, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
+import { 
+  Bell, 
+  Search, 
+  Menu, 
+  X, 
+  User, 
+  Settings, 
+  LogOut, 
+  Heart, 
+  ShoppingBag, 
+  ArrowRight,
+  Home,
+  Package,
+  Zap,
+  Rss,
+  DollarSign,
+  HelpCircle
+} from 'lucide-react';
 import { notificationService } from '../services/notificationService';
 import { IOSButton } from './ios/IOSDesignSystem';
 import { SettingsService } from '../services/settingsService';
+import { cn } from '../utils/cn';
+const standardClasses = { container:{boxed:'mx-auto w-full max-w-7xl px-4'}, flex:{rowGap2:'flex items-center gap-2',rowGap3:'flex items-center gap-3'} };
 import type { WebsiteSettings } from '../types';
 
-// Minimal utility replacements for deprecated standardClasses/cn (to be fully removed in later refactor)
-import { cn } from '../utils/cn';
-const standardClasses = {
-  container: { boxed: 'mx-auto w-full max-w-7xl px-4' },
-  flex: {
-    between: 'flex items-center justify-between',
-    rowGap3: 'flex items-center gap-3',
-    center: 'flex items-center justify-center',
-    rowGap2: 'flex items-center gap-2',
-    row: 'flex'
-  }
-};
+interface NavigationItem {
+  path: string;
+  label: string;
+  icon?: React.ComponentType<any>;
+  isNew?: boolean;
+}
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -32,10 +45,22 @@ const Header = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
 
+  // Navigation items with icons
+  const navigationItems: NavigationItem[] = [
+    { path: '/', label: 'Beranda', icon: Home },
+    { path: '/products', label: 'Produk', icon: Package },
+    { path: '/flash-sales', label: 'Flash Sale', icon: Zap, isNew: true },
+    { path: '/feed', label: 'Feed', icon: Rss },
+    { path: '/sell', label: 'Jual', icon: DollarSign },
+    { path: '/help', label: 'Bantuan', icon: HelpCircle },
+  ];
+
+  // Close menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  // Load notifications count
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -49,8 +74,8 @@ const Header = () => {
     return () => { mounted = false; };
   }, [user?.id]);
 
+  // Load website settings
   useEffect(() => {
-    // Load website settings for dynamic header info
     let mounted = true;
     (async () => {
       try {
@@ -60,470 +85,630 @@ const Header = () => {
         console.warn('Failed to load settings for header:', e);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
+
+  // Load notifications when panel opens
+  useEffect(() => {
+    if (isNotifOpen && user) {
+      (async () => {
+        try {
+          const data = await notificationService.getLatest(10, user.id);
+          setNotifications(data);
+        } catch (e) {
+          console.error('Failed to load notifications:', e);
+        }
+      })();
+    }
+  }, [isNotifOpen, user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
-      setIsSearchFocused(false);
-    }
-  };
-
-  const handleNotificationClick = async () => {
-    // Open popover and load notifications (supports guests too)
-    setIsNotifOpen((o) => !o);
-    if (!isNotifOpen) {
-      try {
-        // Use cached service to minimize egress - limit to 5 for header dropdown
-        const list = await notificationService.getLatest(5, user?.id);
-        setNotifications(list);
-        // Refresh unread count only if we fetched new data
-        const count = await notificationService.getUnreadCount(user?.id);
-        setUnreadCount(count);
-      } catch (e) {
-        console.warn('Failed to load notifications', e);
-      }
     }
   };
 
   const handleLogout = async () => {
     try {
       await logout();
+      setIsMenuOpen(false);
       navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
-  const navigationItems = [
-    { path: '/', label: 'Beranda' },
-    { path: '/products', label: 'Produk' },
-    { path: '/flash-sales', label: 'Flash Sale' },
-    { path: '/feed', label: 'Feed' },
-    { path: '/sell', label: 'Jual' },
-    { path: '/help', label: 'Bantuan' },
-  ];
-
   return (
     <>
       {/* Main Header - Hidden on mobile for better mobile-first experience */}
       <header 
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 transition-all duration-300",
-          // Hide header on all mobile screens for mobile-first design
-          "hidden lg:block mobile-hide-header"
-        )}
-        data-component="header"
+        data-fixed="header" 
+        className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-xl border-b border-white/10 hidden lg:block"
       >
-        <div className={standardClasses.container.boxed}>
-          <div className={cn(standardClasses.flex.between, 'h-16 lg:h-18')}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-18">
+            
             {/* Logo Section */}
-            <Link to="/" className={cn(standardClasses.flex.rowGap3, 'flex-shrink-0 group')}>
-              {/* Dynamic logo if available */}
-              {settings?.logoUrl ? (
-                <img
-                  src={settings.logoUrl}
-                  alt={settings.siteName || 'Logo'}
-                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-ios-border group-hover:ring-ios-accent transition-all duration-200"
-                />
-              ) : (
-                <div className={cn(standardClasses.flex.center, 'w-9 h-9 bg-gradient-to-br from-ios-primary to-ios-accent rounded-xl shadow-sm group-hover:shadow-md transition-all duration-200')}>
-                  <span className="text-white font-bold text-sm">JB</span>
-                </div>
-              )}
-              <div className="hidden sm:block">
-                <span className="font-semibold text-white text-lg tracking-tight">
-                  {settings?.siteName || 'JBalwikobra'}
-                </span>
-                <p className="text-xs text-white-secondary -mt-0.5">Digital Store</p>
-              </div>
-            </Link>
-
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-6 lg:mx-12">
-              <form onSubmit={handleSearch} className="w-full">
-                <div className={`relative transition-all duration-300 ${
-                  isSearchFocused ? 'transform scale-[1.02]' : ''
-                }`}>
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
-                  <input
-                    type="text"
-                    placeholder="Cari produk, akun game, atau layanan..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-12 pr-4 py-3 lg:py-3.5 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent focus:bg-black transition-all duration-300 text-sm lg:text-base"
-                  />
-                </div>
-              </form>
-            </div>
-
+            <ModernLogo settings={settings} />
+            
+            {/* Desktop Search */}
+            <ModernSearchBar 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              isSearchFocused={isSearchFocused}
+              setIsSearchFocused={setIsSearchFocused}
+              onSubmit={handleSearch}
+            />
+            
             {/* Desktop Navigation */}
-            <nav className={cn('hidden lg:flex', standardClasses.flex.rowGap2, 'xl:gap-3')}>
-              {navigationItems.slice(0, 5).map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    standardClasses.flex.rowGap2,
-                    'px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg transition-all duration-200',
-                    location.pathname === item.path
-                      ? 'bg-pink-500 text-white shadow-sm'
-                      : 'text-white hover:bg-black-secondary'
-                  )}
-                >
-                  <span className="font-medium text-sm lg:text-base">{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-
-            {/* Action Buttons */}
-            <div className={cn(standardClasses.flex.row, 'space-x-1 lg:space-x-2 ml-2 lg:ml-4')}>
-              {/* Mobile Search */}
-              <IOSButton
-                variant="ghost"
-                size="small"
-                className="md:hidden"
-                onClick={() => setIsSearchFocused(!isSearchFocused)}
-              >
-                <Search className="w-5 h-5" />
-              </IOSButton>
-
-              {/* Notifications - Only for logged in users */}
-              {user && (
-                <div className="relative">
-                  <IOSButton
-                  variant="ghost" 
-                  size="small"
-                  className="relative"
-                  onClick={handleNotificationClick}
-                  >
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-ios-destructive text-white text-[10px] leading-[18px] rounded-full ring-2 ring-ios-background text-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                  </IOSButton>
-                {isNotifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-black border border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden backdrop-blur-xl">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-black/50">
-                      <span className="text-sm font-semibold text-white">Notifikasi</span>
-                      <div className="flex items-center gap-2">
-                        {user && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                await notificationService.markAllAsRead(user?.id);
-                                // optimistically mark local list as read
-                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-                                const count = await notificationService.getUnreadCount(user?.id);
-                                setUnreadCount(count);
-                              } catch (error) {
-                                console.error('Failed to mark all notifications as read:', error);
-                                // Still update UI for better UX
-                                setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-                                setUnreadCount(0);
-                              }
-                            }}
-                            className="text-xs text-pink-500 hover:underline"
-                          >
-                            Tandai semua dibaca
-                          </button>
-                        )}
-                        <button onClick={() => setIsNotifOpen(false)} className="text-white-secondary hover:text-white p-1">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="text-sm text-white-secondary px-4 py-8 text-center">
-                          <Bell className="w-8 h-8 text-white-secondary/50 mx-auto mb-2" />
-                          <p>Tidak ada notifikasi</p>
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-ios-border">
-                          {notifications.map((n) => (
-                            <div key={n.id}>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    if (user) {
-                                      await notificationService.markAsRead(n.id, user?.id);
-                                      setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
-                                      const count = await notificationService.getUnreadCount(user?.id);
-                                      setUnreadCount(count);
-                                    }
-                                  } catch (error) {
-                                    console.error('Failed to mark notification as read:', error);
-                                    // Optimistic update for better UX
-                                    setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
-                                  }
-                                  setIsNotifOpen(false);
-                                  if (n.link_url) navigate(n.link_url);
-                                }}
-                                className={`w-full text-left px-4 py-3 hover:bg-black-secondary transition-colors flex items-start gap-3 ${
-                                  !n.is_read ? 'bg-pink-500/5' : ''
-                                }`}
-                              >
-                                <div className="mt-1">
-                                  <div className={`w-2 h-2 rounded-full ${n.is_read ? 'bg-ios-border' : 'bg-pink-500'}`} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-white truncate">{n.title}</div>
-                                  {n.body && <div className="text-xs text-white-secondary line-clamp-2 mt-1">{n.body}</div>}
-                                  <div className="text-xs text-white-secondary mt-1">{new Date(n.created_at).toLocaleString('id-ID', { 
-                                    day: 'numeric', 
-                                    month: 'short', 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  })}</div>
-                                </div>
-                                {n.link_url && (
-                                  <ArrowRight className="w-4 h-4 text-white-secondary" />
-                                )}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {notifications.length > 0 && (
-                        <div className="p-3 border-t border-gray-700 bg-black/30">
-                          <button
-                            onClick={() => {
-                              setIsNotifOpen(false);
-                              navigate('/notifications');
-                            }}
-                            className="w-full text-center text-sm text-pink-500 hover:underline"
-                          >
-                            Lihat semua notifikasi
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                </div>
-              )}
-
-              {/* User Menu */}
-              {user ? (
-                <div className="relative">
-                  <IOSButton
-                    variant="ghost"
-                    size="small"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="flex items-center space-x-2"
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.name || 'User'}
-                        className="w-8 h-8 rounded-full object-cover shadow-sm border border-gray-700"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center shadow-sm">
-                        <span className="text-white text-sm font-medium">
-                          {(user.name || user.email || 'U').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <span className="hidden sm:block text-white font-medium max-w-20 truncate">
-                      {user.email?.split('@')[0] || 'User'}
-                    </span>
-                  </IOSButton>
-
-                  {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-black border border-gray-700 rounded-2xl shadow-xl py-3 z-50 backdrop-blur-xl">
-                      {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-700">
-                        <div className="flex items-center space-x-3">
-                          {user.avatarUrl ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.name || 'User'}
-                              className="w-10 h-10 rounded-full object-cover border border-gray-700"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-ios-primary to-ios-accent rounded-full flex items-center justify-center">
-                              <span className="text-white text-lg font-medium">
-                                {(user.name || user.email || 'U').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{user.name || user.email}</p>
-                            <p className="text-xs text-ios-success flex items-center">
-                              <div className="w-2 h-2 bg-ios-success rounded-full mr-1.5"></div>
-                              Online
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Navigation Links */}
-                      <nav className="py-2">
-                        <Link
-                          to="/profile"
-                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
-                        >
-                          <User className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
-                          <span className="font-medium">Profil Saya</span>
-                        </Link>
-                        <Link
-                          to="/wishlist"
-                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
-                        >
-                          <Heart className="w-4 h-4 text-white-secondary group-hover:text-ios-destructive transition-colors" />
-                          <span className="font-medium">Wishlist</span>
-                        </Link>
-                        <Link
-                          to="/orders"
-                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
-                        >
-                          <ShoppingBag className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
-                          <span className="font-medium">Riwayat Pembelian</span>
-                        </Link>
-                        <Link
-                          to="/settings"
-                          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-black-secondary transition-colors group"
-                        >
-                          <Settings className="w-4 h-4 text-white-secondary group-hover:text-pink-500 transition-colors" />
-                          <span className="font-medium">Pengaturan</span>
-                        </Link>
-                        <div className="my-2 border-t border-gray-700"></div>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center space-x-3 px-4 py-3 text-ios-destructive hover:bg-black-secondary transition-colors w-full text-left group"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span className="font-medium">Keluar</span>
-                        </button>
-                      </nav>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <IOSButton
-                  onClick={() => navigate('/auth')}
-                  variant="primary"
-                  size="small"
-                  className="hidden sm:flex font-medium"
-                >
-                  Masuk
-                </IOSButton>
-              )}
-
-              {/* Mobile Menu Toggle */}
-              <IOSButton
-                variant="ghost"
-                size="small"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="lg:hidden"
-              >
-                {isMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </IOSButton>
-            </div>
+            <ModernDesktopNav 
+              navigationItems={navigationItems}
+              currentPath={location.pathname}
+            />
+            
+            {/* User Actions */}
+            <ModernUserActions 
+              user={user}
+              unreadCount={unreadCount}
+              isNotifOpen={isNotifOpen}
+              setIsNotifOpen={setIsNotifOpen}
+              notifications={notifications}
+              setNotifications={setNotifications}
+              setUnreadCount={setUnreadCount}
+              navigate={navigate}
+              onLogout={handleLogout}
+              isMenuOpen={isMenuOpen}
+              setIsMenuOpen={setIsMenuOpen}
+            />
           </div>
         </div>
+      </header>
 
-        {/* Mobile Search Modal */}
-        {isSearchFocused && (
-          <div className="md:hidden absolute top-full left-0 right-0 z-50 bg-black border-b border-gray-700 shadow-lg">
-            <div className="p-4">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
+      {/* Mobile Menu Overlay */}
+      <ModernMobileMenu 
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        navigationItems={navigationItems}
+        currentPath={location.pathname}
+        user={user}
+        onLogout={handleLogout}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onSearch={handleSearch}
+        navigate={navigate}
+      />
+    </>
+  );
+};
+
+// Modern Logo Component
+const ModernLogo: React.FC<{ settings: WebsiteSettings | null }> = ({ settings }) => (
+  <Link 
+    to="/" 
+    className="flex items-center gap-3 flex-shrink-0 group"
+  >
+    {settings?.logoUrl ? (
+      <div className="relative">
+        <img
+          src={settings.logoUrl}
+          alt={settings.siteName || 'Logo'}
+          className="w-10 h-10 rounded-xl object-cover ring-1 ring-white/20 group-hover:ring-pink-500/50 transition-all duration-300"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
+    ) : (
+      <div className="relative">
+        <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-pink-500/25 transition-all duration-300">
+          <span className="text-white font-bold text-sm">JB</span>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-fuchsia-400 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+      </div>
+    )}
+    
+    <div className="hidden sm:block">
+      <span className="font-semibold text-white text-lg tracking-tight group-hover:text-pink-300 transition-colors duration-300">
+        {settings?.siteName || 'JBalwikobra'}
+      </span>
+      <p className="text-xs text-white/70 -mt-0.5">Digital Store</p>
+    </div>
+  </Link>
+);
+
+// Modern Search Bar Component
+interface ModernSearchBarProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  isSearchFocused: boolean;
+  setIsSearchFocused: (focused: boolean) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
+const ModernSearchBar: React.FC<ModernSearchBarProps> = ({
+  searchQuery,
+  setSearchQuery,
+  isSearchFocused,
+  setIsSearchFocused,
+  onSubmit
+}) => (
+  <div className="hidden md:flex flex-1 max-w-2xl mx-6 lg:mx-12">
+    <form onSubmit={onSubmit} className="w-full">
+      <div className={`relative transition-all duration-300 ${
+        isSearchFocused ? 'transform scale-[1.02]' : ''
+      }`}>
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+        <input
+          type="text"
+          placeholder="Cari produk, akun game, atau layanan..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          className={cn(
+            "w-full pl-12 pr-4 py-3 lg:py-3.5",
+            "bg-white/5 backdrop-blur-sm border border-white/20 rounded-2xl",
+            "text-white placeholder-white/60",
+            "focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50",
+            "focus:bg-white/10 transition-all duration-300",
+            "text-sm lg:text-base"
+          )}
+        />
+      </div>
+    </form>
+  </div>
+);
+
+// Modern Desktop Navigation Component
+interface ModernDesktopNavProps {
+  navigationItems: NavigationItem[];
+  currentPath: string;
+}
+
+const ModernDesktopNav: React.FC<ModernDesktopNavProps> = ({ navigationItems, currentPath }) => (
+  <nav className="hidden lg:flex items-center gap-2 xl:gap-3">
+    {navigationItems.slice(0, 5).map((item) => {
+      const Icon = item.icon;
+      const isActive = currentPath === item.path;
+      
+      return (
+        <Link
+          key={item.path}
+          to={item.path}
+          className={cn(
+            "relative flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300",
+            "hover:bg-white/10 hover:backdrop-blur-sm",
+            isActive 
+              ? "bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 text-white border border-pink-500/30" 
+              : "text-white/80 hover:text-white"
+          )}
+        >
+          {Icon && <Icon className="w-4 h-4" />}
+          <span className="font-medium text-sm">{item.label}</span>
+          
+          {/* New Badge */}
+          {item.isNew && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-pink-500 to-red-500 rounded-full animate-pulse" />
+          )}
+          
+          {/* Active indicator */}
+          {isActive && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-gradient-to-r from-pink-500 to-fuchsia-500 rounded-full" />
+          )}
+        </Link>
+      );
+    })}
+  </nav>
+);
+
+// Modern User Actions Component
+interface ModernUserActionsProps {
+  user: any;
+  unreadCount: number;
+  isNotifOpen: boolean;
+  setIsNotifOpen: (open: boolean) => void;
+  notifications: any[];
+  setNotifications: (notifications: any[]) => void;
+  setUnreadCount: (count: number) => void;
+  navigate: (path: string) => void;
+  onLogout: () => void;
+  isMenuOpen: boolean;
+  setIsMenuOpen: (open: boolean) => void;
+}
+
+const ModernUserActions: React.FC<ModernUserActionsProps> = ({
+  user,
+  unreadCount,
+  isNotifOpen,
+  setIsNotifOpen,
+  notifications,
+  setNotifications,
+  setUnreadCount,
+  navigate,
+  onLogout,
+  isMenuOpen,
+  setIsMenuOpen
+}) => (
+  <div className="flex items-center gap-3">
+    
+    {/* Notifications (Desktop) */}
+    {user && (
+      <div className="relative hidden sm:block">
+        <button
+          onClick={() => setIsNotifOpen(!isNotifOpen)}
+          className={cn(
+            "relative p-2.5 rounded-xl transition-all duration-300",
+            "hover:bg-white/10 hover:backdrop-blur-sm",
+            isNotifOpen ? "bg-white/10 text-white" : "text-white/80"
+          )}
+        >
+          <Bell className="w-5 h-5" />
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            </div>
+          )}
+        </button>
+        
+        {/* Notifications Dropdown */}
+        {isNotifOpen && (
+          <ModernNotificationsPanel 
+            notifications={notifications}
+            setNotifications={setNotifications}
+            setUnreadCount={setUnreadCount}
+            user={user}
+            navigate={navigate}
+            onClose={() => setIsNotifOpen(false)}
+          />
+        )}
+      </div>
+    )}
+
+    {/* User Menu (Desktop) */}
+    {user ? (
+      <div className="hidden sm:flex items-center gap-2">
+        <Link
+          to="/profile"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-300 group"
+        >
+          <div className="w-7 h-7 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-lg flex items-center justify-center">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-white text-sm font-medium group-hover:text-pink-300 transition-colors">
+            {user.name?.split(' ')[0] || 'User'}
+          </span>
+        </Link>
+        
+        <button
+          onClick={onLogout}
+          className="p-2.5 rounded-xl hover:bg-red-500/20 text-white/80 hover:text-red-400 transition-all duration-300"
+          title="Logout"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+    ) : (
+      <div className="hidden sm:flex items-center gap-2">
+        <IOSButton 
+          variant="ghost" 
+          size="small"
+          onClick={() => navigate('/auth')}
+          className="text-white border-white/20 hover:bg-white/10"
+        >
+          Masuk
+        </IOSButton>
+        <IOSButton 
+          variant="primary" 
+          size="small"
+          onClick={() => navigate('/auth')}
+          className="bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700"
+        >
+          Daftar
+        </IOSButton>
+      </div>
+    )}
+
+    {/* Mobile Menu Toggle */}
+    <button
+      onClick={() => setIsMenuOpen(!isMenuOpen)}
+      className={cn(
+        "p-2.5 rounded-xl transition-all duration-300 sm:hidden",
+        "hover:bg-white/10 hover:backdrop-blur-sm",
+        isMenuOpen ? "bg-white/10 text-white" : "text-white/80"
+      )}
+    >
+      {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+    </button>
+  </div>
+);
+
+// Modern Notifications Panel Component
+interface ModernNotificationsPanelProps {
+  notifications: any[];
+  setNotifications: (notifications: any[]) => void;
+  setUnreadCount: (count: number) => void;
+  user: any;
+  navigate: (path: string) => void;
+  onClose: () => void;
+}
+
+const ModernNotificationsPanel: React.FC<ModernNotificationsPanelProps> = ({
+  notifications,
+  setNotifications,
+  setUnreadCount,
+  user,
+  navigate,
+  onClose
+}) => (
+  <div className="absolute right-0 top-full mt-2 w-80 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50">
+    <div className="p-4 border-b border-white/10">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-white">Notifikasi</h3>
+        <div className="flex items-center gap-2">
+          {notifications.some(n => !n.is_read) && (
+            <button
+              onClick={async () => {
+                try {
+                  await notificationService.markAllAsRead(user?.id);
+                  const updatedNotifications = notifications.map(n => ({ ...n, is_read: true }));
+                  setNotifications(updatedNotifications);
+                  const count = await notificationService.getUnreadCount(user?.id);
+                  setUnreadCount(count);
+                } catch (error) {
+                  console.error('Failed to mark all notifications as read:', error);
+                  // Still update the UI optimistically for better UX
+                  const updatedNotifications = notifications.map(n => ({ ...n, is_read: true }));
+                  setNotifications(updatedNotifications);
+                  setUnreadCount(0);
+                }
+              }}
+              className="text-xs text-pink-400 hover:text-pink-300 transition-colors"
+            >
+              Tandai semua dibaca
+            </button>
+          )}
+          <button 
+            onClick={onClose} 
+            className="text-white/60 hover:text-white p-1 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div className="max-h-80 overflow-y-auto">
+      {notifications.length === 0 ? (
+        <div className="text-center py-8 px-4">
+          <Bell className="w-8 h-8 text-white/30 mx-auto mb-3" />
+          <p className="text-sm text-white/60">Tidak ada notifikasi</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-white/10">
+          {notifications.map((notification) => (
+            <button
+              key={notification.id}
+              onClick={async () => {
+                try {
+                  if (user) {
+                    await notificationService.markAsRead(notification.id, user?.id);
+                    const updatedNotifications = notifications.map(n => n.id === notification.id ? { ...n, is_read: true } : n);
+                    setNotifications(updatedNotifications);
+                    const count = await notificationService.getUnreadCount(user?.id);
+                    setUnreadCount(count);
+                  }
+                } catch (error) {
+                  console.error('Failed to mark notification as read:', error);
+                  // Still update the UI optimistically for better UX
+                  const updatedNotifications = notifications.map(n => n.id === notification.id ? { ...n, is_read: true } : n);
+                  setNotifications(updatedNotifications);
+                  // Refetch the count to keep it accurate
+                  try {
+                    const count = await notificationService.getUnreadCount(user?.id);
+                    setUnreadCount(count);
+                  } catch {
+                    // If we can't fetch count, try to estimate it
+                    const unreadInList = updatedNotifications.filter(n => !n.is_read).length;
+                    setUnreadCount(Math.max(0, unreadInList));
+                  }
+                }
+                onClose();
+                if (notification.link_url) navigate(notification.link_url);
+              }}
+              className={cn(
+                "w-full text-left px-4 py-3 hover:bg-white/5 transition-all duration-200",
+                "flex items-start gap-3",
+                !notification.is_read ? "bg-pink-500/5" : ""
+              )}
+            >
+              <div className="mt-1">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  notification.is_read ? "bg-white/30" : "bg-pink-500"
+                )} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white line-clamp-2">
+                  {notification.title}
+                </p>
+                {notification.message && (
+                  <p className="text-xs text-white/60 mt-1 line-clamp-2">
+                    {notification.message}
+                  </p>
+                )}
+                <p className="text-xs text-white/40 mt-1">
+                  {new Date(notification.created_at).toLocaleDateString('id-ID')}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// Modern Mobile Menu Component
+interface ModernMobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  navigationItems: NavigationItem[];
+  currentPath: string;
+  user: any;
+  onLogout: () => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  onSearch: (e: React.FormEvent) => void;
+  navigate: (path: string) => void;
+}
+
+const ModernMobileMenu: React.FC<ModernMobileMenuProps> = ({
+  isOpen,
+  onClose,
+  navigationItems,
+  currentPath,
+  user,
+  onLogout,
+  searchQuery,
+  setSearchQuery,
+  onSearch,
+  navigate
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 sm:hidden">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Menu Panel */}
+      <div className="fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-black/95 backdrop-blur-xl border-l border-white/20">
+        <div className="flex flex-col h-full">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <h2 className="text-lg font-semibold text-white">Menu</h2>
+            <button 
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Mobile Search */}
+          <div className="p-4 border-b border-white/10">
+            <form onSubmit={onSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Cari produk, akun game, atau layanan..."
+                  placeholder="Cari produk..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-full pl-12 pr-12 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent transition-all duration-300"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm"
                 />
-                <button
-                  type="button"
-                  onClick={() => setIsSearchFocused(false)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-white-secondary hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
-        )}
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="lg:hidden bg-black/90 backdrop-blur-xl border-t border-gray-700">
-            <div className="px-4 py-4 space-y-4">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white-secondary" />
-                  <input
-                    type="text"
-                    placeholder="Cari produk atau layanan..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-black-secondary border border-gray-700 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-ios-accent focus:border-ios-accent"
-                  />
-                </div>
-              </form>
-
-              {/* Navigation */}
-              <nav className="space-y-1">
-                {navigationItems.map((item) => (
+          
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto">
+            <nav className="p-4 space-y-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPath === item.path;
+                
+                return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      location.pathname === item.path
-                        ? 'bg-pink-500 text-white shadow-sm'
-                        : 'text-white hover:bg-black-secondary'
-                    }`}
+                    onClick={onClose}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300",
+                      isActive 
+                        ? "bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 text-white border border-pink-500/30" 
+                        : "text-white/80 hover:text-white hover:bg-white/5"
+                    )}
                   >
+                    {Icon && <Icon className="w-5 h-5" />}
                     <span className="font-medium">{item.label}</span>
+                    {item.isNew && (
+                      <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-red-500 rounded-full animate-pulse" />
+                    )}
+                    {isActive && <ArrowRight className="w-4 h-4 ml-auto" />}
                   </Link>
-                ))}
-              </nav>
-
-              {/* Auth Section */}
-              {!user && (
-                <div className="pt-4 border-t border-gray-700">
-                  <IOSButton
-                    onClick={() => navigate('/auth')}
-                    variant="primary"
-                    className="w-full font-medium"
-                  >
-                    Masuk / Daftar
-                  </IOSButton>
-                </div>
-              )}
-            </div>
+                );
+              })}
+            </nav>
           </div>
-        )}
-      </header>
-
-      {/* Mobile Menu Backdrop */}
-      {isMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
-    </>
+          
+          {/* User Section */}
+          <div className="p-4 border-t border-white/10">
+            {user ? (
+              <div className="space-y-3">
+                <Link
+                  to="/profile"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-lg flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-white text-sm">
+                      {user.name || 'User'}
+                    </p>
+                    <p className="text-xs text-white/60">Lihat Profile</p>
+                  </div>
+                </Link>
+                
+                <button
+                  onClick={() => {
+                    onLogout();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-300"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Keluar</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <IOSButton 
+                  variant="ghost" 
+                  fullWidth
+                  onClick={() => {
+                    navigate('/auth');
+                    onClose();
+                  }}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  Masuk
+                </IOSButton>
+                <IOSButton 
+                  variant="primary" 
+                  fullWidth
+                  onClick={() => {
+                    navigate('/auth');
+                    onClose();
+                  }}
+                  className="bg-gradient-to-r from-pink-500 to-fuchsia-600"
+                >
+                  Daftar
+                </IOSButton>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

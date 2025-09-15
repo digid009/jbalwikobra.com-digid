@@ -1,12 +1,12 @@
 import React from 'react';
 import { cn } from '../../../utils/cn';
 import FloatingNotifications from '../FloatingNotifications';
-import ModernFooter from '../../../components/ModernFooter';
+import Footer from '../../../components/Footer';
 
 interface DashboardLayoutProps {
   header?: React.ReactNode;
   children: React.ReactNode;
-  /** Optional custom footer override. Jika tidak diberikan akan memakai ModernFooter */
+  /** Optional custom footer override. Jika tidak diberikan akan memakai Footer */
   footer?: React.ReactNode;
   className?: string;
   /** if true, remove max-width constraint */
@@ -29,14 +29,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   showFooter = true,
 }) => {
   return (
-    <div className={cn('w-full min-h-screen flex flex-col', className)}>
+    <div className={cn('w-full min-h-screen flex flex-col bg-black text-white', className)}>
       {header}
-      <main className="dashboard-shell pt-16 flex-1">
-        <div className={cn('dashboard-container', fullWidth && 'max-w-none')}>
+      <main className="dashboard-shell pt-16 flex-1 bg-black">
+        <div className={cn('dashboard-container bg-black', fullWidth && 'max-w-none')}>
           {children}
         </div>
       </main>
-      {showFooter && (footer ?? <ModernFooter />)}
+      {showFooter && (footer ?? <Footer />)}
       {/* FloatingNotifications - muncul di semua halaman admin */}
       <FloatingNotifications />
     </div>

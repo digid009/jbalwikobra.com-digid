@@ -1,138 +1,267 @@
-import React, { useState } from 'react';
-import { IOSButton, IOSCard } from '../../../../components/ios/IOSDesignSystem';
-import { Search, Filter, Plus, X } from 'lucide-react';
-const cn = (...c: any[]) => c.filter(Boolean).join(' ');
+import React from 'react';
+import { Search, Filter, SortAsc, SortDesc, Package, Archive, Eye, AlertCircle } from 'lucide-react';
+import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
+import { cn } from '../../../../utils/cn';
+import { adminInputBase, adminSelectBase } from '../ui/InputStyles';
+import { t } from '../../../../i18n/strings';
 
-interface ProductsFiltersProps {
+// Use centralized InputStyles for consistency across admin
+
+export interface ProductFilters {
   searchTerm: string;
-  onSearchChange: (search: string) => void;
-  statusFilter: 'all' | 'active' | 'inactive';
-  onStatusFilterChange: (status: 'all' | 'active' | 'inactive') => void;
+  statusFilter: 'all' | 'active' | 'archived' | 'draft';
   categoryFilter: string;
-  onCategoryFilterChange: (category: string) => void;
-  onAddProduct?: () => void;
-  onClearFilters: () => void;
-  className?: string;
-  categories?: { id: string; name: string }[]; // dynamic categories
+  priceRangeFilter: 'all' | 'under-50k' | '50k-100k' | '100k-500k' | 'over-500k';
+  stockFilter: 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
+  sortBy: 'name' | 'price' | 'stock' | 'created_at' | 'updated_at';
+  sortOrder: 'asc' | 'desc';
 }
 
-export const ProductsFilters: React.FC<ProductsFiltersProps> = ({
-  searchTerm,
-  onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
-  categoryFilter,
-  onCategoryFilterChange,
-  onAddProduct,
-  onClearFilters,
-  className = '',
-  categories = []
-}) => {
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+interface ProductFiltersProps {
+  filters: ProductFilters;
+  onFiltersChange: (filters: ProductFilters) => void;
+  categories: { id: string; name: string; }[];
+  totalProducts: number;
+  filteredProducts: number;
+  loading?: boolean;
+}
 
-  const hasActiveFilters = searchTerm || statusFilter !== 'all' || categoryFilter;
+const ProductsFilters: React.FC<ProductFiltersProps> = ({
+  filters,
+  onFiltersChange,
+  categories,
+  totalProducts,
+  filteredProducts,
+  loading = false
+}) => {
+  const updateFilter = (key: keyof ProductFilters, value: any) => {
+    onFiltersChange({
+      ...filters,
+      [key]: value
+    });
+  };
+
+  const clearFilters = () => {
+    onFiltersChange({
+      searchTerm: '',
+      statusFilter: 'all',
+      categoryFilter: '',
+      priceRangeFilter: 'all',
+      stockFilter: 'all',
+      sortBy: 'created_at',
+      sortOrder: 'desc'
+    });
+  };
+
+  const hasActiveFilters = 
+    filters.searchTerm || 
+    filters.statusFilter !== 'all' || 
+    filters.categoryFilter || 
+    filters.priceRangeFilter !== 'all' || 
+    filters.stockFilter !== 'all';
 
   return (
-    <IOSCard className={cn(
-      'bg-gradient-to-r from-black/80 via-gray-950/80 to-black/80 backdrop-blur-sm border border-pink-500/20',
-      className
-    )}>
-      <div className="p-6 space-y-6">
-        {/* Primary Filters Row */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className={cn(
-                'w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-600 rounded-2xl',
-                'text-white placeholder-gray-400',
-                'focus:outline-none focus:border-pink-500/50 focus:ring-2 focus:ring-pink-500/20',
-                'transition-all duration-200'
-              )}
-            />
+    <IOSCard className="bg-surface-glass-light border border-surface-tint-light">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Filter className="w-5 h-5 text-ds-pink" />
+            <h3 className="text-lg font-semibold text-ds-text">Filter Produk</h3>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <IOSButton
-              variant="ghost"
-              size="small"
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="flex items-center gap-2 hover:bg-pink-500/20 border border-pink-500/30"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-            </IOSButton>
-            
-            {onAddProduct && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-ds-text-secondary">
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-ds-text-tertiary rounded-full animate-pulse" />
+                  Memuat...
+                </span>
+              ) : (
+                `${filteredProducts} dari ${totalProducts} produk`
+              )}
+            </span>
+            {hasActiveFilters && (
               <IOSButton
-                variant="primary"
-                size="small"
-                onClick={onAddProduct}
-                className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700"
+                onClick={clearFilters}
+                variant="secondary"
+                size="sm"
+                className="text-ds-text-secondary hover:text-ds-text"
               >
-                <Plus className="w-4 h-4" />
-                Add Product
+                Reset Filter
               </IOSButton>
             )}
           </div>
         </div>
 
-        {/* Advanced Filters */}
-        {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-white/10">
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Status</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => onStatusFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
-                className="w-full px-3 py-2 bg-black/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-pink-500/50"
-              >
-                <option value="all">All Products</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </select>
-            </div>
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ds-text-tertiary" />
+          <input
+            type="text"
+            placeholder="Cari produk berdasarkan nama, SKU, atau deskripsi..."
+            value={filters.searchTerm}
+            onChange={(e) => updateFilter('searchTerm', e.target.value)}
+            className={cn(adminInputBase, "pl-12")}
+          />
+        </div>
 
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Category</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => onCategoryFilterChange(e.target.value)}
-                className="w-full px-3 py-2 bg-black/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-pink-500/50"
-              >
-                <option value="">All Categories</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+        {/* Filter Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+              Status
+            </label>
+            <select
+              value={filters.statusFilter}
+              onChange={(e) => updateFilter('statusFilter', e.target.value)}
+              className={adminSelectBase}
+            >
+              <option value="all">Semua Status</option>
+              <option value="active">
+                <Eye className="w-4 h-4 inline mr-2" />
+                Aktif
+              </option>
+              <option value="draft">
+                <Package className="w-4 h-4 inline mr-2" />
+                Draft
+              </option>
+              <option value="archived">
+                <Archive className="w-4 h-4 inline mr-2" />
+                Diarsipkan
+              </option>
+            </select>
           </div>
-        )}
 
-        {/* Clear Filters */}
+          {/* Category Filter */}
+          <div>
+            <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+              Kategori
+            </label>
+            <select
+              value={filters.categoryFilter}
+              onChange={(e) => updateFilter('categoryFilter', e.target.value)}
+              className={adminSelectBase}
+            >
+              <option value="">Semua Kategori</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price Range Filter */}
+          <div>
+            <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+              Range Harga
+            </label>
+            <select
+              value={filters.priceRangeFilter}
+              onChange={(e) => updateFilter('priceRangeFilter', e.target.value)}
+              className={adminSelectBase}
+            >
+              <option value="all">Semua Harga</option>
+              <option value="under-50k">Di bawah Rp 50.000</option>
+              <option value="50k-100k">Rp 50.000 - 100.000</option>
+              <option value="100k-500k">Rp 100.000 - 500.000</option>
+              <option value="over-500k">Di atas Rp 500.000</option>
+            </select>
+          </div>
+
+          {/* Stock Filter */}
+          <div>
+            <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+              Status Stok
+            </label>
+            <select
+              value={filters.stockFilter}
+              onChange={(e) => updateFilter('stockFilter', e.target.value)}
+              className={adminSelectBase}
+            >
+              <option value="all">Semua Stok</option>
+              <option value="in-stock">Tersedia</option>
+              <option value="low-stock">Stok Menipis</option>
+              <option value="out-of-stock">Habis</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="flex items-center gap-4 pt-4 border-t border-surface-tint-light">
+          <span className="text-sm font-medium text-ds-text-secondary">Urutkan:</span>
+          
+          <select
+            value={filters.sortBy}
+            onChange={(e) => updateFilter('sortBy', e.target.value)}
+            className={cn(adminSelectBase, "flex-1 max-w-xs")}
+          >
+            <option value="created_at">Tanggal Dibuat</option>
+            <option value="updated_at">Terakhir Diupdate</option>
+            <option value="name">Nama Produk</option>
+            <option value="price">Harga</option>
+            <option value="stock">Jumlah Stok</option>
+          </select>
+
+          <IOSButton
+            onClick={() => updateFilter('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')}
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            {filters.sortOrder === 'asc' ? (
+              <>
+                <SortAsc className="w-4 h-4" />
+                A-Z
+              </>
+            ) : (
+              <>
+                <SortDesc className="w-4 h-4" />
+                Z-A
+              </>
+            )}
+          </IOSButton>
+        </div>
+
+        {/* Active Filters Summary */}
         {hasActiveFilters && (
-          <div className="filter-footer border-t border-white/10 pt-4">
-            <div className="left">
-              <span className="fs-sm text-secondary">Filters applied</span>
+          <div className="bg-ds-pink/10 border border-ds-pink/20 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-ds-pink mb-2">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Filter Aktif</span>
             </div>
-            <div className="right">
-              <IOSButton
-                variant="ghost"
-                size="small"
-                onClick={onClearFilters}
-                className="flex items-center gap-2 hover:bg-red-500/20 border border-red-500/30 text-red-400"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </IOSButton>
+            <div className="flex flex-wrap gap-2">
+              {filters.searchTerm && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-ds-pink/20 text-ds-pink text-xs rounded-lg">
+                  Pencarian: "{filters.searchTerm}"
+                  <button onClick={() => updateFilter('searchTerm', '')}>×</button>
+                </span>
+              )}
+              {filters.statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-ds-pink/20 text-ds-pink text-xs rounded-lg">
+                  Status: {filters.statusFilter}
+                  <button onClick={() => updateFilter('statusFilter', 'all')}>×</button>
+                </span>
+              )}
+              {filters.categoryFilter && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-ds-pink/20 text-ds-pink text-xs rounded-lg">
+                  Kategori: {categories.find(c => c.id === filters.categoryFilter)?.name}
+                  <button onClick={() => updateFilter('categoryFilter', '')}>×</button>
+                </span>
+              )}
+              {filters.priceRangeFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-ds-pink/20 text-ds-pink text-xs rounded-lg">
+                  Harga: {filters.priceRangeFilter}
+                  <button onClick={() => updateFilter('priceRangeFilter', 'all')}>×</button>
+                </span>
+              )}
+              {filters.stockFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-ds-pink/20 text-ds-pink text-xs rounded-lg">
+                  Stok: {filters.stockFilter}
+                  <button onClick={() => updateFilter('stockFilter', 'all')}>×</button>
+                </span>
+              )}
             </div>
           </div>
         )}

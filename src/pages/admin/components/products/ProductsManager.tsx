@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
-// DS V2 components + new pagination
-import { IOSCard, IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
-import { IOSPaginationV2 } from '../../../../components/ios/IOSPaginationV2';
 import { adminService, Product } from '../../../../services/adminService';
 import { ProductService } from '../../../../services/productService';
 import { useCategories } from '../../../../hooks/useCategories';
 import { Search, Filter, Plus, Package, AlertCircle, Loader2 } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
-import ProductsFilters from './ProductsFilters';
+// Use the newer ProductFilters if needed; legacy ProductsFilters retained but not re-exported
+// import { ProductFilters } from './ProductFilters';
 // Removed card/list/grid UI in favor of unified table view
-import ProductsTable from './ProductsTable';
+import { ProductTable } from './ProductTable';
 import { t } from '../../../../i18n/strings';
 
 interface ProductsManagerProps {
@@ -177,20 +175,20 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
 
   if (error) {
     return (
-      <IOSCard className="bg-gradient-to-r from-red-900/20 to-red-800/20 border-red-500/20">
+  <div className="dashboard-data-panel padded rounded-xl border border-red-500/20 bg-red-900/10">
         <div className="p-8 text-center space-y-4">
           <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
           <h3 className="text-xl font-bold text-white">Error Loading Products</h3>
           <p className="text-gray-300">{error}</p>
-          <IOSButton
-            variant="primary"
+          <button
+            type="button"
             onClick={loadProducts}
-            className="bg-gradient-to-r from-pink-500 to-fuchsia-600"
+            className="btn btn-primary"
           >
             Retry
-          </IOSButton>
+          </button>
         </div>
-      </IOSCard>
+      </div>
     );
   }
 
@@ -206,119 +204,95 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <IOSButton
-            variant="tertiary"
-            size="sm"
+          <button
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'flex items-center gap-2 border',
-              showFilters ? 'border-pink-500/60 bg-pink-600/20' : 'border-zinc-700'
+              'btn btn-secondary flex items-center gap-2',
+              showFilters && 'ring-1 ring-pink-500/60'
             )}
           >
             <Filter className="w-4 h-4" />
             {t('common.filters')}
-          </IOSButton>
+          </button>
 
-          <IOSButton
-            variant="primary"
-            size="sm"
+          <button
+            type="button"
             onClick={handleAddProduct}
-            className="flex items-center gap-2"
+            className="btn btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             {t('common.addProduct')}
-          </IOSButton>
+          </button>
         </div>
       </div>
 
       {/* Filters */}
-      {showFilters && (
-        <ProductsFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          onAddProduct={handleAddProduct}
-          onClearFilters={clearAllFilters}
-          categories={categories}
-        />
-      )}
+          {showFilters && (
+            <div className="bg-[var(--bg-secondary)] border border-token rounded-xl p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm text-ds-text-secondary mb-1">Search</label>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search name or description..."
+                    className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-token rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-ds-text-secondary mb-1">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-token rounded-lg"
+                  >
+                    <option value="all">All</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-ds-text-secondary mb-1">Category</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-token rounded-lg"
+                  >
+                    <option value="">All</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={clearAllFilters}>Clear</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={handleAddProduct}>Add Product</button>
+              </div>
+            </div>
+          )}
 
-      {/* Products Table */}
-      <ProductsTable
+      {/* Products Table (Design System) */}
+      <ProductTable
         products={paginatedProducts}
         loading={loading}
-        onView={handleViewProduct}
+        currentPage={currentPage}
+        totalPages={Math.ceil(filteredProducts.length / itemsPerPage) || 1}
+        itemsPerPage={itemsPerPage}
+        totalProducts={filteredProducts.length}
+        onPageChange={(page) => setCurrentPage(page)}
+        onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
         onEdit={handleEditProduct}
+        onArchive={(p)=> handleQuickUpdate(p.id, { is_active: false })}
+        onRestore={(p)=> handleQuickUpdate(p.id, { is_active: true })}
         onDelete={handleDeleteProduct}
-        onQuickUpdate={handleQuickUpdate}
       />
 
-      {/* Pagination */}
-        {filteredProducts.length > 0 && (
-          <div className="pt-6 space-y-3">
-            {/* External items-per-page selector (replaces legacy built-in) */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-300">
-              <span className="text-zinc-400">Items per page:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e)=>{ setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-              >
-                {[8,12,16,24].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-              <span className="text-zinc-500">Total {filteredProducts.length}</span>
-            </div>
-            <IOSPaginationV2
-              currentPage={currentPage}
-              totalPages={Math.ceil(filteredProducts.length / itemsPerPage)}
-              totalItems={filteredProducts.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={(page) => setCurrentPage(page)}
-            />
-          </div>
-        )}
+  {/* Pagination moved into ProductTable footer */}
 
-      {/* Empty State */}
-      {!loading && filteredProducts.length === 0 && (
-        <IOSCard className="bg-gradient-to-r from-black/50 to-gray-900/50 border-gray-500/20">
-          <div className="p-12 text-center space-y-6">
-            <Package className="w-16 h-16 mx-auto text-gray-500" />
-            <div>
-              <h3 className="text-xl font-bold text-white mb-2">
-                {products.length === 0 ? 'No Products Found' : 'No Matching Products'}
-              </h3>
-              <p className="text-gray-400 max-w-md mx-auto">
-                {products.length === 0 
-                  ? 'Get started by adding your first product to the system.'
-                  : 'Try adjusting your filters or search terms to find what you\'re looking for.'
-                }
-              </p>
-            </div>
-            {products.length === 0 ? (
-              <IOSButton
-                variant="primary"
-                size="sm"
-                onClick={handleAddProduct}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {t('common.addProduct')}
-              </IOSButton>
-            ) : (
-              <IOSButton
-                variant="tertiary"
-                size="sm"
-                onClick={clearAllFilters}
-                className="border border-pink-500/40"
-              >
-                {t('common.clearAllFilters')}
-              </IOSButton>
-            )}
-          </div>
-        </IOSCard>
-      )}
+  {/* Empty state handled inside ProductTable */}
     </div>
   );
 };

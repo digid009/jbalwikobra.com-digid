@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, X, AlertTriangle, Pin, PinOff, Image as ImageIcon } from 'lucide-react';
-import { 
-  IOSCard, 
-  IOSButton, 
-  IOSSectionHeader,
-  IOSInputField
-} from '../../../components/ios/IOSDesignSystemV2';
-import { IOSPaginationV2 } from '../../../components/ios/IOSPaginationV2';
-import { IOSImageUploader } from '../../../components/ios/IOSImageUploader';
+import { Plus, Search, Edit, Trash2, X, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+// DS primitives and utilities
+import { DataPanel } from '../layout/DashboardPrimitives';
+import { adminInputBase, adminSelectBase, adminCheckboxBase, cx } from './ui/InputStyles';
 import { adminService, type FeedPost } from '../../../services/adminService';
 import { uploadFile } from '../../../services/storageService';
 
@@ -163,43 +158,48 @@ const AdminFeedManagement: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6 p-6 min-h-screen">
-        <IOSSectionHeader
-          title="Manajemen Feed Posts"
-          subtitle="Loading..."
-        />
-        <IOSCard padding="md">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white">Manajemen Feed Posts</h2>
+          <div className="text-sm text-gray-200">Loading...</div>
+        </div>
+        <DataPanel>
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ds-pink"></div>
           </div>
-        </IOSCard>
+        </DataPanel>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 p-6 min-h-screen">
-      <IOSSectionHeader
-        title="Manajemen Feed Posts"
-        subtitle={`${filteredPosts.length} posts total`}
-      />
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-white">Manajemen Feed Posts</h2>
+          <p className="text-sm text-gray-200">{`${filteredPosts.length} posts total`}</p>
+        </div>
+      </div>
 
       {/* Search and Filters */}
-      <IOSCard padding="md">
+      <DataPanel>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
-            <IOSInputField
-              type="text"
-              placeholder="Cari berdasarkan judul atau konten..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              leadingIcon={<Search className="w-5 h-5 text-zinc-500" />}
-            />
+            <div className="relative">
+              <Search className="w-5 h-5 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Cari berdasarkan judul atau konten..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={cx(adminInputBase, 'pl-10 pr-3 py-2 w-full')}
+              />
+            </div>
           </div>
           <div>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as 'all' | 'post' | 'announcement')}
-              className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+              className={cx(adminSelectBase, 'w-full px-3 py-2')}
             >
               <option value="all">Semua Tipe</option>
               <option value="post">Post</option>
@@ -207,19 +207,19 @@ const AdminFeedManagement: React.FC = () => {
             </select>
           </div>
           <div>
-            <IOSButton 
-              onClick={() => setShowCreateModal(true)} 
-              className="w-full"
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="btn btn-primary w-full flex items-center justify-center gap-2"
             >
-              <Plus size={18} />
+              <Plus className="w-4 h-4" />
               Buat Post Baru
-            </IOSButton>
+            </button>
           </div>
         </div>
-      </IOSCard>
+      </DataPanel>
 
       {/* Posts Table */}
-      <IOSCard padding="none">
+      <DataPanel>
         <div className="overflow-x-auto admin-table-container">
           <table className="admin-table admin-table-sticky zebra compact w-full text-sm">
             <thead>
@@ -244,11 +244,7 @@ const AdminFeedManagement: React.FC = () => {
                     </div>
                   </td>
                   <td>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      post.type === 'announcement'
-                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                        : 'bg-green-500/20 text-green-300 border border-green-500/30'
-                    }`}>
+                    <span className={`badge ${post.type === 'announcement' ? 'badge-warning' : 'badge-primary'}`}>
                       {post.type === 'announcement' ? 'Pengumuman' : 'Post'}
                     </span>
                   </td>
@@ -274,11 +270,7 @@ const AdminFeedManagement: React.FC = () => {
                   <td>
                     <button
                       onClick={() => handleTogglePin(post)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-                        post.is_pinned
-                          ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                          : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
-                      }`}
+                      className={cx('btn btn-secondary btn-xs', post.is_pinned && 'btn-warning')}
                     >
                       {post.is_pinned ? 'Pinned' : 'Pin'}
                     </button>
@@ -287,17 +279,14 @@ const AdminFeedManagement: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(post)}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 transition-colors"
+                        className="btn btn-secondary btn-xs"
                         aria-label="Edit post"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          setDeletingPost(post);
-                          setShowDeleteModal(true);
-                        }}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                        onClick={() => { setDeletingPost(post); setShowDeleteModal(true); }}
+                        className="btn btn-danger btn-xs"
                         aria-label="Delete post"
                       >
                         Delete
@@ -313,37 +302,48 @@ const AdminFeedManagement: React.FC = () => {
         {filteredPosts.length === 0 && (
           <div className="text-center py-12">
             <div className="text-zinc-400 mb-2">Tidak ada posts ditemukan</div>
-            <IOSButton onClick={() => setShowCreateModal(true)} variant="secondary">
-              Buat Post Pertama
-            </IOSButton>
+            <button className="btn btn-secondary" onClick={() => setShowCreateModal(true)}>Buat Post Pertama</button>
           </div>
         )}
-      </IOSCard>
+      </DataPanel>
 
-      {/* Pagination (Unified) */}
+      {/* Pagination (DS) */}
       {totalPages > 1 && (
-        <div className="admin-pagination">
-          <IOSPaginationV2
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalPages * 10}
-            itemsPerPage={10}
-            onPageChange={setCurrentPage}
-          />
+        <div className="flex items-center justify-between pt-stack-lg border-t border-surface-tint-gray/30">
+          <div className="fs-sm text-surface-tint-gray">
+            Page {currentPage} of {totalPages}
+          </div>
+          <nav className="flex items-center gap-cluster-sm" role="navigation" aria-label="Pagination">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage <= 1}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              Next
+            </button>
+          </nav>
         </div>
       )}
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <IOSCard className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="dashboard-data-panel padded rounded-xl p-stack-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">
                 {editingPost ? 'Edit Post' : 'Buat Post Baru'}
               </h2>
-              <IOSButton
-                variant="ghost"
-                size="sm"
+              <button
+                className="btn btn-ghost btn-sm"
                 onClick={() => {
                   setShowCreateModal(false);
                   setEditingPost(null);
@@ -356,10 +356,10 @@ const AdminFeedManagement: React.FC = () => {
                   });
                   setUploadedImages([]);
                 }}
-                className="p-2"
+                aria-label="Close"
               >
-                <X size={20} />
-              </IOSButton>
+                <X size={18} />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -370,7 +370,7 @@ const AdminFeedManagement: React.FC = () => {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as 'post' | 'announcement' })}
-                  className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                  className={cx(adminSelectBase, 'w-full px-3 py-2')}
                   required
                 >
                   <option value="post">Post</option>
@@ -382,10 +382,11 @@ const AdminFeedManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-400 mb-2">
                   Judul {formData.type === 'announcement' ? '*' : '(Opsional)'}
                 </label>
-                <IOSInputField
+                <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className={cx(adminInputBase, 'px-3 py-2 w-full')}
                   placeholder={formData.type === 'announcement' ? 'Masukkan judul pengumuman' : 'Masukkan judul post (opsional)'}
                   required={formData.type === 'announcement'}
                 />
@@ -399,7 +400,7 @@ const AdminFeedManagement: React.FC = () => {
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={6}
-                  className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 resize-none transition-colors"
+                  className={cx(adminInputBase, 'px-3 py-2 w-full resize-none')}
                   placeholder="Masukkan konten post"
                   required
                 />
@@ -409,13 +410,43 @@ const AdminFeedManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-zinc-400 mb-2">
                   Gambar (Maksimal 2)
                 </label>
-                <IOSImageUploader
-                  images={uploadedImages}
-                  onChange={setUploadedImages}
-                  onUpload={handleImageUpload}
-                  max={2}
-                  label="Post Images"
-                />
+                {/* Minimal DS-styled image picker */}
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {uploadedImages.map((url, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={url} alt={`uploaded-${idx}`} className="w-20 h-20 object-cover rounded border border-surface-tint-gray/30" />
+                        <button
+                          type="button"
+                          className="absolute -top-2 -right-2 btn btn-ghost btn-xs"
+                          onClick={() => setUploadedImages(uploadedImages.filter((_, i) => i !== idx))}
+                          aria-label="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <input
+                      id="feed-images-input"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (!files.length) return;
+                        const remaining = Math.max(0, 2 - uploadedImages.length);
+                        const toUpload = files.slice(0, remaining);
+                        const urls = await handleImageUpload(toUpload);
+                        setUploadedImages([...uploadedImages, ...urls]);
+                        e.currentTarget.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="feed-images-input" className="btn btn-secondary btn-sm">Upload Images</label>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -424,7 +455,7 @@ const AdminFeedManagement: React.FC = () => {
                   id="is_pinned"
                   checked={formData.is_pinned}
                   onChange={(e) => setFormData({ ...formData, is_pinned: e.target.checked })}
-                  className="w-4 h-4 text-pink-500 bg-zinc-900 border-zinc-700 rounded focus:ring-pink-500 focus:ring-2"
+                  className={cx(adminCheckboxBase, 'w-4 h-4')}
                 />
                 <label htmlFor="is_pinned" className="text-sm text-zinc-400">
                   Pin post di atas (akan muncul lebih dulu)
@@ -432,9 +463,9 @@ const AdminFeedManagement: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <IOSButton
+                <button
                   type="button"
-                  variant="secondary"
+                  className="btn btn-secondary"
                   onClick={() => {
                     setShowCreateModal(false);
                     setEditingPost(null);
@@ -449,20 +480,20 @@ const AdminFeedManagement: React.FC = () => {
                   }}
                 >
                   Batal
-                </IOSButton>
-                <IOSButton type="submit" disabled={uploading}>
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={uploading}>
                   {uploading ? 'Menyimpan...' : (editingPost ? 'Update Post' : 'Buat Post')}
-                </IOSButton>
+                </button>
               </div>
             </form>
-          </IOSCard>
+          </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && deletingPost && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <IOSCard className="w-full max-w-md">
+          <div className="dashboard-data-panel padded rounded-xl p-stack-lg w-full max-w-md">
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
                 <AlertTriangle size={24} className="text-red-500" />
@@ -472,24 +503,21 @@ const AdminFeedManagement: React.FC = () => {
                 Post "{deletingPost.title || 'Untitled'}" akan dihapus permanen dan tidak dapat dikembalikan.
               </p>
               <div className="flex justify-center gap-3">
-                <IOSButton
-                  variant="secondary"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setDeletingPost(null);
-                  }}
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { setShowDeleteModal(false); setDeletingPost(null); }}
                 >
                   Batal
-                </IOSButton>
-                <IOSButton
+                </button>
+                <button
+                  className="btn btn-danger"
                   onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700"
                 >
                   Hapus
-                </IOSButton>
+                </button>
               </div>
             </div>
-          </IOSCard>
+          </div>
         </div>
       )}
     </div>

@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react';
 import { adminClient } from '../../../services/unifiedAdminClient';
 import { adminCache } from '../../../services/adminCache';
 import { prefetchManager } from '../../../services/intelligentPrefetch';
-import { IOSCard, IOSSectionHeader } from '../../../components/ios/IOSDesignSystem';
+import { DataPanel } from '../layout/DashboardPrimitives';
 import { Activity, Database, Clock, TrendingDown, TrendingUp, Server } from 'lucide-react';
 
 interface PerformanceMetrics {
@@ -152,13 +152,12 @@ export const AdminPerformanceMonitor: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 right-4 w-96 z-50">
-      <IOSCard className="bg-black/95 backdrop-blur-md text-white border-gray-700">
+      <DataPanel className="bg-black/95 backdrop-blur-md text-white border border-gray-700 rounded-2xl shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <IOSSectionHeader 
-            title="Performance Monitor"
-            subtitle="API & Cache Metrics"
-            className="text-white"
-          />
+          <div className="flex flex-col">
+            <span className="text-white font-semibold">Performance Monitor</span>
+            <span className="text-xs text-gray-400">API & Cache Metrics</span>
+          </div>
           <button
             onClick={() => setExpanded(false)}
             className="text-gray-400 hover:text-white transition-colors"
@@ -301,7 +300,7 @@ export const AdminPerformanceMonitor: React.FC = () => {
             </div>
           </div>
         </div>
-      </IOSCard>
+  </DataPanel>
     </div>
   );
 };

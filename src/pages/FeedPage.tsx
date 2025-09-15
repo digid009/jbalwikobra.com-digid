@@ -5,7 +5,7 @@ import { reviewService, type UserReview } from '../services/reviewService';
 import { IOSContainer, IOSCard, IOSButton, IOSSectionHeader, IOSHero, IOSBadge } from '../components/ios/IOSDesignSystem';
 import { iosDesignTokens } from '../components/ios/IOSDesignSystemV2';
 import { ConsistentLayout, PageWrapper, ContentSection } from '../components/layout/ConsistentLayout';
-import { ModernFeedCard } from '../components/ModernFeedCard';
+import { FeedCard } from '../components/FeedCard';
 import LinkifyText from '../components/LinkifyText';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
@@ -547,7 +547,7 @@ export default function FeedPage() {
             </div>
             
             {feedPosts.map((post) => (
-              <ModernFeedCard
+              <FeedCard
                 key={post.id}
                 post={{
                   id: post.id,
