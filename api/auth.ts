@@ -2,7 +2,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
+// Remove unused imports to prevent module resolution issues in production
+// import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 // Remove adminNotificationService import to avoid module resolution issues
 // import { adminNotificationService } from '../src/services/adminNotificationService';
 
@@ -133,9 +134,18 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Identifier and password are required' });
     }
 
+    // Ensure Supabase is properly initialized
+    let supabaseClient;
+    try {
+      supabaseClient = getSupabase();
+    } catch (error) {
+      console.error('Supabase initialization failed:', error);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+
     // Find user by phone or email
     console.log('Attempting to find user in database...');
-    const { data: user, error: userError } = await getSupabase()
+    const { data: user, error: userError } = await supabaseClient
       .from('users')
       .select('*')
       .or(`phone.eq.${identifier},email.eq.${identifier}`)
@@ -159,7 +169,14 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    let isValidPassword;
+    try {
+      isValidPassword = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('bcrypt compare error:', bcryptError);
+      return res.status(500).json({ error: 'Password verification error' });
+    }
+    
     if (!isValidPassword) {
       console.log('Password verification failed');
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -177,7 +194,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    const { error: sessionError } = await getSupabase()
+    const { error: sessionError } = await supabaseClient
       .from('user_sessions')
       .insert({
         user_id: user.id,
@@ -188,11 +205,12 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
       });
 
     if (sessionError) {
+      console.error('Session creation error:', sessionError);
       return res.status(500).json({ error: 'Failed to create session' });
     }
 
     // Update last login
-    await getSupabase()
+    await supabaseClient
       .from('users')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', user.id);
@@ -207,7 +225,10 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error) {
     console.error('Login error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 }
 
@@ -326,6 +347,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
     // Send WhatsApp verification
     try {
       console.log('Sending WhatsApp verification code to:', phone);
+      const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService');
       const whatsappService = new DynamicWhatsAppService();
       const result = await whatsappService.sendVerificationCode(phone, verificationCode);
       
