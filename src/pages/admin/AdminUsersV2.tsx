@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, UserCheck, Shield, Clock, Search, Filter, RefreshCw, Plus, Edit, Trash2, Mail, Phone, Calendar } from 'lucide-react';
+import { Users, UserCheck, Shield, Clock, Search, Filter, RefreshCw, Plus, Edit, Trash2, Mail, Phone, Calendar, RotateCcw, TrendingUp, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import { adminService, User } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 
@@ -16,9 +16,73 @@ interface UserFilters {
   search: string;
 }
 
+// Dashboard-style MetricCard component
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  change?: number;
+  changeType?: 'increase' | 'decrease' | 'neutral';
+  icon: React.ComponentType<any>;
+  trend?: 'up' | 'down' | 'neutral';
+  color?: 'pink' | 'blue' | 'green' | 'orange' | 'purple';
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ 
+  title, 
+  value, 
+  change, 
+  changeType = 'neutral', 
+  icon: Icon, 
+  trend = 'neutral', 
+  color = 'blue' 
+}) => {
+  const colorMap = {
+    pink: 'from-pink-500 to-fuchsia-600',
+    blue: 'from-blue-500 to-cyan-600',
+    green: 'from-emerald-500 to-green-600',
+    orange: 'from-orange-500 to-red-600',
+    purple: 'from-purple-500 to-violet-600'
+  };
+
+  const trendIcon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : Activity;
+  const TrendIcon = trendIcon;
+
+  return (
+    <div className="group relative overflow-hidden bg-black border border-gray-800 rounded-2xl p-6 hover:border-pink-500/30 transition-all duration-300 hover:transform hover:scale-[1.02]">
+      {/* Background gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${colorMap[color]} opacity-5 group-hover:opacity-10 transition-opacity duration-300`} />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${colorMap[color]} shadow-lg`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          {change !== undefined && (
+            <div className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium ${
+              changeType === 'increase' ? 'bg-emerald-500/10 text-emerald-400' :
+              changeType === 'decrease' ? 'bg-red-500/10 text-red-400' :
+              'bg-gray-500/10 text-gray-400'
+            }`}>
+              <TrendIcon className="w-3 h-3" />
+              <span>{Math.abs(change)}%</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-1">
+          <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+          <p className="text-sm text-gray-400 font-medium">{title}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminUsersV2: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState<UserFilters>({
     role: 'all',
@@ -85,8 +149,10 @@ const AdminUsersV2: React.FC = () => {
     loadUsers();
   }, []);
 
-  const handleRefresh = () => {
-    loadUsers();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadUsers();
+    setRefreshing(false);
   };
 
   const handleEditUser = (user: User) => {
@@ -117,34 +183,23 @@ const AdminUsersV2: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 bg-clip-text text-transparent">
-            User Management
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Manage user accounts and permissions
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Dashboard-Style Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+              User Management
+            </h1>
+            <p className="text-gray-400 mt-1">Manage user accounts, permissions and analytics</p>
+          </div>
           <button
             onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            disabled={refreshing}
+            className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200 disabled:opacity-50"
           >
-            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-          <button
-            onClick={() => push('Add user functionality coming soon!', 'info')}
-            className="flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            Add User
+            <RotateCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
         </div>
 
@@ -155,46 +210,123 @@ const AdminUsersV2: React.FC = () => {
           </div>
         )}
 
-        {/* Statistics Cards */}
+        {/* Modern Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-500/20 rounded-lg mx-auto mb-4">
-              <Users className="h-6 w-6 text-blue-400" />
+          <MetricCard
+            title="Total Users"
+            value={loading ? "..." : stats.total}
+            change={12.5}
+            changeType="increase"
+            icon={Users}
+            trend="up"
+            color="blue"
+          />
+          <MetricCard
+            title="Active Users"
+            value={loading ? "..." : stats.active}
+            change={8.2}
+            changeType="increase"
+            icon={UserCheck}
+            trend="up"
+            color="green"
+          />
+          <MetricCard
+            title="Admin Users"
+            value={loading ? "..." : stats.admin}
+            change={-2.1}
+            changeType="decrease"
+            icon={Shield}
+            trend="down"
+            color="purple"
+          />
+          <MetricCard
+            title="New This Month"
+            value={loading ? "..." : stats.recent}
+            change={15.3}
+            changeType="increase"
+            icon={Clock}
+            trend="up"
+            color="orange"
+          />
+        </div>
+
+        {/* Quick Actions Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Quick Actions */}
+          <div className="lg:col-span-1">
+            <div className="bg-black border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <div className="p-2 bg-pink-500/10 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-pink-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => push('Add user functionality coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-pink-500/10 hover:border-pink-500/30 border border-gray-700 text-gray-300 hover:text-pink-400 transition-all duration-200"
+                >
+                  <Plus className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Add New User</p>
+                    <p className="text-xs text-gray-500">Create a new user account</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => push('Export functionality coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-blue-500/10 hover:border-blue-500/30 border border-gray-700 text-gray-300 hover:text-blue-400 transition-all duration-200"
+                >
+                  <Mail className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Export Users</p>
+                    <p className="text-xs text-gray-500">Download user data</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => push('Bulk actions coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-green-500/10 hover:border-green-500/30 border border-gray-700 text-gray-300 hover:text-green-400 transition-all duration-200"
+                >
+                  <Shield className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Manage Permissions</p>
+                    <p className="text-xs text-gray-500">Bulk permission updates</p>
+                  </div>
+                </button>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.total.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Total Users</div>
           </div>
 
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-500/20 rounded-lg mx-auto mb-4">
-              <UserCheck className="h-6 w-6 text-green-400" />
+          {/* User Analytics Preview */}
+          <div className="lg:col-span-2">
+            <div className="bg-black border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Users className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">User Analytics</h3>
+                </div>
+                <button className="flex items-center space-x-2 text-sm text-pink-400 hover:text-pink-300 transition-colors">
+                  <span>View Details</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.active / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Activity Rate</p>
+                </div>
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.admin / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Admin Ratio</p>
+                </div>
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.recent / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Growth Rate</p>
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.active.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Active Users</div>
-          </div>
-
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-purple-500/20 rounded-lg mx-auto mb-4">
-              <Shield className="h-6 w-6 text-purple-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.admin.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Admin Users</div>
-          </div>
-
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-orange-500/20 rounded-lg mx-auto mb-4">
-              <Clock className="h-6 w-6 text-orange-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.recent.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">New This Month</div>
           </div>
         </div>
 

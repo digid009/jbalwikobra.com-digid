@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Search, Filter, RefreshCw, Plus, Edit, Trash2, Eye, ShoppingCart, DollarSign, Archive, Calendar, Tag } from 'lucide-react';
+import { Package, Search, Filter, RefreshCw, Plus, Edit, Trash2, Eye, ShoppingCart, DollarSign, Archive, Calendar, Tag, ArrowUpRight, ArrowDownRight, Activity, FileDown, TrendingUp } from 'lucide-react';
 import { adminService, Product } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 import ProductModal from './components/ProductModal';
+import { 
+  AdminStatCard
+} from './components/ui';
 
 interface ProductStats {
   total: number;
@@ -25,6 +28,7 @@ const AdminProductsV2: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>({
     status: 'all',
     category: 'all',
@@ -231,8 +235,9 @@ const AdminProductsV2: React.FC = () => {
 
   const handleRefresh = () => {
     // Clear cache and force refresh
+    setRefreshing(true);
     setCachedResults(new Map());
-    loadProducts(true);
+    loadProducts(true).finally(() => setRefreshing(false));
   };
 
   const handleEditProduct = (product: Product) => {
@@ -354,36 +359,31 @@ const AdminProductsV2: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 bg-clip-text text-transparent">
-            Product Management
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Manage your products and inventory
-          </p>
+    <div className="space-y-6">
+      {/* Header - Flash Sales Style */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Product Management</h1>
+          <p className="text-gray-400 text-sm">Manage your products and inventory</p>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            disabled={loading || refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${(loading || refreshing) ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
             onClick={handleAddProduct}
-            className="flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
             Add Product
           </button>
         </div>
+      </div>
 
         {/* Cache Status Indicator */}
         {(() => {
@@ -410,45 +410,34 @@ const AdminProductsV2: React.FC = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-500/20 rounded-lg mx-auto mb-4">
-              <Package className="h-6 w-6 text-blue-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.total.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Total Products</div>
-          </div>
-
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-500/20 rounded-lg mx-auto mb-4">
-              <ShoppingCart className="h-6 w-6 text-green-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.active.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Active Products</div>
-          </div>
-
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-gray-500/20 rounded-lg mx-auto mb-4">
-              <Archive className="h-6 w-6 text-gray-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : stats.archived.toLocaleString()}
-            </div>
-            <div className="text-gray-400 text-sm">Archived Products</div>
-          </div>
-
-          <div className="bg-black border border-gray-800 rounded-xl p-6 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-yellow-500/20 rounded-lg mx-auto mb-4">
-              <DollarSign className="h-6 w-6 text-yellow-400" />
-            </div>
-            <div className="text-2xl font-bold text-white mb-1">
-              {loading ? '...' : formatPrice(stats.totalValue)}
-            </div>
-            <div className="text-gray-400 text-sm">Total Value</div>
-          </div>
+          <AdminStatCard
+            title="Total Products"
+            value={loading ? '...' : stats.total}
+            icon={Package}
+            iconColor="text-blue-400"
+            iconBgColor="bg-blue-500/20"
+          />
+          <AdminStatCard
+            title="Active Products"
+            value={loading ? '...' : stats.active}
+            icon={ShoppingCart}
+            iconColor="text-green-400"
+            iconBgColor="bg-green-500/20"
+          />
+          <AdminStatCard
+            title="Archived Products"
+            value={loading ? '...' : stats.archived}
+            icon={Archive}
+            iconColor="text-gray-400"
+            iconBgColor="bg-gray-500/20"
+          />
+          <AdminStatCard
+            title="Total Value"
+            value={loading ? '...' : formatPrice(stats.totalValue)}
+            icon={DollarSign}
+            iconColor="text-yellow-400"
+            iconBgColor="bg-yellow-500/20"
+          />
         </div>
 
         {/* Filters */}
@@ -833,7 +822,6 @@ const AdminProductsV2: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Product Modal */}
       <ProductModal
