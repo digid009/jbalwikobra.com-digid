@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatNumberID, parseNumberID } from '../../../../utils/helpers';
 // Replaced IOSToggle with native checkbox styled for DS
 
 export interface RentalValues {
@@ -46,13 +47,23 @@ export const SettingsRentalSection: React.FC<SettingsRentalProps> = ({ values, o
               </div>
               <div>
                 <label className="block text-xs font-medium text-white mb-1">Price</label>
-                <input type="number" value={values.rental_price_per_hour} min={0} onChange={e=>onChange({ rental_price_per_hour: Number(e.target.value) })}
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  value={values.rental_price_per_hour ? `Rp ${formatNumberID(values.rental_price_per_hour)}` : ''} 
+                  onChange={e => onChange({ rental_price_per_hour: parseNumberID(e.target.value) })}
+                  placeholder="Rp 0"
                   className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500" />
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-white mb-1">Deposit</label>
-              <input type="number" value={values.rental_deposit} min={0} onChange={e=>onChange({ rental_deposit: Number(e.target.value) })}
+              <input 
+                type="text" 
+                inputMode="numeric"
+                value={values.rental_deposit ? `Rp ${formatNumberID(values.rental_deposit)}` : ''} 
+                onChange={e => onChange({ rental_deposit: parseNumberID(e.target.value) })}
+                placeholder="Rp 0"
                 className="w-full px-2 py-1 text-xs rounded-2xl border border-gray-700 bg-black focus:ring-1 focus:ring-blue-500 focus:border-pink-500" />
             </div>
           </div>

@@ -23,8 +23,17 @@ export const ProductRentalOptions = React.memo(({
   cameFromFlashSaleCard,
   hasRental
 }: ProductRentalOptionsProps) => {
-  // Don't show rental options if user came from flash sale card
-  if (cameFromFlashSaleCard || !hasRental || !rentalOptions || rentalOptions.length === 0) {
+  // Debug logging
+  console.log('ProductRentalOptions Debug:', {
+    hasRental,
+    rentalOptionsCount: rentalOptions?.length || 0,
+    cameFromFlashSaleCard,
+    selectedRental: selectedRental?.id || null
+  });
+
+  // Don't show rental options if no rental data is available
+  if (!hasRental || !rentalOptions || rentalOptions.length === 0) {
+    console.log('ProductRentalOptions: Hidden due to no rental data');
     return null;
   }
 

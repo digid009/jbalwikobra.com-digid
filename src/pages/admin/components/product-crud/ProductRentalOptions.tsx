@@ -1,6 +1,7 @@
 import React from 'react';
 import { IOSButton } from '../../../../components/ios/IOSDesignSystemV2';
 import { Clock, X } from 'lucide-react';
+import { formatNumberID, parseNumberID } from '../../../../utils/helpers';
 
 export interface ProductRentalOptionRow {
   id: string;
@@ -17,11 +18,10 @@ interface ProductRentalOptionsProps {
   max?: number;
 }
 
-// Helper to format Rupiah while typing (simple approach)
-const formatRupiah = (value: string) => {
-  const numbers = value.replace(/[^0-9]/g, '');
-  if (!numbers) return '';
-  return 'Rp ' + numbers.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+// Helper to format Rupiah with thousand separators and Rp prefix
+const formatRupiahPrice = (value: string | number): string => {
+  const numValue = typeof value === 'string' ? parseNumberID(value) : value;
+  return numValue > 0 ? `Rp ${formatNumberID(numValue)}` : '';
 };
 
 export const ProductRentalOptions: React.FC<ProductRentalOptionsProps> = ({
@@ -85,14 +85,17 @@ export const ProductRentalOptions: React.FC<ProductRentalOptionsProps> = ({
 
       <div className="space-y-3">
         {options.map(row => {
-          const formatted = formatRupiah(row.price);
+          const formattedPrice = formatRupiahPrice(row.price);
           return (
             <div key={row.id} className="grid grid-cols-12 gap-4 items-center group">
               <input
-                type="number"
-                min="0"
+                type="text"
+                inputMode="numeric"
                 value={row.qty}
-                onChange={e => updateRow(row.id, 'qty', e.target.value)}
+                onChange={e => {
+                  const numValue = e.target.value.replace(/[^0-9]/g, '');
+                  updateRow(row.id, 'qty', numValue);
+                }}
                 className="col-span-2 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 text-white placeholder-white/40 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 text-sm"
                 placeholder="0"
               />
@@ -110,8 +113,11 @@ export const ProductRentalOptions: React.FC<ProductRentalOptionsProps> = ({
               <input
                 type="text"
                 inputMode="numeric"
-                value={formatted}
-                onChange={e => updateRow(row.id, 'price', e.target.value)}
+                value={formattedPrice}
+                onChange={e => {
+                  const parsedValue = parseNumberID(e.target.value);
+                  updateRow(row.id, 'price', parsedValue.toString());
+                }}
                 className="col-span-5 px-3 py-2 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 text-white placeholder-white/40 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 text-sm"
                 placeholder="Rp 0"
               />

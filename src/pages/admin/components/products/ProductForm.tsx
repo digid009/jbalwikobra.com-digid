@@ -203,8 +203,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   type="text"
                   inputMode="numeric"
                   className={cx(adminInputBase, 'col-span-2 px-2 py-1')}
-                  placeholder="Harga"
-                  value={rental.price ? formatNumberID(rental.price) : ''}
+                  placeholder="Rp 0"
+                  value={rental.price ? `Rp ${formatNumberID(rental.price)}` : ''}
                   onChange={(e) => {
                     const next = [...form.rentals]; 
                     next[idx] = { ...rental, price: parseNumberID(e.target.value) }; 

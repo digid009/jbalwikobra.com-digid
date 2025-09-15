@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Move, Loader, ImageIcon, Save } from 'lucide-react';
 import { adminService, Product } from '../../../services/adminService';
 import { uploadFiles, deletePublicUrls, UploadResult } from '../../../services/storageService';
 import { useToast } from '../../../components/Toast';
+import { formatNumberID, parseNumberID } from '../../../utils/helpers';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -306,24 +307,29 @@ const ProductModal: React.FC<ProductModalProps> = ({
     if (!num && num !== 0) return '';
     const numValue = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
     if (isNaN(numValue)) return '';
-    return numValue.toLocaleString('id-ID');
-  };
-
-  const parseNumberFromFormatted = (formattedStr: string) => {
-    if (!formattedStr) return 0;
-    const cleaned = formattedStr.replace(/[^\d]/g, '');
-    return cleaned ? parseInt(cleaned, 10) : 0;
+    return formatNumberID(numValue);
   };
 
   const handlePriceChange = (value: string, field: 'price' | 'original_price') => {
-    const numericValue = parseNumberFromFormatted(value);
+    const numericValue = parseNumberID(value);
+    
     if (field === 'original_price') {
       setFormData(prev => ({ 
         ...prev, 
         [field]: value === '' || numericValue === 0 ? undefined : numericValue 
       }));
     } else {
-      setFormData(prev => ({ ...prev, [field]: numericValue }));
+      // Handle main price field
+      setFormData(prev => {
+        const updatedData = { ...prev, [field]: numericValue };
+        
+        // Auto-fill original_price if it's empty/zero and main price has a value
+        if (numericValue > 0 && (!prev.original_price || prev.original_price === 0)) {
+          updatedData.original_price = numericValue;
+        }
+        
+        return updatedData;
+      });
     }
   };
 
@@ -392,10 +398,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={formatNumberWithSeparator(formData.price)}
+                  inputMode="numeric"
+                  value={formData.price ? `Rp ${formatNumberWithSeparator(formData.price)}` : ''}
                   onChange={(e) => handlePriceChange(e.target.value, 'price')}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="0"
+                  placeholder="Rp 0"
                   required
                   disabled={isReadOnly}
                 />
@@ -411,10 +418,11 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={formData.original_price ? formatNumberWithSeparator(formData.original_price) : ''}
+                  inputMode="numeric"
+                  value={formData.original_price ? `Rp ${formatNumberWithSeparator(formData.original_price)}` : ''}
                   onChange={(e) => handlePriceChange(e.target.value, 'original_price')}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="0"
+                  placeholder="Rp 0"
                   disabled={isReadOnly}
                 />
                 {isReadOnly && formData.original_price && (
@@ -560,16 +568,16 @@ const ProductModal: React.FC<ProductModalProps> = ({
                             </div>
                             <div className="col-span-3">
                               <input
-                                type="number"
-                                value={option.price}
+                                type="text"
+                                inputMode="numeric"
+                                value={option.price ? `Rp ${formatNumberID(option.price)}` : ''}
                                 onChange={(e) => {
                                   const newOptions = [...formData.rental_options];
-                                  newOptions[index] = { ...newOptions[index], price: Number(e.target.value) };
+                                  newOptions[index] = { ...newOptions[index], price: parseNumberID(e.target.value) };
                                   setFormData(prev => ({ ...prev, rental_options: newOptions }));
                                 }}
-                                placeholder="Price"
+                                placeholder="Rp 0"
                                 className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
-                                min="0"
                                 disabled={isReadOnly}
                               />
                             </div>

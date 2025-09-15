@@ -1,6 +1,7 @@
 import React from 'react';
 import { adminInputBase } from '../ui/InputStyles';
 import { cn } from '../../../../utils/cn';
+import { formatNumberID, parseNumberID } from '../../../../utils/helpers';
 
 export interface BasicInfoValues {
   name: string; description: string; price: number; original_price: number; stock: number;
@@ -37,21 +38,23 @@ export const BasicInfoSection: React.FC<BasicInfoProps> = ({ values, onChange })
         <div>
           <label className="block text-sm font-medium text-white mb-2">Price *</label>
             <input
-              type="number"
-              value={values.price}
-              onChange={e=>onChange({ price: Number(e.target.value) })}
+              type="text"
+              inputMode="numeric"
+              value={values.price ? `Rp ${formatNumberID(values.price)}` : ''}
+              onChange={e => onChange({ price: parseNumberID(e.target.value) })}
               className={cn(adminInputBase, 'placeholder:text-white/50')}
-              placeholder="0"
+              placeholder="Rp 0"
             />
         </div>
         <div>
           <label className="block text-sm font-medium text-white mb-2">Original Price</label>
             <input
-              type="number"
-              value={values.original_price}
-              onChange={e=>onChange({ original_price: Number(e.target.value) })}
+              type="text"
+              inputMode="numeric"
+              value={values.original_price ? `Rp ${formatNumberID(values.original_price)}` : ''}
+              onChange={e => onChange({ original_price: parseNumberID(e.target.value) })}
               className={cn(adminInputBase, 'placeholder:text-white/50')}
-              placeholder="0"
+              placeholder="Rp 0"
             />
         </div>
       </div>

@@ -81,3 +81,28 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Hide number input spinners/arrows across all browsers */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Hide spinners on price input fields specifically */
+input[placeholder*="Rp"]::-webkit-outer-spin-button,
+input[placeholder*="Rp"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[placeholder*="Price"]::-webkit-outer-spin-button,
+input[placeholder*="Price"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
