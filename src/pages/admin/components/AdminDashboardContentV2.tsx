@@ -23,6 +23,7 @@ import { adminClient, AdminDashboardStats, OrderStatusTimeSeries } from '../../.
 import { AdminNotification } from '../../../services/adminNotificationService';
 import { prefetchManager } from '../../../services/intelligentPrefetch';
 import { OrderAnalyticsChart } from './OrderAnalyticsChart';
+import { adminService } from '../../../services/adminService';
 
 interface AdminDashboardContentProps {
   onRefreshStats?: () => void;
@@ -225,7 +226,11 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
   useEffect(() => {
     prefetchManager.setCurrentPage('dashboard');
     loadDashboardData();
-    adminClient.prefetchDashboardData();
+    
+    // Only prefetch in production to avoid development API errors
+    if (process.env.NODE_ENV !== 'development') {
+      adminClient.prefetchDashboardData();
+    }
   }, []);
 
   const loadDashboardData = async () => {
@@ -233,27 +238,72 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       setLoading(true);
       console.log('🔄 Loading dashboard data...');
       
-      const batchResults = await adminClient.batchRequest([
-        { id: 'stats', endpoint: 'dashboard-stats' },
-        { id: 'notifications', endpoint: 'recent-notifications', params: { limit: 6 } }
-      ]);
-
-      console.log('📊 Batch results:', batchResults);
-
-      if (batchResults.stats?.data) {
-        console.log('📈 Dashboard stats loaded:', batchResults.stats.data);
-        const newStats = batchResults.stats.data;
-        setDashboardStats(newStats);
-        setDashboardMetrics(calculateMetrics(newStats));
-      } else {
-        console.warn('⚠️ No stats data received');
-      }
+      // Use direct adminService for development to avoid API proxy issues
+      const isDevelopment = process.env.NODE_ENV === 'development';
       
-      if (batchResults.notifications?.data) {
-        console.log('🔔 Notifications loaded:', batchResults.notifications.data);
-        setRecentNotifications(batchResults.notifications.data);
+      if (isDevelopment) {
+        console.log('🛠️ Development mode: Using direct adminService');
+        
+        // Load stats directly from adminService
+        const statsData = await adminService.getDashboardStats();
+        console.log('📈 Dashboard stats loaded (direct):', statsData);
+        
+        // Convert adminService format to unifiedAdminClient format
+        const convertedStats: AdminDashboardStats = {
+          orders: {
+            count: statsData.totalOrders,
+            completed: statsData.completedOrders,
+            pending: statsData.pendingOrders,
+            revenue: statsData.totalRevenue,
+            completedRevenue: statsData.totalRevenue // Use same value for now
+          },
+          users: {
+            count: statsData.totalUsers
+          },
+          products: {
+            count: statsData.totalProducts
+          },
+          flashSales: {
+            count: statsData.totalFlashSales
+          },
+          reviews: {
+            count: statsData.totalReviews,
+            averageRating: statsData.averageRating
+          }
+        };
+        
+        setDashboardStats(convertedStats);
+        setDashboardMetrics(calculateMetrics(convertedStats));
+        
+        // For notifications, use empty array in development for now
+        setRecentNotifications([]);
+        
       } else {
-        console.warn('⚠️ No notifications data received');
+        // Production mode: Use unifiedAdminClient with API
+        console.log('🚀 Production mode: Using unifiedAdminClient');
+        
+        const batchResults = await adminClient.batchRequest([
+          { id: 'stats', endpoint: 'dashboard-stats' },
+          { id: 'notifications', endpoint: 'recent-notifications', params: { limit: 6 } }
+        ]);
+
+        console.log('📊 Batch results:', batchResults);
+
+        if (batchResults.stats?.data) {
+          console.log('📈 Dashboard stats loaded:', batchResults.stats.data);
+          const newStats = batchResults.stats.data;
+          setDashboardStats(newStats);
+          setDashboardMetrics(calculateMetrics(newStats));
+        } else {
+          console.warn('⚠️ No stats data received');
+        }
+        
+        if (batchResults.notifications?.data) {
+          console.log('🔔 Notifications loaded:', batchResults.notifications.data);
+          setRecentNotifications(batchResults.notifications.data);
+        } else {
+          console.warn('⚠️ No notifications data received');
+        }
       }
       
     } catch (error) {
@@ -277,12 +327,17 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
     try {
       setRefreshing(true);
       
-      adminClient.invalidateOrdersCaches();
-      adminClient.invalidateUsersCaches();
-      adminClient.invalidateProductsCaches();
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      
+      if (!isDevelopment) {
+        // Only clear caches in production mode
+        adminClient.invalidateOrdersCaches();
+        adminClient.invalidateUsersCaches();
+        adminClient.invalidateProductsCaches();
+        await adminClient.prefetchDashboardData();
+      }
       
       await loadDashboardData();
-      await adminClient.prefetchDashboardData();
       
       if (onRefreshStats) {
         onRefreshStats();

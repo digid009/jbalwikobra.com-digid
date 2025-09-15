@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { AdminStats, adminService } from '../../services/adminService';
 import { AdminDashboardContent } from './components/AdminDashboardContent';
 import AdminDashboardContentV2 from './components/AdminDashboardContentV2';
-import AdminOrders from './AdminOrders';
-import AdminUsers from './AdminUsers';
-import AdminProducts from './AdminProducts';
+import AdminOrdersV2 from './AdminOrdersV2';
+import AdminUsersV2 from './AdminUsersV2';
+import AdminProductsV2 from './AdminProductsV2';
 import AdminFeedManagement from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from '../../components/admin/flash-sales';
@@ -80,11 +80,11 @@ const AdminDashboard: React.FC = () => {
       case 'dashboard':
         return <AdminDashboardContentV2 onRefreshStats={loadStats} />;
       case 'orders':
-        return <AdminOrders />;
+        return <AdminOrdersV2 />;
       case 'users':
-        return <AdminUsers />;
+        return <AdminUsersV2 />;
       case 'products':
-        return <AdminProducts />;
+        return <AdminProductsV2 />;
       case 'feed':
         return <AdminFeedManagement />;
       case 'banners':

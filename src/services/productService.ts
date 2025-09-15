@@ -1282,15 +1282,11 @@ export class ProductService {
         .order('sort_order', { ascending: true });
       let result: string[] = [];
       if (!catErr && catData && catData.length) {
+        // For category names, get from categories table via category_id FK only
         result = catData.map(c => c.slug || c.name).filter(Boolean);
       } else {
-        const { data: legacyData } = await supabase
-          .from('products')
-          .select('category')
-          .not('category', 'is', null);
-        const set = new Set<string>();
-        legacyData?.forEach(r => r.category && set.add(r.category));
-        result = Array.from(set);
+        // Fallback: return empty array if no categories table access
+        result = [];
       }
       g._productServiceCache.set(cacheKey, { v: result, t: Date.now() });
       return result;

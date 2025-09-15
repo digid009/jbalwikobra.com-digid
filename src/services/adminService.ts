@@ -873,7 +873,7 @@ export const adminService = {
   async getProducts(page: number = 1, limit: number = 10, searchTerm?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<PaginatedResponse<Product>> {
     const sortKey = sort ? `${sort.column}:${sort.direction}` : 'created_at:desc';
     return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}:${sortKey}`, async () => {
-      // Use LEFT JOIN with tiers and game_titles to get all products
+      // Use LEFT JOIN with tiers and game_titles, get category data separately
       let query = supabase
         .from('products')
         .select(`
@@ -907,10 +907,33 @@ export const adminService = {
       const rows = data || [];
       console.log('[adminService.getProducts] success:', { rows: rows.length, count });
 
+      // Fetch category data separately for products that have category_id
+      const categoryIds = [...new Set(rows.filter(r => r.category_id).map(r => r.category_id))];
+      let categoriesMap = new Map();
+      
+      if (categoryIds.length > 0) {
+        try {
+          const { data: categories } = await supabase
+            .from('categories')
+            .select('id, name, slug, icon')
+            .in('id', categoryIds);
+          
+          if (categories) {
+            categories.forEach(cat => categoriesMap.set(cat.id, cat));
+          }
+        } catch (err) {
+          console.warn('[adminService.getProducts] failed to fetch categories:', err);
+        }
+      }
+
       const mapped = rows.map((row: any) => {
         const base: any = dbRowToDomainProduct(row);
         // expose category_id as categoryId for edit modal compatibility
         if ((row as any).category_id) base.categoryId = (row as any).category_id;
+        // Add category data if available
+        if ((row as any).category_id && categoriesMap.has((row as any).category_id)) {
+          base.categoryData = categoriesMap.get((row as any).category_id);
+        }
         return base as Product;
       });
 
@@ -921,6 +944,30 @@ export const adminService = {
         totalPages: Math.ceil((count || 0) / limit)
       };
     });
+  },
+
+  async getProductStats(): Promise<{ total: number; active: number; archived: number; totalValue: number }> {
+    return adminCache.getOrFetch('admin:product-stats', async () => {
+      try {
+        // Get all products to calculate accurate statistics
+        const { data: allProducts, error } = await supabase
+          .from('products')
+          .select('price, is_active, archived_at');
+
+        if (error) throw error;
+
+        const products = allProducts || [];
+        const total = products.length;
+        const active = products.filter(p => p.is_active && !p.archived_at).length;
+        const archived = products.filter(p => !p.is_active || p.archived_at).length;
+        const totalValue = products.reduce((sum, p) => sum + (p.price || 0), 0);
+
+        return { total, active, archived, totalValue };
+      } catch (error) {
+        console.error('[adminService.getProductStats] error:', error);
+        return { total: 0, active: 0, archived: 0, totalValue: 0 };
+      }
+    }, { ttl: 300000 }); // Cache for 5 minutes
   },  async getReviews(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Review>> {
     return adminCache.getOrFetch(`admin:reviews:${page}:${limit}`, async () => {
       try {
@@ -1693,5 +1740,106 @@ export const adminService = {
     
     // Clear cache
     adminCache.clear();
+  },
+
+  // Helper functions for dropdowns
+  async getCategories(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getGameTitles(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    const { data, error } = await supabase
+      .from('game_titles')
+      .select('id, name, slug')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getTiers(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    const { data, error } = await supabase
+      .from('tiers')
+      .select('id, name, slug')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Product CRUD Operations
+  async createProduct(data: {
+    name: string;
+    description: string;
+    price: number;
+    original_price?: number;
+    category_id?: string;
+    game_title_id?: string;
+    tier_id?: string;
+    image?: string;
+    images?: string[];
+    stock?: number;
+    is_active?: boolean;
+    has_rental?: boolean;
+  }): Promise<Product> {
+    const { data: product, error } = await supabase
+      .from('products')
+      .insert({
+        ...data,
+        stock: data.stock || 1,
+        is_active: data.is_active !== undefined ? data.is_active : true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+    
+    return product as Product;
+  },
+
+  async updateProduct(id: string, data: {
+    name?: string;
+    description?: string;
+    price?: number;
+    original_price?: number;
+    category_id?: string;
+    game_title_id?: string;
+    tier_id?: string;
+    image?: string;
+    images?: string[];
+    stock?: number;
+    is_active?: boolean;
+    has_rental?: boolean;
+  }): Promise<Product> {
+    const { data: product, error } = await supabase
+      .from('products')
+      .update({
+        ...data,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Clear cache
+    adminCache.clear();
+    
+    return product as Product;
   }
 };
