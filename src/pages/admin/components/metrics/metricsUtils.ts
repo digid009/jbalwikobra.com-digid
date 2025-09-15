@@ -16,28 +16,28 @@ export const defaultStats: AdminStats = {
 
 export const formatMetrics = (stats: AdminStats) => ({
   revenue: {
-    formatted: 'Rp ' + (stats?.totalRevenue ?? 0).toLocaleString(),
-    subtitle: `${stats.completedOrders} completed orders`
+    formatted: 'Rp ' + (stats?.totalRevenue ?? 0).toLocaleString('id-ID'),
+    subtitle: `from ${stats.completedOrders} paid orders`
   },
   orders: {
-    formatted: stats.totalOrders.toLocaleString(),
-    subtitle: `${stats.pendingOrders} pending`
+    formatted: (stats.totalOrders || 0).toLocaleString('id-ID'),
+    subtitle: `${stats.pendingOrders || 0} pending, ${stats.completedOrders || 0} completed`
   },
   users: {
-    formatted: stats.totalUsers.toLocaleString(),
+    formatted: (stats.totalUsers || 0).toLocaleString('id-ID'),
     subtitle: 'registered users'
   },
   products: {
-    formatted: stats.totalProducts.toLocaleString(),
+    formatted: (stats.totalProducts || 0).toLocaleString('id-ID'),
     subtitle: 'active products'
   },
   reviews: {
-    formatted: stats.totalReviews.toLocaleString(),
+    formatted: (stats.totalReviews || 0).toLocaleString('id-ID'),
     subtitle: stats?.averageRating ? `${stats.averageRating.toFixed(1)}/5 avg rating` : 'No reviews yet'
   },
   flashSales: {
-    formatted: stats.totalFlashSales.toLocaleString(),
-    subtitle: `${stats.activeFlashSales} currently active`
+    formatted: (stats.totalFlashSales || 0).toLocaleString('id-ID'),
+    subtitle: `${stats.activeFlashSales || 0} currently active`
   }
 });
 

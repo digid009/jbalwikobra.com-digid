@@ -1,49 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Star, ThumbsUp, ThumbsDown, AlertCircle, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, MessageSquare, RefreshCw } from 'lucide-react';
 import { adminService, Review } from '../../../services/adminService';
-import { RLSDiagnosticsBanner } from '../../../components/ios/RLSDiagnosticsBanner';
-import { cn } from '../../../utils/cn';
-import { getUserAvatarUrl, getUserDisplayName } from '../../../utils/avatarUtils';
-import { scrollToPaginationContent } from '../../../utils/scrollUtils';
-import { 
-  AdminPageHeaderV2, 
-  AdminStatCard, 
-  AdminDataTable, 
-  AdminFilters, 
-  StatusBadge 
-} from './ui';
-import type { 
-  TableColumn, 
-  TableAction, 
-  AdminFiltersConfig 
-} from './ui';
+import { ReviewsStatsComponent } from '../../../components/admin/reviews/ReviewsStatsComponent';
+import { ReviewsFiltersComponent } from '../../../components/admin/reviews/ReviewsFiltersComponent';
+import { ReviewsTable } from '../../../components/admin/reviews/ReviewsTable';
+import { ReviewFormModal } from '../../../components/admin/reviews/ReviewFormModal';
 
 export const AdminReviewsManagement: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [tableExists, setTableExists] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasErrors, setHasErrors] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [itemsPerPage] = useState(20);
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
   // Filter state
-  const [filters, setFilters] = useState({
-    search: '',
-    rating: 'all',
-    date: 'all'
+  const [filterState, setFilterState] = useState({
+    searchTerm: '',
+    ratingFilter: 'all' as 'all' | '5' | '4' | '3' | '2' | '1' | 'high' | 'low',
+    dateFilter: 'all' as 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year',
+    sortBy: 'created_at' as 'created_at' | 'rating' | 'user_name' | 'product_name',
+    sortOrder: 'desc' as 'asc' | 'desc'
   });
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Statistics calculation
   const stats = {
-    total: reviews.length,
-    highRated: reviews.filter(review => review.rating >= 4).length,
-    lowRated: reviews.filter(review => review.rating <= 2).length,
-    recent: reviews.filter(review => {
+    totalReviews: reviews.length,
+    averageRating: reviews.length > 0 ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 0,
+    highRatedReviews: reviews.filter(review => review.rating >= 4).length,
+    lowRatedReviews: reviews.filter(review => review.rating <= 2).length,
+    recentReviews: reviews.filter(review => {
       const reviewDate = new Date(review.created_at);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -51,262 +46,280 @@ export const AdminReviewsManagement: React.FC = () => {
     }).length
   };
 
-  // Filter configuration
-  const filtersConfig: AdminFiltersConfig = {
-    searchPlaceholder: 'Search reviews...',
-    filters: [
-      {
-        key: 'rating',
-        label: 'Rating',
-        options: [
-          { value: 'all', label: 'All Ratings' },
-          { value: '5', label: '5 Stars' },
-          { value: '4', label: '4 Stars' },
-          { value: '3', label: '3 Stars' },
-          { value: '2', label: '2 Stars' },
-          { value: '1', label: '1 Star' }
-        ]
-      },
-      {
-        key: 'date',
-        label: 'Period',
-        options: [
-          { value: 'all', label: 'All Time' },
-          { value: 'week', label: 'This Week' },
-          { value: 'month', label: 'This Month' },
-          { value: 'quarter', label: 'This Quarter' }
-        ]
-      }
-    ],
-    sortOptions: [
-      { value: 'created_at', label: 'Date Created' },
-      { value: 'rating', label: 'Rating' },
-      { value: 'user_id', label: 'Customer' }
-    ]
+  // Convert filter state to component props format
+  const filtersForComponent = {
+    searchTerm: filterState.searchTerm,
+    ratingFilter: filterState.ratingFilter,
+    dateFilter: filterState.dateFilter,
+    sortBy: filterState.sortBy,
+    sortOrder: filterState.sortOrder
   };
-
-  // Table columns configuration
-  const columns: TableColumn<Review>[] = [
-    {
-      key: 'user',
-      label: 'Customer',
-      render: (review) => {
-        const uid = (review as any)?.user_id || '';
-        const avatar = uid ? getUserAvatarUrl(uid) : undefined;
-        const name = uid ? getUserDisplayName(uid) : 'Unknown User';
-        return (
-          <div className="flex items-center gap-3">
-            {avatar ? (
-              <img src={avatar} alt="User" className="w-8 h-8 rounded-full" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gray-700/50 flex items-center justify-center text-xs text-gray-300">?
-              </div>
-            )}
-            <span className="font-medium">{name}</span>
-          </div>
-        );
-      }
-    },
-    {
-      key: 'product',
-      label: 'Product',
-      render: (review) => (
-        <span className="font-medium">{review.product?.name || 'Unknown Product'}</span>
-      )
-    },
-    {
-      key: 'rating',
-      label: 'Rating',
-      render: (review) => (
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star 
-              key={i} 
-              className={cn(
-                "w-4 h-4",
-                i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-              )}
-            />
-          ))}
-          <span className="ml-1 text-sm text-gray-600">({review.rating})</span>
-        </div>
-      )
-    },
-    {
-      key: 'comment',
-      label: 'Review',
-      render: (review) => (
-        <div className="max-w-xs">
-          <p className="text-sm text-gray-700 truncate">{review.comment}</p>
-        </div>
-      )
-    },
-    {
-      key: 'created_at',
-      label: 'Date',
-      render: (review) => (
-        <span className="text-sm text-gray-600">
-          {new Date(review.created_at).toLocaleDateString()}
-        </span>
-      )
-    }
-  ];
-
-  // Table actions
-  const actions: TableAction<Review>[] = [
-    {
-      label: 'View',
-      icon: <Eye size={16} />,
-      onClick: (review) => console.log('View review:', review.id)
-    },
-    {
-      label: 'Edit',
-      icon: <Edit size={16} />,
-      onClick: (review) => console.log('Edit review:', review.id)
-    },
-    {
-      label: 'Delete',
-      icon: <Trash2 size={16} />,
-      onClick: (review) => console.log('Delete review:', review.id),
-      variant: 'danger'
-    }
-  ];
 
   useEffect(() => {
     loadReviews();
-  }, [currentPage, filters.search, filters.rating, filters.date]);
+  }, [currentPage]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [reviews, filterState]);
 
   const loadReviews = async () => {
     try {
       setLoading(true);
       setError(null);
-      setHasErrors(false);
-      setErrorMessage('');
       const result = await adminService.getReviews(currentPage, itemsPerPage);
       setReviews(result.data);
       setTotalCount(result.count || 0);
-      setTableExists(true);
     } catch (error: any) {
       console.error('Error loading reviews:', error);
-      if (error.code === 'PGRST116') {
-        setTableExists(false);
-        setHasErrors(true);
-        setErrorMessage('Reviews table does not exist. Click "Setup Reviews" to create it.');
-      } else {
-        setError('Failed to load reviews');
-        setHasErrors(true);
-        setErrorMessage(`Error loading reviews: ${error.message}`);
-      }
+      setError('Failed to load reviews');
     } finally {
       setLoading(false);
     }
   };
 
-  const setupReviewsTable = async () => {
+  const applyFilters = () => {
+    let filtered = [...reviews];
+
+    // Search filter
+    if (filterState.searchTerm) {
+      const searchLower = filterState.searchTerm.toLowerCase();
+      filtered = filtered.filter(review => 
+        review.comment?.toLowerCase().includes(searchLower) ||
+        review.user_name?.toLowerCase().includes(searchLower) ||
+        review.product_name?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Rating filter
+    if (filterState.ratingFilter !== 'all') {
+      if (filterState.ratingFilter === 'high') {
+        filtered = filtered.filter(review => review.rating >= 4);
+      } else if (filterState.ratingFilter === 'low') {
+        filtered = filtered.filter(review => review.rating <= 2);
+      } else {
+        filtered = filtered.filter(review => review.rating === parseInt(filterState.ratingFilter));
+      }
+    }
+
+    // Date range filter
+    if (filterState.dateFilter !== 'all') {
+      const now = new Date();
+      let cutoffDate = new Date();
+
+      switch (filterState.dateFilter) {
+        case 'today':
+          cutoffDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          cutoffDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'quarter':
+          cutoffDate.setMonth(now.getMonth() - 3);
+          break;
+        case 'year':
+          cutoffDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      filtered = filtered.filter(review => new Date(review.created_at) >= cutoffDate);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any = a[filterState.sortBy as keyof Review];
+      let bValue: any = b[filterState.sortBy as keyof Review];
+
+      if (filterState.sortBy === 'created_at') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
+
+      if (filterState.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredReviews(filtered);
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    // Convert component filters back to internal state
+    setFilterState({
+      searchTerm: newFilters.searchTerm || '',
+      ratingFilter: newFilters.ratingFilter || 'all',
+      dateFilter: newFilters.dateFilter || 'all',
+      sortBy: newFilters.sortBy || 'created_at',
+      sortOrder: newFilters.sortOrder || 'desc'
+    });
+    setCurrentPage(1);
+  };
+
+  const handleToggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleCreateReview = () => {
+    setSelectedReview(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditReview = (review: Review) => {
+    setSelectedReview(review);
+    setIsModalOpen(true);
+  };
+
+  const handleViewReview = (review: Review) => {
+    // You could implement a view-only modal or navigate to a detail page
+    console.log('View review:', review);
+  };
+
+  const handleDeleteReview = async (id: string) => {
     try {
       setLoading(true);
-      // Setup functionality would go here
+      // Mock delete for now - replace with actual service call
+      console.log('Delete review:', id);
       await loadReviews();
     } catch (error: any) {
-      console.error('Error setting up reviews table:', error);
-      setError('Failed to setup reviews table');
-      setHasErrors(true);
-      setErrorMessage(`Error setting up table: ${error.message}`);
+      console.error('Error deleting review:', error);
+      setError('Failed to delete review');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFiltersChange = (newFilters: Record<string, any>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    setCurrentPage(1); // Reset to first page when filters change
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    scrollToPaginationContent();
+  const handleModalSubmit = async (reviewData: Review) => {
+    try {
+      setModalLoading(true);
+      
+      // Mock CRUD operations for now - replace with actual service calls
+      if (selectedReview) {
+        console.log('Update review:', selectedReview.id, reviewData);
+      } else {
+        console.log('Create review:', reviewData);
+      }
+      
+      setIsModalOpen(false);
+      await loadReviews();
+    } catch (error: any) {
+      console.error('Error saving review:', error);
+      setError('Failed to save review');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-50">
-      <RLSDiagnosticsBanner 
-        hasErrors={hasErrors}
-        errorMessage={errorMessage}
-        statsLoaded={!loading}
-      />
-
-      <AdminPageHeaderV2
-        title="Reviews Management"
-        subtitle="Manage customer reviews and feedback"
-        icon={Star}
-        actions={[
-          {
-            key: 'refresh',
-            label: 'Refresh',
-            onClick: loadReviews,
-            variant: 'secondary',
-            icon: RefreshCw,
-            loading: loading
-          }
-        ]}
-      />
-
-      <div className="flex flex-col gap-6 p-6">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <AdminStatCard
-            title="Total Reviews"
-            value={stats.total}
-            icon={Star}
-            iconColor="text-blue-600"
-            iconBgColor="bg-blue-100"
-          />
-          <AdminStatCard
-            title="High Rated (4-5★)"
-            value={stats.highRated}
-            icon={ThumbsUp}
-            iconColor="text-green-600"
-            iconBgColor="bg-green-100"
-          />
-          <AdminStatCard
-            title="Low Rated (1-2★)"
-            value={stats.lowRated}
-            icon={ThumbsDown}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
-          />
-          <AdminStatCard
-            title="Recent (This Week)"
-            value={stats.recent}
-            icon={AlertCircle}
-            iconColor="text-orange-600"
-            iconBgColor="bg-orange-100"
-          />
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <div className="bg-black border-b border-gray-800 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-2xl flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Reviews Management</h1>
+              <p className="text-gray-400">Manage customer reviews and feedback</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadReviews}
+              disabled={loading}
+              className="px-4 py-2 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 transition-all duration-200 flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <button
+              onClick={handleCreateReview}
+              className="px-4 py-2 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white rounded-xl hover:from-pink-600 hover:to-fuchsia-700 transition-all duration-200 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Review
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
+
+        {/* Statistics */}
+        <ReviewsStatsComponent
+          stats={stats}
+          loading={loading}
+        />
 
         {/* Filters */}
-        <AdminFilters
-          config={filtersConfig}
-          values={filters}
+        <ReviewsFiltersComponent
+          filters={filtersForComponent}
           onFiltersChange={handleFiltersChange}
-          totalItems={totalCount}
-          filteredItems={reviews.length}
-          loading={loading}
-          defaultCollapsed={true}
+          showFilters={showFilters}
+          onToggleFilters={handleToggleFilters}
+          resultCount={filteredReviews.length}
         />
 
-        {/* Data Table */}
-        <AdminDataTable
-          data={reviews}
-          columns={columns}
-          actions={actions}
+        {/* Reviews Table */}
+        <ReviewsTable
+          reviews={filteredReviews}
           loading={loading}
-          currentPage={currentPage}
-          totalItems={totalCount}
-          pageSize={itemsPerPage}
-          onPageChange={handlePageChange}
+          onEdit={handleEditReview}
+          onDelete={handleDeleteReview}
+          onView={handleViewReview}
         />
+
+        {/* Pagination would go here if needed */}
+        {totalPages > 1 && (
+          <div className="bg-black border border-gray-800 rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-gray-400">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} reviews
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-white">
+                  {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Review Form Modal */}
+      <ReviewFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleModalSubmit}
+        review={selectedReview}
+        loading={modalLoading}
+      />
     </div>
   );
 };

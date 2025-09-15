@@ -177,84 +177,6 @@ export interface TopProductStat {
 
 class AdminService {
   // Dashboard Stats
-  async getDashboardStats(): Promise<AdminStats> {
-    try {
-      // Get orders stats from the working service
-      const orderStats = await ordersService.getOrderStats();
-      
-      // Get other stats in parallel
-      const [
-        { count: totalUsers },
-  { count: totalProducts }
-      ] = await Promise.all([
-  supabase.from('users').select('id', { count: 'exact', head: true }),
-  supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true)
-      ]);
-
-      // Updated business rule: totalReviews represents count of paid + completed orders
-      let totalReviews = 0;
-      let averageRating = 0; // Keep averageRating legacy computation if reviews table exists
-      try {
-        const [paidCompletedOrders, reviewsWithRating] = await Promise.all([
-          supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['paid', 'completed']),
-          supabase.from('reviews').select('rating')
-        ]);
-        totalReviews = paidCompletedOrders.count || 0;
-        if (reviewsWithRating.data?.length) {
-          averageRating = reviewsWithRating.data.reduce((sum, r) => sum + (r as any).rating, 0) / reviewsWithRating.data.length;
-        }
-      } catch (e) {
-        // fallback silently
-      }
-
-      // Get flash sales data
-      let totalFlashSales = 0;
-      let activeFlashSales = 0;
-      try {
-        const { count: totalFlashSalesCount } = await supabase
-          .from('flash_sales')
-          .select('*', { count: 'exact', head: true });
-        
-        const { count: activeFlashSalesCount } = await supabase
-          .from('flash_sales')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true);
-          
-        totalFlashSales = totalFlashSalesCount || 0;
-        activeFlashSales = activeFlashSalesCount || 0;
-      } catch (e) {
-        // fallback silently
-      }
-
-      return {
-        totalOrders: orderStats.totalOrders,
-        totalRevenue: orderStats.totalRevenue,
-        totalUsers: totalUsers || 0,
-        totalProducts: totalProducts || 0,
-        totalReviews,
-        averageRating: Math.round(averageRating * 10) / 10,
-        pendingOrders: orderStats.pendingOrders,
-        completedOrders: orderStats.completedOrders,
-        totalFlashSales,
-        activeFlashSales
-      };
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      return {
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalUsers: 0,
-        totalProducts: 0,
-        totalReviews: 0,
-        averageRating: 0,
-        pendingOrders: 0,
-        completedOrders: 0,
-        totalFlashSales: 0,
-        activeFlashSales: 0
-      };
-    }
-  }
-
   // Orders Management
   async getOrders(page = 1, limit = 20, status?: string): Promise<{ data: Order[], count: number }> {
     try {
@@ -679,22 +601,31 @@ export const adminService = {
   async getAdminStats(): Promise<AdminStats> {
     return adminCache.getOrFetch('admin:stats', async () => {
       try {
-        // Get all stats in parallel
+        // Get all stats in parallel - optimized queries
         const [
           { count: totalUsers },
           { count: totalProducts },
           { count: totalOrders },
           { count: pendingOrders },
           { count: completedOrders },
-          ordersWithAmounts
+          { count: paidOrders },
+          ordersWithRevenue
         ] = await Promise.all([
           supabase.from('users').select('id', { count: 'exact', head: true }),
           supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('orders').select('id', { count: 'exact', head: true }),
           supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-          supabase.from('orders').select('amount')
+          supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+          supabase.from('orders').select('amount, status').in('status', ['paid', 'completed'])
         ]);
+
+        // Calculate total revenue from paid and completed orders
+        let totalRevenue = 0;
+        if (ordersWithRevenue.data) {
+          totalRevenue = ordersWithRevenue.data.reduce((sum, order) => 
+            sum + (Number(order.amount) || 0), 0);
+        }
 
         // Try to get reviews (might not exist)
         let totalReviews = 0;
@@ -715,20 +646,6 @@ export const adminService = {
             : 0;
         } catch (reviewError) {
           // Silent fallback if reviews table missing
-        }
-
-        // Calculate revenue - only from paid and completed orders
-        let totalRevenue = 0;
-        if (ordersWithAmounts.data) {
-          const { data: ordersWithStatus, error: statusError } = await supabase
-            .from('orders')
-            .select('amount, status')
-            .in('status', ['paid', 'completed']);
-          
-          if (!statusError && ordersWithStatus) {
-            totalRevenue = ordersWithStatus.reduce((sum, order) => 
-              sum + (Number(order.amount) || 0), 0);
-          }
         }
 
         // Get flash sales data
@@ -757,7 +674,7 @@ export const adminService = {
           totalReviews,
           averageRating: Math.round(averageRating * 10) / 10,
           pendingOrders: pendingOrders || 0,
-          completedOrders: completedOrders || 0,
+          completedOrders: (completedOrders || 0) + (paidOrders || 0), // Include both completed and paid orders
           totalFlashSales,
           activeFlashSales
         };
@@ -777,6 +694,12 @@ export const adminService = {
         };
       }
     });
+  },
+
+  // Clear admin stats cache to force fresh data
+  clearStatsCache(): void {
+    adminCache.invalidate('admin:stats');
+    console.log('Admin stats cache cleared');
   },
 
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
