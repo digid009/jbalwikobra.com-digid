@@ -15,9 +15,14 @@ import {
   Search,
   Bell,
   Settings,
-  LogOut
+  LogOut,
+  Check,
+  Clock,
+  DollarSign
 } from 'lucide-react';
-import { AdminStats } from '../../../services/adminService';
+import { AdminStats, AdminNotification, adminService } from '../../../services/adminService';
+import { SettingsService } from '../../../services/settingsService';
+import { WebsiteSettings } from '../../../types';
 import { AdminTab } from './structure/adminTypes';
 
 interface NavigationItem {
@@ -56,6 +61,11 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
   
   // Update time every minute
   useEffect(() => {
@@ -64,6 +74,59 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
     }, 60000);
     
     return () => clearInterval(interval);
+  }, []);
+
+  // Load website settings for logo
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await SettingsService.get();
+        if (mounted) setSettings(data);
+      } catch (e) {
+        console.warn('Failed to load settings for admin header:', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Load notifications
+  const loadNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const data = await adminService.getNotifications(1, 5);
+      setNotifications(data);
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  // Load notifications on mount and every 30 seconds
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Get unread notification count
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.notification-dropdown') && !target.closest('.notification-button')) {
+        setShowNotifications(false);
+      }
+      if (!target.closest('.settings-dropdown') && !target.closest('.settings-button')) {
+        setShowSettings(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const [dispatchOpenEvent] = useState(() => () => {
@@ -91,9 +154,19 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
             {/* Left: Logo */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg font-bold">J</span>
-                </div>
+                {settings?.logoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={settings.logoUrl}
+                      alt={settings.siteName || 'Logo'}
+                      className="w-10 h-10 rounded-xl object-cover ring-1 ring-white/20 shadow-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg font-bold">J</span>
+                  </div>
+                )}
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
                     JB Admin
@@ -131,17 +204,132 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
               </button>
 
               {/* Notifications */}
-              <button className="relative p-2 rounded-xl bg-gray-800/50 hover:bg-pink-500/10 text-gray-300 hover:text-pink-400 transition-all duration-200">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </button>
+              <div className="relative notification-button">
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-xl bg-gray-800/50 hover:bg-pink-500/10 text-gray-300 hover:text-pink-400 transition-all duration-200"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50 notification-dropdown">
+                    <div className="p-4 border-b border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-white font-semibold">Notifications</h3>
+                        <span className="text-xs text-gray-400">{unreadCount} unread</span>
+                      </div>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {loadingNotifications ? (
+                        <div className="p-4 text-center text-gray-400">Loading...</div>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-400">No notifications</div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${
+                              !notification.is_read ? 'bg-pink-500/5' : ''
+                            }`}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`p-2 rounded-lg ${
+                                notification.type === 'new_order' ? 'bg-blue-500/20 text-blue-400' :
+                                notification.type === 'paid_order' ? 'bg-green-500/20 text-green-400' :
+                                notification.type === 'cancelled_order' ? 'bg-red-500/20 text-red-400' :
+                                notification.type === 'new_user' ? 'bg-purple-500/20 text-purple-400' :
+                                'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                {notification.type === 'new_order' && <ShoppingCart className="w-4 h-4" />}
+                                {notification.type === 'paid_order' && <DollarSign className="w-4 h-4" />}
+                                {notification.type === 'cancelled_order' && <X className="w-4 h-4" />}
+                                {notification.type === 'new_user' && <Users className="w-4 h-4" />}
+                                {notification.type === 'new_review' && <Star className="w-4 h-4" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white">{notification.title}</p>
+                                <p className="text-xs text-gray-400 mt-1">{notification.message}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {new Date(notification.created_at).toLocaleString('id-ID')}
+                                </p>
+                              </div>
+                              {!notification.is_read && (
+                                <div className="w-2 h-2 bg-pink-500 rounded-full mt-2"></div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="p-3 border-t border-gray-700">
+                      <button 
+                        onClick={() => setShowNotifications(false)}
+                        className="w-full text-center text-xs text-pink-400 hover:text-pink-300 transition-colors"
+                      >
+                        View All Notifications
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Settings */}
-              <button className="p-2 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white transition-all duration-200">
-                <Settings className="w-5 h-5" />
-              </button>
+              <div className="relative settings-button">
+                <button 
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white transition-all duration-200"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+
+                {/* Settings Dropdown */}
+                {showSettings && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50 settings-dropdown">
+                    <div className="p-4 border-b border-gray-700">
+                      <h3 className="text-white font-semibold">Settings</h3>
+                    </div>
+                    <div className="p-2">
+                      <button 
+                        onClick={() => {
+                          setActiveTab('settings');
+                          setShowSettings(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm">Admin Settings</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          onRefreshStats?.();
+                          setShowSettings(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="text-sm">Refresh Data</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          loadNotifications();
+                          setShowSettings(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <Bell className="w-4 h-4" />
+                        <span className="text-sm">Refresh Notifications</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Logout */}
               <button className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200">

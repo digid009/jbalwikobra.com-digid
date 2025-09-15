@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { NotificationProvider } from './components/ios/NotificationSystem';
-import { injectCriticalCSS, preloadCriticalResources } from './utils/criticalCSS';
+import { injectCriticalCSS } from './utils/criticalCSS';
 import { initWebVitalsMonitoring } from './utils/webVitalsMonitor';
 import { FontOptimizer } from './utils/fontOptimizer';
 import { silenceConsoleInProduction } from './utils/consoleSilencer';
@@ -40,7 +40,7 @@ initWebVitalsMonitoring();
 
 // Inject critical CSS before any rendering
 injectCriticalCSS();
-preloadCriticalResources();
+// preloadCriticalResources(); // Disabled to prevent unused preload warnings
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

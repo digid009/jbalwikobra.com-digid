@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Calendar } from 'lucide-react';
 import unifiedAdminClient from '../../../services/unifiedAdminClient';
+import { adminService } from '../../../services/adminService';
 
 interface OrderChartData {
   date: string;
@@ -44,6 +45,7 @@ export const OrderAnalyticsChart: React.FC<OrderAnalyticsChartProps> = ({ loadin
   const [chartData, setChartData] = useState<OrderChartData[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [actualTotalRevenue, setActualTotalRevenue] = useState<number>(0);
 
   useEffect(() => {
     loadChartData();
@@ -52,6 +54,11 @@ export const OrderAnalyticsChart: React.FC<OrderAnalyticsChartProps> = ({ loadin
   const loadChartData = async () => {
     try {
       setChartLoading(true);
+      
+      // First, get the actual total revenue from adminService
+      const dashboardStats = await adminService.getDashboardStats();
+      setActualTotalRevenue(dashboardStats.totalRevenue);
+      console.log('📊 Chart: Using actual total revenue:', dashboardStats.totalRevenue);
       
       // Get real data from API
       const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
@@ -69,10 +76,9 @@ export const OrderAnalyticsChart: React.FC<OrderAnalyticsChartProps> = ({ loadin
         const date = new Date(item.date);
         const paidOrders = item.paid + item.completed; // Count both paid and completed as successful
         const totalOrders = item.total;
-        // Estimate revenue based on paid orders (we don't have daily revenue breakdown)
-        // This is an approximation - in a real app you'd want daily revenue data
-        const avgOrderValue = 75000; // Average order value estimation
-        const revenue = paidOrders * avgOrderValue;
+        // Use proportional revenue based on actual total revenue
+        const totalPaidOrders = timeSeriesData.reduce((sum: number, d: any) => sum + d.paid + d.completed, 0);
+        const revenue = totalPaidOrders > 0 ? (paidOrders / totalPaidOrders) * dashboardStats.totalRevenue : 0;
         
         return {
           date: date.toLocaleDateString('id-ID', { 
@@ -243,7 +249,7 @@ export const OrderAnalyticsChart: React.FC<OrderAnalyticsChartProps> = ({ loadin
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold text-pink-400">
-            Rp {chartData.reduce((sum, day) => sum + day.revenue, 0).toLocaleString()}
+            Rp {actualTotalRevenue.toLocaleString()}
           </p>
           <p className="text-xs text-gray-400">Total Revenue</p>
         </div>

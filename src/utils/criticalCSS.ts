@@ -75,13 +75,15 @@ export const injectCriticalCSS = () => {
   document.head.insertBefore(style, document.head.firstChild);
 };
 
-// Preload key resources
+// Preload key resources - optimized to prevent unused warnings
 export const preloadCriticalResources = () => {
   if (typeof document === 'undefined') return;
   
+  // Only preload resources that are guaranteed to be used immediately
   const resources = [
-    { href: '/manifest.json', as: 'fetch', crossorigin: 'anonymous' },
-    { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', as: 'style' }
+    // Manifest will be used by PWA functionality
+    { href: '/manifest.json', as: 'fetch', crossorigin: 'anonymous' }
+    // Note: Font CSS removed from preload as it's now loaded directly in HTML
   ];
   
   resources.forEach(resource => {
@@ -93,6 +95,13 @@ export const preloadCriticalResources = () => {
     link.href = resource.href;
     link.as = resource.as;
     if (resource.crossorigin) link.crossOrigin = resource.crossorigin;
+    
+    // Add onload handler to ensure resource is used
+    link.onload = () => {
+      // Resource loaded successfully
+      console.debug('Preloaded resource:', resource.href);
+    };
+    
     document.head.appendChild(link);
   });
 };

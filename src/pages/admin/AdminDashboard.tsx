@@ -70,6 +70,29 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const refreshStats = async () => {
+    try {
+      setLoading(true);
+      setHasStatsError(false);
+      setStatsErrorMessage('');
+      
+      // Clear cache and reload
+      adminService.clearStatsCache();
+      localStorage.removeItem('adminCache'); // Clear any localStorage cache
+      
+      const statsData = await adminService.getDashboardStats();
+      setStats(statsData);
+      
+      console.log('✅ Stats refreshed successfully:', statsData);
+    } catch (error: any) {
+      console.error('Failed to refresh admin stats:', error);
+      setHasStatsError(true);
+      setStatsErrorMessage(error.message || 'Failed to refresh dashboard statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderContent = () => {
     // Add diagnostic page for development
     if (window.location.search.includes('diagnostic')) {
@@ -94,7 +117,7 @@ const AdminDashboard: React.FC = () => {
       case 'reviews':
         return <AdminReviewsManagement />;
       default:
-        return <AdminDashboardContentV2 onRefreshStats={loadStats} />;
+        return <AdminDashboardContentV2 onRefreshStats={refreshStats} />;
     }
   };
 
@@ -114,7 +137,7 @@ const AdminDashboard: React.FC = () => {
               stats={stats}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
-              onRefreshStats={loadStats}
+              onRefreshStats={refreshStats}
             />
           </>
         }

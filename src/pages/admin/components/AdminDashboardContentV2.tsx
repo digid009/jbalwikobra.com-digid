@@ -238,73 +238,42 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       setLoading(true);
       console.log('🔄 Loading dashboard data...');
       
-      // Use direct adminService for development to avoid API proxy issues
-      const isDevelopment = process.env.NODE_ENV === 'development';
+      // Always use direct adminService for consistency
+      console.log('🛠️ Using direct adminService for consistent data');
       
-      if (isDevelopment) {
-        console.log('🛠️ Development mode: Using direct adminService');
-        
-        // Load stats directly from adminService
-        const statsData = await adminService.getDashboardStats();
-        console.log('📈 Dashboard stats loaded (direct):', statsData);
-        
-        // Convert adminService format to unifiedAdminClient format
-        const convertedStats: AdminDashboardStats = {
-          orders: {
-            count: statsData.totalOrders,
-            completed: statsData.completedOrders,
-            pending: statsData.pendingOrders,
-            revenue: statsData.totalRevenue,
-            completedRevenue: statsData.totalRevenue // Use same value for now
-          },
-          users: {
-            count: statsData.totalUsers
-          },
-          products: {
-            count: statsData.totalProducts
-          },
-          flashSales: {
-            count: statsData.totalFlashSales
-          },
-          reviews: {
-            count: statsData.totalReviews,
-            averageRating: statsData.averageRating
-          }
-        };
-        
-        setDashboardStats(convertedStats);
-        setDashboardMetrics(calculateMetrics(convertedStats));
-        
-        // For notifications, use empty array in development for now
-        setRecentNotifications([]);
-        
-      } else {
-        // Production mode: Use unifiedAdminClient with API
-        console.log('🚀 Production mode: Using unifiedAdminClient');
-        
-        const batchResults = await adminClient.batchRequest([
-          { id: 'stats', endpoint: 'dashboard-stats' },
-          { id: 'notifications', endpoint: 'recent-notifications', params: { limit: 6 } }
-        ]);
-
-        console.log('📊 Batch results:', batchResults);
-
-        if (batchResults.stats?.data) {
-          console.log('📈 Dashboard stats loaded:', batchResults.stats.data);
-          const newStats = batchResults.stats.data;
-          setDashboardStats(newStats);
-          setDashboardMetrics(calculateMetrics(newStats));
-        } else {
-          console.warn('⚠️ No stats data received');
+      // Load stats directly from adminService
+      const statsData = await adminService.getDashboardStats();
+      console.log('📈 Dashboard stats loaded (direct):', statsData);
+      
+      // Convert adminService format to unifiedAdminClient format
+      const convertedStats: AdminDashboardStats = {
+        orders: {
+          count: statsData.totalOrders,
+          completed: statsData.completedOrders,
+          pending: statsData.pendingOrders,
+          revenue: statsData.totalRevenue,
+          completedRevenue: statsData.totalRevenue // Use same value for now
+        },
+        users: {
+          count: statsData.totalUsers
+        },
+        products: {
+          count: statsData.totalProducts
+        },
+        flashSales: {
+          count: statsData.totalFlashSales
+        },
+        reviews: {
+          count: statsData.totalReviews,
+          averageRating: statsData.averageRating
         }
-        
-        if (batchResults.notifications?.data) {
-          console.log('🔔 Notifications loaded:', batchResults.notifications.data);
-          setRecentNotifications(batchResults.notifications.data);
-        } else {
-          console.warn('⚠️ No notifications data received');
-        }
-      }
+      };
+      
+      setDashboardStats(convertedStats);
+      setDashboardMetrics(calculateMetrics(convertedStats));
+      
+      // For notifications, use empty array for now
+      setRecentNotifications([]);
       
     } catch (error) {
       console.error('❌ Error loading dashboard data:', error);
