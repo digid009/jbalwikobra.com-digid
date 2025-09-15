@@ -122,6 +122,7 @@ export interface WebsiteSettings {
   footerCopyrightText?: string;
   newsletterEnabled?: boolean;
   socialMediaEnabled?: boolean;
+  topupUrl?: string; // URL for Top Up Game feature
   updatedAt?: string;
 }
 

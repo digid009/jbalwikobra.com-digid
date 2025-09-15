@@ -1,10 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, User, Plus, MessageSquare, Package, DollarSign } from 'lucide-react';
+import { Home, User, Package, DollarSign } from 'lucide-react';
 import CobraIcon from './icons/CobraIcon';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import { iosDesignTokens } from './ios/IOSDesignSystemV2';
-import MobileNavItem, { MobileNavItemConfig } from './mobile/MobileNavItem';
 
 // Mobile-First iOS Design System V2 Navigation Constants
 const NAVIGATION_CONSTANTS = {
@@ -81,25 +79,51 @@ const MobileNavigation: React.FC = () => {
 
   return (
     <>
-      {/* iOS Design System V2 - Mobile Bottom Navigation */}
-      <nav 
-        data-fixed="bottom-nav" 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
-        style={{ paddingBottom: '16px' }}
+      <nav
+        role="navigation"
+        aria-label="Main navigation"
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden pb-safe"
       >
-  <div className="mobile-nav-surface mobile-nav-appear mx-3 mb-0 px-4 pt-3 rounded-3xl" style={{ paddingBottom: '16px' }}>
-          <div className="relative flex items-center justify-around">
-            {navigationItems.map(item => (
-              <MobileNavItem key={item.path} item={item} isActive={isActiveTab(item.path)} touchSize={NAVIGATION_CONSTANTS.MIN_TOUCH_TARGET} />
-            ))}
-          </div>
+        <div className="mx-3 mb-1 rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl px-3 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0)+6px)] shadow-[0_2px_18px_-4px_rgba(255,0,128,0.35)]">
+          <ul className="flex items-end justify-between gap-0.5" role="tablist">
+            {navigationItems.map(item => {
+              const active = isActiveTab(item.path);
+              const Icon = item.icon;
+              const baseClasses = 'flex flex-col items-center justify-center gap-1 select-none';
+              const activeClasses = 'text-white bg-gradient-to-br from-pink-500/15 to-fuchsia-500/15 border border-pink-500/30';
+              const inactiveClasses = 'text-white/55 hover:text-white/80 hover:bg-white/5';
+              const common = 'transition-all duration-300 ease-out';
+              return (
+                <li key={item.path} role="presentation" className="flex-1">
+                  <Link
+                    to={item.path}
+                    aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
+                    className={[
+                      baseClasses,
+                      common,
+                      'relative rounded-2xl',
+                      active ? activeClasses : inactiveClasses,
+                      'h-12 px-2'
+                    ].join(' ')}
+                    style={{ minHeight: NAVIGATION_CONSTANTS.MIN_TOUCH_TARGET }}
+                  >
+                    <div className={`flex flex-col items-center ${active ? 'scale-105' : ''} transition-all`}> 
+                      <Icon size={20} strokeWidth={active ? 2.3 : 2} />
+                      <span className="mt-0.5 text-[10px] leading-tight font-medium">{item.label}</span>
+                    </div>
+                    {active && (
+                      <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-pink-400 shadow-[0_0_4px_rgba(244,114,182,0.8)]" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-
-        {/* iOS Safe Area Spacer */}
-        <div className="h-safe-area-inset-bottom" />
+        <div className="h-1" />
       </nav>
-
-      {/* Content Spacer for proper page layout */}
+      {/* Spacer to avoid content overlap (height matches nav total) */}
       <div className="h-20 lg:hidden" />
     </>
   );

@@ -2,10 +2,11 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import Header from './components/Header';
+import PNHeader from './components/public/layout/PNHeader';
 import MobileNavigation from './components/MobileNavigation';
 import ScrollToTop from './components/ScrollToTop';
 import Footer from './components/Footer';
+import PNFooter from './components/public/layout/PNFooter';
 import './App.css';
 import './styles/global-design-system.css';
 import './styles/admin-design-system.css';
@@ -171,10 +172,11 @@ function App() {
                   </Route>
                 )}
                 
-                {/* Public routes with global layout */}
+        {/* Public routes with global layout */}
                 <Route path="*" element={
                   <div className="App min-h-screen flex flex-col bg-black text-white relative">
-                    <Header />
+          {/* New PN public header; keep legacy header import for compatibility in other routes */}
+          <PNHeader />
                     {/* Floating notifications for public app */}
                     <FloatingNotifications />
                     <main className="flex-1 pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
@@ -218,7 +220,8 @@ function App() {
                         </Routes>
                       </Suspense>
                     </main>
-                    <Footer />
+                    {/* New PN public footer */}
+                    <PNFooter />
                     <MobileNavigation />
                   </div>
                 } />

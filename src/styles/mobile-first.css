@@ -160,12 +160,7 @@ input, textarea, select {
   }
 }
 
-/* Hide header on mobile screens */
-@media (max-width: 1023px) {
-  .mobile-hide-header {
-    display: none !important;
-  }
-}
+/* Removed .mobile-hide-header (PNHeader now uses Tailwind responsive classes) */
 
 /* Form specific spacing to prevent navigation overlap */
 .form-container-mobile {

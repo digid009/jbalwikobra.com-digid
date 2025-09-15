@@ -162,32 +162,7 @@
   padding-top: env(safe-area-inset-top);
 }
 
-.public-header {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  
-  /* iOS translucent navigation bar effect */
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.public-header-container {
-  padding: var(--spacing-md);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 64px;
-}
-
-/* Hide global header on small screens (mobile nav now primary) */
-@media (max-width: 767px) {
-  .public-header { display: none !important; }
-  /* Remove unused top padding when header hidden */
-  .public-layout { padding-top: 0; }
-}
+/* Removed legacy .public-header styles; PNHeader component handles layout & responsive visibility */
 
 .public-logo {
   font-size: var(--font-size-xl);
