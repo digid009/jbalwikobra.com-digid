@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 // Remove adminNotificationService import to avoid module resolution issues
 // import { adminNotificationService } from '../src/services/adminNotificationService';
 
@@ -322,15 +323,22 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to create verification' });
     }
 
-    // Send WhatsApp verification - temporarily disabled to isolate auth issues
+    // Send WhatsApp verification
     try {
-      console.log('WhatsApp verification disabled - verification code:', verificationCode);
-      // const result = await whatsappService.sendVerificationCode(phone, verificationCode);
-      // if (!result.success) {
-      //   console.error('WhatsApp send failed:', result.error);
-      // }
+      console.log('Sending WhatsApp verification code to:', phone);
+      const whatsappService = new DynamicWhatsAppService();
+      const result = await whatsappService.sendVerificationCode(phone, verificationCode);
+      
+      if (!result.success) {
+        console.error('WhatsApp send failed:', result.error);
+        // Don't fail the signup if WhatsApp fails, just log it
+        console.log('Continuing with signup despite WhatsApp failure');
+      } else {
+        console.log('WhatsApp verification sent successfully');
+      }
     } catch (whatsappError) {
       console.error('WhatsApp error:', whatsappError);
+      // Don't fail the signup if WhatsApp fails
     }
 
     return res.status(200).json({
