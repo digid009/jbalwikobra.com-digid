@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { formatCurrency, calculateTimeRemaining } from '../utils/helpers';
 import { Zap, ArrowUpRight, Users, Trophy, Crown, Sparkles } from 'lucide-react';
@@ -20,6 +20,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   fromCatalogPage = false,
   className = ''
 }) => {
+  const navigate = useNavigate();
+  
   const timeRemaining = product.flashSaleEndTime
     ? calculateTimeRemaining(product.flashSaleEndTime)
     : null;
@@ -147,7 +149,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
       padding="none"
       hoverable
       className={`relative flex flex-col overflow-hidden ${showFlashSaleTimer ? 'bg-gradient-to-br from-pink-700/40 via-pink-700/30 to-fuchsia-700/40 border border-pink-500/30' : `${tierStyle.bg} border ${tierStyle.cardBorder}`} group ${className}`}
-      onClick={() => window.location.href = `/products/${product.id}`}
+      onClick={() => navigate(`/products/${product.id}`, { 
+        state: { 
+          fromFlashSaleCard: showFlashSaleTimer,
+          fromCatalogPage 
+        } 
+      })}
     >
       {/* Image */}
       <div className="aspect-[4/5] w-full bg-[linear-gradient(45deg,#1e1e1e,#2a2a2a)] flex items-center justify-center border-b border-gray-500/20">

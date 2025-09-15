@@ -37,7 +37,11 @@ export const FlashSaleProductCard: React.FC<FlashSaleProductCardProps> = ({ prod
       padding="none"
       hoverable
   className="relative flex flex-col overflow-hidden interactive-card border border-subtle group"
-      onClick={() => navigate(`/products/${product.id}`)}
+      onClick={() => navigate(`/products/${product.id}`, { 
+        state: { 
+          fromFlashSaleCard: true
+        } 
+      })}
     >
       {/* Image */}
     <div className="aspect-square w-full flex items-center justify-center border-b border-subtle bg-[linear-gradient(55deg,#161616,#1f1f1f_35%,#2a1a2a_95%)]">
