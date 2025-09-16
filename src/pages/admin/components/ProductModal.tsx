@@ -104,6 +104,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
             const categoryId = product.category_id || (product as any).category || (product as any).categoryId || '';
             
             const productImages = product.images || (product.image ? [product.image] : []);
+            
+            // Fetch rental options if editing and product has rental flag
+            let existingRentalOptions: any[] = [];
+            if (product.has_rental && supabase) {
+              try {
+                const { data: rentalOptions } = await supabase
+                  .from('rental_options')
+                  .select('*')
+                  .eq('product_id', product.id)
+                  .order('id');
+                existingRentalOptions = rentalOptions || [];
+              } catch (error) {
+                console.warn('Failed to fetch rental options:', error);
+              }
+            }
+            
             setFormData({
               name: product.name || '',
               description: product.description || '',
@@ -117,7 +133,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               stock: product.stock || 1,
               is_active: product.is_active ?? true,
               has_rental: product.has_rental || false,
-              rental_options: (product as any).rentalOptions || []
+              rental_options: existingRentalOptions
             });
             
             // Initialize image items for display
