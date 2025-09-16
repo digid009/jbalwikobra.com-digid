@@ -19,7 +19,7 @@ export const ProductsResultsInfo = React.memo(({
 }: ProductsResultsInfoProps) => {
   return (
     <section className="mb-4">
-      <IOSContainer size="xl">
+      <div className="max-w-7xl mx-auto">
         <IOSCard padding="sm" className="flex items-center justify-between bg-zinc-900/60">
           <span className="text-sm text-zinc-400">
             {totalProducts} produk ditemukan
@@ -28,7 +28,7 @@ export const ProductsResultsInfo = React.memo(({
             )}
           </span>
         </IOSCard>
-      </IOSContainer>
+      </div>
     </section>
   );
 });

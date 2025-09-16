@@ -106,3 +106,23 @@ input[placeholder*="Price"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Global minimum tap target size (36x36) */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.icon-button,
+.clickable,
+a[role="button"],
+label[role="button"],
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* Utility class for explicit usage */
+.tap-36 { min-width: 36px; min-height: 36px; }

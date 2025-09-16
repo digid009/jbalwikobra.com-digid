@@ -25,11 +25,17 @@ interface ProductsPageState {
 
 interface FilterState {
   searchTerm: string;
-  selectedGame: string;
-  selectedTier: string;
+  selectedGame: string; // single select (pills)
+  selectedTier: string; // single select (pills)
+  selectedGames: string[]; // desktop multi-select
+  selectedTiers: string[]; // desktop multi-select
+  minPrice: number | null;
+  maxPrice: number | null;
   sortBy: string;
-  showFilters: boolean;
+  rentalOnly: boolean;
 }
+
+type LayoutDensity = 'comfortable' | 'compact';
 
 export const useProductsData = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,12 +50,42 @@ export const useProductsData = () => {
     error: null
   });
 
-  const [filterState, setFilterState] = useState<FilterState>({
-    searchTerm: searchParams.get('search') || '',
-    selectedGame: searchParams.get('game') || '',
-    selectedTier: searchParams.get('tier') || '',
-    sortBy: searchParams.get('sortBy') || 'newest',
-    showFilters: false
+  const [filterState, setFilterState] = useState<FilterState>(() => {
+    // Load from sessionStorage if available
+    let stored: Partial<FilterState> = {};
+    try {
+      const savedState = sessionStorage.getItem('productsPageState');
+      if (savedState) stored = JSON.parse(savedState);
+    } catch {/* ignore */}
+
+    const urlSelectedGames = searchParams.get('games');
+    const urlSelectedTiers = searchParams.get('tiers');
+    const urlMin = searchParams.get('minPrice');
+    const urlMax = searchParams.get('maxPrice');
+    const urlRental = searchParams.get('rental');
+
+    return {
+      searchTerm: searchParams.get('search') ?? (stored.searchTerm ?? ''),
+      selectedGame: searchParams.get('game') ?? (stored.selectedGame ?? ''),
+      selectedTier: searchParams.get('tier') ?? (stored.selectedTier ?? ''),
+      selectedGames: urlSelectedGames ? urlSelectedGames.split(',').filter(Boolean) : (stored.selectedGames ?? []),
+      selectedTiers: urlSelectedTiers ? urlSelectedTiers.split(',').filter(Boolean) : (stored.selectedTiers ?? []),
+      minPrice: urlMin !== null ? Number(urlMin) : (stored.minPrice ?? null),
+      maxPrice: urlMax !== null ? Number(urlMax) : (stored.maxPrice ?? null),
+      sortBy: searchParams.get('sortBy') ?? (stored.sortBy ?? 'newest'),
+      rentalOnly: urlRental ? (urlRental === '1' || urlRental === 'true') : (stored.rentalOnly ?? false),
+    };
+  });
+
+  // Layout density (persisted)
+  const [layoutDensity, setLayoutDensity] = useState<LayoutDensity>(() => {
+    if (typeof window === 'undefined') return 'comfortable';
+    try {
+      const stored = localStorage.getItem('catalog_layout_density');
+      return stored === 'compact' ? 'compact' : 'comfortable';
+    } catch {
+      return 'comfortable';
+    }
   });
 
   const [currentPage, setCurrentPage] = useState(() => {
@@ -142,20 +178,39 @@ export const useProductsData = () => {
       );
     }
 
-    // Game filter
-    if (filterState.selectedGame) {
+    // Game filter (multi-select has priority)
+    if (filterState.selectedGames && filterState.selectedGames.length > 0) {
+      const setGames = new Set(filterState.selectedGames.map(g => g.toLowerCase()));
+      filtered = filtered.filter(p => p.gameTitleData?.name && setGames.has(p.gameTitleData.name.toLowerCase()));
+    } else if (filterState.selectedGame) {
       filtered = filtered.filter(product => {
-  const gameName = product.gameTitleData?.name;
+        const gameName = product.gameTitleData?.name;
         return gameName?.toLowerCase() === filterState.selectedGame.toLowerCase();
       });
     }
 
-    // Tier filter
-    if (filterState.selectedTier) {
+    // Tier filter (multi-select has priority)
+    if (filterState.selectedTiers && filterState.selectedTiers.length > 0) {
+      const setTiers = new Set(filterState.selectedTiers.map(t => t.toLowerCase()));
+      filtered = filtered.filter(p => p.tierData?.slug && setTiers.has(p.tierData.slug.toLowerCase()));
+    } else if (filterState.selectedTier) {
       filtered = filtered.filter(product => {
         const tierSlug = product.tierData?.slug;
         return tierSlug?.toLowerCase() === filterState.selectedTier.toLowerCase();
       });
+    }
+
+    // Rental filter
+    if (filterState.rentalOnly) {
+      filtered = filtered.filter(product => Boolean(product.hasRental || product.rentalOptions?.length));
+    }
+
+    // Price range filter
+    if (typeof filterState.minPrice === 'number' && !Number.isNaN(filterState.minPrice)) {
+      filtered = filtered.filter(p => p.price >= (filterState.minPrice as number));
+    }
+    if (typeof filterState.maxPrice === 'number' && !Number.isNaN(filterState.maxPrice)) {
+      filtered = filtered.filter(p => p.price <= (filterState.maxPrice as number));
     }
 
     // Sort
@@ -190,7 +245,12 @@ export const useProductsData = () => {
     if (filterState.searchTerm) params.set('search', filterState.searchTerm);
     if (filterState.selectedGame) params.set('game', filterState.selectedGame);
     if (filterState.selectedTier) params.set('tier', filterState.selectedTier);
+    if (filterState.selectedGames?.length) params.set('games', filterState.selectedGames.join(','));
+    if (filterState.selectedTiers?.length) params.set('tiers', filterState.selectedTiers.join(','));
+    if (typeof filterState.minPrice === 'number' && !Number.isNaN(filterState.minPrice)) params.set('minPrice', String(filterState.minPrice));
+    if (typeof filterState.maxPrice === 'number' && !Number.isNaN(filterState.maxPrice)) params.set('maxPrice', String(filterState.maxPrice));
     if (filterState.sortBy !== 'newest') params.set('sortBy', filterState.sortBy);
+  if (filterState.rentalOnly) params.set('rental', '1');
     setSearchParams(params);
   }, [filterState, setSearchParams]);
 
@@ -203,16 +263,8 @@ export const useProductsData = () => {
     sessionStorage.setItem('productsPageState', JSON.stringify(stateToSave));
   }, [currentPage, filterState]);
 
-  const handleFilterChange = useCallback((key: string, value: string | boolean) => {
+  const handleFilterChange = useCallback((key: string, value: string | boolean | string[] | number | null) => {
     setFilterState(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const toggleFilters = useCallback(() => {
-    setFilterState(prev => ({ ...prev, showFilters: !prev.showFilters }));
-  }, []);
-
-  const closeFilters = useCallback(() => {
-    setFilterState(prev => ({ ...prev, showFilters: false }));
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
@@ -227,6 +279,64 @@ export const useProductsData = () => {
     handleFilterChange('sortBy', 'newest');
   }, [handleFilterChange]);
 
+  // Active filters derivation (memo)
+  const activeFilters = useMemo(() => {
+    const items: Array<{ key: string; label: string; value: string }> = [];
+    if (filterState.searchTerm) items.push({ key: 'searchTerm', label: 'Pencarian', value: filterState.searchTerm });
+    if (filterState.selectedGames?.length) items.push({ key: 'selectedGames', label: 'Game', value: filterState.selectedGames.join(', ') });
+    else if (filterState.selectedGame) items.push({ key: 'selectedGame', label: 'Game', value: filterState.selectedGame });
+    if (filterState.selectedTiers?.length) items.push({ key: 'selectedTiers', label: 'Tier', value: filterState.selectedTiers.join(', ') });
+    else if (filterState.selectedTier) items.push({ key: 'selectedTier', label: 'Tier', value: filterState.selectedTier });
+    if (typeof filterState.minPrice === 'number' || typeof filterState.maxPrice === 'number') {
+      const min = (typeof filterState.minPrice === 'number') ? `Min ${filterState.minPrice}` : '';
+      const max = (typeof filterState.maxPrice === 'number') ? `Max ${filterState.maxPrice}` : '';
+      const label = [min, max].filter(Boolean).join(' · ');
+      if (label) items.push({ key: 'priceRange', label: 'Harga', value: label });
+    }
+  if (filterState.rentalOnly) items.push({ key: 'rentalOnly', label: 'Rental', value: 'Ya' });
+    return items;
+  }, [filterState.searchTerm, filterState.selectedGame, filterState.selectedTier, filterState.selectedGames, filterState.selectedTiers, filterState.minPrice, filterState.maxPrice, filterState.rentalOnly]);
+
+  const clearFilter = useCallback((key: string) => {
+    if (key === 'searchTerm' || key === 'selectedGame' || key === 'selectedTier') {
+      handleFilterChange(key, '');
+    } else if (key === 'selectedGames') {
+      handleFilterChange('selectedGames', []);
+    } else if (key === 'selectedTiers') {
+      handleFilterChange('selectedTiers', []);
+    } else if (key === 'rentalOnly') {
+      handleFilterChange('rentalOnly', false);
+    } else if (key === 'priceRange') {
+      handleFilterChange('minPrice', null);
+      handleFilterChange('maxPrice', null);
+    }
+  }, [handleFilterChange]);
+
+  const clearAllFilters = useCallback(() => {
+  handleFilterChange('searchTerm', '');
+  handleFilterChange('selectedGame', '');
+  handleFilterChange('selectedTier', '');
+  handleFilterChange('selectedGames', []);
+  handleFilterChange('selectedTiers', []);
+  handleFilterChange('minPrice', null);
+  handleFilterChange('maxPrice', null);
+  handleFilterChange('sortBy', 'newest');
+  handleFilterChange('rentalOnly', false);
+  }, [resetFilters]);
+
+  // Persist layout density
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('catalog_layout_density', layoutDensity);
+      }
+    } catch {/* ignore */}
+  }, [layoutDensity]);
+
+  const handleSetLayoutDensity = useCallback((density: LayoutDensity) => {
+    setLayoutDensity(density);
+  }, []);
+
   // Pagination calculations
   const totalPages = Math.ceil(state.filteredProducts.length / productsPerPage);
   const startIndex = (currentPage - 1) * productsPerPage;
@@ -240,13 +350,16 @@ export const useProductsData = () => {
     currentPage,
     currentProducts,
     totalPages,
+  layoutDensity,
+  activeFilters,
     
     // Actions
     fetchData,
     handleFilterChange,
     handlePageChange,
     resetFilters,
-    toggleFilters,
-    closeFilters
+  clearFilter,
+  clearAllFilters,
+  setLayoutDensity: handleSetLayoutDensity
   };
 };
