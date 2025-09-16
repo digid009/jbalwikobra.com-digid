@@ -66,8 +66,8 @@ export const PNButton: React.FC<ButtonProps> = ({
       size === 'md' && 'px-4 py-2.5 text-sm',
       size === 'sm' && 'px-3 py-2 text-xs',
       variant === 'primary' && 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white hover:from-pink-600 hover:to-fuchsia-700 shadow-lg shadow-pink-500/25',
-      variant === 'secondary' && 'bg-white/10 text-white hover:bg-white/15 border border-white/20',
-      variant === 'ghost' && 'bg-transparent text-white hover:bg-white/10 border border-transparent',
+      variant === 'secondary' && 'bg-black text-white hover:bg-gray-900 border border-white/20',
+      variant === 'ghost' && 'bg-transparent text-white hover:bg-white/10 border border-white/30',
       className
     )}
     {...rest}

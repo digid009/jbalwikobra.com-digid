@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Crown } from 'lucide-react';
+import { ChevronRight, Crown, UserPlus } from 'lucide-react';
 import { useCategories } from '../../hooks/useCategories';
 import { PNSectionHeader, PNCard, PNContainer } from '../ui/PinkNeonDesignSystem';
 
@@ -12,6 +12,15 @@ const CategorySkeleton: React.FC = () => (
 
 const HomeAccountCategoriesSection: React.FC = () => {
   const { categories, loading } = useCategories();
+
+  // Function to determine icon based on category name
+  const getCategoryIcon = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    if (name.includes('jasa') || name.includes('posting') || name.includes('service')) {
+      return UserPlus;
+    }
+    return Crown;
+  };
 
   if (loading) {
     return (
@@ -65,7 +74,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
               <PNCard className="p-4 hover:bg-white/10 transition-colors h-full">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-600 via-pink-500 to-fuchsia-600 border border-pink-500/30 flex items-center justify-center">
-                    <Crown size={20} className="text-white" />
+                    {React.createElement(getCategoryIcon(c.name), { size: 20, className: "text-white" })}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-semibold truncate">{c.name}</div>

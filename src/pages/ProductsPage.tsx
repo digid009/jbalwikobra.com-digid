@@ -17,11 +17,11 @@ import {
   ProductsLoadingSkeleton,
   ProductsErrorState,
   ProductsGrid,
-  PaginationBar
+  PaginationBar,
+  ProductsPageHeader
 } from '../components/products';
 import { PNCatalogToolbar } from '../components/catalog';
 import { ProductsResultsInfo } from '../components/products';
-import { PNSection, PNContainer, PNHeading, PNText } from '../components/ui/PinkNeonDesignSystem';
 
 const ProductsPage: React.FC = () => {
   const {
@@ -65,27 +65,20 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* PN Style Hero Matching Homepage */}
-      <PNSection padding="lg">
-        <PNContainer>
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-black via-black to-black px-6 py-10">
-            {/* Glow background accents */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl" />
-              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-fuchsia-600/20 rounded-full blur-3xl" />
-            </div>
-            <div className="relative z-10 text-center max-w-xl mx-auto">
-              <PNHeading level={1} gradient className="mb-3">Catalog Akun Game</PNHeading>
-              <PNText className="mb-3">Jelajahi koleksi akun game kami yang terkurasi dengan filter, pencarian cepat, dan tampilan adaptif</PNText>
-            </div>
-          </div>
-        </PNContainer>
-      </PNSection>
+      {/* Products Header - Flash Sales Style */}
+      <ProductsPageHeader
+        searchTerm={filterState.searchTerm}
+        onSearchChange={(term) => handleFilterChange('searchTerm', term)}
+        totalProducts={filteredProducts.length}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        showBackNav={true}
+      />
 
       {/* PN Toolbar */}
       <PNCatalogToolbar
-        search={filterState.searchTerm}
-        onSearchChange={(v) => handleFilterChange('searchTerm', v)}
+        search=""
+        onSearchChange={() => {}}
         sortBy={filterState.sortBy}
         onSortChange={(v) => handleFilterChange('sortBy', v)}
         activeFilters={activeFilters}
@@ -101,6 +94,7 @@ const ProductsPage: React.FC = () => {
         onGameChange={(name) => handleFilterChange('selectedGame', name)}
         selectedCategory={filterState.searchTerm}
         onCategoryChange={(name) => handleFilterChange('searchTerm', name)}
+        hideSearch={true}
       />
 
       <div className="px-4 mt-4">

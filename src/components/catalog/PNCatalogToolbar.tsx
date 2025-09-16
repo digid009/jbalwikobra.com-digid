@@ -24,6 +24,8 @@ interface PNCatalogToolbarProps {
   // Categories props
   selectedCategory?: string;
   onCategoryChange?: (name: string) => void;
+  // Hide search bar option
+  hideSearch?: boolean;
 }
 
 const PNCatalogToolbar: React.FC<PNCatalogToolbarProps> = ({
@@ -44,6 +46,7 @@ const PNCatalogToolbar: React.FC<PNCatalogToolbarProps> = ({
   onGameChange,
   selectedCategory,
   onCategoryChange,
+  hideSearch = false,
 }) => {
   // Debounced search input UX
   const [localSearch, setLocalSearch] = useState(search);
@@ -117,30 +120,32 @@ const PNCatalogToolbar: React.FC<PNCatalogToolbarProps> = ({
         </div>
 
         {/* Search Bar - Full width on mobile */}
-        <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 sm:px-4 h-9 sm:h-10 min-h-9 sm:min-h-10 max-h-9 sm:max-h-10 focus-within:border-pink-400/40 transition-colors">
-          <span className="flex w-4 h-4 items-center justify-center shrink-0">
-            <Search size={16} className="w-4 h-4 shrink-0 text-pink-300" style={{ width: 16, height: 16 }} />
-          </span>
-          <input
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') onSearchChange(localSearch); }}
-            placeholder="Cari akun game..."
-            className="bg-transparent flex-1 h-full leading-none outline-none text-xs sm:text-sm text-white placeholder:text-white/40"
-            aria-label="Pencarian produk"
-          />
-          {localSearch && (
-            <IOSButton
-              variant="ghost"
-              size="sm"
-              onClick={() => { setLocalSearch(''); onSearchChange(''); }}
-              className="w-7 sm:w-8 h-7 sm:h-8 p-1.5 sm:p-2 rounded-full"
-              aria-label="Bersihkan pencarian"
-            >
-              <X size={14} className="w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0" style={{ width: 14, height: 14 }} />
-            </IOSButton>
-          )}
-        </div>
+        {!hideSearch && (
+          <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 sm:px-4 h-9 sm:h-10 min-h-9 sm:min-h-10 max-h-9 sm:max-h-10 focus-within:border-pink-400/40 transition-colors">
+            <span className="flex w-4 h-4 items-center justify-center shrink-0">
+              <Search size={16} className="w-4 h-4 shrink-0 text-pink-300" style={{ width: 16, height: 16 }} />
+            </span>
+            <input
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') onSearchChange(localSearch); }}
+              placeholder="Cari akun game..."
+              className="bg-transparent flex-1 h-full leading-none outline-none text-xs sm:text-sm text-white placeholder:text-white/40"
+              aria-label="Pencarian produk"
+            />
+            {localSearch && (
+              <IOSButton
+                variant="ghost"
+                size="sm"
+                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                className="w-7 sm:w-8 h-7 sm:h-8 p-1.5 sm:p-2 rounded-full"
+                aria-label="Bersihkan pencarian"
+              >
+                <X size={14} className="w-3.5 sm:w-4 h-3.5 sm:h-4 shrink-0" style={{ width: 14, height: 14 }} />
+              </IOSButton>
+            )}
+          </div>
+        )}
 
         {/* Filter Controls - Stack on mobile, horizontal on desktop */}
         <div className="flex flex-col gap-3 sm:gap-4">
