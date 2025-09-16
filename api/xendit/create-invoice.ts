@@ -3,6 +3,27 @@ const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
+// Only include payment methods that are ACTIVATED on your Xendit account
+// Update this list based on your Xendit dashboard activation status
+const ACTIVATED_PAYMENT_METHODS = [
+  // Virtual Accounts - Based on your dashboard screenshot
+  'BJB',
+  'BNI', 
+  'BRI',
+  'BSI',
+  'CIMB',
+  'MANDIRI',
+  'PERMATA',
+  // Over-the-counter
+  'INDOMARET',
+  // QR Code
+  'QRIS',
+  // PayLater  
+  'AKULAKU'
+  // Note: E-wallets like DANA, OVO, SHOPEEPAY are not included because
+  // they're not activated on your account. Add them here if you activate them.
+];
+
 // Simple admin notification function for serverless environment
 async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'new_order', customerPhone?: string) {
   try {
@@ -255,6 +276,7 @@ export default async function handler(req: any, res: any) {
         success_redirect_url: withOrderId(success_redirect_url),
         failure_redirect_url: withOrderId(failure_redirect_url),
         customer,
+        payment_methods: ACTIVATED_PAYMENT_METHODS, // Only show activated payment channels
         metadata: {
           client_external_id: finalExternalId,
           product_id: order?.product_id || null,

@@ -62,9 +62,9 @@ const CheckoutModal: React.FC<Props> = ({
       customer.email.trim().length > 0 &&
       customer.phone.trim().length > 0 &&
       isPhoneValid &&
-      selectedPaymentMethod.trim().length > 0 // Require payment method selection
+      (checkoutType === 'rental' || selectedPaymentMethod.trim().length > 0) // Payment method optional for rental
     );
-  }, [customer, isPhoneValid, selectedPaymentMethod]);
+  }, [customer, isPhoneValid, selectedPaymentMethod, checkoutType]);
 
   // Form errors
   const [errors, setErrors] = useState<{
@@ -94,7 +94,7 @@ const CheckoutModal: React.FC<Props> = ({
       newErrors.phone = 'Format nomor WhatsApp tidak valid';
     }
 
-    if (!selectedPaymentMethod.trim()) {
+    if (!selectedPaymentMethod.trim() && checkoutType === 'purchase') {
       newErrors.paymentMethod = 'Pilih metode pembayaran';
     }
 
@@ -113,7 +113,13 @@ const CheckoutModal: React.FC<Props> = ({
     if (checkoutType === 'purchase') {
       onCheckout(selectedPaymentMethod);
     } else {
-      onWhatsAppRental();
+      // For rental, if payment method is selected, proceed with payment
+      // Otherwise go to WhatsApp
+      if (selectedPaymentMethod.trim()) {
+        onCheckout(selectedPaymentMethod);
+      } else {
+        onWhatsAppRental();
+      }
     }
   };
 
@@ -158,6 +164,7 @@ const CheckoutModal: React.FC<Props> = ({
                 amount={effectivePrice}
                 loading={creatingInvoice}
                 error={errors.paymentMethod}
+                checkoutType={checkoutType}
               />
 
               {/* Actions */}
@@ -170,6 +177,7 @@ const CheckoutModal: React.FC<Props> = ({
                 onCheckout={() => handleSubmit()}
                 onWhatsAppRental={() => handleSubmit()}
                 onCancel={onClose}
+                selectedPaymentMethod={selectedPaymentMethod}
               />
             </form>
           </div>

@@ -17,6 +17,7 @@ interface PurchaseActionsProps {
   onCheckout: () => void;
   onWhatsAppRental: () => void;
   onCancel: () => void;
+  selectedPaymentMethod?: string; // Add selectedPaymentMethod prop
 }
 
 export const PurchaseActions = React.memo(({
@@ -27,9 +28,12 @@ export const PurchaseActions = React.memo(({
   isFormValid,
   onCheckout,
   onWhatsAppRental,
-  onCancel
+  onCancel,
+  selectedPaymentMethod
 }: PurchaseActionsProps) => {
   const isPurchase = checkoutType === 'purchase';
+  const isRental = checkoutType === 'rental';
+  const hasPaymentMethod = selectedPaymentMethod && selectedPaymentMethod.trim() !== '';
   const canProceed = isPurchase ? (acceptedTerms && isFormValid && !creatingInvoice) : isFormValid;
 
   return (
@@ -123,7 +127,28 @@ export const PurchaseActions = React.memo(({
               {creatingInvoice ? 'Memproses...' : 'Bayar Sekarang'}
             </span>
           </PNButton>
+        ) : isRental && hasPaymentMethod ? (
+          // Rental with payment method selected - show payment button
+          <PNButton
+            variant="primary"
+            size="lg"
+            onClick={onCheckout}
+            disabled={!canProceed}
+            className={`flex-1 flex items-center justify-center space-x-2 ${
+              canProceed 
+                ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700' 
+                : 'opacity-50 cursor-not-allowed'
+            }`}
+          >
+            {creatingInvoice && (
+              <Loader className="animate-spin" size={18} />
+            )}
+            <span>
+              {creatingInvoice ? 'Memproses...' : 'Bayar Rental'}
+            </span>
+          </PNButton>
         ) : (
+          // Rental without payment method - show WhatsApp button
           <PNButton
             variant="primary"
             size="lg"

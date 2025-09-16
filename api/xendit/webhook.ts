@@ -11,7 +11,7 @@ function mapStatus(x: string | undefined): 'pending'|'paid'|'completed'|'cancell
 
 async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId?: string) {
   try {
-    // Get order details with product information
+    // Get order details with product information and rental details
     let q = sb.from('orders')
       .select(`
         id,
@@ -20,6 +20,8 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
         customer_phone,
         amount,
         status,
+        order_type,
+        rental_duration,
         created_at,
         paid_at,
         products (
@@ -45,9 +47,28 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
 
     const product = order.products;
     const productName = product?.name || 'Unknown Product';
+    const isRental = order.order_type === 'rental';
     
-    // Generate notification message
-    const message = `🎮 **ORDERAN BARU - PAID** 
+    // Generate notification message (different for rental vs purchase)
+    const message = isRental 
+      ? `� **RENTAL ORDER - PAID** 
+
+👤 **Customer:** ${order.customer_name || 'Guest'}
+📧 **Email:** ${order.customer_email || 'Not provided'}
+📱 **Phone:** ${order.customer_phone || 'Not provided'}
+📋 **Order ID:** ${order.id}
+
+🎯 **Product:** ${productName}
+⏰ **Duration:** ${order.rental_duration || 'Not specified'}
+💰 **Amount:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
+✅ **Status:** PAID
+
+📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
+
+🚨 **ACTION REQUIRED:** Set up rental access for customer immediately!
+
+#RentalPaid`
+      : `🎮 **PURCHASE ORDER - PAID** 
 
 👤 **Customer:** ${order.customer_name || 'Guest'}
 📧 **Email:** ${order.customer_email || 'Not provided'}
@@ -60,7 +81,9 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
 
 📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
 
-#OrderPaid`;
+🚨 **ACTION REQUIRED:** Prepare account for delivery!
+
+#PurchasePaid`;
 
     // Send to WhatsApp group (admin notification)
     const API_BASE_URL = 'https://notifapi.com';
@@ -121,8 +144,38 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
           return;
         }
 
-        // Generate customer notification message
-        const customerMessage = `🎉 **PEMBAYARAN BERHASIL!**
+        // Generate customer notification message (different for rental vs purchase)
+        const customerMessage = isRental 
+          ? `� **RENTAL PAYMENT CONFIRMED!**
+
+Halo ${order.customer_name || 'Customer'},
+
+Terima kasih! Pembayaran rental Anda telah berhasil diproses.
+
+📋 **Order ID:** ${order.id}
+🎯 **Product:** ${productName}
+⏰ **Duration:** ${order.rental_duration || 'Not specified'}
+💰 **Total:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
+✅ **Status:** PAID
+
+📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
+
+🚀 **Selanjutnya:**
+• Tim kami akan segera mengatur akses rental Anda
+• Informasi login akan dikirim dalam 5-15 menit
+• Gunakan akun sesuai durasi yang dipilih
+• Jangan ubah password atau data akun
+
+⚠️ **PENTING:**
+• Rental dimulai setelah akun diberikan
+• Tidak ada perpanjangan otomatis
+• Backup data pribadi sebelum rental berakhir
+
+💬 **Support:** wa.me/6289653510125
+🌐 **Website:** https://jbalwikobra.com
+
+Selamat bermain! 🎮`
+          : `🎉 **PURCHASE PAYMENT CONFIRMED!**
 
 Halo ${order.customer_name || 'Customer'},
 
@@ -137,8 +190,15 @@ Terima kasih! Pembayaran Anda telah berhasil diproses.
 
 🚀 **Selanjutnya:**
 • Tim kami akan segera memproses pesanan Anda
-• Akun game akan dikirim melalui WhatsApp dalam 1-5 Menit
-• Jika ada pertanyaan, hubungi support kami
+• Akun game akan dikirim melalui WhatsApp dalam 5-30 menit
+• Detail login dan panduan akan disertakan
+• Akun menjadi milik Anda sepenuhnya
+
+✅ **Yang Anda dapatkan:**
+• Full access permanent
+• Garansi 7 hari
+• Support after sales
+• Panduan penggunaan
 
 💬 **Support:** wa.me/6289653510125
 🌐 **Website:** https://jbalwikobra.com

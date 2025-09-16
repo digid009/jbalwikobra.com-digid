@@ -1,11 +1,17 @@
 /**
  * PaymentMethods - Dynamic payment method selection component
- * Fetches available payment options from Xendit API and allows direct payment
+ * Only shows payment methods that are activated on your Xendit account
  */
 
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Smartphone, Building2, Star, Wallet, ChevronDown, ChevronUp, Check, QrCode, Store, Loader2, AlertCircle, Shield } from 'lucide-react';
 import { PNText, PNCard, PNHeading } from '../ui/PinkNeonDesignSystem';
+import { 
+  getActivatedPaymentChannels, 
+  getPopularActivatedChannels,
+  isChannelActivated,
+  type ActivatedPaymentChannel
+} from '../../config/paymentChannels';
 import { 
   fetchAvailablePaymentMethods, 
   formatPaymentMethod, 
@@ -36,6 +42,7 @@ interface PaymentMethodsProps {
   onDirectPayment?: (methodId: string) => void;
   loading?: boolean;
   error?: string; // Add error prop for validation messages
+  checkoutType?: 'purchase' | 'rental'; // Add checkout type for conditional rendering
 }
 
 export const PaymentMethods = React.memo(({
@@ -45,7 +52,8 @@ export const PaymentMethods = React.memo(({
   amount,
   onDirectPayment,
   loading = false,
-  error
+  error,
+  checkoutType = 'purchase'
 }: PaymentMethodsProps) => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [groupedMethods, setGroupedMethods] = useState<PaymentMethodGroup[]>([]);
@@ -63,53 +71,108 @@ export const PaymentMethods = React.memo(({
       setLoadError(null);
       
       try {
-        const xenditMethods = await fetchAvailablePaymentMethods(amount);
-        const filteredMethods = xenditMethods
-          .filter(method => !amount || isAmountValidForMethod(amount, method))
-          .filter(method => method.available);
+        // Use activated payment channels configuration instead of Xendit API
+        const activatedChannels = getActivatedPaymentChannels();
+        const popularChannels = getPopularActivatedChannels();
 
-        const formattedMethods = filteredMethods.map(method => {
-          const formatted = formatPaymentMethod(method);
-          return {
-            ...formatted,
-            icon: getPaymentIcon(method.type, method.id),
-            limitations: getPaymentMethodLimitations(method)
-          };
+        // Filter by amount if provided
+        const filteredMethods = activatedChannels
+          .filter(channel => !amount || (amount >= channel.min_amount && amount <= channel.max_amount))
+          .map(channel => ({
+            id: channel.id,
+            name: channel.name,
+            description: channel.description,
+            icon: getPaymentIcon(channel.type, channel.id),
+            badges: [channel.processing_time, ...(channel.popular ? ['Populer'] : [])],
+            popular: channel.popular || false,
+            available: channel.available,
+            limitations: amount && (amount < channel.min_amount || amount > channel.max_amount) 
+              ? `Minimum ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(channel.min_amount)}, Maksimum ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(channel.max_amount)}` 
+              : undefined
+          }));
+
+        // Group methods by type
+        const groups: PaymentMethodGroup[] = [];
+        const groupsMap: { [key: string]: XenditPaymentMethod[] } = {};
+        
+        filteredMethods.forEach(method => {
+          const channel = activatedChannels.find(c => c.id === method.id);
+          if (channel) {
+            const typeKey = channel.type;
+            if (!groupsMap[typeKey]) groupsMap[typeKey] = [];
+            
+            // Map channel type to XenditPaymentMethod type
+            const mappedType: "EWALLET" | "QRIS" | "VIRTUAL_ACCOUNT" | "CREDIT_CARD" | "BANK" | "RETAIL_OUTLET" = 
+              channel.type === 'OVER_THE_COUNTER' ? 'RETAIL_OUTLET' : 
+              channel.type === 'VIRTUAL_ACCOUNT' ? 'BANK' :
+              channel.type as "EWALLET" | "QRIS" | "VIRTUAL_ACCOUNT" | "CREDIT_CARD";
+            
+            // Convert PaymentMethod to XenditPaymentMethod
+            groupsMap[typeKey].push({
+              id: method.id,
+              name: method.name,
+              type: mappedType,
+              processing_time: channel.processing_time,
+              available: method.available,
+              min_amount: channel.min_amount,
+              max_amount: channel.max_amount,
+              description: channel.type === 'EWALLET' ? 'Pembayaran instant dengan e-wallet' :
+                          channel.type === 'VIRTUAL_ACCOUNT' ? 'Transfer bank melalui virtual account' :
+                          channel.type === 'QRIS' ? 'Scan QR code untuk bayar' :
+                          channel.type === 'OVER_THE_COUNTER' ? 'Bayar di retail atau cicilan' :
+                          'Metode pembayaran',
+              icon: channel.type === 'EWALLET' ? '💳' :
+                    channel.type === 'VIRTUAL_ACCOUNT' ? '🏦' :
+                    channel.type === 'QRIS' ? '📱' :
+                    channel.type === 'OVER_THE_COUNTER' ? '🏪' :
+                    '💰'
+            });
+          }
         });
 
-        // Group methods and set popular to QRIS only
-        const groups = groupPaymentMethods(filteredMethods);
-        
-        // Force popular methods to only include QRIS
-        const popular = [
-          {
-            id: 'qris',
-            name: 'QRIS',
-            description: 'Scan QR untuk bayar',
-            icon: getPaymentIcon('QRIS', 'qris'),
-            badges: ['Instant', 'Populer'],
-            popular: true,
-            available: true,
-            limitations: undefined
-          }
-        ];
+        // Convert groups map to array format
+        Object.entries(groupsMap).forEach(([type, methods]) => {
+          groups.push({
+            type: type,
+            name: type === 'EWALLET' ? 'E-Wallet' :
+                  type === 'VIRTUAL_ACCOUNT' ? 'Bank Transfer' :
+                  type === 'QRIS' ? 'QR Code' :
+                  type === 'OVER_THE_COUNTER' ? 'Retail/PayLater' :
+                  type,
+            description: type === 'EWALLET' ? 'Pembayaran instant dengan e-wallet' :
+                        type === 'VIRTUAL_ACCOUNT' ? 'Transfer bank melalui virtual account' :
+                        type === 'QRIS' ? 'Scan QR code untuk bayar' :
+                        type === 'OVER_THE_COUNTER' ? 'Bayar di retail atau cicilan' :
+                        'Metode pembayaran',
+            icon: type === 'EWALLET' ? '💳' :
+                  type === 'VIRTUAL_ACCOUNT' ? '🏦' :
+                  type === 'QRIS' ? '📱' :
+                  type === 'OVER_THE_COUNTER' ? '🏪' :
+                  '💰',
+            methods,
+            popular: type === 'QRIS' || type === 'EWALLET'
+          });
+        });
 
-        setPaymentMethods(formattedMethods);
+        // Create popular methods list (only QRIS and AstraPay for now)
+        const popular = filteredMethods.filter(method => method.popular);
+
+        setPaymentMethods(filteredMethods);
         setGroupedMethods(groups);
         setPopularMethods(popular);
-        setSource(process.env.NODE_ENV === 'development' ? 'fallback' : 'xendit_api');
+        setSource('fallback'); // Using local configuration instead of API
       } catch (err) {
-        console.error('Failed to load payment methods:', err);
+        console.error('Failed to load activated payment methods:', err);
         setLoadError('Gagal memuat metode pembayaran. Menampilkan opsi default.');
-        // Fallback to static methods
+        // Fallback to minimal static methods
         const staticMethods = getStaticPaymentMethods();
         const staticXenditMethods: XenditPaymentMethod[] = staticMethods.map(method => ({
           id: method.id,
           name: method.name,
-          type: method.id === 'ovo' || method.id === 'dana' || method.id === 'gopay' || method.id === 'linkaja' ? 'EWALLET' :
-                method.id === 'bca' || method.id === 'mandiri' || method.id === 'bni' || method.id === 'bri' ? 'VIRTUAL_ACCOUNT' :
+          type: method.id === 'astrapay' ? 'EWALLET' :
                 method.id === 'qris' ? 'QRIS' :
-                'CREDIT_CARD',
+                method.id.includes('bni') || method.id.includes('bri') || method.id.includes('mandiri') ? 'VIRTUAL_ACCOUNT' :
+                'VIRTUAL_ACCOUNT',
           description: method.description,
           icon: '💳',
           available: method.available,
@@ -457,13 +520,23 @@ export const PaymentMethods = React.memo(({
       <PNCard className="space-y-4 p-3 sm:p-5 bg-black border border-white/10">
         <div className="flex items-center space-x-2 mb-4 flex-wrap">
           <CreditCard className="text-pink-400" size={20} />
-          <PNHeading level={3} className="!mb-0 flex-1 min-w-0">Pilih Metode Pembayaran</PNHeading>
+          <PNHeading level={3} className="!mb-0 flex-1 min-w-0">
+            {checkoutType === 'rental' ? 'Metode Pembayaran (Opsional)' : 'Pilih Metode Pembayaran'}
+          </PNHeading>
           {source !== 'xendit_api' && (
             <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full flex-shrink-0">
               {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Mode Offline'}
             </span>
           )}
         </div>
+
+        {checkoutType === 'rental' && (
+          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <PNText className="text-sm text-blue-300">
+              💡 Untuk rental, Anda bisa memilih metode pembayaran di sini atau melanjutkan via WhatsApp untuk konsultasi terlebih dahulu.
+            </PNText>
+          </div>
+        )}
 
         {/* Popular Methods Section */}
         {popularMethods.length > 0 && (

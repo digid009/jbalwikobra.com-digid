@@ -1,7 +1,62 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Activated payment channels - only include channels activated on your Xendit account
+const ACTIVATED_EWALLET_CHANNELS = {
+  'astrapay': 'ID_ASTRAPAY'
+  // Add more as they get activated on your Xendit account
+  // 'ovo': 'ID_OVO',
+  // 'dana': 'ID_DANA', 
+  // 'shopeepay': 'ID_SHOPEEPAY'
+};
+
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Simple order creation function for direct payments
+async function createOrderRecord(order: any, externalId: string) {
+  if (!order || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.log('[Direct Payment] Skipping order creation - missing order data or Supabase config');
+    return null;
+  }
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const orderPayload = {
+      client_external_id: externalId,
+      product_id: order.product_id || null,
+      customer_name: order.customer_name,
+      customer_email: order.customer_email,
+      customer_phone: order.customer_phone,
+      order_type: order.order_type || 'purchase',
+      amount: order.amount,
+      rental_duration: order.rental_duration || null,
+      user_id: order.user_id || null,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('orders')
+      .insert(orderPayload)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[Direct Payment] Order creation error:', error);
+      return null;
+    }
+
+    console.log('[Direct Payment] Order created successfully:', data?.id);
+    return data;
+  } catch (error) {
+    console.error('[Direct Payment] Order creation failed:', error);
+    return null;
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,7 +77,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       description,
       external_id,
       success_redirect_url,
-      failure_redirect_url
+      failure_redirect_url,
+      order // Add order parameter for database tracking
     } = req.body;
 
     // Validate required fields
@@ -32,21 +88,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Validate that the payment method is activated on the account
+    const paymentMethodLower = payment_method_id.toLowerCase();
+    
+    // Check if it's an activated e-wallet
+    const isActivatedEwallet = Object.keys(ACTIVATED_EWALLET_CHANNELS).includes(paymentMethodLower);
+    
+    if (!isActivatedEwallet) {
+      console.error(`[Xendit Direct Payment] Payment method '${payment_method_id}' is not activated on this account`);
+      return res.status(400).json({ 
+        error: `Payment method '${payment_method_id}' is not available. Please select from activated payment methods.`,
+        available_methods: Object.keys(ACTIVATED_EWALLET_CHANNELS)
+      });
+    }
+
     // Determine the appropriate Xendit endpoint based on payment method
     let endpoint = '';
     let payload: any = {};
 
-    const paymentMethodLower = payment_method_id.toLowerCase();
-
-    if (['ovo', 'dana', 'gopay', 'linkaja', 'shopeepay'].includes(paymentMethodLower)) {
-      // E-Wallet payment
+    if (isActivatedEwallet) {
+      // E-Wallet payment - use activated channel mapping
       endpoint = '/ewallets/charges';
+      const xenditChannelCode = ACTIVATED_EWALLET_CHANNELS[paymentMethodLower as keyof typeof ACTIVATED_EWALLET_CHANNELS];
+      
       payload = {
         reference_id: external_id,
         currency,
         amount,
         checkout_method: 'ONE_TIME_PAYMENT',
-        channel_code: paymentMethodLower.toUpperCase(),
+        channel_code: xenditChannelCode,
         channel_properties: {
           mobile_number: customer?.mobile_number,
           success_redirect_url,
@@ -113,6 +183,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: `Unsupported payment method: ${payment_method_id}` 
       });
     }
+
+    // Create order record if order data provided
+    const createdOrder = await createOrderRecord(order, external_id);
 
     // Make request to Xendit
     const response = await fetch(`${XENDIT_BASE_URL}${endpoint}`, {

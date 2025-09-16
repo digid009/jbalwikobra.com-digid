@@ -117,6 +117,8 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
       amount: number;
       status: 'pending' | 'paid' | 'completed' | 'cancelled';
       customerName: string;
+      orderType?: 'purchase' | 'rental';
+      rentalDuration?: string;
     }
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -146,6 +148,8 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
       amount: number;
       customerName: string;
       paymentMethod: string;
+      orderType?: 'purchase' | 'rental';
+      rentalDuration?: string;
     }
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -174,6 +178,8 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
       customerPhone: string;
       status: 'pending' | 'paid' | 'completed' | 'cancelled';
       paymentMethod?: string;
+      orderType?: 'purchase' | 'rental';
+      rentalDuration?: string;
     }
   ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -181,7 +187,8 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
       const result = await this.sendGroupMessage(this.GROUP_IDS.ORDERAN_WEBSITE, message);
       
       // Also log to console for debugging
-      console.log(`📊 Order notification sent to group: ${orderData.orderId}`);
+      const orderTypeText = orderData.orderType === 'rental' ? 'Rental' : 'Order';
+      console.log(`📊 ${orderTypeText} notification sent to group: ${orderData.orderId}`);
       
       return result;
     } catch (error) {
@@ -290,7 +297,7 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
   }
 
   /**
-   * Generate order notification message
+   * Generate order notification message (with rental support)
    */
   private static generateOrderNotificationMessage(orderData: {
     orderId: string;
@@ -298,6 +305,8 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
     amount: number;
     status: string;
     customerName: string;
+    orderType?: 'purchase' | 'rental';
+    rentalDuration?: string;
   }): string {
     const statusEmoji = {
       pending: '⏳',
@@ -313,22 +322,34 @@ Jika Anda menerima pesan ini, API key berhasil dikonfigurasi! ✅`;
       cancelled: 'Pesanan Dibatalkan'
     };
 
-    return `🛍️ *Update Pesanan JB Alwikobra*
+    const isRental = orderData.orderType === 'rental';
+    const orderTypeIcon = isRental ? '🏠' : '🎮';
+    const orderTypeText = isRental ? 'Rental' : 'Purchase';
+
+    return `${orderTypeIcon} *Update ${orderTypeText} JB Alwikobra*
 
 Halo ${orderData.customerName}! 👋
 
 ${statusEmoji[orderData.status as keyof typeof statusEmoji]} *Status:* ${statusText[orderData.status as keyof typeof statusText]}
 
-📋 *Detail Pesanan:*
+📋 *Detail ${orderTypeText}:*
 • Order ID: ${orderData.orderId}
 • Produk: ${orderData.productName}
+${isRental && orderData.rentalDuration ? `• Durasi: ${orderData.rentalDuration}` : ''}
 • Total: Rp ${orderData.amount.toLocaleString('id-ID')}
 
 ${orderData.status === 'paid' 
-  ? '🎮 Akun game akan segera diproses dan dikirim dalam 1x24 jam!'
+  ? isRental 
+    ? '� Akses rental akan segera diatur dan dikirim dalam 5-15 menit!'
+    : '�🎮 Akun game akan segera diproses dan dikirim dalam 5-30 menit!'
   : orderData.status === 'pending'
   ? '💳 Silakan selesaikan pembayaran untuk melanjutkan pesanan.'
   : ''}
+
+${isRental && orderData.status === 'paid' 
+  ? '⚠️ *Penting untuk Rental:*\n• Jangan ubah password atau data akun\n• Gunakan sesuai durasi yang dipilih\n• Backup data sebelum rental berakhir'
+  : ''
+}
 
 Terima kasih telah berbelanja di JB Alwikobra! 🙏
 
@@ -346,8 +367,14 @@ Terima kasih telah berbelanja di JB Alwikobra! 🙏
     amount: number;
     customerName: string;
     paymentMethod: string;
+    orderType?: 'purchase' | 'rental';
+    rentalDuration?: string;
   }): string {
-    return `💳 *Konfirmasi Pembayaran JB Alwikobra*
+    const isRental = orderData.orderType === 'rental';
+    const orderTypeIcon = isRental ? '🏠' : '💳';
+    const orderTypeText = isRental ? 'Rental' : 'Pembelian';
+    
+    return `${orderTypeIcon} *Konfirmasi ${orderTypeText} JB Alwikobra*
 
 Halo ${orderData.customerName}! 👋
 
@@ -356,13 +383,19 @@ Halo ${orderData.customerName}! 👋
 📋 *Detail Transaksi:*
 • Order ID: ${orderData.orderId}
 • Produk: ${orderData.productName}
+${isRental && orderData.rentalDuration ? `• Durasi: ${orderData.rentalDuration}` : ''}
 • Total: Rp ${orderData.amount.toLocaleString('id-ID')}
 • Metode: ${orderData.paymentMethod}
 
-🎮 *Langkah Selanjutnya:*
-1. Akun game akan diproses tim kami
-2. Estimasi pengiriman: 1x24 jam
-3. Anda akan di WhatsApp saat akun siap oleh tim kami
+${isRental ? '🏠 *Langkah Selanjutnya Rental:*' : '🎮 *Langkah Selanjutnya:*'}
+1. ${isRental ? 'Akses rental akan diatur tim kami' : 'Akun game akan diproses tim kami'}
+2. Estimasi pengiriman: ${isRental ? '5-15 menit' : '5-30 menit'}
+3. Anda akan di WhatsApp saat ${isRental ? 'akses siap' : 'akun siap'} oleh tim kami
+
+${isRental 
+  ? '⚠️ *Penting untuk Rental:*\n• Jangan ubah password atau data akun\n• Gunakan sesuai durasi yang dipilih\n• Backup data pribadi sebelum rental berakhir\n• Tidak ada perpanjangan otomatis'
+  : '✅ *Keuntungan Purchase:*\n• Akun menjadi milik Anda sepenuhnya\n• Garansi 7 hari untuk semua akun\n• Support after sales lengkap\n• Panduan penggunaan disertakan'
+}
 
 Ada pertanyaan? Hubungi admin kami! 💬
 
@@ -384,6 +417,8 @@ Terima kasih telah mempercayai JB Alwikobra! 🙏
     customerPhone: string;
     status: 'pending' | 'paid' | 'completed' | 'cancelled';
     paymentMethod?: string;
+    orderType?: 'purchase' | 'rental';
+    rentalDuration?: string;
   }): string {
     const statusEmoji = {
       pending: '🟡',
@@ -392,11 +427,14 @@ Terima kasih telah mempercayai JB Alwikobra! 🙏
       cancelled: '🔴'
     };
 
+    const isRental = orderData.orderType === 'rental';
+    const orderTypeIcon = isRental ? '🏠' : '🎮';
+    
     const statusText = {
-      pending: 'ORDER BARU - MENUNGGU BAYAR',
-      paid: 'PEMBAYARAN BERHASIL',
-      completed: 'ORDER SELESAI',
-      cancelled: 'ORDER DIBATALKAN'
+      pending: isRental ? 'RENTAL BARU - MENUNGGU BAYAR' : 'ORDER BARU - MENUNGGU BAYAR',
+      paid: isRental ? 'RENTAL PAYMENT BERHASIL' : 'PEMBAYARAN BERHASIL',
+      completed: isRental ? 'RENTAL SELESAI' : 'ORDER SELESAI',
+      cancelled: isRental ? 'RENTAL DIBATALKAN' : 'ORDER DIBATALKAN'
     };
 
     const currentDate = new Date().toLocaleString('id-ID', {
@@ -409,9 +447,10 @@ Terima kasih telah mempercayai JB Alwikobra! 🙏
 
     return `${statusEmoji[orderData.status]} *${statusText[orderData.status]}*
 
-📋 *DETAIL ORDER:*
+📋 *DETAIL ${isRental ? 'RENTAL' : 'ORDER'}:*
 • ID: #${orderData.orderId}
 • Produk: ${orderData.productName}
+${isRental && orderData.rentalDuration ? `• Durasi: ${orderData.rentalDuration}` : ''}
 • Total: Rp ${orderData.amount.toLocaleString('id-ID')}
 • Customer: ${orderData.customerName}
 • Phone: ${orderData.customerPhone}
@@ -419,16 +458,25 @@ ${orderData.paymentMethod ? `• Payment: ${orderData.paymentMethod}` : ''}
 • Waktu: ${currentDate}
 
 ${orderData.status === 'paid' 
-  ? '🎮 *ACTION REQUIRED:* Segera proses akun game untuk customer!'
+  ? isRental 
+    ? '🏠 *ACTION REQUIRED:* Segera setup akses rental untuk customer!'
+    : '🎮 *ACTION REQUIRED:* Segera proses akun game untuk customer!'
   : orderData.status === 'pending'
   ? '💳 *STATUS:* Menunggu konfirmasi pembayaran customer'
   : orderData.status === 'completed'
-  ? '✅ *STATUS:* Akun sudah berhasil dikirim ke customer'
+  ? isRental 
+    ? '✅ *STATUS:* Akses rental sudah berhasil diberikan ke customer'
+    : '✅ *STATUS:* Akun sudah berhasil dikirim ke customer'
   : '❌ *STATUS:* Order dibatalkan atau refund'
 }
 
+${isRental && orderData.status === 'paid' 
+  ? '\n⚠️ *REMINDER RENTAL:*\n• Setup akses sesuai durasi\n• Berikan instruksi penggunaan\n• Monitor penggunaan akun'
+  : ''
+}
+
 ---
-📊 *ORDERAN WEBSITE - JB ALWIKOBRA*`;
+📊 *${isRental ? 'RENTAL' : 'ORDERAN'} WEBSITE - JB ALWIKOBRA*`;
   }
 
   /**
