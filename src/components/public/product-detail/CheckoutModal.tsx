@@ -1,8 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import PhoneInput from '../../../components/PhoneInput';
+import React, { useState, useMemo } from 'react';
 import { Info, Calendar } from 'lucide-react';
 import { RentalOption } from '../../../types';
+import { PNSection } from '../../ui/PinkNeonDesignSystem';
+import {
+  PurchaseFormHeader,
+  CustomerInfoForm,
+  PaymentMethods,
+  PurchaseActions
+} from '../../purchase-form';
 
 interface Customer { name: string; email: string; phone: string; }
 
@@ -20,7 +25,7 @@ interface Props {
   acceptedTerms: boolean;
   setAcceptedTerms: (v: boolean) => void;
   creatingInvoice: boolean;
-  onCheckout: () => void;
+  onCheckout: (paymentMethod: string) => void;
   onWhatsAppRental: () => void;
 }
 
@@ -41,96 +46,134 @@ const CheckoutModal: React.FC<Props> = ({
   onCheckout,
   onWhatsAppRental
 }) => {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+
+  // Handle payment method selection (don't redirect immediately)
+  const handlePaymentMethodSelect = (methodId: string) => {
+    console.log('Payment method selected:', methodId);
+    setSelectedPaymentMethod(methodId);
+    // Don't trigger form submission - wait for user to click "Bayar Sekarang"
+  };
+
+  // Form validation
+  const isFormValid = useMemo(() => {
+    return (
+      customer.name.trim().length > 0 &&
+      customer.email.trim().length > 0 &&
+      customer.phone.trim().length > 0 &&
+      isPhoneValid &&
+      selectedPaymentMethod.trim().length > 0 // Require payment method selection
+    );
+  }, [customer, isPhoneValid, selectedPaymentMethod]);
+
+  // Form errors
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+    paymentMethod?: string;
+  }>({});
+
+  // Validate form on submit
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    
+    if (!customer.name.trim()) {
+      newErrors.name = 'Nama lengkap wajib diisi';
+    }
+    
+    if (!customer.email.trim()) {
+      newErrors.email = 'Email wajib diisi';
+    } else if (!/\S+@\S+\.\S+/.test(customer.email)) {
+      newErrors.email = 'Format email tidak valid';
+    }
+    
+    if (!customer.phone.trim()) {
+      newErrors.phone = 'Nomor WhatsApp wajib diisi';
+    } else if (!isPhoneValid) {
+      newErrors.phone = 'Format nomor WhatsApp tidak valid';
+    }
+
+    if (!selectedPaymentMethod.trim()) {
+      newErrors.paymentMethod = 'Pilih metode pembayaran';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    if (checkoutType === 'purchase') {
+      onCheckout(selectedPaymentMethod);
+    } else {
+      onWhatsAppRental();
+    }
+  };
+
   if (!visible) return null;
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-black border border-gray-700 rounded-xl max-w-md w-full p-6 text-white modal-mobile overflow-y-auto">
-        <h3 className="text-xl font-bold text-white mb-4">
-          {checkoutType === 'purchase' ? 'Beli Akun' : 'Rental Akun'}
-        </h3>
-        <div className="mb-4 p-4 bg-black border border-gray-700 rounded-lg">
-          <p className="font-medium text-white">{productName}</p>
-          <p className="text-pink-400 font-semibold">
-            {checkoutType === 'rental' && selectedRental
-              ? `${Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(selectedRental.price)} (${selectedRental.duration})`
-              : Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(effectivePrice)}
-          </p>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-2 pt-4 md:p-6 z-50">
+      <div className="relative max-w-2xl w-full mt-0 md:mt-0">
+        {/* Glow effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-12 -left-12 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-fuchsia-600/20 rounded-full blur-3xl" />
         </div>
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); onCheckout(); }}>
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Nama Lengkap *</label>
-            <input
-              type="text"
-              required
-              value={customer.name}
-              onChange={e => setCustomer({ ...customer, name: e.target.value })}
-              className="w-full px-3 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 min-h-[44px]"
-              placeholder="Masukkan nama lengkap"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Email *</label>
-            <input
-              type="email"
-              required
-              value={customer.email}
-              onChange={e => setCustomer({ ...customer, email: e.target.value })}
-              className="w-full px-3 border border-gray-700 bg-black text-white rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 min-h-[44px]"
-              placeholder="Masukkan email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">No. WhatsApp *</label>
-            <PhoneInput
-              value={customer.phone}
-              onChange={(value) => setCustomer({ ...customer, phone: value })}
-              onValidationChange={setIsPhoneValid}
-              placeholder="Masukkan Nomor WhatsApp"
-              required
-              disableAutoDetection
-            />
-          </div>
-          {checkoutType === 'purchase' && (
-            <div className="p-3 bg-black border border-gray-700 rounded-lg flex items-start space-x-2 text-white/70 text-sm">
-              <Info size={16} className="mt-0.5" />
-              <span>Pembayaran aman dan terjamin. Detail akan dikirim via WhatsApp setelah pembayaran berhasil.</span>
-            </div>
-          )}
-          {checkoutType === 'rental' && (
-            <div className="p-3 bg-black border border-gray-700 rounded-lg flex items-start space-x-2 text-white/70 text-sm">
-              <Calendar size={16} className="mt-0.5" />
-              <span>Akses rental diberikan melalui WhatsApp.</span>
-            </div>
-          )}
-          {checkoutType === 'purchase' && (
-            <label className="flex items-start space-x-2 text-sm text-white/70 min-h-[44px]">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={e => setAcceptedTerms(e.target.checked)}
-                className="mt-0.5 h-4 w-4 text-pink-600 border-gray-700 bg-black rounded"
+        
+        {/* Modal content with PinkNeon design */}
+        <div className="relative bg-black border border-white/10 rounded-2xl backdrop-blur-sm shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_25px_50px_-12px_rgba(0,0,0,0.25)] max-h-[95vh] md:max-h-[85vh] overflow-hidden">
+          {/* Scrollable Content */}
+          <div className="overflow-y-auto max-h-[95vh] md:max-h-[85vh] p-4 md:p-6 pb-20 md:pb-6">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+              {/* Header */}
+              <PurchaseFormHeader
+                checkoutType={checkoutType}
+                productName={productName}
+                effectivePrice={effectivePrice}
+                selectedRental={selectedRental}
+                onClose={onClose}
               />
-              <span>
-                Saya menyetujui <Link to="/terms" className="text-pink-400 underline hover:text-pink-300" target="_blank" rel="noreferrer">Syarat & Ketentuan</Link>
-              </span>
-            </label>
-          )}
-          <div className="flex space-x-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 border border-gray-700 text-white/70 rounded-lg hover:bg-black transition-colors min-h-[44px]">Batal</button>
-            {checkoutType === 'purchase' ? (
-              <button
-                type="submit"
-                disabled={!acceptedTerms || creatingInvoice}
-                className={`flex-1 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] ${acceptedTerms && !creatingInvoice ? 'bg-pink-600 text-white hover:bg-pink-700' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}
-              >
-                {creatingInvoice && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />}
-                {creatingInvoice ? 'Memproses...' : 'Bayar Sekarang'}
-              </button>
-            ) : (
-              <button type="button" onClick={onWhatsAppRental} className="flex-1 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors min-h-[44px]">Lanjut ke WhatsApp</button>
-            )}
+
+              {/* Customer Information */}
+              <CustomerInfoForm
+                customer={customer}
+                setCustomer={setCustomer}
+                isPhoneValid={isPhoneValid}
+                setIsPhoneValid={setIsPhoneValid}
+                errors={errors}
+              />
+
+              {/* Payment Methods */}
+              <PaymentMethods 
+                selectedMethod={selectedPaymentMethod}
+                onMethodSelect={handlePaymentMethodSelect}
+                showSelection={true} 
+                amount={effectivePrice}
+                loading={creatingInvoice}
+                error={errors.paymentMethod}
+              />
+
+              {/* Actions */}
+              <PurchaseActions
+                checkoutType={checkoutType}
+                acceptedTerms={acceptedTerms}
+                setAcceptedTerms={setAcceptedTerms}
+                creatingInvoice={creatingInvoice}
+                isFormValid={isFormValid}
+                onCheckout={() => handleSubmit()}
+                onWhatsAppRental={() => handleSubmit()}
+                onCancel={onClose}
+              />
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

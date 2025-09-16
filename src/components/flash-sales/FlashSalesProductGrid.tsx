@@ -5,22 +5,20 @@
  * - Responsive grid layout matching homepage style
  * - Horizontal scroll on mobile, column grid on desktop
  * - Uses shared FlashSaleCard component
- * - Handles both Product and FlashSale data
+ * - Handles FlashSaleWithProduct data from useFlashSalesData hook
  */
 
 import React from 'react';
 import { Product, FlashSale } from '../../types';
 import FlashSaleCard from '../shared/FlashSaleCard';
 
+interface FlashSaleWithProduct extends FlashSale {
+  product: Product;
+}
+
 interface FlashSalesProductGridProps {
-  /** Array of flash sale products to display */
-  products: Array<{
-    id: string;
-    product: Product;
-    originalPrice?: number;
-    salePrice: number;
-    endTime?: string;
-  }>;
+  /** Array of flash sale products to display from useFlashSalesData hook */
+  products: FlashSaleWithProduct[];
   /** Additional CSS classes */
   className?: string;
 }
@@ -30,18 +28,21 @@ const FlashSalesProductGrid: React.FC<FlashSalesProductGridProps> = ({
   className = "" 
 }) => {
   return (
-    <div className={`grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 ${className}`}>
+    <div 
+      className={`grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ${className}`}
+      style={{ pointerEvents: 'auto' }}
+    >
       {products.map(flashSale => {
         // Convert flash sale data to FlashSale type for the card
         const flashSaleData: FlashSale = {
           id: flashSale.id,
-          productId: flashSale.product.id,
-          originalPrice: flashSale.originalPrice || 0,
+          productId: flashSale.productId,
+          originalPrice: flashSale.originalPrice,
           salePrice: flashSale.salePrice,
-          endTime: flashSale.endTime || '',
-          startTime: '', // Not needed for display
-          isActive: true, // Assume active if in the list
-          stock: 0 // Not needed for display
+          endTime: flashSale.endTime,
+          startTime: flashSale.startTime,
+          isActive: flashSale.isActive,
+          stock: flashSale.stock
         };
 
         return (
@@ -50,6 +51,7 @@ const FlashSalesProductGrid: React.FC<FlashSalesProductGridProps> = ({
             product={flashSale.product}
             flashSale={flashSaleData}
             variant="page"
+            className="w-full"
           />
         );
       })}

@@ -11,7 +11,7 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PNCard, PNButton } from '../ui/PinkNeonDesignSystem';
 import { Product, FlashSale } from '../../types';
 import FlashSaleTimer from '../FlashSaleTimer';
@@ -36,6 +36,8 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
   disableLink = false,
   variant = 'homepage'
 }) => {
+  const navigate = useNavigate();
+  
   // Determine pricing - flash sale data takes precedence
   const originalPrice = flashSale?.originalPrice || product.originalPrice;
   const currentPrice = flashSale?.salePrice || product.price;
@@ -49,15 +51,78 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
 
   // Determine layout classes based on variant
   const cardClasses = variant === 'homepage' 
-    ? "p-3 md:p-4 hover:bg-white/10 transition-colors h-full min-w-[190px] md:min-w-0"
-    : "p-2.5 md:p-3 hover:bg-white/10 transition-colors h-full w-full";
+    ? "p-3 md:p-4 hover:bg-white/10 transition-colors h-full min-w-[190px] md:min-w-0 cursor-pointer"
+    : "p-2.5 md:p-3 hover:bg-white/10 transition-colors h-full w-full cursor-pointer";
 
-  const linkClasses = variant === 'homepage'
-    ? "block snap-center md:snap-auto"
-    : "block";
+  // Handle card click navigation
+  const handleCardClick = (e: React.MouseEvent) => {
+    console.log('🖱️ Flash sale card clicked:', {
+      productId: product.id,
+      productName: product.name,
+      hasFlashSale: !!flashSale,
+      flashSaleData: flashSale,
+      disableLink,
+      target: e.target,
+      currentTarget: e.currentTarget
+    });
+    
+    if (!disableLink) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Navigate to different pages based on flash sale data availability
+      if (flashSale && flashSale.salePrice && flashSale.originalPrice && flashSale.endTime) {
+        // Has complete flash sale data - go to flash sale detail page
+        navigate(`/flash-sales/${product.id}`, {
+          state: {
+            fromFlashSaleCard: true,
+            flashSaleData: flashSale
+          }
+        });
+      } else {
+        // No complete flash sale data - go to regular product page
+        navigate(`/products/${product.id}`, {
+          state: {
+            fromFlashSaleCard: true
+          }
+        });
+      }
+    }
+  };
 
-  const CardContent = () => (
-    <PNCard className={`${cardClasses} ${className}`}>
+  // Handle button click to prevent navigation
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('🛒 Buy button clicked for:', product.name);
+    
+    // Use the same logic as card click for consistent navigation
+    if (flashSale && flashSale.salePrice && flashSale.originalPrice && flashSale.endTime) {
+      // Has complete flash sale data - go to flash sale detail page
+      navigate(`/flash-sales/${product.id}`, {
+        state: {
+          fromFlashSaleCard: true,
+          flashSaleData: flashSale,
+          openCheckoutModal: true // Flag to open checkout modal immediately
+        }
+      });
+    } else {
+      // No complete flash sale data - go to regular product page
+      navigate(`/products/${product.id}`, {
+        state: {
+          fromFlashSaleCard: true,
+          openCheckoutModal: true // Flag to open checkout modal immediately
+        }
+      });
+    }
+  };
+
+  return (
+    <PNCard 
+      className={`${cardClasses} ${className}`}
+      onClick={handleCardClick}
+      style={{ pointerEvents: 'auto' }}
+      data-testid="flash-sale-card"
+    >
       {/* Product Image */}
       <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-pink-600/60 via-pink-600/40 to-fuchsia-600/60 border border-pink-500/30 mb-2 md:mb-3 overflow-hidden">
         {product.image ? (
@@ -109,22 +174,16 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
         </div>
       )}
       
-      {/* Buy Button */}
-      <PNButton variant="primary" size="sm" fullWidth>
+      {/* Buy Button - prevent event propagation to allow card navigation */}
+      <PNButton 
+        variant="primary" 
+        size="sm" 
+        fullWidth
+        onClick={handleButtonClick}
+      >
         Beli
       </PNButton>
     </PNCard>
-  );
-
-  // Wrap with Link if not disabled
-  if (disableLink) {
-    return <CardContent />;
-  }
-
-  return (
-    <Link to={`/products/${product.id}`} className={linkClasses}>
-      <CardContent />
-    </Link>
   );
 };
 

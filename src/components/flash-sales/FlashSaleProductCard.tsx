@@ -83,9 +83,18 @@ export const FlashSaleProductCard: React.FC<FlashSaleProductCardProps> = ({ prod
         variant="primary" 
         size="sm" 
         fullWidth
-        onClick={() => navigate(`/products/${product.id}`, { 
+        onClick={() => navigate(`/flash-sales/${product.id}`, { 
           state: { 
-            fromFlashSaleCard: true
+            fromFlashSaleCard: true,
+            flashSaleData: {
+              id: product.id,
+              productId: product.id,
+              originalPrice: product.originalPrice,
+              salePrice: product.price,
+              endTime: product.flashSaleEndTime,
+              isActive: product.isFlashSale && remaining && !remaining.isExpired,
+              discountPercentage: discountPct
+            }
           } 
         })}
       >

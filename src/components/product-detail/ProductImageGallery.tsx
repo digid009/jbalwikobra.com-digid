@@ -7,7 +7,7 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 import ResponsiveImage from '../ResponsiveImage';
-import { IOSCard } from '../ios/IOSDesignSystemV2';
+import { PNCard } from '../ui/PinkNeonDesignSystem';
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -27,11 +27,7 @@ export const ProductImageGallery = React.memo(({
   return (
     <div>
       {/* Main Image */}
-      <IOSCard
-        variant="elevated"
-        padding="none"
-        className="aspect-[4/5] mb-4 bg-[linear-gradient(45deg,#1e1e1e,#2a2a2a)] flex items-center justify-center overflow-hidden relative"
-      >
+      <PNCard className="aspect-[4/5] mb-4 bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center overflow-hidden relative p-0">
         <ResponsiveImage
           src={images[selectedImage]}
           alt={productName}
@@ -49,22 +45,19 @@ export const ProductImageGallery = React.memo(({
             <span>Flash Sale</span>
           </div>
         )}
-      </IOSCard>
+      </PNCard>
 
       {/* Image Thumbnails */}
       {images.length > 1 && (
         <div className="flex space-x-3 overflow-x-auto pb-2" role="listbox" aria-label="Galeri gambar">
           {images.map((image, index) => (
-            <IOSCard
+            <PNCard
               key={index}
-              variant={selectedImage === index ? "elevated" : "outlined"}
-              padding="none"
-              hoverable
               onClick={() => onImageSelect(index)}
-              className={`flex-shrink-0 w-20 md:w-24 min-w-[44px] min-h-[44px] aspect-[4/5] overflow-hidden transition-all duration-200 cursor-pointer ${
+              className={`flex-shrink-0 w-20 md:w-24 min-w-[44px] min-h-[44px] aspect-[4/5] overflow-hidden transition-all duration-200 cursor-pointer p-0 hover:scale-105 ${
                 selectedImage === index 
-                  ? 'ring-2 ring-pink-500 shadow-lg shadow-pink-500/25' 
-                  : 'hover:shadow-md'
+                  ? 'ring-2 ring-pink-500 shadow-lg shadow-pink-500/25 bg-pink-500/10' 
+                  : 'hover:bg-white/10'
               }`}
             >
               <div
@@ -76,10 +69,10 @@ export const ProductImageGallery = React.memo(({
                 <img
                   src={image}
                   alt={`${productName} ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
-            </IOSCard>
+            </PNCard>
           ))}
         </div>
       )}

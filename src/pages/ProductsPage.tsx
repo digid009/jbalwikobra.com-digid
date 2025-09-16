@@ -18,10 +18,8 @@ import {
   ProductsErrorState,
   ProductsGrid,
   PaginationBar,
-  ProductsPageHeader
+  ProductsHeroWithFilters
 } from '../components/products';
-import { PNCatalogToolbar } from '../components/catalog';
-import { ProductsResultsInfo } from '../components/products';
 
 const ProductsPage: React.FC = () => {
   const {
@@ -65,20 +63,14 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Products Header - Flash Sales Style */}
-      <ProductsPageHeader
+      {/* Integrated Hero with Filters */}
+      <ProductsHeroWithFilters
         searchTerm={filterState.searchTerm}
         onSearchChange={(term) => handleFilterChange('searchTerm', term)}
         totalProducts={filteredProducts.length}
         currentPage={currentPage}
         totalPages={totalPages}
         showBackNav={true}
-      />
-
-      {/* PN Toolbar */}
-      <PNCatalogToolbar
-        search=""
-        onSearchChange={() => {}}
         sortBy={filterState.sortBy}
         onSortChange={(v) => handleFilterChange('sortBy', v)}
         activeFilters={activeFilters}
@@ -94,35 +86,22 @@ const ProductsPage: React.FC = () => {
         onGameChange={(name) => handleFilterChange('selectedGame', name)}
         selectedCategory={filterState.searchTerm}
         onCategoryChange={(name) => handleFilterChange('searchTerm', name)}
-        hideSearch={true}
       />
 
-      <div className="px-4 mt-4">
-        <div className="max-w-7xl mx-auto flex flex-col gap-6">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-white">Hasil</h2>
-            <p className="text-xs text-white/50">{filteredProducts.length} akun ditemukan</p>
-          </div>
-
-          <ProductsResultsInfo
-            totalProducts={filteredProducts.length}
+      {/* Products Grid */}
+      <div className="px-4">
+        <div className="max-w-7xl mx-auto">
+          <ProductsGrid
+            products={currentProducts}
+            onResetFilters={resetFilters}
+            density={layoutDensity}
+            loading={loading}
+          />
+          <PaginationBar
             currentPage={currentPage}
             totalPages={totalPages}
+            onPageChange={handlePageChange}
           />
-
-          <div id="products-grid">
-            <ProductsGrid
-              products={currentProducts}
-              onResetFilters={resetFilters}
-              density={layoutDensity}
-              loading={loading}
-            />
-            <PaginationBar
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
         </div>
       </div>
 

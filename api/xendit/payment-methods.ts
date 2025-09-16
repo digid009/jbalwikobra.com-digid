@@ -1,0 +1,253 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
+const XENDIT_BASE_URL = 'https://api.xendit.co';
+
+interface PaymentMethodResponse {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  available: boolean;
+  channels?: string[];
+  min_amount?: number;
+  max_amount?: number;
+  fees?: {
+    percentage?: number;
+    fixed?: number;
+  };
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!XENDIT_SECRET_KEY) {
+    console.error('[Xendit Payment Methods] Missing XENDIT_SECRET_KEY');
+    return res.status(500).json({ error: 'Payment service configuration error' });
+  }
+
+  try {
+    const { amount } = req.body;
+
+    // Fetch available payment methods from Xendit
+    const response = await fetch(`${XENDIT_BASE_URL}/payment_methods`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    let paymentMethods: PaymentMethodResponse[] = [];
+
+    if (response.ok) {
+      const data = await response.json();
+      paymentMethods = data.data || [];
+    } else {
+      console.warn('[Xendit Payment Methods] API call failed, using fallback methods');
+    }
+
+    // Process and enhance payment methods
+    const processedMethods = paymentMethods.map(method => ({
+      id: method.id,
+      name: method.name,
+      type: method.type,
+      description: method.description || getDefaultDescription(method.type, method.name),
+      available: method.available && (!amount || isAmountValid(amount, method)),
+      min_amount: method.min_amount,
+      max_amount: method.max_amount,
+      processing_time: getProcessingTime(method.type),
+      popular: isPopularMethod(method.id, method.type),
+      channels: method.channels,
+      fees: method.fees
+    }));
+
+    // If no methods from API, return static fallback
+    if (processedMethods.length === 0) {
+      return res.status(200).json({
+        payment_methods: getStaticFallbackMethods(amount),
+        source: 'fallback'
+      });
+    }
+
+    // Filter by amount if provided
+    const filteredMethods = amount 
+      ? processedMethods.filter(method => 
+          method.available && isAmountValid(amount, method)
+        )
+      : processedMethods.filter(method => method.available);
+
+    return res.status(200).json({
+      payment_methods: filteredMethods,
+      source: 'xendit_api'
+    });
+
+  } catch (error) {
+    console.error('[Xendit Payment Methods] Error:', error);
+    
+    // Return fallback methods on error
+    return res.status(200).json({
+      payment_methods: getStaticFallbackMethods(req.body.amount),
+      source: 'fallback_error'
+    });
+  }
+}
+
+function getDefaultDescription(type: string, name: string): string {
+  const descriptions: Record<string, string> = {
+    'EWALLET': `Pembayaran instant dengan ${name}`,
+    'VIRTUAL_ACCOUNT': `Transfer melalui Virtual Account ${name}`,
+    'CREDIT_CARD': 'Pembayaran dengan kartu kredit/debit',
+    'QRIS': 'Scan QR Code untuk bayar',
+    'BANK': `Transfer bank melalui ${name}`,
+    'RETAIL_OUTLET': `Bayar di outlet ${name}`
+  };
+
+  return descriptions[type] || `Pembayaran melalui ${name}`;
+}
+
+function getProcessingTime(type: string): string {
+  const processingTimes: Record<string, string> = {
+    'EWALLET': 'Instant',
+    'QRIS': 'Instant',
+    'CREDIT_CARD': 'Instant',
+    'VIRTUAL_ACCOUNT': '1-15 menit',
+    'BANK': '1-15 menit',
+    'RETAIL_OUTLET': '1-60 menit'
+  };
+
+  return processingTimes[type] || '1-15 menit';
+}
+
+function isPopularMethod(id: string, type: string): boolean {
+  const popularMethods = [
+    'ovo', 'dana', 'gopay', 'qris', 'bca', 'bni', 'mandiri'
+  ];
+  
+  return popularMethods.includes(id.toLowerCase()) || type === 'QRIS';
+}
+
+function isAmountValid(amount: number, method: PaymentMethodResponse): boolean {
+  if (method.min_amount && amount < method.min_amount) {
+    return false;
+  }
+  
+  if (method.max_amount && amount > method.max_amount) {
+    return false;
+  }
+  
+  return true;
+}
+
+function getStaticFallbackMethods(amount?: number) {
+  const staticMethods = [
+    {
+      id: 'ovo',
+      name: 'OVO',
+      type: 'EWALLET',
+      description: 'Pembayaran instant dengan OVO',
+      available: true,
+      processing_time: 'Instant',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 10000000
+    },
+    {
+      id: 'dana',
+      name: 'DANA',
+      type: 'EWALLET',
+      description: 'Pembayaran instant dengan DANA',
+      available: true,
+      processing_time: 'Instant',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 10000000
+    },
+    {
+      id: 'gopay',
+      name: 'GoPay',
+      type: 'EWALLET',
+      description: 'Pembayaran instant dengan GoPay',
+      available: true,
+      processing_time: 'Instant',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 2000000
+    },
+    {
+      id: 'qris',
+      name: 'QRIS',
+      type: 'QRIS',
+      description: 'Scan QR Code untuk bayar',
+      available: true,
+      processing_time: 'Instant',
+      popular: true,
+      min_amount: 1000,
+      max_amount: 10000000
+    },
+    {
+      id: 'bca',
+      name: 'BCA Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BCA',
+      available: true,
+      processing_time: '1-15 menit',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 50000000
+    },
+    {
+      id: 'mandiri',
+      name: 'Mandiri Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account Mandiri',
+      available: true,
+      processing_time: '1-15 menit',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 50000000
+    },
+    {
+      id: 'bni',
+      name: 'BNI Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BNI',
+      available: true,
+      processing_time: '1-15 menit',
+      min_amount: 10000,
+      max_amount: 50000000
+    },
+    {
+      id: 'bri',
+      name: 'BRI Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BRI',
+      available: true,
+      processing_time: '1-15 menit',
+      min_amount: 10000,
+      max_amount: 50000000
+    },
+    {
+      id: 'credit_card',
+      name: 'Kartu Kredit/Debit',
+      type: 'CREDIT_CARD',
+      description: 'Visa, Mastercard, JCB',
+      available: true,
+      processing_time: 'Instant',
+      min_amount: 10000
+    }
+  ];
+
+  // Filter by amount if provided
+  if (amount) {
+    return staticMethods.filter(method => 
+      (!method.min_amount || amount >= method.min_amount) &&
+      (!method.max_amount || amount <= method.max_amount)
+    );
+  }
+
+  return staticMethods;
+}

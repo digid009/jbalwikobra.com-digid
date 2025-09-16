@@ -54,6 +54,20 @@ export const useProductDetail = () => {
   // Navigation state
   const cameFromFlashSaleCard = Boolean((location as any)?.state?.fromFlashSaleCard);
   const cameFromCatalogPage = Boolean((location as any)?.state?.fromCatalogPage);
+  const flashSaleData = (location as any)?.state?.flashSaleData;
+  const shouldOpenCheckoutModal = Boolean((location as any)?.state?.openCheckoutModal);
+
+  // Debug logging
+  useEffect(() => {
+    if (cameFromFlashSaleCard) {
+      console.log('🔍 ProductDetail: Navigated from flash sale card', {
+        productId: id,
+        hasFlashSaleData: !!flashSaleData,
+        flashSaleData: flashSaleData,
+        shouldOpenCheckoutModal
+      });
+    }
+  }, [cameFromFlashSaleCard, flashSaleData, id, shouldOpenCheckoutModal]);
 
   // Product state
   const [state, setState] = useState<ProductDetailState>({
@@ -112,28 +126,72 @@ export const useProductDetail = () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const data = await ProductService.getProductById(id);
-      setState(prev => ({ ...prev, product: data, loading: false }));
       
       // Set initial rental option
       if (data?.rentalOptions && data.rentalOptions.length > 0) {
         setRentalState({ selectedRental: data.rentalOptions[0] });
       }
 
-      // If navigated from a flash sale card, try to enrich with live flash sale info
+      // If navigated from a flash sale card, use the flash sale data or try to fetch live data
       if (data && cameFromFlashSaleCard) {
-        const sale = await ProductService.getActiveFlashSaleByProductId(data.id);
-        if (sale) {
-          setState(prev => prev.product ? {
+        if (flashSaleData) {
+          // Use the flash sale data passed from the card
+          console.log('🔍 Applying flash sale data from card:', flashSaleData);
+          
+          const updatedProduct = {
+            ...data,
+            isFlashSale: true,
+            flashSaleEndTime: flashSaleData.endTime,
+            price: flashSaleData.salePrice,
+            originalPrice: flashSaleData.originalPrice || data.originalPrice || data.price
+          };
+          
+          console.log('🔍 Updated product with flash sale data:', updatedProduct);
+          
+          setState(prev => ({
             ...prev,
-            product: {
-              ...prev.product,
-              isFlashSale: true,
-              flashSaleEndTime: sale.endTime,
-              price: sale.salePrice,
-              originalPrice: sale.originalPrice || prev.product.originalPrice
+            product: updatedProduct,
+            loading: false
+          }));
+        } else {
+          // Fallback: try to fetch live flash sale data
+          try {
+            const sale = await ProductService.getActiveFlashSaleByProductId(data.id);
+            if (sale) {
+              const updatedProduct = {
+                ...data,
+                isFlashSale: true,
+                flashSaleEndTime: sale.endTime,
+                price: sale.salePrice,
+                originalPrice: sale.originalPrice || data.originalPrice
+              };
+              
+              setState(prev => ({
+                ...prev,
+                product: updatedProduct,
+                loading: false
+              }));
+            } else {
+              setState(prev => ({ ...prev, product: data, loading: false }));
             }
-          } : prev);
+          } catch (flashSaleError) {
+            console.warn('Could not fetch flash sale data:', flashSaleError);
+            setState(prev => ({ ...prev, product: data, loading: false }));
+          }
         }
+      } else {
+        setState(prev => ({ ...prev, product: data, loading: false }));
+      }
+      
+      // Auto-open checkout modal if requested from button click
+      if (shouldOpenCheckoutModal && data) {
+        setTimeout(() => {
+          setCheckoutState(prev => ({
+            ...prev,
+            showCheckoutForm: true,
+            checkoutType: 'purchase'
+          }));
+        }, 500); // Small delay to let UI render
       }
     } catch (err) {
       setState(prev => ({
@@ -142,7 +200,7 @@ export const useProductDetail = () => {
         error: 'Failed to load product details'
       }));
     }
-  }, [id, cameFromFlashSaleCard]);
+  }, [id, cameFromFlashSaleCard, shouldOpenCheckoutModal]);
 
   // Setup gallery images
   useEffect(() => {
@@ -219,7 +277,7 @@ export const useProductDetail = () => {
   }, []);
 
   // Checkout handlers
-  const handleCheckout = useCallback(async () => {
+  const handleCheckout = useCallback(async (paymentMethod?: string) => {
     if (!state.product) return;
     
     try {
@@ -248,6 +306,7 @@ export const useProductDetail = () => {
         description: `Pembelian ${state.product.name}`,
         successRedirectUrl: `${window.location.origin}/payment-status?status=success`,
         failureRedirectUrl: `${window.location.origin}/payment-status?status=failed`,
+        paymentMethod, // Pass the selected payment method
         customer: {
           given_names: checkoutState.customer.name,
           email: checkoutState.customer.email,
@@ -341,11 +400,40 @@ export const useProductDetail = () => {
   const timeRemaining = state.product?.flashSaleEndTime 
     ? calculateTimeRemaining(state.product.flashSaleEndTime) 
     : null;
-  const effectivePrice = (isFlashSaleActive && state.product?.originalPrice && state.product.originalPrice > state.product.price) 
+  
+  // Fix: Check if time remaining is still valid (not expired)
+  const isTimeValid = timeRemaining && (
+    timeRemaining.days > 0 || 
+    timeRemaining.hours > 0 || 
+    timeRemaining.minutes > 0 || 
+    timeRemaining.seconds > 0
+  );
+  
+  const actuallyFlashSaleActive = isFlashSaleActive && isTimeValid;
+  
+  const effectivePrice = (actuallyFlashSaleActive && state.product?.originalPrice && state.product.originalPrice > state.product.price) 
     ? state.product.price 
     : (state.product?.originalPrice && state.product.originalPrice > 0 
       ? state.product.originalPrice 
       : state.product?.price || 0);
+
+  // Debug final computed values
+  useEffect(() => {
+    if (state.product && cameFromFlashSaleCard) {
+      console.log('🔍 Final computed values:', {
+        productName: state.product.name,
+        isFlashSale: state.product.isFlashSale,
+        flashSaleEndTime: state.product.flashSaleEndTime,
+        isFlashSaleActive,
+        actuallyFlashSaleActive,
+        isTimeValid,
+        price: state.product.price,
+        originalPrice: state.product.originalPrice,
+        effectivePrice,
+        timeRemaining
+      });
+    }
+  }, [state.product, isFlashSaleActive, actuallyFlashSaleActive, effectivePrice, timeRemaining, cameFromFlashSaleCard]);
 
   return {
     // State
@@ -358,7 +446,7 @@ export const useProductDetail = () => {
     cameFromCatalogPage,
     
     // Computed
-    isFlashSaleActive,
+    isFlashSaleActive: actuallyFlashSaleActive,
     timeRemaining,
     effectivePrice,
     isInWishlist: state.product ? isInWishlist(state.product.id) : false,

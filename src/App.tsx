@@ -36,6 +36,7 @@ const TraditionalAuthPage = React.lazy(() => import('./pages/TraditionalAuthPage
 const ProductsPage = React.lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'));
 const FlashSalesPage = React.lazy(() => import('./pages/FlashSalesPage'));
+const FlashSaleProductDetailPage = React.lazy(() => import('./pages/FlashSaleProductDetailPage'));
 const SellPage = React.lazy(() => import('./pages/SellPage'));
 const PaymentStatusPage = React.lazy(() => import('./pages/PaymentStatusPage'));
 const HelpPage = React.lazy(() => import('./pages/HelpPage'));
@@ -204,6 +205,7 @@ function App() {
                           <Route path="/products" element={<ProductsPage />} />
                           <Route path="/products/:id" element={<ProductDetailPage />} />
                           <Route path="/flash-sales" element={<FlashSalesPage />} />
+                          <Route path="/flash-sales/:id" element={<FlashSaleProductDetailPage />} />
                           <Route path="/sell" element={<SellPage />} />
                           <Route path="/help" element={<HelpPage />} />
                           <Route path="/feed" element={<FeedPage />} />

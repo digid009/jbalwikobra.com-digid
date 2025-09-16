@@ -7,6 +7,7 @@ export type CreateInvoiceInput = {
   description?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
+  paymentMethod?: string; // Add payment method selection
   customer?: {
     given_names?: string;
     email?: string;
@@ -50,6 +51,7 @@ export async function createXenditInvoice(input: CreateInvoiceInput) {
         description: input.description,
         success_redirect_url: input.successRedirectUrl,
         failure_redirect_url: input.failureRedirectUrl,
+        payment_method: input.paymentMethod, // Include selected payment method
         customer: input.customer,
         order: input.order
       }),

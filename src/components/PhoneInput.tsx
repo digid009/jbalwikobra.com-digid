@@ -32,9 +32,11 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const [filteredCountries, setFilteredCountries] = useState(COUNTRIES);
   const [error, setError] = useState<string>('');
   const [isValid, setIsValid] = useState<boolean>(true);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Auto-detect country based on phone number input
   const detectCountryFromNumber = (number: string): Country | null => {
@@ -249,7 +251,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
         setSearchTerm('');
       }
@@ -258,6 +261,35 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Update dropdown position when shown
+  useEffect(() => {
+    if (showDropdown && inputRef.current) {
+      const updatePosition = () => {
+        const rect = inputRef.current!.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const dropdownHeight = 256; // max-h-64 = 16rem = 256px
+        
+        // Check if dropdown would overflow viewport
+        const wouldOverflow = rect.bottom + dropdownHeight > viewportHeight;
+        
+        setDropdownPosition({
+          top: wouldOverflow ? Math.max(0, rect.top - dropdownHeight - 4) : rect.bottom + 4,
+          left: rect.left,
+          width: rect.width
+        });
+      };
+
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, { passive: true });
+      window.addEventListener('resize', updatePosition, { passive: true });
+
+      return () => {
+        window.removeEventListener('scroll', updatePosition);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [showDropdown]);
 
   // Parse initial value
   useEffect(() => {
@@ -281,9 +313,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   }, [value, disableAutoDetection]);
 
   const getBorderColor = () => {
-    if (!phoneNumber) return 'border-gray-700';
-    if (isValid) return 'border-green-500/60';
-    return 'border-red-500/60';
+    if (!phoneNumber) return 'border-white/20';
+    if (isValid) return 'border-green-500/50';
+    return 'border-red-500/50';
   };
 
   const getIconColor = () => {
@@ -292,19 +324,24 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     return 'text-red-500';
   };
 
+  const getRingColor = () => {
+    if (!phoneNumber) return 'focus:ring-pink-500/40';
+    if (isValid) return 'focus:ring-green-500/40';
+    return 'focus:ring-red-500/40';
+  };
+
   return (
-    <div className={`relative ${className}`}>
-      <div className={`flex rounded-lg border ${getBorderColor()} bg-black text-white overflow-hidden`}>
+    <div ref={containerRef} className={`relative ${className}`}>
+      <div className={`flex rounded-xl border ${getBorderColor()} bg-white/5 backdrop-blur-sm text-white overflow-hidden transition-all duration-200 focus-within:ring-2 ${getRingColor().replace('focus:', 'focus-within:')} focus-within:border-pink-500/50`}>
         
         {/* Country Selector */}
         <button
           type="button"
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 px-3 py-2 border-r border-gray-700 hover:bg-black transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3 py-2 border-r border-white/20 hover:bg-white/10 transition-colors cursor-pointer"
         >
           <span className="text-lg">{selectedCountry.flag}</span>
-          <span className="text-sm font-medium text-white-secondary">{selectedCountry.phoneCode}</span>
-          <ChevronDown size={16} className={`text-white-secondary transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+          <ChevronDown size={16} className={`text-gray-300 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Phone Number Input */}
@@ -316,7 +353,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder={placeholder || selectedCountry.placeholder}
           required={required}
           maxLength={Math.max(selectedCountry.maxLength || 15, 15)}
-          className="flex-1 px-3 py-2 bg-transparent border-0 focus:outline-none focus:ring-0 text-white placeholder:text-white/50"
+          className="flex-1 px-3 py-2 bg-transparent border-0 focus:outline-none focus:ring-0 text-white placeholder:text-gray-400"
         />
 
         {/* Validation Icon */}
@@ -329,17 +366,25 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
       {/* Country Dropdown */}
       {showDropdown && (
-        <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-1 bg-black border border-gray-700 rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+        <div 
+          ref={dropdownRef} 
+          className="fixed bg-gray-900/95 border border-pink-500/30 rounded-xl backdrop-blur-md shadow-xl z-[99999] max-h-64 overflow-hidden" 
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`
+          }}
+        >
           {/* Search */}
-          <div className="p-2 border-b border-gray-700">
+          <div className="p-3 border-b border-pink-500/20">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-secondary" />
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search countries..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-black border border-gray-700 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-9 pr-3 py-2 text-sm bg-black/50 border border-pink-500/30 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/40 focus:border-pink-500/50 transition-all duration-200"
               />
             </div>
           </div>
@@ -350,45 +395,22 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
               <button
                 key={country.code}
                 onClick={() => handleCountrySelect(country)}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-black transition-colors ${
-                  selectedCountry.code === country.code ? 'bg-pink-600/20 text-pink-300' : 'text-white-secondary'
+                className={`w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-pink-500/20 transition-colors ${
+                  selectedCountry.code === country.code ? 'bg-pink-500/30 text-pink-200' : 'text-white'
                 }`}
               >
                 <span className="text-lg">{country.flag}</span>
-                <span className="font-medium">{country.phoneCode}</span>
-                <span className="flex-1 truncate">{country.name}</span>
+                <span className="font-medium text-sm">{country.phoneCode}</span>
+                <span className="flex-1 truncate text-sm">{country.name}</span>
               </button>
             ))}
             
             {filteredCountries.length === 0 && (
-              <div className="px-3 py-4 text-center text-white-secondary text-sm">
+              <div className="px-3 py-4 text-center text-gray-300 text-sm">
                 No countries found
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="text-xs text-red-400 mt-1 flex items-center space-x-1">
-          <AlertCircle size={12} />
-          <span>{error}</span>
-        </div>
-      )}
-      
-      {/* Help text */}
-      {!error && (
-        <div className="text-xs text-white-secondary mt-1">
-          Format: {selectedCountry.phoneCode} {selectedCountry.placeholder}
-        </div>
-      )}
-      
-      {/* Valid confirmation */}
-      {phoneNumber && isValid && !error && (
-        <div className="text-xs text-green-400 mt-1 flex items-center space-x-1">
-          <CheckCircle size={12} />
-          <span>Nomor telepon valid</span>
         </div>
       )}
     </div>

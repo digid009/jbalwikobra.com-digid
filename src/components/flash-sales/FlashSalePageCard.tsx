@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PNCard, PNButton } from '../ui/PinkNeonDesignSystem';
 import { Product, FlashSale } from '../../types';
 import FlashSaleTimer from '../FlashSaleTimer';
@@ -15,8 +15,29 @@ interface FlashSalePageCardProps {
 }
 
 const FlashSalePageCard: React.FC<FlashSalePageCardProps> = ({ product, flashSale }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/flash-sales/${product.id}`, {
+      state: {
+        fromFlashSaleCard: true,
+        flashSaleData: flashSale ? {
+          id: flashSale.id,
+          productId: product.id,
+          originalPrice: flashSale.originalPrice,
+          salePrice: flashSale.salePrice,
+          endTime: flashSale.endTime,
+          isActive: true,
+          discountPercentage: flashSale.originalPrice && flashSale.originalPrice > flashSale.salePrice
+            ? Math.round(((flashSale.originalPrice - flashSale.salePrice) / flashSale.originalPrice) * 100)
+            : 0
+        } : null
+      }
+    });
+  };
+
   return (
-    <Link to={`/products/${product.id}`} className="block">
+    <div onClick={handleClick} className="cursor-pointer">
       <PNCard className="p-3 md:p-4 hover:bg-white/10 transition-colors h-full min-w-[190px] md:min-w-0">
         <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-pink-600/60 via-pink-600/40 to-fuchsia-600/60 border border-pink-500/30 mb-2 md:mb-3 overflow-hidden">
           {product.image && (
@@ -61,7 +82,7 @@ const FlashSalePageCard: React.FC<FlashSalePageCardProps> = ({ product, flashSal
           Beli
         </PNButton>
       </PNCard>
-    </Link>
+    </div>
   );
 };
 

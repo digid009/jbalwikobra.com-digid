@@ -20,3 +20,4 @@ export { TierSelect } from './TierSelect';
 export { EmptyState } from './EmptyState';
 export { ProductCardSkeleton } from './ProductCardSkeleton';
 export { default as ProductsPageHeader } from './ProductsPageHeader';
+export { default as ProductsHeroWithFilters } from './ProductsHeroWithFilters';

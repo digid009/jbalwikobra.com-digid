@@ -6,7 +6,7 @@ interface FlashSaleTimerProps {
   endTime: string;
   className?: string;
   compact?: boolean;
-  variant?: 'card' | 'inline'; // New variant for different styles
+  variant?: 'card' | 'inline' | 'detail'; // Added 'detail' variant
 }
 
 const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({ 
@@ -44,6 +44,37 @@ const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({
       <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black text-pink-400 text-xs font-semibold border border-pink-400/60 backdrop-blur-sm ${className}`}>
         <Clock size={12} className="text-pink-400" />
         <span>BERAKHIR</span>
+      </div>
+    );
+  }
+
+  if (variant === 'detail') {
+    return (
+      <div className={`flex space-x-3 ${className}`}>
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
+            {timeRemaining.days.toString().padStart(2, '0')}
+          </div>
+          <span className="text-xs text-red-300 mt-1 block">Hari</span>
+        </div>
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
+            {timeRemaining.hours.toString().padStart(2, '0')}
+          </div>
+          <span className="text-xs text-red-300 mt-1 block">Jam</span>
+        </div>
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
+            {timeRemaining.minutes.toString().padStart(2, '0')}
+          </div>
+          <span className="text-xs text-red-300 mt-1 block">Menit</span>
+        </div>
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-2 rounded-lg font-bold text-lg font-mono tracking-wide shadow-sm">
+            {timeRemaining.seconds.toString().padStart(2, '0')}
+          </div>
+          <span className="text-xs text-red-300 mt-1 block">Detik</span>
+        </div>
       </div>
     );
   }

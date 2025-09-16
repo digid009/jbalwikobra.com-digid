@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, ShoppingCart, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useWishlist } from '../contexts/WishlistContext';
+import PublicPageHeader from '../components/shared/PublicPageHeader';
+import { PNSection, PNContainer } from '../components/ui/PinkNeonDesignSystem';
 import { formatCurrency } from '../utils/helpers';
 // standardClasses helper removed – using direct utility classes per new design system
 
 const WishlistPage: React.FC = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
+  const navigate = useNavigate();
 
   const handleClearWishlist = () => {
     if (confirm('Yakin ingin mengosongkan wishlist?')) {
@@ -15,35 +18,43 @@ const WishlistPage: React.FC = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   return (
     <AuthRequired>
-      <div className="min-h-screen" style={{
-        background: '#000000',
-        backgroundImage: 'linear-gradient(135deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0a0a0a 75%, #000000 100%)'
-      }}>
-      
-      <div className="pt-20 pb-20 px-4">
-  <div className="w-full max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
-                <Heart size={24} className="text-white" />
+      <div className="min-h-screen bg-black text-white">
+        <PNContainer>
+          <PNSection padding="lg">
+            {/* Shared Header */}
+            <PublicPageHeader
+              backLabel="Beranda"
+              onBack={handleBackToHome}
+              showWishlist={false}
+              showShare={false}
+            />
+
+            {/* Wishlist Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
+                  <Heart size={24} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-white">Wishlist Saya</h1>
+                  <p className="text-gray-400">Produk yang Anda sukai</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Wishlist Saya</h1>
-                <p className="text-secondary">Produk yang Anda sukai</p>
-              </div>
+              {wishlistItems.length > 0 && (
+                <button
+                  onClick={handleClearWishlist}
+                  className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
+                >
+                  Kosongkan Semua
+                </button>
+              )}
             </div>
-            {wishlistItems.length > 0 && (
-              <button
-                onClick={handleClearWishlist}
-                className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
-              >
-                Kosongkan Semua
-              </button>
-            )}
-          </div>
 
           {wishlistItems.length === 0 ? (
             <div className="bg-surface-alt backdrop-blur rounded-2xl p-12 text-center border-subtle">
@@ -139,14 +150,14 @@ const WishlistPage: React.FC = () => {
                   <div className="text-2xl font-bold text-yellow-400">
                     {formatCurrency(wishlistItems.reduce((sum, item) => sum + item.price, 0))}
                   </div>
-                  <div className="text-tertiary text-sm">Total Nilai</div>
+                  <div className="text-gray-400 text-sm">Total Nilai</div>
                 </div>
               </div>
             </div>
           )}
-        </div>
+          </PNSection>
+        </PNContainer>
       </div>
-    </div>
     </AuthRequired>
   );
 };
