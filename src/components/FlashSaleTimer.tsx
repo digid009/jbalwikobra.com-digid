@@ -33,8 +33,8 @@ const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({
   if (timeRemaining.isExpired) {
     if (variant === 'card') {
       return (
-        <div className={`w-full flex items-center justify-center gap-2 text-pink-600 bg-white rounded-lg py-2 text-[11px] font-semibold tracking-wide ${className}`}>
-          <Clock className="w-4 h-4" />
+        <div className={`w-full flex items-center justify-center gap-1.5 text-pink-600 bg-white rounded-lg py-1.5 text-[10px] font-semibold tracking-wide ${className}`}>
+          <Clock className="w-3 h-3" />
           <span>Berakhir</span>
         </div>
       );
@@ -50,11 +50,11 @@ const FlashSaleTimer: React.FC<FlashSaleTimerProps> = ({
 
   if (variant === 'card') {
     return (
-      <div className={`w-full flex items-center justify-center gap-2 text-pink-600 bg-white rounded-lg py-2 text-[11px] font-semibold tracking-wide group-hover:bg-white/90 ${className}`}>
-        <Clock className="w-4 h-4" />
-        <span>
-          {timeRemaining.days > 0 && `${timeRemaining.days} Hari `}
-          {`${timeRemaining.hours.toString().padStart(2,'0')}:${timeRemaining.minutes.toString().padStart(2,'0')}:${timeRemaining.seconds.toString().padStart(2,'0')}`} tersisa
+      <div className={`w-full flex items-center justify-center gap-1.5 text-pink-600 bg-white rounded-lg py-1.5 text-[10px] font-semibold tracking-wide ${className}`}>
+        <Clock className="w-3 h-3" />
+        <span className="truncate">
+          {timeRemaining.days > 0 && `${timeRemaining.days}h `}
+          {`${timeRemaining.hours.toString().padStart(2,'0')}:${timeRemaining.minutes.toString().padStart(2,'0')}:${timeRemaining.seconds.toString().padStart(2,'0')}`}
         </span>
       </div>
     );

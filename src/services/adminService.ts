@@ -808,6 +808,9 @@ export const adminService = {
           ),
           game_titles (
             id, name, slug, icon, logo_url
+          ),
+          rental_options (
+            id, duration, price, description
           )
         `, { count: 'exact' });
 

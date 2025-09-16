@@ -531,7 +531,7 @@ const AdminProductsV2: React.FC = () => {
             <table className="w-full table-fixed">
               <thead>
                 <tr className="border-b border-gray-800">
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider w-80">Product</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider w-96">Product</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Game Title</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Category</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider w-24">Tier</th>
@@ -598,7 +598,7 @@ const AdminProductsV2: React.FC = () => {
                 ) : (
                   currentPageProducts.map((product) => (
                     <tr key={product.id} className={`transition-all duration-200 border-l-4 ${getTierRowColor(product)}`}>
-                      <td className="px-6 py-4 w-80">
+                      <td className="px-6 py-4 w-96">
                         <div className="flex items-center space-x-3">
                           <div className="relative flex-shrink-0">
                             {product.images && product.images.length > 0 ? (
@@ -639,11 +639,28 @@ const AdminProductsV2: React.FC = () => {
                             <div className="text-sm text-gray-400 truncate">
                               {product.description || 'No description available'}
                             </div>
-                            {product.images && product.images.length > 1 && (
-                              <div className="text-xs text-pink-300">
-                                {product.images.length} images
+                            <div className="flex items-center gap-2 mt-1">
+                              {product.images && product.images.length > 1 && (
+                                <div className="text-xs text-pink-300">
+                                  {product.images.length} images
+                                </div>
+                              )}
+                              {/* Rental Status Tag */}
+                              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                product.has_rental 
+                                  ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                                  : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                              }`}>
+                                {product.has_rental ? 'Rental Active' : 'Rental Inactive'}
                               </div>
-                            )}
+                              {/* Variant Count Tag */}
+                              {product.has_rental && (
+                                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                  {(product as any).rentalOptions?.length || 0} variants
+                                </div>
+                              )}
+
+                            </div>
                           </div>
                         </div>
                       </td>

@@ -45,6 +45,12 @@ export interface DbProductRow {
     icon?: string;
     logo_url?: string;
   } | null;
+  rental_options?: {
+    id: string;
+    duration: string;
+    price: number;
+    description?: string;
+  }[] | null;
 }
 
 // Domain shape used by admin panels (kept aligned with existing AdminService.Product interface)
@@ -84,6 +90,12 @@ export interface DomainProduct {
     icon?: string;
     logo_url?: string;
   } | null;
+  rentalOptions?: {
+    id: string;
+    duration: string;
+    price: number;
+    description?: string;
+  }[] | null;
 }
 
 // Helper: ensure images array & primary image coherence
@@ -133,7 +145,8 @@ export function dbRowToDomainProduct(row: DbProductRow): DomainProduct {
     archived_at: row.archived_at || null,
     // Include LEFT JOIN relations for admin filtering
     tiers: row.tiers || null,
-    game_titles: row.game_titles || null
+    game_titles: row.game_titles || null,
+    rentalOptions: row.rental_options || null
   };
 }
 
