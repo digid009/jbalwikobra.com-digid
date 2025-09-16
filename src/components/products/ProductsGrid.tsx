@@ -7,6 +7,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types';
 import { PNProductCard } from '../catalog';
+import { PNButton } from '../ui/PinkNeonDesignSystem';
 import { formatCurrency } from '../../utils/helpers';
 import { IOSContainer, IOSGrid } from '../ios/IOSDesignSystemV2';
 import { PNContainer } from '../ui/PinkNeonDesignSystem';
@@ -138,6 +139,19 @@ export const ProductsGrid = React.memo(({ products, onResetFilters, density = 'c
                       </span>
                     </div>
                   )}
+                  
+                  <PNButton 
+                    variant="primary" 
+                    size="sm" 
+                    fullWidth
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/products/${product.id}`, { state: { fromCatalogPage: true } });
+                    }}
+                    className="mt-3"
+                  >
+                    Beli Sekarang
+                  </PNButton>
                 </PNProductCard>
               );
             })}

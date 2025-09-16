@@ -45,8 +45,11 @@ export class SettingsService {
         instagramUrl: data.instagram_url ?? undefined,
         tiktokUrl: data.tiktok_url ?? undefined,
         youtubeUrl: data.youtube_url ?? undefined,
+        twitterUrl: data.twitter_url ?? undefined,
         heroTitle: data.hero_title ?? undefined,
         heroSubtitle: data.hero_subtitle ?? undefined,
+        topupGameUrl: data.topup_game_url ?? undefined,
+        whatsappChannelUrl: data.whatsapp_channel_url ?? undefined,
         updatedAt: data.updated_at ?? undefined,
       };
       this.cache = { v: result, t: Date.now() };
@@ -71,8 +74,11 @@ export class SettingsService {
         instagram_url: input.instagramUrl ?? current.instagramUrl ?? null,
         tiktok_url: input.tiktokUrl ?? current.tiktokUrl ?? null,
         youtube_url: input.youtubeUrl ?? current.youtubeUrl ?? null,
+        twitter_url: input.twitterUrl ?? current.twitterUrl ?? null,
         hero_title: input.heroTitle ?? current.heroTitle ?? null,
         hero_subtitle: input.heroSubtitle ?? current.heroSubtitle ?? null,
+        topup_game_url: input.topupGameUrl ?? current.topupGameUrl ?? null,
+        whatsapp_channel_url: input.whatsappChannelUrl ?? current.whatsappChannelUrl ?? null,
       };
       if (input.logoFile instanceof File) {
         const result = await uploadFile(input.logoFile, 'settings');
@@ -106,8 +112,11 @@ export class SettingsService {
         instagramUrl: row.instagram_url ?? current.instagramUrl,
         tiktokUrl: row.tiktok_url ?? current.tiktokUrl,
         youtubeUrl: row.youtube_url ?? current.youtubeUrl,
+        twitterUrl: row.twitter_url ?? current.twitterUrl,
         heroTitle: row.hero_title ?? current.heroTitle,
         heroSubtitle: row.hero_subtitle ?? current.heroSubtitle,
+        topupGameUrl: row.topup_game_url ?? current.topupGameUrl,
+        whatsappChannelUrl: row.whatsapp_channel_url ?? current.whatsappChannelUrl,
         updatedAt: row.updated_at ?? new Date().toISOString(),
       };
   // Invalidate/refresh cache

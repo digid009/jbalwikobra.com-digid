@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { Product } from '../../types';
 import { calculateTimeRemaining, formatCurrency } from '../../utils/helpers';
-import { IOSCard } from '../ios/IOSDesignSystemV2';
-import PriceBadge from '../ui/badges/PriceBadge';
-import DiscountBadge from '../ui/badges/DiscountBadge';
+import { PNCard, PNButton } from '../ui/PinkNeonDesignSystem';
 import { useNavigate } from 'react-router-dom';
 
 interface FlashSaleProductCardProps {
@@ -32,61 +30,68 @@ export const FlashSaleProductCard: React.FC<FlashSaleProductCardProps> = ({ prod
     : 0;
 
   return (
-    <IOSCard
-      variant="elevated"
-      padding="none"
-      hoverable
-  className="relative flex flex-col overflow-hidden interactive-card border border-subtle group"
-      onClick={() => navigate(`/products/${product.id}`, { 
-        state: { 
-          fromFlashSaleCard: true
-        } 
-      })}
-    >
-      {/* Image */}
-    <div className="aspect-square w-full flex items-center justify-center border-b border-subtle bg-[linear-gradient(55deg,#161616,#1f1f1f_35%,#2a1a2a_95%)]">
+    <PNCard className="p-3 md:p-4 hover:bg-white/10 transition-colors h-full min-w-[190px] md:min-w-0">
+      {/* Image with homepage styling - exactly matching PNFlashSalesSection */}
+      <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-pink-600/60 via-pink-600/40 to-fuchsia-600/60 border border-pink-500/30 mb-2 md:mb-3 overflow-hidden">
         {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-      <div className="text-[10px] text-tertiary tracking-wider">NO IMAGE</div>
+          <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 tracking-wider">NO IMAGE</div>
         )}
       </div>
 
-      {/* Content */}
-  <div className="flex-1 p-4 flex flex-col gap-3">
-	<h3 className="text-white font-semibold text-sm leading-snug tracking-wide line-clamp-2 group-hover:text-white/90">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          <PriceBadge value={product.price} />
-          <DiscountBadge percent={discountPct} />
+      {/* Content with homepage styling - exactly matching PNFlashSalesSection */}
+      <div className="text-sm font-semibold text-white line-clamp-2 mb-2 md:mb-2 md:min-h-10">{product.name}</div>
+      
+      <div className="flex items-end justify-between gap-3 mb-2">
+        <div className="flex flex-col leading-tight">
           {product.originalPrice && product.originalPrice > product.price && (
-    <div className="text-[11px] text-tertiary line-through">
-              {formatCurrency(product.originalPrice)}
-            </div>
+            <div className="text-[11px] md:text-[12px] text-gray-400 line-through">{formatCurrency(product.originalPrice)}</div>
           )}
+          <div className="text-pink-300 font-extrabold text-[15px] md:text-[16px]">{formatCurrency(product.price)}</div>
         </div>
+        {product.originalPrice && product.originalPrice > product.price && (
+          <div className="shrink-0 px-2 py-1 rounded-md bg-pink-600/20 border border-pink-500/40 text-pink-300 text-[11px] md:text-[12px] font-bold">
+            -{discountPct}%
+          </div>
+        )}
       </div>
 
-      {/* Timer */}
-  <div className="px-3 pb-4">
-  <div className="w-full flex items-center justify-center gap-2 text-pink-300 bg-black/50 rounded-lg py-2 text-[11px] font-medium tracking-wide border border-subtle backdrop-blur-sm">
-          <Clock className="w-4 h-4" />
-          {remaining ? (
-            remaining.isExpired ? (
-              <span>Berakhir</span>
+      {/* Timer with homepage styling - exactly matching PNFlashSalesSection */}
+      {product.isFlashSale && product.flashSaleEndTime && (
+        <div className="mb-2 md:mb-3">
+          <div className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg bg-black/60 border border-pink-500/30 text-pink-300 text-[11px] font-medium">
+            <Clock className="w-3.5 h-3.5" />
+            {remaining ? (
+              remaining.isExpired ? (
+                <span>Berakhir</span>
+              ) : (
+                <span>
+                  {remaining.days > 0 && `${remaining.days}h `}
+                  {`${remaining.hours.toString().padStart(2,'0')}:${remaining.minutes.toString().padStart(2,'0')}:${remaining.seconds.toString().padStart(2,'0')}`}
+                </span>
+              )
             ) : (
-              <span>
-                {remaining.days > 0 && `${remaining.days} Hari `}
-                {`${remaining.hours.toString().padStart(2,'0')}:${remaining.minutes.toString().padStart(2,'0')}:${remaining.seconds.toString().padStart(2,'0')}`} tersisa
-              </span>
-            )
-          ) : (
-            <span>Memuat...</span>
-          )}
+              <span>Memuat...</span>
+            )}
+          </div>
         </div>
-      </div>
-    </IOSCard>
+      )}
+      
+      {/* CTA Button with homepage styling - exactly matching PNFlashSalesSection */}
+      <PNButton 
+        variant="primary" 
+        size="sm" 
+        fullWidth
+        onClick={() => navigate(`/products/${product.id}`, { 
+          state: { 
+            fromFlashSaleCard: true
+          } 
+        })}
+      >
+        Beli
+      </PNButton>
+    </PNCard>
   );
 };
 

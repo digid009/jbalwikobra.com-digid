@@ -4,6 +4,7 @@ import { adminService, Product } from '../../../services/adminService';
 import { uploadFiles, deletePublicUrls, UploadResult } from '../../../services/storageService';
 import { useToast } from '../../../components/Toast';
 import { formatNumberID, parseNumberID } from '../../../utils/helpers';
+import { supabase } from '../../../services/supabase';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -178,20 +179,55 @@ const ProductModal: React.FC<ProductModalProps> = ({
         ...formData,
         images: imageItems.map(item => item.url),
         image: imageItems.length > 0 ? imageItems[0].url : formData.image,
-        // Remove rentalOptions from submitData as it's not a database column
-        // Only include has_rental boolean field
       };
 
       // Remove the rentalOptions field to avoid database schema errors
       delete (submitData as any).rentalOptions;
       delete (submitData as any).rental_options;
 
+      let savedProduct: any;
       if (mode === 'create') {
-        await adminService.createProduct(submitData);
+        savedProduct = await adminService.createProduct(submitData);
         push('Product created successfully!', 'success');
       } else if (mode === 'edit' && product) {
-        await adminService.updateProduct(product.id, submitData);
+        savedProduct = await adminService.updateProduct(product.id, submitData);
         push('Product updated successfully!', 'success');
+      }
+
+      // Save rental options if provided
+      if (savedProduct && formData.rental_options?.length && supabase) {
+        try {
+          const productId = savedProduct.id || product?.id;
+          
+          // First, delete existing rental options if editing
+          if (mode === 'edit' && productId) {
+            const { error: deleteError } = await supabase.from('rental_options').delete().eq('product_id', productId);
+            if (deleteError) {
+              console.warn('Failed to delete existing rentals:', deleteError);
+            }
+          }
+          
+          // Filter valid rental options
+          const validRentals = formData.rental_options.filter(r => r.duration?.trim() && r.price > 0);
+          
+          if (validRentals.length > 0) {
+            const rentalData = validRentals.map(r => ({
+              product_id: productId,
+              duration: r.duration.trim(),
+              price: Number(r.price) || 0,
+              description: r.description?.trim() || null
+            }));
+
+            const { error: rentalError } = await supabase.from('rental_options').insert(rentalData);
+            if (rentalError) {
+              console.warn('Failed to save rental options:', rentalError);
+              push('Product saved, but failed to save rental options', 'info');
+            }
+          }
+        } catch (rentalError) {
+          console.warn('Failed to save rental options:', rentalError);
+          push('Product saved, but failed to save rental options', 'info');
+        }
       }
       
       onSuccess?.();

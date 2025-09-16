@@ -18,7 +18,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
       <section className="px-4 py-6">
         <PNSectionHeader
           title="Kategori Akun"
-          subtitle="Pilih kategori sesuai kebutuhan gaming Anda"
+          subtitle="Berbagai pilihan untuk Anda"
           padX={false}
           action={
             <Link to="/products" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">
@@ -44,7 +44,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
       <PNContainer>
         <PNSectionHeader
           title="Kategori Akun"
-          subtitle="Pilih kategori sesuai kebutuhan gaming Anda"
+          subtitle="Berbagai pilihan akun untuk Anda"
           padX={false}
           action={
             <Link to="/products" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">

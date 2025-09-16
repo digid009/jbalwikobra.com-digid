@@ -122,7 +122,8 @@ export interface WebsiteSettings {
   footerCopyrightText?: string;
   newsletterEnabled?: boolean;
   socialMediaEnabled?: boolean;
-  topupUrl?: string; // URL for Top Up Game feature
+  topupGameUrl?: string; // URL for Top Up Game feature
+  whatsappChannelUrl?: string; // URL for WhatsApp channel
   updatedAt?: string;
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ShoppingBag, TrendingUp, Rocket } from 'lucide-react';
+import { Zap, ShoppingBag, TrendingUp, Rocket, MessageCircle } from 'lucide-react';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
 import { SettingsService } from '../../../services/settingsService';
 import type { WebsiteSettings } from '../../../types';
@@ -21,7 +21,8 @@ const PNHero: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
-  const topupUrl = settings?.topupUrl || 'https://www.example.com';
+  const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
+  const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
 
   return (
     <PNSection padding="lg">
@@ -37,12 +38,15 @@ const PNHero: React.FC = () => {
             <PNText className="mb-6">Beli, jual, dan rental akun game favorit dengan aman, cepat, dan terpercaya</PNText>
 
             <div className="space-y-3">
-              <Link to="/flash-sales">
-                <PNButton variant="primary" size="lg" fullWidth className="flex items-center justify-center gap-2">
-                  <Zap size={18} />
-                  Flash Sale Hari Ini
-                </PNButton>
-              </Link>
+              {/* Top Up Game button */}
+              <div>
+                <a href={topupGameUrl} target="_blank" rel="noopener noreferrer">
+                  <PNButton variant="primary" size="lg" fullWidth className="flex items-center justify-center gap-2">
+                    <Rocket size={18} />
+                    Top Up Game Murah
+                  </PNButton>
+                </a>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <Link to="/products">
                   <PNButton variant="secondary" size="md" fullWidth className="flex items-center justify-center gap-2">
@@ -57,12 +61,12 @@ const PNHero: React.FC = () => {
                   </PNButton>
                 </Link>
               </div>
-              {/* New Top Up Game CTA */}
+              {/* WhatsApp Channel button */}
               <div>
-                <a href={topupUrl} target="_blank" rel="noopener noreferrer">
-                  <PNButton variant="secondary" size="md" fullWidth className="flex items-center justify-center gap-2 mt-1 border border-white/15 bg-white/5 hover:bg-white/10">
-                    <Rocket size={16} />
-                    Top Up Game
+                <a href={whatsappChannelUrl} target="_blank" rel="noopener noreferrer">
+                  <PNButton variant="secondary" size="md" fullWidth className="flex items-center justify-center gap-2">
+                    <MessageCircle size={16} />
+                    Join WhatsApp Channel
                   </PNButton>
                 </a>
               </div>
