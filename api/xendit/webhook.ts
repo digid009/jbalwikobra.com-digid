@@ -3,7 +3,7 @@
 
 function mapStatus(x: string | undefined): 'pending'|'paid'|'completed'|'cancelled' {
   const s = (x || '').toUpperCase();
-  if (s === 'PAID') return 'paid';
+  if (s === 'PAID' || s === 'SUCCEEDED' || s === 'SUCCESS') return 'paid';
   if (s === 'SETTLED') return 'completed';
   if (s === 'EXPIRED' || s === 'CANCELLED') return 'cancelled';
   return 'pending';
@@ -247,22 +247,41 @@ export default async function handler(req: any, res: any) {
 
   try {
     // Header validation
-    const headerToken = req.headers['x-callback-token'] || req.headers['X-Callback-Token'];
-    if (XENDIT_CALLBACK_TOKEN && headerToken !== XENDIT_CALLBACK_TOKEN) {
+    const headerToken = (req.headers['x-callback-token'] as string | undefined) || (req.headers['X-Callback-Token'] as string | undefined) || '';
+    if (XENDIT_CALLBACK_TOKEN && String(headerToken || '').trim() !== String(XENDIT_CALLBACK_TOKEN).trim()) {
+      console.error('[Webhook] Invalid callback token');
       return res.status(401).json({ error: 'Invalid callback token' });
     }
 
     const payload = req.body || {};
+    const event = (payload.event || payload.type || '').toString();
     const data = payload.data || payload;
-    if (!data || (!data.external_id && !data.id) || !data.status) {
-      return res.status(400).json({ error: 'Invalid payload' });
+
+    // Extract identifiers from various possible shapes
+    const invoiceId: string | undefined =
+      data.id || data.invoice_id || data.payment_request_id || data.payment_method_id ||
+      data.qr_code?.id || data.payment_method?.id;
+
+    const externalId: string | undefined =
+      data.external_id || data.reference_id || data.qr_code?.external_id || data.qr_code?.reference_id ||
+      data.payment_method?.reference_id || data.payment_method?.external_id;
+
+    // Determine status from field or event name
+    const rawStatus: string | undefined = data.status || data.qr_code?.status || data.payment_method?.status ||
+      (event.includes('succeeded') ? 'SUCCEEDED' : undefined) ||
+      (event.includes('failed') ? 'FAILED' : undefined) ||
+      (event.includes('expired') ? 'EXPIRED' : undefined);
+
+    if (!externalId && !invoiceId) {
+      console.error('[Webhook] Missing identifiers');
+      return res.status(400).json({ error: 'Invalid payload: missing identifiers' });
     }
 
-    const invoiceId: string | undefined = data.id || data.invoice_id;
-    const externalId: string | undefined = data.external_id;
-    const status = mapStatus(data.status);
+    const status = mapStatus(rawStatus);
     const paidAt: string | null = data.paid_at ? new Date(data.paid_at).toISOString() : (status === 'paid' || status === 'completed') ? new Date().toISOString() : null;
-    const paymentChannel: string | null = data.payment_channel || data.payment_method || null;
+    const paymentChannel: string | null =
+      data.payment_channel || data.payment_method || data.channel_code || data.payment_method?.type ||
+      (data.qr_code ? 'QRIS' : null);
     const payerEmail: string | null = data.payer_email || data.payer?.email || null;
     const invoiceUrl: string | null = data.invoice_url || null;
     const currency: string | null = data.currency || 'IDR';
@@ -347,6 +366,38 @@ export default async function handler(req: any, res: any) {
             .eq('client_external_id', clientId)
             .select('id');
           if (!e3) updated = (up3 || []).length;
+        }
+      }
+      // If still nothing updated and we have at least an externalId, insert a minimal placeholder order
+      if (updated === 0 && externalId) {
+        const baseRow: any = {
+          client_external_id: externalId,
+          order_type: 'purchase',
+          amount: typeof (data.amount) === 'number' ? data.amount : null,
+          customer_name: null,
+          customer_email: payerEmail,
+          customer_phone: null,
+          status: 'pending',
+          payment_method: 'xendit',
+          created_at: new Date().toISOString()
+        };
+        const { error: insertErr } = await sb.from('orders').upsert(baseRow, { onConflict: 'client_external_id' });
+        if (!insertErr) {
+          const { data: up4 } = await sb
+            .from('orders')
+            .update({
+              status,
+              paid_at: paidAt,
+              payment_channel: paymentChannel,
+              payer_email: payerEmail,
+              xendit_invoice_url: invoiceUrl,
+              xendit_invoice_id: invoiceId,
+              currency,
+              expires_at: expiresAt,
+            })
+            .eq('client_external_id', externalId)
+            .select('id');
+          updated = (up4 || []).length;
         }
       }
     }

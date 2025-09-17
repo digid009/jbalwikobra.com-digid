@@ -84,8 +84,8 @@ const ProductsPage: React.FC = () => {
         gameTitles={gameTitles}
         selectedGame={filterState.selectedGame}
         onGameChange={(name) => handleFilterChange('selectedGame', name)}
-        selectedCategory={filterState.searchTerm}
-        onCategoryChange={(name) => handleFilterChange('searchTerm', name)}
+  selectedCategory={filterState.selectedCategory}
+  onCategoryChange={(name) => handleFilterChange('selectedCategory', name)}
       />
 
       {/* Products Grid */}

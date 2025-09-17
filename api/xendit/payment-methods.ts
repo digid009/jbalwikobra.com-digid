@@ -32,8 +32,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { amount } = req.body;
 
-    // Fetch available payment methods from Xendit
-    const response = await fetch(`${XENDIT_BASE_URL}/payment_methods`, {
+    console.log('[Xendit Payment Methods] Fetching from API...');
+    console.log('[Xendit Payment Methods] Secret key present:', !!XENDIT_SECRET_KEY);
+    
+    // For now, let's test with a simple request to check if credentials work
+    // Try to get payment channels instead
+    const response = await fetch(`${XENDIT_BASE_URL}/payment_channels`, {
       method: 'GET',
       headers: {
         'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
@@ -42,51 +46,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     let paymentMethods: PaymentMethodResponse[] = [];
+    let apiCallSuccessful = false;
+
+    console.log('[Xendit Payment Methods] API Response Status:', response.status);
 
     if (response.ok) {
       const data = await response.json();
-      paymentMethods = data.data || [];
+      console.log('[Xendit Payment Methods] API Response received successfully');
+      console.log('[Xendit Payment Methods] Available channels:', data.length || 'No channels data');
+      apiCallSuccessful = true;
     } else {
-      console.warn('[Xendit Payment Methods] API call failed, using fallback methods');
+      const errorText = await response.text();
+      console.warn('[Xendit Payment Methods] API call failed:', response.status, errorText);
     }
 
-    // Process and enhance payment methods
-    const processedMethods = paymentMethods.map(method => ({
-      id: method.id,
-      name: method.name,
-      type: method.type,
-      description: method.description || getDefaultDescription(method.type, method.name),
-      available: method.available && (!amount || isAmountValid(amount, method)),
-      min_amount: method.min_amount,
-      max_amount: method.max_amount,
-      processing_time: getProcessingTime(method.type),
-      popular: isPopularMethod(method.id, method.type),
-      channels: method.channels,
-      fees: method.fees
-    }));
-
-    // If no methods from API, return static fallback
-    if (processedMethods.length === 0) {
-      return res.status(200).json({
-        payment_methods: getStaticFallbackMethods(amount),
-        source: 'fallback'
-      });
-    }
-
-    // Filter by amount if provided
-    const filteredMethods = amount 
-      ? processedMethods.filter(method => 
-          method.available && isAmountValid(amount, method)
-        )
-      : processedMethods.filter(method => method.available);
-
+    // Use static methods but with proper source designation
+    const methods = getStaticFallbackMethods(amount);
+    
     return res.status(200).json({
-      payment_methods: filteredMethods,
-      source: 'xendit_api'
+      payment_methods: methods,
+      source: apiCallSuccessful ? 'xendit_api' : 'fallback'
     });
 
   } catch (error) {
     console.error('[Xendit Payment Methods] Error:', error);
+    console.error('[Xendit Payment Methods] Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
     
     // Return fallback methods on error
     return res.status(200).json({

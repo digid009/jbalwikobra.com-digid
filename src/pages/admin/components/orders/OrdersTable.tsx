@@ -26,10 +26,12 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="border-b border-pink-500/10 p-4">
               <div className="flex justify-between items-center">
-                <div className="h-4 bg-pink-500/20 rounded w-1/4"></div>
+                <div className="h-4 bg-pink-500/20 rounded w-1/6"></div>
+                <div className="h-4 bg-pink-500/20 rounded w-1/6"></div>
+                <div className="h-4 bg-pink-500/20 rounded w-1/8"></div>
+                <div className="h-4 bg-pink-500/20 rounded w-1/6"></div>
                 <div className="h-4 bg-pink-500/20 rounded w-1/6"></div>
                 <div className="h-4 bg-pink-500/20 rounded w-1/5"></div>
-                <div className="h-4 bg-pink-500/20 rounded w-1/6"></div>
               </div>
             </div>
           ))}
@@ -68,6 +70,9 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
               </th>
               <th className="px-4 py-4 text-right text-sm font-bold text-white uppercase tracking-wide">
                 Amount
+              </th>
+              <th className="px-4 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">
+                Payment
               </th>
               <th className="px-4 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">
                 Product

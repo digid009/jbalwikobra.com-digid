@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingCart, 
   Filter, 
@@ -6,8 +7,7 @@ import {
   Search, 
   MoreVertical, 
   Eye,
-  Edit,
-  Trash2,
+  Settings,
   Package,
   CreditCard,
   Clock,
@@ -84,7 +84,20 @@ const StatusBadge: React.FC<{ status: OrderStatus }> = ({ status }) => {
 };
 
 // Modern Payment Badge Component  
-const PaymentBadge: React.FC<{ method: PaymentMethod }> = ({ method }) => {
+const PaymentBadge: React.FC<{ order: AdminOrder }> = ({ order }) => {
+  // Show actual payment method from payment_data if available
+  if (order.payment_data?.payment_method_type) {
+    const paymentMethod = order.payment_data.payment_method_type.toUpperCase();
+    
+    return (
+      <span className="text-sm font-medium text-white">
+        {paymentMethod}
+      </span>
+    );
+  }
+  
+  // Fallback to old payment badge
+  const method = (order.payment_method || 'whatsapp') as PaymentMethod;
   const variants = {
     xendit: {
       bg: 'bg-gradient-to-r from-purple-500/20 to-violet-500/20',
@@ -199,13 +212,13 @@ const OrderFilters: React.FC<{
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200"
+            className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200 hover:bg-gray-800/80"
           >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="" className="bg-gray-800 text-white">All Status</option>
+            <option value="pending" className="bg-gray-800 text-white">Pending</option>
+            <option value="paid" className="bg-gray-800 text-white">Paid</option>
+            <option value="completed" className="bg-gray-800 text-white">Completed</option>
+            <option value="cancelled" className="bg-gray-800 text-white">Cancelled</option>
           </select>
         </div>
 
@@ -215,11 +228,17 @@ const OrderFilters: React.FC<{
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200"
+            className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200 hover:bg-gray-800/80"
           >
-            <option value="">All Methods</option>
-            <option value="xendit">Xendit</option>
-            <option value="whatsapp">WhatsApp</option>
+            <option value="" className="bg-gray-800 text-white">All Methods</option>
+            <option value="qris" className="bg-gray-800 text-white">QRIS</option>
+            <option value="bni" className="bg-gray-800 text-white">BNI Virtual Account</option>
+            <option value="bca" className="bg-gray-800 text-white">BCA Virtual Account</option>
+            <option value="mandiri" className="bg-gray-800 text-white">Mandiri Virtual Account</option>
+            <option value="bri" className="bg-gray-800 text-white">BRI Virtual Account</option>
+            <option value="permata" className="bg-gray-800 text-white">Permata Virtual Account</option>
+            <option value="xendit" className="bg-gray-800 text-white">Xendit (Legacy)</option>
+            <option value="whatsapp" className="bg-gray-800 text-white">WhatsApp</option>
           </select>
         </div>
 
@@ -229,11 +248,11 @@ const OrderFilters: React.FC<{
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200"
+            className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200 hover:bg-gray-800/80"
           >
-            <option value="">All Types</option>
-            <option value="purchase">Purchase</option>
-            <option value="rental">Rental</option>
+            <option value="" className="bg-gray-800 text-white">All Types</option>
+            <option value="purchase" className="bg-gray-800 text-white">Purchase</option>
+            <option value="rental" className="bg-gray-800 text-white">Rental</option>
           </select>
         </div>
 
@@ -257,6 +276,7 @@ const OrderFilters: React.FC<{
 
 // Main Orders Page Component
 const AdminOrdersV2: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -292,6 +312,37 @@ const AdminOrdersV2: React.FC = () => {
     }
   }, [push]);
 
+  // Update order status function
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await fetch('/api/admin?action=update-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        push('Status pesanan berhasil diperbarui', 'success');
+        // Refresh orders
+        loadOrders();
+      } else {
+        throw new Error(result.error || 'Failed to update status');
+      }
+    } catch (error: any) {
+      push(`Gagal memperbarui status: ${error.message}`, 'error');
+    }
+  };
+
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
@@ -306,7 +357,12 @@ const AdminOrdersV2: React.FC = () => {
         order.customer_phone.includes(searchLower);
 
       const matchesStatus = !statusFilter || order.status === statusFilter;
-      const matchesPayment = !paymentFilter || order.payment_method === paymentFilter;
+      
+      // Updated payment filter to check both payment_data and legacy payment_method
+      const matchesPayment = !paymentFilter || 
+        (order.payment_data?.payment_method_type?.toLowerCase() === paymentFilter) ||
+        (order.payment_method === paymentFilter);
+      
       const matchesType = !typeFilter || order.order_type === typeFilter;
 
       return matchesSearch && matchesStatus && matchesPayment && matchesType;
@@ -521,8 +577,17 @@ const AdminOrdersV2: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <div className="text-sm font-medium text-gray-300">
-                            {order.order_type === 'purchase' ? 'Purchase' : 'Rental'}
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              order.order_type === 'purchase'
+                                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
+                                : 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
+                            }`}>
+                              {order.order_type === 'purchase' ? 'Purchase' : 'Rental'}
+                            </span>
+                            {order.order_type === 'rental' && (order as any).rental_duration && (
+                              <span className="text-xs text-gray-400">⏰ {(order as any).rental_duration}</span>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500">Order ID: {order.id.slice(0, 8)}...</div>
                         </div>
@@ -536,7 +601,7 @@ const AdminOrdersV2: React.FC = () => {
                         <StatusBadge status={order.status as OrderStatus} />
                       </td>
                       <td className="px-6 py-4">
-                        <PaymentBadge method={(order.payment_method || 'whatsapp') as PaymentMethod} />
+                        <PaymentBadge order={order} />
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-300">
@@ -545,14 +610,35 @@ const AdminOrdersV2: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-pink-400 hover:bg-pink-500/10 rounded-lg transition-all duration-200">
+                          <button 
+                            onClick={() => {
+                              // Navigate to product detail page
+                              if (order.product_id) {
+                                navigate(`/products/${order.product_id}`);
+                              } else {
+                                push('Product ID tidak tersedia', 'error');
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-pink-400 hover:bg-pink-500/10 rounded-lg transition-all duration-200"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200">
-                            <Trash2 className="w-4 h-4" />
+                          <button 
+                            onClick={() => {
+                              if (order.status === 'completed') {
+                                push('Pesanan sudah diproses', 'info');
+                                return;
+                              }
+                              updateOrderStatus(order.id, 'completed');
+                            }}
+                            disabled={order.status === 'completed'}
+                            className={`p-2 rounded-lg transition-all duration-200 ${
+                              order.status === 'completed' 
+                                ? 'text-gray-600 cursor-not-allowed' 
+                                : 'text-gray-400 hover:text-green-400 hover:bg-green-500/10'
+                            }`}
+                          >
+                            <Settings className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

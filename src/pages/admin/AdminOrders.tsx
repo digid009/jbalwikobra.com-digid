@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
-import { RefreshCw, Plus, Package, CreditCard, Clock, CheckCircle, Eye, Edit } from 'lucide-react';
+import { RefreshCw, Plus, Package, CreditCard, Clock, CheckCircle, Eye, Settings } from 'lucide-react';
 import { 
   AdminPageHeaderV2, 
   AdminStatCard, 
@@ -23,9 +24,25 @@ type OrderRow = {
   payment_method: 'xendit'|'whatsapp';
   rental_duration?: string | null;
   created_at: string;
+  // Payment information from payments table
+  payment_data?: {
+    xendit_id?: string;
+    payment_method_type?: string; // 'qris', 'bni', 'mandiri', etc.
+    payment_status?: string; // 'ACTIVE', 'PENDING', 'PAID', etc.
+    qr_url?: string;
+    qr_string?: string;
+    account_number?: string;
+    bank_code?: string;
+    payment_url?: string;
+    payment_code?: string;
+    retail_outlet?: string;
+    created_at?: string;
+    expiry_date?: string;
+  };
 };
 
 const AdminOrders: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -190,7 +207,39 @@ const AdminOrders: React.FC = () => {
     header: 'Pembayaran',
       sortable: true,
       render: (value, order) => {
-        // Map order status to PaymentBadge status  
+        // Show actual payment method from payment_data if available
+        if (order.payment_data?.payment_method_type) {
+          const paymentMethod = order.payment_data.payment_method_type.toUpperCase();
+          const paymentStatus = order.payment_data.payment_status || 'Unknown';
+          
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-ds-text">
+                {paymentMethod}
+              </span>
+              <div className="flex items-center gap-1">
+                <span className={`text-xs px-2 py-1 rounded ${
+                  paymentStatus === 'ACTIVE' ? 'bg-green-500/20 text-green-300' :
+                  paymentStatus === 'PENDING' ? 'bg-yellow-500/20 text-yellow-300' :
+                  paymentStatus === 'PAID' ? 'bg-blue-500/20 text-blue-300' :
+                  'bg-gray-500/20 text-gray-300'
+                }`}>
+                  {paymentStatus}
+                </span>
+              </div>
+              {order.payment_data.qr_url && (
+                <span className="text-xs text-ds-text-tertiary">QR Available</span>
+              )}
+              {order.payment_data.account_number && (
+                <span className="text-xs text-ds-text-tertiary truncate max-w-[100px]">
+                  VA: {order.payment_data.account_number}
+                </span>
+              )}
+            </div>
+          );
+        }
+        
+        // Fallback to old payment badge
         const paymentStatusMap: Record<string, 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled'> = {
           completed: 'paid',
           paid: 'paid',
@@ -218,27 +267,60 @@ const AdminOrders: React.FC = () => {
     }
   ];
 
+  // Update order status function
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await fetch('/api/admin?action=update-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        push('Status pesanan berhasil diperbarui', 'success');
+        // Refresh orders
+        loadOrders();
+      } else {
+        throw new Error(result.error || 'Failed to update status');
+      }
+    } catch (error: any) {
+      push(`Gagal memperbarui status: ${error.message}`, 'error');
+    }
+  };
+
   // Table actions
-  const actions: DSTableAction<OrderRow>[] = [
+  const getTableActions = (order: OrderRow): DSTableAction<OrderRow>[] => [
     {
       key: 'view',
       label: 'Lihat',
       icon: Eye,
       onClick: (order) => {
-        // Navigate to order detail page or open modal
-        push(`Viewing order ${order.id}`, 'info');
+        // Navigate to product detail page
+        if (order.product_id) {
+          navigate(`/products/${order.product_id}`);
+        } else {
+          push('Product ID tidak tersedia', 'error');
+        }
       },
       variant: 'secondary'
     },
     {
-      key: 'edit',
-      label: 'Edit', 
-      icon: Edit,
-      onClick: (order) => {
-        // Open edit modal or navigate to edit page
-        push(`Editing order ${order.id}`, 'info');
-      },
-      variant: 'primary'
+      key: 'process',
+      label: order.status === 'completed' ? 'Sudah Diproses' : 'Proses',
+      icon: Settings,
+      onClick: () => updateOrderStatus(order.id, 'completed'),
+      variant: 'primary',
+      disabled: () => order.status === 'completed'
     }
   ];
 
@@ -268,6 +350,7 @@ const AdminOrders: React.FC = () => {
         payment_method: r.payment_method ?? r.paymentMethod ?? 'whatsapp',
         rental_duration: r.rental_duration ?? r.rentalDuration ?? null,
         created_at: r.created_at ?? r.createdAt ?? new Date().toISOString(),
+        payment_data: r.payment_data
       }));
       
       setOrders(mappedOrders);
@@ -389,7 +472,36 @@ const AdminOrders: React.FC = () => {
       <AdminDSTable<OrderRow>
         data={sortedOrders}
         columns={columns}
-        actions={actions}
+        actions={[
+          {
+            key: 'view',
+            label: 'Lihat',
+            icon: Eye,
+            onClick: (order) => {
+              // Navigate to product detail page
+              if (order.product_id) {
+                navigate(`/products/${order.product_id}`);
+              } else {
+                push('Product ID tidak tersedia', 'error');
+              }
+            },
+            variant: 'secondary'
+          },
+          {
+            key: 'process',
+            label: 'Proses',
+            icon: Settings,
+            onClick: (order) => {
+              if (order.status === 'completed') {
+                push('Pesanan sudah diproses', 'info');
+                return;
+              }
+              updateOrderStatus(order.id, 'completed');
+            },
+            variant: 'primary',
+            disabled: (order) => order.status === 'completed'
+          }
+        ]}
         loading={loading}
         emptyMessage="Tidak ada pesanan."
       />

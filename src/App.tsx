@@ -39,6 +39,7 @@ const FlashSalesPage = React.lazy(() => import('./pages/FlashSalesPage'));
 const FlashSaleProductDetailPage = React.lazy(() => import('./pages/FlashSaleProductDetailPage'));
 const SellPage = React.lazy(() => import('./pages/SellPage'));
 const PaymentStatusPage = React.lazy(() => import('./pages/PaymentStatusPage'));
+const PaymentInterface = React.lazy(() => import('./pages/PaymentInterface'));
 const HelpPage = React.lazy(() => import('./pages/HelpPage'));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const WishlistPage = React.lazy(() => import('./pages/WishlistPage'));
@@ -214,6 +215,7 @@ function App() {
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="/terms" element={<TermsPage />} />
                           <Route path="/payment-status" element={<PaymentStatusPage />} />
+                          <Route path="/payment" element={<PaymentInterface />} />
                           <Route path="/orders" element={<OrderHistoryPage />} />
                           {/* Hidden design system showcase - not linked in navigation */}
                           <Route path="/internal/design-system" element={<DesignSystemShowcase />} />

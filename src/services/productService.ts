@@ -396,7 +396,7 @@ export class ProductService {
       console.log('[ProductService] getProductById called with id:', id, 'type:', typeof id);
       
       // Validate input ID
-      if (!id || typeof id !== 'string' || id.trim() === '') {
+      if (!id || typeof id !== 'string' || id.trim() === '' || id.trim() === 'undefined') {
         console.error('[ProductService] Invalid product ID provided:', id);
         return null;
       }

@@ -48,20 +48,24 @@ export async function createXenditInvoice(input: CreateInvoiceInput) {
     if (input.paymentMethod && input.paymentMethod.trim() !== '') {
       console.log('[paymentService] Using direct payment API for method:', input.paymentMethod);
       
+      const paymentPayload = {
+        amount: input.amount,
+        currency: 'IDR',
+        payment_method_id: input.paymentMethod,
+        customer: input.customer,
+        description: input.description,
+        external_id: input.clientExternalId || input.externalId,
+        success_redirect_url: input.successRedirectUrl,
+        failure_redirect_url: input.failureRedirectUrl,
+        order: input.order // Include order data for database tracking
+      };
+      
+      console.log('[paymentService] Payment payload:', paymentPayload);
+      
       const res = await fetch('/api/xendit/create-direct-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: input.amount,
-          currency: 'IDR',
-          payment_method_id: input.paymentMethod,
-          customer: input.customer,
-          description: input.description,
-          external_id: input.clientExternalId || input.externalId,
-          success_redirect_url: input.successRedirectUrl,
-          failure_redirect_url: input.failureRedirectUrl,
-          order: input.order // Include order data for database tracking
-        }),
+        body: JSON.stringify(paymentPayload),
         signal: controller.signal
       });
       
@@ -71,7 +75,23 @@ export async function createXenditInvoice(input: CreateInvoiceInput) {
       const data = await res.json();
       console.log('[paymentService] Direct payment response data:', data);
       
-      if (!res.ok) throw new Error(data?.error || 'Failed to create direct payment');
+      if (!res.ok) {
+        console.error('[paymentService] Direct payment failed:', {
+          status: res.status,
+          statusText: res.statusText,
+          error: data?.error,
+          details: data?.details,
+          available_methods: data?.available_methods,
+          fullResponse: data
+        });
+        
+        // Log the details object specifically for debugging
+        if (data?.details) {
+          console.error('[paymentService] Error details:', JSON.stringify(data.details, null, 2));
+        }
+        
+        throw new Error(data?.error || 'Failed to validate the request, 1 error occurred.');
+      }
       
       // Convert direct payment response to invoice format
       return {

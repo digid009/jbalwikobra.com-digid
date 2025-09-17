@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Calendar, Clock, Star, Sparkles } from 'lucide-react';
-import { IOSButton, IOSBadge } from '../components/ios/IOSDesignSystem';
+import { IOSButton } from './ios/IOSDesignSystemV2';
 import { cn } from '../utils/cn';
-import LinkifyText from '../components/LinkifyText';
+import LinkifyText from './LinkifyText';
 
 interface FeedCardProps {
   post: {
@@ -57,15 +57,15 @@ export const FeedCard: React.FC<FeedCardProps> = ({
     switch (post.type) {
       case 'announcement':
         return (
-          <IOSBadge className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-amber-500/30 text-amber-100">
+          <span className="text-xs px-2 py-1 rounded-full border bg-amber-500/20 border-amber-500/30 text-amber-100">
             Pengumuman
-          </IOSBadge>
+          </span>
         );
       case 'review':
         return (
-          <IOSBadge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30 text-yellow-100">
+          <span className="text-xs px-2 py-1 rounded-full border bg-yellow-500/20 border-yellow-500/30 text-yellow-100">
             Review
-          </IOSBadge>
+          </span>
         );
       default:
         return null;
@@ -117,7 +117,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({
 
         {/* More Options */}
         <IOSButton
-          size="small"
+          size="sm"
           className="bg-white/5 hover:bg-white/10 border-white/10 p-2"
         >
           <MoreHorizontal className="w-4 h-4 text-white/60" />
@@ -187,7 +187,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({
         <div className="flex items-center gap-4">
           {/* Like Button */}
           <IOSButton
-            size="small"
+            size="sm"
             onClick={() => canInteract && onLike?.(post.id)}
             disabled={!canInteract}
             className={cn(
@@ -206,7 +206,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({
 
           {/* Comment Button */}
           <IOSButton
-            size="small"
+            size="sm"
             onClick={() => canInteract && onComment?.(post.id)}
             disabled={!canInteract}
             className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white transition-all duration-200"
@@ -217,7 +217,7 @@ export const FeedCard: React.FC<FeedCardProps> = ({
 
           {/* Share Button */}
           <IOSButton
-            size="small"
+            size="sm"
             onClick={() => canInteract && onShare?.(post.id)}
             disabled={!canInteract}
             className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white transition-all duration-200"

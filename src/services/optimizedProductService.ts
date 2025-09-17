@@ -78,12 +78,15 @@ class OptimizedProductService {
         .select(`
           id, name, description, price, original_price,
           images, is_active, archived_at, created_at,
-          game_title_id, tier_id, has_rental,
+          game_title_id, tier_id, has_rental, category_id,
           tiers (
             id, name, slug, color, background_gradient, icon
           ),
           game_titles (
             id, name, slug, icon, logo_url
+          ),
+          categories:categories!fk_products_category (
+            id, name, slug, icon, color, is_active, sort_order
           )
         `, { count: 'exact' });
 
@@ -249,6 +252,16 @@ class OptimizedProductService {
   // accountDetails removed (column dropped)
       tierData: product.tiers,
       gameTitleData: product.game_titles,
+      categoryData: product.categories ? {
+        id: product.categories.id,
+        name: product.categories.name,
+        slug: product.categories.slug,
+        icon: product.categories.icon,
+        color: product.categories.color,
+        isActive: product.categories.is_active ?? true,
+        sortOrder: product.categories.sort_order ?? 0,
+      } : undefined,
+      categoryId: product.category_id ?? product.categoryId ?? product.categories?.id,
       hasRental: product.has_rental ?? false,
       rentalOptions: [] // Load separately if needed
     };

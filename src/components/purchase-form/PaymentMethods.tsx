@@ -66,6 +66,7 @@ export const PaymentMethods = React.memo(({
 
   // Fetch payment methods on mount or when amount changes
   useEffect(() => {
+    let cancelled = false;
     const loadPaymentMethods = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -157,10 +158,30 @@ export const PaymentMethods = React.memo(({
         // Create popular methods list (only QRIS and AstraPay for now)
         const popular = filteredMethods.filter(method => method.popular);
 
+        if (cancelled) return;
         setPaymentMethods(filteredMethods);
         setGroupedMethods(groups);
         setPopularMethods(popular);
-        setSource('fallback'); // Using local configuration instead of API
+        setSource('fallback'); // Default to local configuration; may flip to xendit_api after health check
+
+        // Lightweight health check: detect if Xendit API is reachable on this deploy
+        // This keeps the robust local config for listing, but flips badges/messages to online when healthy
+        try {
+          const healthRes = await fetch('/api/xendit/payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount })
+          });
+          if (!cancelled && healthRes.ok) {
+            const healthData = await healthRes.json();
+            if (healthData?.source === 'xendit_api') {
+              setSource('xendit_api');
+            }
+          }
+        } catch (e) {
+          // Silently ignore; stay in fallback UI mode
+          console.debug('[PaymentMethods] Xendit health check failed; staying in fallback mode');
+        }
       } catch (err) {
         console.error('Failed to load activated payment methods:', err);
         setLoadError('Gagal memuat metode pembayaran. Menampilkan opsi default.');
@@ -182,8 +203,9 @@ export const PaymentMethods = React.memo(({
           max_amount: method.id === 'gopay' ? 2000000 : 10000000
         }));
         
-        setPaymentMethods(staticMethods);
-        setGroupedMethods(groupPaymentMethods(staticXenditMethods));
+  if (cancelled) return;
+  setPaymentMethods(staticMethods);
+  setGroupedMethods(groupPaymentMethods(staticXenditMethods));
         // Force popular methods to only show QRIS in fallback mode too
         setPopularMethods([
           {
@@ -199,11 +221,15 @@ export const PaymentMethods = React.memo(({
         ]);
         setSource('fallback_error');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     loadPaymentMethods();
+
+    return () => {
+      cancelled = true;
+    };
   }, [amount]);
 
   const toggleGroup = (groupType: string) => {

@@ -22,6 +22,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const navigate = useNavigate();
   
+  // Validate product data - prevent navigation if ID is missing
+  if (!product || !product.id || product.id.trim() === '') {
+    console.error('[ProductCard] Invalid product data:', product);
+    return null; // Don't render card with invalid data
+  }
+  
   const timeRemaining = product.flashSaleEndTime
     ? calculateTimeRemaining(product.flashSaleEndTime)
     : null;
@@ -143,18 +149,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
   product.tierData?.slug?.toUpperCase() || 'REGULER'
   );
 
+  const handleCardClick = () => {
+    // Double-check product ID before navigation
+    if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+      console.error('[ProductCard] Cannot navigate: invalid product ID:', product.id);
+      return;
+    }
+    
+    navigate(`/products/${product.id}`, { 
+      state: { 
+        fromFlashSaleCard: showFlashSaleTimer,
+        fromCatalogPage 
+      } 
+    });
+  };
+
   return (
     <IOSCard
       variant="elevated"
       padding="none"
       hoverable
       className={`relative flex flex-col overflow-hidden ${showFlashSaleTimer ? 'bg-gradient-to-br from-pink-700/40 via-pink-700/30 to-fuchsia-700/40 border border-pink-500/30' : `${tierStyle.bg} border ${tierStyle.cardBorder}`} group ${className}`}
-      onClick={() => navigate(`/products/${product.id}`, { 
-        state: { 
-          fromFlashSaleCard: showFlashSaleTimer,
-          fromCatalogPage 
-        } 
-      })}
+      onClick={handleCardClick}
     >
       {/* Image */}
       <div className="aspect-[4/5] w-full bg-[linear-gradient(45deg,#1e1e1e,#2a2a2a)] flex items-center justify-center border-b border-gray-500/20">

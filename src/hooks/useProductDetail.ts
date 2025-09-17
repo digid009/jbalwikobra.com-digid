@@ -3,7 +3,7 @@
  * Handles product data fetching, gallery state, checkout flow, and wishlist integration
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Product, Customer, RentalOption } from '../types';
 import { ProductService } from '../services/productService';
@@ -38,6 +38,8 @@ interface CheckoutState {
   isPhoneValid: boolean;
   creatingInvoice: boolean;
   paymentAttemptId: string | null;
+  submissionInProgress: boolean;
+  lastSubmissionTime: number;
 }
 
 interface RentalState {
@@ -50,6 +52,10 @@ export const useProductDetail = () => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
+
+  // Submission tracking to prevent race conditions
+  const submissionInProgress = useRef(false);
+  const lastSubmissionTime = useRef(0);
 
   // Navigation state
   const cameFromFlashSaleCard = Boolean((location as any)?.state?.fromFlashSaleCard);
@@ -94,7 +100,9 @@ export const useProductDetail = () => {
     },
     isPhoneValid: true,
     creatingInvoice: false,
-    paymentAttemptId: null
+    paymentAttemptId: null,
+    submissionInProgress: false,
+    lastSubmissionTime: 0
   });
 
   // Rental state
@@ -121,7 +129,22 @@ export const useProductDetail = () => {
 
   // Fetch product data
   const fetchProduct = useCallback(async () => {
-    if (!id) return;
+    // Improved ID validation - check for undefined, null, empty string, or literal "undefined"
+    if (!id || id.trim() === '' || id.trim() === 'undefined' || id.trim() === 'null') {
+      console.warn('[useProductDetail] Invalid product ID detected:', id);
+      setState(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Product ID tidak valid. Mengalihkan ke halaman produk...' 
+      }));
+      
+      // Redirect to products page after a short delay
+      setTimeout(() => {
+        navigate('/products', { replace: true });
+      }, 1000);
+      
+      return;
+    }
     
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -280,12 +303,44 @@ export const useProductDetail = () => {
   const handleCheckout = useCallback(async (paymentMethod?: string) => {
     if (!state.product) return;
     
+    // Immediate duplicate prevention using refs (faster than state)
+    if (submissionInProgress.current) {
+      console.log('🚫 Order submission already in progress, ignoring duplicate request');
+      return;
+    }
+
+    // Prevent rapid successive submissions (within 3 seconds)
+    const now = Date.now();
+    if (lastSubmissionTime.current && (now - lastSubmissionTime.current) < 3000) {
+      console.log('🚫 Too soon after last submission, ignoring request');
+      return;
+    }
+    
+    // Set immediate flags to prevent concurrent calls
+    submissionInProgress.current = true;
+    lastSubmissionTime.current = now;
+    
     try {
-      setCheckoutState(prev => ({ ...prev, creatingInvoice: true }));
+      // Set UI state for loading indicators
+      setCheckoutState(prev => ({ 
+        ...prev, 
+        creatingInvoice: true,
+        submissionInProgress: true,
+        lastSubmissionTime: now
+      }));
+      
+      console.log('🚀 Starting order creation process...');
       
       const { createXenditInvoice } = await import('../services/paymentService');
       
-      const externalId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Generate unique external ID with multiple randomness sources
+      const timestamp = Date.now();
+      const random1 = Math.random().toString(36).substr(2, 9);
+      const random2 = performance.now().toString(36).substr(2, 5);
+      const random3 = Math.random().toString(36).substr(2, 4);
+      const externalId = `order_${timestamp}_${random1}_${random2}_${random3}`;
+      
+      console.log('📝 Generated external ID:', externalId);
       
       // Calculate effective price
       const isFlashSaleActive = Boolean(state.product?.flashSaleEndTime && state.product.isFlashSale);
@@ -323,14 +378,39 @@ export const useProductDetail = () => {
         }
       });
       
-      // Redirect to payment page
-      window.location.href = invoiceData.invoice_url;
+      // Instead of redirecting to Xendit's generic page, redirect to our custom payment interface
+      const paymentParams = new URLSearchParams({
+        id: invoiceData.id,
+        method: paymentMethod || 'unknown',
+        amount: amount.toString(),
+        external_id: externalId,
+        description: `Pembelian ${state.product.name}`
+      });
+      
+      // For e-wallets that require immediate redirect (like GoPay, DANA), 
+      // check if we have a direct payment URL and use it
+      if (invoiceData.invoice_url && 
+          paymentMethod && 
+          ['dana', 'gopay', 'linkaja', 'shopeepay', 'ovo'].includes(paymentMethod.toLowerCase())) {
+        // Direct redirect for e-wallets
+        window.location.href = invoiceData.invoice_url;
+      } else {
+        // Use our custom payment interface for QRIS, Virtual Accounts, etc.
+        window.location.href = `/payment?${paymentParams.toString()}`;
+      }
       
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('❌ Checkout error:', error);
       showToast('Gagal membuat invoice. Silakan coba lagi.', 'error');
     } finally {
-      setCheckoutState(prev => ({ ...prev, creatingInvoice: false }));
+      // Reset both ref flags and state flags
+      submissionInProgress.current = false;
+      setCheckoutState(prev => ({ 
+        ...prev, 
+        creatingInvoice: false,
+        submissionInProgress: false
+      }));
+      console.log('✅ Order submission process completed');
     }
   }, [state.product, checkoutState, rentalState.selectedRental, showToast]);
 

@@ -72,6 +72,11 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
       
       // Navigate to different pages based on flash sale data availability
       if (flashSale && flashSale.salePrice && flashSale.originalPrice && flashSale.endTime) {
+        // Validate product ID before navigation
+        if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+          console.error('[FlashSaleCard] Cannot navigate: invalid product ID:', product.id);
+          return;
+        }
         // Has complete flash sale data - go to flash sale detail page
         navigate(`/flash-sales/${product.id}`, {
           state: {
@@ -81,6 +86,10 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
         });
       } else {
         // No complete flash sale data - go to regular product page
+        if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+          console.error('[FlashSaleCard] Cannot navigate: invalid product ID:', product.id);
+          return;
+        }
         navigate(`/products/${product.id}`, {
           state: {
             fromFlashSaleCard: true
@@ -94,6 +103,12 @@ const FlashSaleCard: React.FC<FlashSaleCardProps> = ({
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log('🛒 Buy button clicked for:', product.name);
+    
+    // Validate product ID before navigation
+    if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+      console.error('[FlashSaleCard] Cannot navigate: invalid product ID:', product.id);
+      return;
+    }
     
     // Use the same logic as card click for consistent navigation
     if (flashSale && flashSale.salePrice && flashSale.originalPrice && flashSale.endTime) {

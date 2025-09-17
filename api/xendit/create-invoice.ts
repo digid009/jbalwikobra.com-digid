@@ -4,9 +4,11 @@ const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
 // Only include payment methods that are ACTIVATED on your Xendit account
-// Update this list based on your Xendit dashboard activation status
+// Based on your Xendit dashboard activation status
 const ACTIVATED_PAYMENT_METHODS = [
-  // Virtual Accounts - Based on your dashboard screenshot
+  // E-Wallets - Currently activated
+  'ASTRAPAY',
+  // Virtual Accounts - All activated on your account  
   'BJB',
   'BNI', 
   'BRI',
@@ -14,14 +16,12 @@ const ACTIVATED_PAYMENT_METHODS = [
   'CIMB',
   'MANDIRI',
   'PERMATA',
-  // Over-the-counter
+  // Over-the-counter - Activated
   'INDOMARET',
-  // QR Code
-  'QRIS',
-  // PayLater  
-  'AKULAKU'
-  // Note: E-wallets like DANA, OVO, SHOPEEPAY are not included because
-  // they're not activated on your account. Add them here if you activate them.
+  // QR Code - Usually activated by default
+  'QRIS'
+  // Note: PayLater (AKULAKU) removed as it's not clearly activated
+  // Add more e-wallets if you activate them: OVO, DANA, SHOPEEPAY, GOPAY, etc.
 ];
 
 // Simple admin notification function for serverless environment

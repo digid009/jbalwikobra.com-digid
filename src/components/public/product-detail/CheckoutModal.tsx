@@ -110,6 +110,12 @@ const CheckoutModal: React.FC<Props> = ({
       return;
     }
 
+    // Prevent duplicate submissions
+    if (creatingInvoice) {
+      console.log('🚫 Already creating invoice, ignoring submission');
+      return;
+    }
+
     if (checkoutType === 'purchase') {
       onCheckout(selectedPaymentMethod);
     } else {
@@ -137,7 +143,7 @@ const CheckoutModal: React.FC<Props> = ({
         <div className="relative bg-black border border-white/10 rounded-2xl backdrop-blur-sm shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_25px_50px_-12px_rgba(0,0,0,0.25)] max-h-[95vh] md:max-h-[85vh] overflow-hidden">
           {/* Scrollable Content */}
           <div className="overflow-y-auto max-h-[95vh] md:max-h-[85vh] p-4 md:p-6 pb-20 md:pb-6">
-            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            <form className="space-y-4 md:space-y-6">
               {/* Header */}
               <PurchaseFormHeader
                 checkoutType={checkoutType}

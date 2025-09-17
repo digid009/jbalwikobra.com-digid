@@ -95,11 +95,53 @@ async function recentNotifications(limit: number) {
 async function listOrders(page: number, limit: number, status?: string) {
   if (!supabase) return { data: [], count: 0, page };
   const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('orders').select('id,customer_name,customer_email,customer_phone,product_name,amount,status,order_type,created_at,updated_at', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  
+  // First get orders
+  let query: any = supabase.from('orders').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (status && status !== 'all') query = query.eq('status', status);
-  const { data, error, count } = await query;
+  const { data: orders, error, count } = await query;
   if (error) return { data: [], count: 0, page };
-  return { data:data||[], count:count||0, page };
+  
+  // Get payment data for these orders
+  const orderRows = orders || [];
+  const externalIds = orderRows.map(order => order.client_external_id).filter(Boolean);
+  let paymentsMap: { [key: string]: any } = {};
+  
+  if (externalIds.length > 0) {
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('*')
+      .in('external_id', externalIds);
+    
+    if (payments) {
+      payments.forEach(payment => {
+        paymentsMap[payment.external_id] = payment;
+      });
+    }
+  }
+  
+  // Map orders with payment data
+  const mappedOrders = orderRows.map((order: any) => {
+    const paymentRecord = paymentsMap[order.client_external_id];
+    
+    return {
+      ...order,
+      payment_data: paymentRecord ? {
+        xendit_id: paymentRecord.xendit_id,
+        payment_method_type: paymentRecord.payment_method,
+        payment_status: paymentRecord.status,
+        qr_url: paymentRecord.payment_data?.qr_url,
+        qr_string: paymentRecord.payment_data?.qr_string,
+        account_number: paymentRecord.payment_data?.account_number,
+        bank_code: paymentRecord.payment_data?.bank_code,
+        payment_url: paymentRecord.payment_data?.payment_url,
+        payment_code: paymentRecord.payment_data?.payment_code,
+        retail_outlet: paymentRecord.payment_data?.retail_outlet,
+      } : undefined
+    };
+  });
+  
+  return { data: mappedOrders, count: count || 0, page };
 }
 
 async function updateOrderStatus(orderId: string, newStatus: string) {

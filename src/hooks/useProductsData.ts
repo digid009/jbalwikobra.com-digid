@@ -25,6 +25,7 @@ interface ProductsPageState {
 
 interface FilterState {
   searchTerm: string;
+  selectedCategory: string; // category by name (from categories hook)
   selectedGame: string; // single select (pills)
   selectedTier: string; // single select (pills)
   selectedGames: string[]; // desktop multi-select
@@ -66,6 +67,11 @@ export const useProductsData = () => {
 
     return {
       searchTerm: searchParams.get('search') ?? (stored.searchTerm ?? ''),
+      selectedCategory: (() => {
+        const c = searchParams.get('category');
+        if (!c || c.toLowerCase() === 'all') return stored.selectedCategory ?? '';
+        return c;
+      })(),
       selectedGame: searchParams.get('game') ?? (stored.selectedGame ?? ''),
       selectedTier: searchParams.get('tier') ?? (stored.selectedTier ?? ''),
       selectedGames: urlSelectedGames ? urlSelectedGames.split(',').filter(Boolean) : (stored.selectedGames ?? []),
@@ -178,6 +184,12 @@ export const useProductsData = () => {
       );
     }
 
+    // Category filter (by name)
+    if (filterState.selectedCategory) {
+      const target = filterState.selectedCategory.toLowerCase();
+      filtered = filtered.filter(p => p.categoryData?.name?.toLowerCase() === target);
+    }
+
     // Game filter (multi-select has priority)
     if (filterState.selectedGames && filterState.selectedGames.length > 0) {
       const setGames = new Set(filterState.selectedGames.map(g => g.toLowerCase()));
@@ -237,12 +249,25 @@ export const useProductsData = () => {
 
     setState(prev => ({ ...prev, filteredProducts: filtered }));
     setCurrentPage(1); // Reset to first page when filters change
-  }, [state.products, filterState.searchTerm, filterState.selectedGame, filterState.selectedTier, filterState.sortBy]);
+  }, [
+    state.products,
+    filterState.searchTerm,
+    filterState.selectedCategory,
+    filterState.selectedGame,
+    filterState.selectedTier,
+    filterState.selectedGames,
+    filterState.selectedTiers,
+    filterState.rentalOnly,
+    filterState.minPrice,
+    filterState.maxPrice,
+    filterState.sortBy
+  ]);
 
   // Update URL params
   useEffect(() => {
     const params = new URLSearchParams();
     if (filterState.searchTerm) params.set('search', filterState.searchTerm);
+  if (filterState.selectedCategory) params.set('category', filterState.selectedCategory);
     if (filterState.selectedGame) params.set('game', filterState.selectedGame);
     if (filterState.selectedTier) params.set('tier', filterState.selectedTier);
     if (filterState.selectedGames?.length) params.set('games', filterState.selectedGames.join(','));
@@ -274,6 +299,7 @@ export const useProductsData = () => {
 
   const resetFilters = useCallback(() => {
     handleFilterChange('searchTerm', '');
+  handleFilterChange('selectedCategory', '');
     handleFilterChange('selectedGame', '');
     handleFilterChange('selectedTier', '');
     handleFilterChange('sortBy', 'newest');
@@ -282,7 +308,8 @@ export const useProductsData = () => {
   // Active filters derivation (memo)
   const activeFilters = useMemo(() => {
     const items: Array<{ key: string; label: string; value: string }> = [];
-    if (filterState.searchTerm) items.push({ key: 'searchTerm', label: 'Pencarian', value: filterState.searchTerm });
+  if (filterState.searchTerm) items.push({ key: 'searchTerm', label: 'Pencarian', value: filterState.searchTerm });
+  if (filterState.selectedCategory) items.push({ key: 'selectedCategory', label: 'Kategori', value: filterState.selectedCategory });
     if (filterState.selectedGames?.length) items.push({ key: 'selectedGames', label: 'Game', value: filterState.selectedGames.join(', ') });
     else if (filterState.selectedGame) items.push({ key: 'selectedGame', label: 'Game', value: filterState.selectedGame });
     if (filterState.selectedTiers?.length) items.push({ key: 'selectedTiers', label: 'Tier', value: filterState.selectedTiers.join(', ') });
@@ -295,10 +322,10 @@ export const useProductsData = () => {
     }
   if (filterState.rentalOnly) items.push({ key: 'rentalOnly', label: 'Rental', value: 'Ya' });
     return items;
-  }, [filterState.searchTerm, filterState.selectedGame, filterState.selectedTier, filterState.selectedGames, filterState.selectedTiers, filterState.minPrice, filterState.maxPrice, filterState.rentalOnly]);
+  }, [filterState.searchTerm, filterState.selectedCategory, filterState.selectedGame, filterState.selectedTier, filterState.selectedGames, filterState.selectedTiers, filterState.minPrice, filterState.maxPrice, filterState.rentalOnly]);
 
   const clearFilter = useCallback((key: string) => {
-    if (key === 'searchTerm' || key === 'selectedGame' || key === 'selectedTier') {
+  if (key === 'searchTerm' || key === 'selectedCategory' || key === 'selectedGame' || key === 'selectedTier') {
       handleFilterChange(key, '');
     } else if (key === 'selectedGames') {
       handleFilterChange('selectedGames', []);
@@ -314,6 +341,7 @@ export const useProductsData = () => {
 
   const clearAllFilters = useCallback(() => {
   handleFilterChange('searchTerm', '');
+  handleFilterChange('selectedCategory', '');
   handleFilterChange('selectedGame', '');
   handleFilterChange('selectedTier', '');
   handleFilterChange('selectedGames', []);

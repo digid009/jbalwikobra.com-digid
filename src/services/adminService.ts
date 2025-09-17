@@ -31,6 +31,7 @@ export interface Order {
   // Expanded status union to align with broader system usage (paid & processing etc.)
   status: 'pending' | 'paid' | 'processing' | 'completed' | 'cancelled' | 'refunded';
   order_type: string; // 'purchase' etc.
+  rental_duration?: string | null;
   created_at: string;
   updated_at: string;
   user_id?: string;
@@ -39,6 +40,21 @@ export interface Order {
   customer_phone?: string; // Actual column in DB
   payment_method?: string;
   xendit_invoice_id?: string;
+  // Payment information from payments table
+  payment_data?: {
+    xendit_id?: string;
+    payment_method_type?: string; // 'qris', 'bni', 'mandiri', etc.
+    payment_status?: string; // 'ACTIVE', 'PENDING', 'PAID', etc.
+    qr_url?: string;
+    qr_string?: string;
+    account_number?: string;
+    bank_code?: string;
+    payment_url?: string;
+    payment_code?: string;
+    retail_outlet?: string;
+    created_at?: string;
+    expiry_date?: string;
+  };
 }
 
 export interface User {
@@ -180,10 +196,14 @@ class AdminService {
   // Orders Management
   async getOrders(page = 1, limit = 20, status?: string): Promise<{ data: Order[], count: number }> {
     try {
-      // Use the actual database columns we confirmed exist
+      // Build the query with optional status filter
       let query = supabase
         .from('orders')
-        .select('id, product_id, customer_name, customer_email, customer_phone, order_type, amount, status, user_id, created_at, updated_at', { count: 'exact' })
+        .select(`
+          id, product_id, customer_name, customer_email, customer_phone, 
+          order_type, rental_duration, amount, status, payment_method, 
+          user_id, created_at, updated_at, client_external_id
+        `, { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -191,37 +211,78 @@ class AdminService {
         query = query.eq('status', status);
       }
 
-      const { data, error, count } = await query;
+      const { data: ordersData, error: ordersError, count } = await query;
 
-      if (error) {
-        console.error('Orders query error:', error);
-        throw error;
+      if (ordersError) {
+        console.error('Orders query error:', ordersError);
+        throw ordersError;
       }
 
-      // Map to Order interface with actual data
-      const productIds = Array.from(new Set((data||[]).map((d:any)=>d.product_id).filter(Boolean)));
+      // Get payment data for orders that have client_external_id
+      const externalIds = (ordersData || [])
+        .map(order => order.client_external_id)
+        .filter(Boolean);
+
+      let paymentsMap: Record<string, any> = {};
+      if (externalIds.length > 0) {
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from('payments')
+          .select('*')
+          .in('external_id', externalIds);
+
+        if (!paymentsError && paymentsData) {
+          paymentsMap = paymentsData.reduce((acc, payment) => {
+            acc[payment.external_id] = payment;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+
+      // Get product names
+      const productIds = Array.from(new Set((ordersData||[]).map((d:any)=>d.product_id).filter(Boolean)));
       let productsMap: Record<string,string> = {};
       if (productIds.length) {
         const { data: prodData } = await supabase.from('products').select('id,name').in('id', productIds);
         productsMap = (prodData||[]).reduce((acc:any,p:any)=>{acc[p.id]=p.name;return acc;},{});
       }
 
-      const orders: Order[] = (data || []).map((item: any) => ({
-        id: item.id,
-        customer_name: item.customer_name || 'Unknown Customer',
-        product_name: item.product_id ? productsMap[item.product_id] : undefined,
-        amount: item.amount || 0,
-        status: item.status || 'pending',
-        order_type: item.order_type || 'purchase',
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        user_id: item.user_id,
-        product_id: item.product_id,
-        customer_email: item.customer_email,
-        customer_phone: item.customer_phone,
-        payment_method: null, // Not in current schema
-        xendit_invoice_id: null // Not in current schema
-      }));
+      const orders: Order[] = (ordersData || []).map((item: any) => {
+        // Get payment data for this order
+        const paymentRecord = item.client_external_id ? paymentsMap[item.client_external_id] : null;
+        
+        return {
+          id: item.id,
+          customer_name: item.customer_name || 'Unknown Customer',
+          product_name: item.product_id ? productsMap[item.product_id] : undefined,
+          amount: item.amount || 0,
+          status: item.status || 'pending',
+          order_type: item.order_type || 'purchase',
+          rental_duration: item.rental_duration || null,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          user_id: item.user_id,
+          product_id: item.product_id,
+          customer_email: item.customer_email,
+          customer_phone: item.customer_phone,
+          payment_method: item.payment_method || null,
+          xendit_invoice_id: null, // Legacy field - keeping for compatibility
+          // Enhanced payment data from payments table
+          payment_data: paymentRecord ? {
+            xendit_id: paymentRecord.xendit_id,
+            payment_method_type: paymentRecord.payment_method,
+            payment_status: paymentRecord.status,
+            qr_url: paymentRecord.payment_data?.qr_url,
+            qr_string: paymentRecord.payment_data?.qr_string,
+            account_number: paymentRecord.payment_data?.account_number,
+            bank_code: paymentRecord.payment_data?.bank_code,
+            payment_url: paymentRecord.payment_data?.payment_url,
+            payment_code: paymentRecord.payment_data?.payment_code,
+            retail_outlet: paymentRecord.payment_data?.retail_outlet,
+            created_at: paymentRecord.created_at,
+            expiry_date: paymentRecord.expiry_date
+          } : undefined
+        };
+      });
 
       return { data: orders, count: count || 0 };
     } catch (error) {
@@ -274,6 +335,101 @@ class AdminService {
       return true;
     } catch(e) {
       console.error('completeOrder error', e);
+      return false;
+    }
+  }
+
+  // Get detailed order information with payment data
+  async getOrderById(orderId: string): Promise<Order | null> {
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          id, product_id, customer_name, customer_email, customer_phone, 
+          order_type, rental_duration, amount, status, payment_method, 
+          user_id, created_at, updated_at, client_external_id
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (orderError) throw orderError;
+      if (!orderData) return null;
+
+      // Get payment data if available
+      let paymentRecord = null;
+      if (orderData.client_external_id) {
+        const { data: paymentData } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('external_id', orderData.client_external_id)
+          .single();
+        paymentRecord = paymentData;
+      }
+
+      // Get product name
+      let productName = undefined;
+      if (orderData.product_id) {
+        const { data: productData } = await supabase
+          .from('products')
+          .select('name')
+          .eq('id', orderData.product_id)
+          .single();
+        productName = productData?.name;
+      }
+
+      return {
+        id: orderData.id,
+        customer_name: orderData.customer_name || 'Unknown Customer',
+        product_name: productName,
+        amount: orderData.amount || 0,
+        status: orderData.status || 'pending',
+        order_type: orderData.order_type || 'purchase',
+        rental_duration: orderData.rental_duration || null,
+        created_at: orderData.created_at,
+        updated_at: orderData.updated_at,
+        user_id: orderData.user_id,
+        product_id: orderData.product_id,
+        customer_email: orderData.customer_email,
+        customer_phone: orderData.customer_phone,
+        payment_method: orderData.payment_method || null,
+        xendit_invoice_id: null,
+        payment_data: paymentRecord ? {
+          xendit_id: paymentRecord.xendit_id,
+          payment_method_type: paymentRecord.payment_method,
+          payment_status: paymentRecord.status,
+          qr_url: paymentRecord.payment_data?.qr_url,
+          qr_string: paymentRecord.payment_data?.qr_string,
+          account_number: paymentRecord.payment_data?.account_number,
+          bank_code: paymentRecord.payment_data?.bank_code,
+          payment_url: paymentRecord.payment_data?.payment_url,
+          payment_code: paymentRecord.payment_data?.payment_code,
+          retail_outlet: paymentRecord.payment_data?.retail_outlet,
+          created_at: paymentRecord.created_at,
+          expiry_date: paymentRecord.expiry_date
+        } : undefined
+      };
+    } catch (error) {
+      console.error('Error fetching order by ID:', error);
+      return null;
+    }
+  }
+
+  // Update order status (useful for payment management)
+  async updateOrderStatus(orderId: string, status: Order['status']): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status, 
+          updated_at: new Date().toISOString(),
+          ...(status === 'paid' && { paid_at: new Date().toISOString() })
+        })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error updating order status:', error);
       return false;
     }
   }
@@ -703,21 +859,17 @@ export const adminService = {
   },
 
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
-    // Orders table is empty but structure exists, need to handle gracefully
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
-      // Since orders table is empty, let's use basic columns that should exist
-      const basicOrderColumns = ['id','created_at'];
-      
       let query = supabase
         .from('orders')
-        .select('*', { count: 'exact' }); // Use * since table is empty anyway
+        .select('*', { count: 'exact' });
 
       if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
-      console.log('[adminService.getOrders] querying (table currently empty)');
-      const { data, error, count } = await query
+      console.log('[adminService.getOrders] querying orders with payment data');
+      const { data: orders, error, count } = await query
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -726,26 +878,61 @@ export const adminService = {
         throw error;
       }
 
-      const rows = data || [];
+      const rows = orders || [];
       console.log('[adminService.getOrders] success:', { rows: rows.length, count });
 
-      // Map to Order interface with safe fallbacks
-      const mapped: Order[] = rows.map((o: any) => ({
-        id: o.id,
-        customer_name: o.customer_name || 'Unknown Customer',
-        product_name: o.product_name || 'Product Order',
-        amount: Number(o.amount) || 0,
-        status: o.status || 'pending',
-        order_type: o.order_type || 'purchase',
-        created_at: o.created_at,
-        updated_at: o.updated_at,
-        user_id: o.user_id,
-        product_id: o.product_id,
-        customer_email: o.customer_email,
-        customer_phone: o.customer_phone,
-        payment_method: o.payment_method,
-        xendit_invoice_id: o.xendit_invoice_id
-      }));
+      // Get payment data for these orders
+      const externalIds = rows.map(order => order.client_external_id).filter(Boolean);
+      let paymentsMap: { [key: string]: any } = {};
+      
+      if (externalIds.length > 0) {
+        const { data: payments } = await supabase
+          .from('payments')
+          .select('*')
+          .in('external_id', externalIds);
+        
+        if (payments) {
+          payments.forEach(payment => {
+            paymentsMap[payment.external_id] = payment;
+          });
+        }
+      }
+
+      // Map to Order interface with payment data
+      const mapped: Order[] = rows.map((o: any) => {
+        const paymentRecord = paymentsMap[o.client_external_id];
+        
+        return {
+          id: o.id,
+          customer_name: o.customer_name || 'Unknown Customer',
+          product_name: o.product_name || 'Product Order',
+          amount: Number(o.amount) || 0,
+          status: o.status || 'pending',
+          order_type: o.order_type || 'purchase',
+          rental_duration: o.rental_duration ?? null,
+          created_at: o.created_at,
+          updated_at: o.updated_at,
+          user_id: o.user_id,
+          product_id: o.product_id,
+          customer_email: o.customer_email,
+          customer_phone: o.customer_phone,
+          payment_method: o.payment_method,
+          xendit_invoice_id: o.xendit_invoice_id,
+          // Payment information from payments table
+          payment_data: paymentRecord ? {
+            xendit_id: paymentRecord.xendit_id,
+            payment_method_type: paymentRecord.payment_method,
+            payment_status: paymentRecord.status,
+            qr_url: paymentRecord.payment_data?.qr_url,
+            qr_string: paymentRecord.payment_data?.qr_string,
+            account_number: paymentRecord.payment_data?.account_number,
+            bank_code: paymentRecord.payment_data?.bank_code,
+            payment_url: paymentRecord.payment_data?.payment_url,
+            payment_code: paymentRecord.payment_data?.payment_code,
+            retail_outlet: paymentRecord.payment_data?.retail_outlet,
+          } : undefined
+        };
+      });
 
       return {
         data: mapped,

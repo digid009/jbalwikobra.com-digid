@@ -109,7 +109,13 @@ export const ProductsGrid = React.memo(({ products, onResetFilters, density = 'c
                   image={mainImage}
                   price={price}
                   density={density}
-                  onClick={() => navigate(`/products/${product.id}`, { state: { fromCatalogPage: true } })}
+                  onClick={() => {
+                    if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+                      console.error('[ProductsGrid] Cannot navigate: invalid product ID:', product.id);
+                      return;
+                    }
+                    navigate(`/products/${product.id}`, { state: { fromCatalogPage: true } });
+                  }}
                   rentalAvailable={isRental}
           imageFrameClassName={imageFrameClassName}
                   className={wrapperClassName}
@@ -146,6 +152,10 @@ export const ProductsGrid = React.memo(({ products, onResetFilters, density = 'c
                     fullWidth
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+                        console.error('[ProductsGrid] Cannot navigate: invalid product ID:', product.id);
+                        return;
+                      }
                       navigate(`/products/${product.id}`, { state: { fromCatalogPage: true } });
                     }}
                     className="mt-3"
