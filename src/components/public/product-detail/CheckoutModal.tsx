@@ -62,9 +62,10 @@ const CheckoutModal: React.FC<Props> = ({
       customer.email.trim().length > 0 &&
       customer.phone.trim().length > 0 &&
       isPhoneValid &&
-      (checkoutType === 'rental' || selectedPaymentMethod.trim().length > 0) // Payment method optional for rental
+      acceptedTerms && // Both rental and purchase now require terms acceptance
+      selectedPaymentMethod.trim().length > 0 // Payment method required for both rental and purchase
     );
-  }, [customer, isPhoneValid, selectedPaymentMethod, checkoutType]);
+  }, [customer, isPhoneValid, selectedPaymentMethod, checkoutType, acceptedTerms]);
 
   // Form errors
   const [errors, setErrors] = useState<{
@@ -72,6 +73,7 @@ const CheckoutModal: React.FC<Props> = ({
     email?: string;
     phone?: string;
     paymentMethod?: string;
+    terms?: string;
   }>({});
 
   // Validate form on submit
@@ -94,8 +96,12 @@ const CheckoutModal: React.FC<Props> = ({
       newErrors.phone = 'Format nomor WhatsApp tidak valid';
     }
 
-    if (!selectedPaymentMethod.trim() && checkoutType === 'purchase') {
+    if (!selectedPaymentMethod.trim()) {
       newErrors.paymentMethod = 'Pilih metode pembayaran';
+    }
+
+    if (!acceptedTerms) {
+      newErrors.terms = 'Anda harus menyetujui syarat dan ketentuan';
     }
 
     setErrors(newErrors);
@@ -119,13 +125,8 @@ const CheckoutModal: React.FC<Props> = ({
     if (checkoutType === 'purchase') {
       onCheckout(selectedPaymentMethod);
     } else {
-      // For rental, if payment method is selected, proceed with payment
-      // Otherwise go to WhatsApp
-      if (selectedPaymentMethod.trim()) {
-        onCheckout(selectedPaymentMethod);
-      } else {
-        onWhatsAppRental();
-      }
+      // For rental, always use Xendit payment (payment method is now required)
+      onCheckout(selectedPaymentMethod);
     }
   };
 
@@ -184,6 +185,7 @@ const CheckoutModal: React.FC<Props> = ({
                 onWhatsAppRental={() => handleSubmit()}
                 onCancel={onClose}
                 selectedPaymentMethod={selectedPaymentMethod}
+                termsError={errors.terms}
               />
             </form>
           </div>

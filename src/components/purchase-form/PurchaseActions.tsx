@@ -18,6 +18,7 @@ interface PurchaseActionsProps {
   onWhatsAppRental: () => void;
   onCancel: () => void;
   selectedPaymentMethod?: string; // Add selectedPaymentMethod prop
+  termsError?: string; // Add terms error prop
 }
 
 export const PurchaseActions = React.memo(({
@@ -29,61 +30,62 @@ export const PurchaseActions = React.memo(({
   onCheckout,
   onWhatsAppRental,
   onCancel,
-  selectedPaymentMethod
+  selectedPaymentMethod,
+  termsError
 }: PurchaseActionsProps) => {
   const isPurchase = checkoutType === 'purchase';
-  const isRental = checkoutType === 'rental';
-  const hasPaymentMethod = selectedPaymentMethod && selectedPaymentMethod.trim() !== '';
-  const canProceed = isPurchase ? (acceptedTerms && isFormValid && !creatingInvoice) : isFormValid;
+  // Both purchase and rental now require terms acceptance and payment method
+  const canProceed = acceptedTerms && isFormValid && !creatingInvoice;
 
   return (
     <div className="space-y-6">
-      {/* Terms and Conditions for Purchase */}
-      {isPurchase && (
-        <div className="space-y-4">
-          <label className="flex items-start space-x-3 cursor-pointer">
-            <div className="relative mt-1">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="sr-only"
-              />
-              <div className={`
-                w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
-                ${acceptedTerms 
-                  ? 'bg-pink-500 border-pink-500' 
-                  : 'border-gray-400 hover:border-pink-400'
-                }
-              `}>
-                {acceptedTerms && <CheckCircle className="text-white" size={12} />}
-              </div>
+      {/* Terms and Conditions for Both Purchase and Rental */}
+      <div className="space-y-4">
+        <label className="flex items-start space-x-3 cursor-pointer">
+          <div className="relative mt-1">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={`
+              w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
+              ${acceptedTerms 
+                ? 'bg-pink-500 border-pink-500' 
+                : 'border-gray-400 hover:border-pink-400'
+              }
+            `}>
+              {acceptedTerms && <CheckCircle className="text-white" size={12} />}
             </div>
-            <div className="flex-1">
-              <PNText className="text-sm leading-relaxed">
-                Saya menyetujui{' '}
-                <Link 
-                  to="/terms" 
-                  className="text-pink-400 underline hover:text-pink-300 transition-colors"
-                  target="_blank" 
-                  rel="noreferrer"
-                >
-                  Syarat & Ketentuan
-                </Link>
-                {' '}dan{' '}
-                <Link 
-                  to="/privacy" 
-                  className="text-pink-400 underline hover:text-pink-300 transition-colors"
-                  target="_blank" 
-                  rel="noreferrer"
-                >
-                  Kebijakan Privasi
-                </Link>
-              </PNText>
-            </div>
-          </label>
-        </div>
-      )}
+          </div>
+          <div className="flex-1">
+            <PNText className="text-sm leading-relaxed">
+              Saya menyetujui{' '}
+              <Link 
+                to="/terms" 
+                className="text-pink-400 underline hover:text-pink-300 transition-colors"
+                target="_blank" 
+                rel="noreferrer"
+              >
+                Syarat & Ketentuan
+              </Link>
+              {' '}dan{' '}
+              <Link 
+                to="/privacy" 
+                className="text-pink-400 underline hover:text-pink-300 transition-colors"
+                target="_blank" 
+                rel="noreferrer"
+              >
+                Kebijakan Privasi
+              </Link>
+            </PNText>
+          </div>
+        </label>
+        {termsError && (
+          <PNText className="text-red-400 text-sm mt-2">{termsError}</PNText>
+        )}
+      </div>
 
       {/* Security & Support Info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
@@ -127,8 +129,8 @@ export const PurchaseActions = React.memo(({
               {creatingInvoice ? 'Memproses...' : 'Bayar Sekarang'}
             </span>
           </PNButton>
-        ) : isRental && hasPaymentMethod ? (
-          // Rental with payment method selected - show payment button
+        ) : (
+          // Rental always uses Xendit payment now
           <PNButton
             variant="primary"
             size="lg"
@@ -147,32 +149,13 @@ export const PurchaseActions = React.memo(({
               {creatingInvoice ? 'Memproses...' : 'Bayar Rental'}
             </span>
           </PNButton>
-        ) : (
-          // Rental without payment method - show WhatsApp button
-          <PNButton
-            variant="primary"
-            size="lg"
-            onClick={onWhatsAppRental}
-            disabled={!isFormValid}
-            className={`flex-1 flex items-center justify-center space-x-2 ${
-              isFormValid
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
-                : 'opacity-50 cursor-not-allowed'
-            }`}
-          >
-            <MessageSquare size={18} />
-            <span>Lanjut ke WhatsApp</span>
-          </PNButton>
         )}
       </div>
 
       {/* Additional Info */}
       <div className="text-center">
         <PNText className="text-xs text-gray-400">
-          {isPurchase 
-            ? 'Setelah pembayaran berhasil, Tim kami akan menghubungi Anda via WhatsApp untuk proses selanjutnya'
-            : 'Tim kami akan menghubungi Anda via WhatsApp untuk mengatur rental'
-          }
+          Setelah pembayaran berhasil, Tim kami akan menghubungi Anda via WhatsApp untuk proses selanjutnya
         </PNText>
       </div>
     </div>

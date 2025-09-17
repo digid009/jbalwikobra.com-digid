@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { MessageCircle, Users } from 'lucide-react';
+import { MessageCircle, Users, Star } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
 import { reviewService, type UserReview } from '../services/reviewService';
-import { IOSButton } from '../components/ios/IOSDesignSystemV2';
+import { PNSection, PNContainer } from '../components/ui/PinkNeonDesignSystem';
 import { FeedCard } from '../components/FeedCard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
@@ -243,103 +243,118 @@ export default function FeedPage() {
   // Helpers moved into ReviewCard component
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 page-content-mobile">
-  <FeedHeader totalCounts={totalCounts} />
+    <>
+      <FeedHeader />
 
-      {/* Main Content Container */}
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 lg:py-8 pb-24 lg:pb-8">
-        {/* Tabs */}
-        <div className="mb-6 lg:mb-8">
-          <FeedTabs active={activeFilter} counts={totalCounts} onChange={handleFilterChange} />
-        </div>
-
-        {/* Login Notice for Guests */}
-        {!user && (
-          <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 backdrop-blur-xl rounded-2xl p-6 border border-amber-500/30 shadow-xl mb-8">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
-                  <Users className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-amber-100 font-semibold">Login Required</p>
-                  <p className="text-amber-200/70 text-sm">Masuk untuk like, komentar, dan memberikan review</p>
-                </div>
-              </div>
-              <IOSButton 
-                size="sm" 
-                onClick={() => navigate('/auth')}
-                className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-amber-500/30 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-100"
-              >
-                Masuk
-              </IOSButton>
-            </div>
+      <PNSection padding="md">
+        <PNContainer>
+          {/* Tabs Section */}
+          <div className="mb-8">
+            <FeedTabs active={activeFilter} onChange={handleFilterChange} />
           </div>
-        )}
 
-        {/* Loading State */}
-        {isLoading && <FeedSkeleton />}
-
-        {/* Error State */}
-        {error && !isLoading && (
-          <ErrorState message={error} onRetry={loadInitialData} />
-        )}
-
-        {/* Posts Section */}
-        {!isLoading && (activeFilter === 'semua' || activeFilter === 'pengumuman') && feedPosts.length > 0 && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-blue-400" />
+          {/* Enhanced Login Notice for Guests */}
+          {!user && (
+            <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 backdrop-blur-2xl rounded-3xl p-6 lg:p-8 border border-amber-500/20 shadow-2xl mb-8 lg:mb-12">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-2xl flex items-center justify-center border border-amber-500/30">
+                    <Users className="w-7 h-7 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-amber-100 font-bold text-lg">Login Required</p>
+                    <p className="text-amber-200/80 text-base mt-1">Masuk untuk like, komentar, dan memberikan review</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-transparent text-white shadow-lg shadow-amber-500/30 px-6 py-3 rounded-xl font-medium transition-all duration-300"
+                >
+                  Masuk
+                </button>
               </div>
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                {activeFilter === 'semua' ? 'Pengumuman' : 'Pengumuman'}
-              </h2>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isLoading && <FeedSkeleton />}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <ErrorState message={error} onRetry={loadInitialData} />
+          )}
+
+        {/* Enhanced Posts Section */}
+        {!isLoading && (activeFilter === 'semua' || activeFilter === 'pengumuman') && feedPosts.length > 0 && (
+          <div className="space-y-8 mb-12">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                <MessageCircle className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
+                  {activeFilter === 'semua' ? 'Pengumuman Terbaru' : 'Pengumuman'}
+                </h2>
+                <p className="text-gray-400 text-sm lg:text-base mt-1">Informasi penting dari komunitas</p>
+              </div>
             </div>
             
-            {feedPosts.map((post) => (
-              <FeedCard
-                key={post.id}
-                post={{
-                  id: post.id,
-                  title: post.title || 'Pengumuman',
-                  content: post.content || '',
-                  author: post.authorName || 'Admin',
-                  created_at: post.created_at,
-                  type: 'announcement',
-                  media: post.media?.map(m => m.url) || [],
-                  counts: post.counts,
-                  isLiked: (post as any).isLiked || false
-                }}
-                onLike={toggleLike}
-                onComment={addComment}
-                onImageClick={setImagePreview}
-                canInteract={!!user}
-              />
-            ))}
+            <div className="grid gap-6 lg:gap-8">
+              {feedPosts.map((post) => (
+                <FeedCard
+                  key={post.id}
+                  post={{
+                    id: post.id,
+                    title: post.title || 'Pengumuman',
+                    content: post.content || '',
+                    author: post.authorName || 'Admin',
+                    created_at: post.created_at,
+                    type: 'announcement',
+                    media: post.media?.map(m => m.url) || [],
+                    counts: post.counts,
+                    isLiked: (post as any).isLiked || false
+                  }}
+                  onLike={toggleLike}
+                  onComment={addComment}
+                  onImageClick={setImagePreview}
+                  canInteract={!!user}
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Reviews Section */}
+        {/* Enhanced Reviews Section */}
         {!isLoading && (activeFilter === 'semua' || activeFilter === 'review') && userReviews.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-semibold">
-              {activeFilter === 'semua' ? 'Review Pembelian' : 'Review'}
-            </h2>
-            {userReviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                currentUserId={user?.id}
-                isEditing={editingReview === review.id}
-                editValue={editContent}
-                onStartEdit={startEditReview}
-                onChangeEdit={setEditContent}
-                onSaveEdit={saveEditReview}
-                onCancelEdit={cancelEditReview}
-                onImageClick={(src) => setImagePreview(src)}
-              />
-            ))}
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30">
+                <Star className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                  {activeFilter === 'semua' ? 'Review Pembelian' : 'Review Komunitas'}
+                </h2>
+                <p className="text-gray-400 text-sm lg:text-base mt-1">Pengalaman dan ulasan dari member</p>
+              </div>
+            </div>
+            
+            <div className="grid gap-6 lg:gap-8">
+              {userReviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  currentUserId={user?.id}
+                  isEditing={editingReview === review.id}
+                  editValue={editContent}
+                  onStartEdit={startEditReview}
+                  onChangeEdit={setEditContent}
+                  onSaveEdit={saveEditReview}
+                  onCancelEdit={cancelEditReview}
+                  onImageClick={(src) => setImagePreview(src)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -348,9 +363,9 @@ export default function FeedPage() {
           <ImageLightbox src={imagePreview} onClose={() => setImagePreview(null)} />
         )}
 
-        {/* Pagination */}
+        {/* Enhanced Pagination */}
         {!isLoading && totalPages > 1 && (
-          <div className="flex justify-center py-6">
+          <div className="flex justify-center py-8 lg:py-12">
             <FeedPagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -360,7 +375,7 @@ export default function FeedPage() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Enhanced Empty State */}
         {!isLoading && feedPosts.length === 0 && userReviews.length === 0 && (
           <EmptyState
             label={activeFilter === 'semua' ? 'Belum ada postingan' : activeFilter === 'pengumuman' ? 'Belum ada pengumuman' : 'Belum ada review'}
@@ -368,26 +383,32 @@ export default function FeedPage() {
           />
         )}
 
-        {/* Refresh Button */}
-        <div className="flex justify-center pt-4 pb-6 lg:pb-4">
-          <IOSButton 
+        {/* Enhanced Refresh Section */}
+        <div className="flex justify-center pt-8 lg:pt-12 pb-8 lg:pb-8">
+          <button 
             onClick={loadInitialData} 
             disabled={isLoading}
-            className="bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/30 hover:from-pink-500/30 hover:to-fuchsia-500/30"
+            className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 border border-pink-500/20 hover:border-pink-500/40 text-white backdrop-blur-sm shadow-lg px-6 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border border-pink-400 border-t-transparent" />
-                Memuat…
+              <span className="inline-flex items-center gap-3">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-pink-400 border-t-transparent" />
+                Memuat ulang...
               </span>
-            ) : 'Muat ulang'}
-          </IOSButton>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Star className="w-5 h-5" />
+                Muat ulang feed
+              </span>
+            )}
+          </button>
         </div>
         
         {/* Extra spacing for mobile navigation */}
         <div className="h-20 lg:hidden" />
-      </div>
-    </div>
+      </PNContainer>
+    </PNSection>
+    </>
   );
 }
 

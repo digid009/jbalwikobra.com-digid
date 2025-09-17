@@ -547,7 +547,7 @@ export const PaymentMethods = React.memo(({
         <div className="flex items-center space-x-2 mb-4 flex-wrap">
           <CreditCard className="text-pink-400" size={20} />
           <PNHeading level={3} className="!mb-0 flex-1 min-w-0">
-            {checkoutType === 'rental' ? 'Metode Pembayaran (Opsional)' : 'Pilih Metode Pembayaran'}
+            Pilih Metode Pembayaran
           </PNHeading>
           {source !== 'xendit_api' && (
             <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full flex-shrink-0">
@@ -555,14 +555,6 @@ export const PaymentMethods = React.memo(({
             </span>
           )}
         </div>
-
-        {checkoutType === 'rental' && (
-          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <PNText className="text-sm text-blue-300">
-              💡 Untuk rental, Anda bisa memilih metode pembayaran di sini atau melanjutkan via WhatsApp untuk konsultasi terlebih dahulu.
-            </PNText>
-          </div>
-        )}
 
         {/* Popular Methods Section */}
         {popularMethods.length > 0 && (
