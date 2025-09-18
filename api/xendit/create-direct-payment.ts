@@ -124,6 +124,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
         failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
       },
+      // CRITICAL: Add webhook URL for payment notifications
+      webhook: {
+        url: `${SITE_URL}/api/xendit/webhook`
+      },
       description: description || `Payment for ${order?.product_name || 'product'}`,
       metadata: {
         client_external_id: external_id,
@@ -336,9 +340,30 @@ async function sendPaymentLinkNotification(paymentData: any, order: any) {
         })
       : '24 jam dari sekarang';
 
+    // Get product name - fetch from database if not provided
+    let productName = order.product_name || 'Product';
+    if (!order.product_name && order.product_id && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        const { data: productData } = await supabase
+          .from('products')
+          .select('name')
+          .eq('id', order.product_id)
+          .single();
+        
+        if (productData?.name) {
+          productName = productData.name;
+          console.log('[Payment Link Notification] Fetched product name:', productName);
+        }
+      } catch (error) {
+        console.error('[Payment Link Notification] Error fetching product name:', error);
+      }
+    }
+
     // Different messages for purchase vs rental
     const isRental = order.order_type === 'rental';
-    const productName = order.product_name || 'Product';
     const customerName = order.customer_name || 'Customer';
     const amount = paymentData.amount || 0;
     
