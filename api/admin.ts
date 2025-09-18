@@ -98,7 +98,14 @@ async function listOrders(page: number, limit: number, status?: string) {
   
   // First get orders
   let query: any = supabase.from('orders').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (status && status !== 'all') query = query.eq('status', status);
+  if (status && status !== 'all') {
+    // Handle "completed" status to include both 'paid' and 'completed' orders
+    if (status === 'completed') {
+      query = query.in('status', ['paid', 'completed']);
+    } else {
+      query = query.eq('status', status);
+    }
+  }
   const { data: orders, error, count } = await query;
   if (error) return { data: [], count: 0, page };
   

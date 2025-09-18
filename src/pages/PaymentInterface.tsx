@@ -1,12 +1,11 @@
 /**
- * PaymentInterface - Shows specific payment method interfaces
- * Handles QRIS QR codes, Virtual Account details, E-Wallet redirects, etc.
+ * PaymentInterface - Simple version with working countdown timer
  */
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { QrCode, Copy, Clock, CreditCard, Building2, Smartphone, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
-import { PNContainer, PNCard, PNHeading, PNText, PNButton } from '../components/ui/PinkNeonDesignSystem';
+import { Clock, CreditCard, ArrowLeft } from 'lucide-react';
+import { PNContainer, PNHeading, PNText, PNButton } from '../components/ui/PinkNeonDesignSystem';
 import QRCode from 'react-qr-code';
 
 interface PaymentData {
@@ -18,24 +17,7 @@ interface PaymentData {
   external_id: string;
   created: string;
   expiry_date?: string;
-  
-  // QRIS specific
   qr_string?: string;
-  qr_url?: string;
-  
-  // Virtual Account specific
-  account_number?: string;
-  bank_code?: string;
-  
-  // E-Wallet specific
-  payment_url?: string;
-  action_type?: string;
-  
-  // Retail specific
-  payment_code?: string;
-  retail_outlet?: string;
-  
-  // Order info
   description?: string;
 }
 
@@ -45,12 +27,18 @@ const PaymentInterface: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copying, setCopying] = useState<string | null>(null);
-  const [polling, setPolling] = useState(false);
-  const [justPaid, setJustPaid] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const paymentId = searchParams.get('id');
   const paymentMethod = searchParams.get('method');
+
+  // Update timer every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!paymentId) {
@@ -58,68 +46,20 @@ const PaymentInterface: React.FC = () => {
       setLoading(false);
       return;
     }
-
-  fetchPaymentData();
+    fetchPaymentData();
   }, [paymentId]);
 
   const fetchPaymentData = async () => {
     try {
       const response = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
-      
-      if (!response.ok) {
-        throw new Error('Payment not found');
-      }
-      
+      if (!response.ok) throw new Error('Payment not found');
       const data = await response.json();
       setPaymentData(data);
-
-      // If payment already paid, show success state briefly then redirect
-  if (data.status && ['PAID', 'paid', 'SETTLED', 'COMPLETED', 'completed', 'SUCCEEDED', 'SUCCESS'].includes(String(data.status).toUpperCase())) {
-        setJustPaid(true);
-        setTimeout(() => {
-          navigate(`/payment-status?status=success&id=${encodeURIComponent(data.id)}`);
-        }, 2500);
-        return;
-      }
-
-      // Start polling until paid
-      if (!polling) {
-        setPolling(true);
-        const interval = setInterval(async () => {
-          try {
-            const r = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
-            if (r.ok) {
-              const d = await r.json();
-              setPaymentData(d);
-              if (d.status && ['PAID', 'paid', 'SETTLED', 'COMPLETED', 'completed', 'SUCCEEDED', 'SUCCESS'].includes(String(d.status).toUpperCase())) {
-                clearInterval(interval);
-                setJustPaid(true);
-                setTimeout(() => {
-                  navigate(`/payment-status?status=success&id=${encodeURIComponent(d.id)}`);
-                }, 2500);
-              }
-            }
-          } catch {}
-        }, 5000);
-
-        // cleanup
-        return () => clearInterval(interval);
-      }
     } catch (err) {
       console.error('Failed to fetch payment data:', err);
       setError('Gagal memuat data pembayaran');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      setCopying(type);
-      await navigator.clipboard.writeText(text);
-      setTimeout(() => setCopying(null), 2000);
-    } catch (err) {
-      alert('Gagal menyalin');
     }
   };
 
@@ -132,9 +72,9 @@ const PaymentInterface: React.FC = () => {
   };
 
   const getTimeRemaining = () => {
-    if (!paymentData?.expiry_date) return null;
+    if (!paymentData?.expiry_date) return 'Tidak ada batas waktu';
     
-    const now = new Date().getTime();
+    const now = currentTime.getTime();
     const expiry = new Date(paymentData.expiry_date).getTime();
     const diff = expiry - now;
     
@@ -142,9 +82,34 @@ const PaymentInterface: React.FC = () => {
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    return `${hours}j ${minutes}m`;
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
   };
+
+  const isTimeRunningOut = () => {
+    if (!paymentData?.expiry_date) return false;
+    const now = currentTime.getTime();
+    const expiry = new Date(paymentData.expiry_date).getTime();
+    const diff = expiry - now;
+    return diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes
+  };
+
+  // Check for expiry
+  useEffect(() => {
+    if (!paymentData?.expiry_date) return;
+    
+    const now = currentTime.getTime();
+    const expiry = new Date(paymentData.expiry_date).getTime();
+    
+    if (now >= expiry) {
+      navigate(`/payment-status?status=expired&id=${encodeURIComponent(paymentData.id)}`);
+    }
+  }, [currentTime, paymentData, navigate]);
 
   if (loading) {
     return (
@@ -160,224 +125,110 @@ const PaymentInterface: React.FC = () => {
   if (error || !paymentData) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <PNContainer>
-          <div className="text-center">
-            <AlertCircle className="text-red-400 mx-auto mb-4" size={48} />
-            <PNHeading level={2} className="mb-4">Pembayaran Tidak Ditemukan</PNHeading>
-            <PNText className="mb-6">{error}</PNText>
-            <PNButton onClick={() => navigate('/')}>Kembali ke Beranda</PNButton>
-          </div>
-        </PNContainer>
+        <div className="text-center">
+          <PNHeading level={1} className="text-red-400 mb-4">Terjadi Kesalahan</PNHeading>
+          <PNText className="mb-6">{error || 'Payment data tidak ditemukan'}</PNText>
+          <PNButton onClick={() => navigate('/')}>Kembali ke Beranda</PNButton>
+        </div>
       </div>
     );
   }
 
-  const renderPaymentMethod = () => {
-    const method = (paymentMethod || paymentData.payment_method || '').toLowerCase();
-
-  // QRIS Payment
-    if (method === 'qris' && (paymentData.qr_string || paymentData.qr_url)) {
-      const qrValue = paymentData.qr_string || paymentData.qr_url || '';
-      return (
-        <PNCard className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <QrCode className="text-orange-400" size={24} />
-            <PNHeading level={3}>Scan QR Code QRIS</PNHeading>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl inline-block mx-auto">
-            <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-              {qrValue.startsWith('data:image') ? (
-                <img
-                  src={qrValue}
-                  alt="QRIS QR Code"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <QRCode value={qrValue} size={240} />
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <PNText className="text-sm text-gray-300">
-              Buka aplikasi e-wallet atau mobile banking yang mendukung QRIS
-            </PNText>
-            <PNText className="text-sm text-gray-300">
-              Scan QR code di atas untuk melakukan pembayaran
-            </PNText>
-          </div>
-        </PNCard>
-      );
-    }
-
-    // Virtual Account Payment
-  if (['bca', 'bni', 'mandiri', 'bri', 'cimb', 'permata', 'bjb', 'bsi'].includes(method) && paymentData.account_number) {
-      const bankName = {
-        bca: 'BCA',
-        bni: 'BNI',
-        mandiri: 'Mandiri',
-        bri: 'BRI',
-    cimb: 'CIMB Niaga',
-    permata: 'Permata',
-    bjb: 'BJB',
-    bsi: 'BSI'
-      }[method] || method.toUpperCase();
-
-      return (
-        <PNCard className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Building2 className="text-blue-400" size={24} />
-            <PNHeading level={3}>Transfer Bank {bankName}</PNHeading>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg space-y-3">
-            <div className="flex justify-between items-center">
-              <PNText className="text-sm text-gray-300">Nomor Virtual Account:</PNText>
-              <div className="flex items-center space-x-2">
-                <PNText className="font-mono text-lg font-bold">{paymentData.account_number}</PNText>
-                <button
-                  onClick={() => copyToClipboard(paymentData.account_number!, 'va')}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors"
-                >
-                  {copying === 'va' ? (
-                    <CheckCircle className="text-green-400" size={16} />
-                  ) : (
-                    <Copy className="text-gray-400" size={16} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <PNText className="text-sm text-gray-300">Jumlah Transfer:</PNText>
-              <PNText className="font-bold text-lg">{formatCurrency(paymentData.amount)}</PNText>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-sm text-gray-300">
-            <PNText>Cara transfer:</PNText>
-            <ol className="list-decimal list-inside space-y-1 ml-4">
-              <li>Buka aplikasi mobile banking atau ATM {bankName}</li>
-              <li>Pilih menu Transfer / Transfer Virtual Account</li>
-              <li>Masukkan nomor Virtual Account di atas</li>
-              <li>Masukkan jumlah transfer sesuai nominal</li>
-              <li>Konfirmasi dan selesaikan pembayaran</li>
-            </ol>
-          </div>
-        </PNCard>
-      );
-    }
-
-    // E-Wallet Payment
-    if (['dana', 'gopay', 'linkaja', 'shopeepay', 'ovo'].includes(method) && paymentData.payment_url) {
-      const walletName = {
-        dana: 'DANA',
-        gopay: 'GoPay',
-        linkaja: 'LinkAja',
-        shopeepay: 'ShopeePay',
-        ovo: 'OVO'
-      }[method] || method.toUpperCase();
-
-      return (
-        <PNCard className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Smartphone className="text-green-400" size={24} />
-            <PNHeading level={3}>Pembayaran {walletName}</PNHeading>
-          </div>
-
-          <div className="space-y-4">
-            <PNText className="text-gray-300">
-              Klik tombol di bawah untuk melanjutkan pembayaran melalui aplikasi {walletName}
-            </PNText>
-
-            <PNButton
-              onClick={() => window.open(paymentData.payment_url, '_blank')}
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-3"
-              size="lg"
-            >
-              Buka {walletName}
-            </PNButton>
-
-            <PNText className="text-sm text-gray-400">
-              Anda akan diarahkan ke aplikasi {walletName} untuk menyelesaikan pembayaran
-            </PNText>
-          </div>
-        </PNCard>
-      );
-    }
-
-    // Fallback for unknown payment methods
-    return (
-      <PNCard className="text-center space-y-4">
-        <CreditCard className="text-gray-400 mx-auto" size={48} />
-        <PNHeading level={3}>Metode Pembayaran: {paymentData.payment_method.toUpperCase()}</PNHeading>
-        <PNText className="text-gray-300">
-          Silakan ikuti instruksi pembayaran yang diberikan
-        </PNText>
-      </PNCard>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <PNContainer className="py-6">
-        {justPaid && (
-          <div className="mb-4 flex items-center justify-center">
-            <div className="inline-flex items-center space-x-2 bg-green-500/20 text-green-400 px-3 py-2 rounded-full text-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>Pembayaran berhasil! Mengarahkan...</span>
-            </div>
-          </div>
-        )}
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+      <PNContainer className="py-8">
+        
+        {/* Header with Back Button and Timer */}
+        <div className="flex items-center justify-between mb-8 p-4 bg-gray-800 rounded-lg border border-gray-700">
           <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+            onClick={() => navigate('/')}
+            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
           >
             <ArrowLeft size={20} />
             <span>Kembali</span>
           </button>
 
+          {/* COUNTDOWN TIMER - VISIBLE AND WORKING */}
           {paymentData.expiry_date && (
-            <div className="flex items-center space-x-2 text-orange-400">
-              <Clock size={16} />
-              <span className="text-sm">{getTimeRemaining()}</span>
+            <div className={`flex items-center space-x-3 px-6 py-3 rounded-lg border ${
+              isTimeRunningOut() 
+                ? 'bg-red-900/50 text-red-300 border-red-500' 
+                : 'bg-blue-900/50 text-blue-300 border-blue-500'
+            }`}>
+              <Clock size={20} />
+              <div className="text-center">
+                <div className="text-sm font-medium">Sisa Waktu</div>
+                <div className="font-mono font-bold text-xl">
+                  {getTimeRemaining()}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Payment Summary */}
-        <PNCard className="mb-6">
-          <div className="text-center space-y-2">
-            <PNHeading level={2}>Pembayaran</PNHeading>
-            <PNText className="text-2xl font-bold text-pink-400">{formatCurrency(paymentData.amount)}</PNText>
-            <PNText className="text-sm text-gray-300">{paymentData.description}</PNText>
-            <div className="inline-flex items-center space-x-2 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span>Menunggu Pembayaran</span>
+        {/* Warning for time running out */}
+        {isTimeRunningOut() && (
+          <div className="mb-6 bg-red-900/50 border border-red-500 rounded-lg p-4">
+            <div className="flex items-center space-x-3 text-red-300">
+              <Clock size={24} />
+              <div>
+                <div className="font-bold text-lg">⚠️ Waktu Hampir Habis!</div>
+                <div className="text-sm">Segera selesaikan pembayaran sebelum kedaluwarsa</div>
+              </div>
             </div>
           </div>
-        </PNCard>
+        )}
 
-        {/* Payment Method Interface */}
-        {renderPaymentMethod()}
-
-        {/* Footer Info */}
-        <PNCard className="mt-6 bg-gray-800/50">
-          <div className="text-center space-y-2">
-            <PNText className="text-sm text-gray-300">
-              Pembayaran akan dikonfirmasi secara otomatis
-            </PNText>
-            <PNText className="text-xs text-gray-400">
-              Halaman ini akan diperbarui setelah pembayaran berhasil
-            </PNText>
-            <PNText className="text-xs text-gray-400">
-              Butuh bantuan? Hubungi customer service kami
-            </PNText>
+        {/* Payment Summary */}
+        <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center mx-auto">
+              <CreditCard className="text-white" size={24} />
+            </div>
+            
+            <div>
+              <PNHeading level={2} className="text-gray-100 mb-2">Total Pembayaran</PNHeading>
+              <div className="text-3xl font-bold text-white mb-2">
+                {formatCurrency(paymentData.amount)}
+              </div>
+              <PNText className="text-gray-300">{paymentData.description}</PNText>
+            </div>
+            
+            <div className="inline-flex items-center space-x-2 bg-yellow-500/20 text-yellow-300 px-4 py-2 rounded-lg border border-yellow-500/30">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="text-sm">Menunggu Pembayaran</span>
+            </div>
           </div>
-        </PNCard>
+        </div>
+
+        {/* QR Code Section */}
+        {paymentData.qr_string && (
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div className="text-center space-y-6">
+              <PNHeading level={3} className="text-white mb-4">Scan QR Code QRIS</PNHeading>
+              
+              <div className="bg-white p-6 rounded-lg inline-block">
+                <QRCode value={paymentData.qr_string} size={250} />
+              </div>
+              
+              <div className="text-left max-w-md mx-auto space-y-3">
+                <div className="text-sm text-gray-300 space-y-2">
+                  <div>1. Buka aplikasi e-wallet atau mobile banking</div>
+                  <div>2. Pilih menu Scan QR Code atau QRIS</div>
+                  <div>3. Arahkan kamera ke QR code di atas</div>
+                  <div>4. Konfirmasi pembayaran sebesar <span className="font-bold text-pink-400">{formatCurrency(paymentData.amount)}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-gray-400 text-sm">
+          <div className="mb-2">🔒 Pembayaran Aman</div>
+          <div>Halaman ini akan otomatis terupdate ketika pembayaran berhasil</div>
+        </div>
+
       </PNContainer>
     </div>
   );

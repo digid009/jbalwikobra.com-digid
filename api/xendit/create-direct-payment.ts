@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PaymentMethodUtils, PAYMENT_METHOD_CONFIGS } from '../../src/config/paymentMethodConfig';
+import { getActivatedPaymentChannels, getXenditChannelCode } from '../_config/paymentChannels.js';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Use shared server config (no imports from src/)
+
 // Simple order creation function for direct payments
-// Prefer explicit SITE_URL; fall back to client var; default to www domain (apex may not resolve)
 const SITE_URL = process.env.SITE_URL || process.env.REACT_APP_SITE_URL || 'https://www.jbalwikobra.com';
 
 async function createOrderRecord(order: any, externalId: string, paymentMethodId: string) {
@@ -28,7 +29,6 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
       customer_phone: order.customer_phone,
       order_type: order.order_type || 'purchase',
       amount: order.amount,
-      // Store provider (not channel) in orders.payment_method to comply with schema ('xendit' | 'whatsapp')
       payment_method: 'xendit',
       rental_duration: order.rental_duration || null,
       user_id: order.user_id || null,
@@ -61,11 +61,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (!XENDIT_SECRET_KEY) {
-    console.error('[Xendit Direct Payment] Missing XENDIT_SECRET_KEY');
+    console.error('[Xendit V3 Payment] Missing XENDIT_SECRET_KEY');
     return res.status(500).json({ error: 'Payment service configuration error' });
   }
 
   try {
+    console.log('[Xendit V3 Payment] Starting payment request processing');
+    
     const {
       amount,
       currency = 'IDR',
@@ -75,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       external_id,
       success_redirect_url,
       failure_redirect_url,
-      order // Add order parameter for database tracking
+      order
     } = req.body;
 
     // Validate required fields
@@ -85,88 +87,131 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Validate that the payment method is activated using centralized config
-    const paymentMethodConfig = PaymentMethodUtils.getConfig(payment_method_id);
+    // Get activated payment channels
+  const activatedChannels = getActivatedPaymentChannels();
+    const paymentChannel = activatedChannels.find(channel => channel.id === payment_method_id);
     
-    if (!paymentMethodConfig) {
-      const allAvailableMethods = PaymentMethodUtils.getAllActivatedIds();
+    if (!paymentChannel || !paymentChannel.available) {
+      const availableMethods = activatedChannels
+        .filter(channel => channel.available)
+        .map(channel => channel.id);
       
-      console.error(`[Xendit Direct Payment] Payment method '${payment_method_id}' is not activated on this account`);
+      console.error(`[Xendit V3 Payment] Payment method '${payment_method_id}' is not activated`);
       return res.status(400).json({ 
         error: `Payment method '${payment_method_id}' is not available. Please select from activated payment methods.`,
-        available_methods: allAvailableMethods
+        available_methods: availableMethods
       });
     }
 
-    // Common metadata for webhook reconciliation
-    const metadata = {
-      client_external_id: external_id,
-      product_id: order?.product_id || null,
-      user_id: order?.user_id || null,
-      order_type: order?.order_type || 'purchase',
-      amount,
-      customer_name: order?.customer_name || customer?.given_names || null,
-      customer_email: order?.customer_email || customer?.email || null,
-      customer_phone: order?.customer_phone || customer?.mobile_number || null,
-      rental_duration: order?.rental_duration || null
-    };
+    // Check amount limits
+  if (amount < (paymentChannel as any).min_amount || amount > (paymentChannel as any).max_amount) {
+      return res.status(400).json({
+    error: `Amount ${amount} is outside valid range for ${paymentChannel.name}. Min: ${(paymentChannel as any).min_amount}, Max: ${(paymentChannel as any).max_amount}`
+      });
+    }
 
-    // Create payment payload using centralized configuration
-    const endpoint = paymentMethodConfig.apiEndpoint;
-    const payload = PaymentMethodUtils.createPaymentPayload(
-      paymentMethodConfig,
-      external_id,
-      amount,
-      currency,
-      description || 'Payment',
-      metadata,
-      customer?.given_names || 'Customer',
-      success_redirect_url || `${SITE_URL}/success`,
-      failure_redirect_url || `${SITE_URL}/failed`,
-      `${SITE_URL}/api/xendit/webhook`
-    );
+    // Create Xendit V3 Payment Request payload
+  const xenditChannelCode = getXenditChannelCode(payment_method_id);
+    const paymentRequestPayload = {
+      reference_id: external_id,
+      type: "PAY",
+      country: "ID",
+      currency: currency,
+      request_amount: amount,
+      capture_method: "AUTOMATIC",
+      channel_code: xenditChannelCode,
+      channel_properties: {
+        success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
+        failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
+      },
+      description: description || `Payment for ${order?.product_name || 'product'}`,
+      metadata: {
+        client_external_id: external_id,
+        product_id: order?.product_id || null,
+        user_id: order?.user_id || null,
+        order_type: order?.order_type || 'purchase',
+        customer_name: order?.customer_name || customer?.given_names || null,
+        customer_email: order?.customer_email || customer?.email || null,
+        customer_phone: order?.customer_phone || customer?.mobile_number || null,
+        rental_duration: order?.rental_duration || null,
+        amount: amount.toString()
+      }
+    };
 
     // Create order record if order data provided
     const createdOrder = await createOrderRecord(order, external_id, payment_method_id);
 
-    console.log('[Xendit Direct Payment] Making request to:', `${XENDIT_BASE_URL}${endpoint}`);
-    console.log('[Xendit Direct Payment] Payload:', JSON.stringify(payload, null, 2));
+    console.log('[Xendit V3 Payment] Making request to:', `${XENDIT_BASE_URL}/v3/payment_requests`);
+    console.log('[Xendit V3 Payment] Payload:', JSON.stringify(paymentRequestPayload, null, 2));
 
-    // Make request to Xendit
-    const response = await fetch(`${XENDIT_BASE_URL}${endpoint}`, {
+    // Prepare headers with required API version and idempotency
+    const headers: Record<string, string> = {
+      'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+      'Content-Type': 'application/json',
+      // Use the latest supported API version for Xendit Payment Requests V3
+      'api-version': '2024-11-11',
+    };
+    if (external_id) headers['x-idempotency-key'] = String(external_id);
+
+    // Log headers safely (exclude Authorization)
+    const { Authorization: _hidden, ...safeHeaders } = headers as any;
+    console.log('[Xendit V3 Payment] Headers being sent:', JSON.stringify(safeHeaders, null, 2));
+    console.log('[Xendit V3 Payment] Full URL:', `${XENDIT_BASE_URL}/v3/payment_requests`);
+
+    // Make request to Xendit V3 API
+    const response = await fetch(`${XENDIT_BASE_URL}/v3/payment_requests`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
+      headers,
+      body: JSON.stringify(paymentRequestPayload)
     });
 
     const responseData = await response.json();
-    console.log('[Xendit Direct Payment] Response status:', response.status);
-    console.log('[Xendit Direct Payment] Response data:', JSON.stringify(responseData, null, 2));
+    console.log('[Xendit V3 Payment] Response status:', response.status);
+    console.log('[Xendit V3 Payment] Response data:', JSON.stringify(responseData, null, 2));
 
     if (!response.ok) {
-      console.error('[Xendit Direct Payment] API Error:', responseData);
+      console.error('[Xendit V3 Payment] API Error:', responseData);
       return res.status(response.status).json({ 
         error: responseData.message || 'Payment creation failed',
         details: responseData,
         debug_info: {
-          endpoint: `${XENDIT_BASE_URL}${endpoint}`,
+          endpoint: `${XENDIT_BASE_URL}/v3/payment_requests`,
           payment_method: payment_method_id,
-          payload: payload
+          channel_code: xenditChannelCode,
+          payload: paymentRequestPayload
         }
       });
     }
 
-    // Format response using centralized configuration
-    const formattedResponse = PaymentMethodUtils.formatResponse(
-      responseData,
-      paymentMethodConfig,
-      external_id,
-      amount,
-      currency
-    );
+    // Format V3 API response
+    let formattedResponse: any = {
+      id: responseData.payment_request_id,
+      external_id: responseData.reference_id,
+      amount: responseData.request_amount,
+      currency: responseData.currency,
+      status: responseData.status,
+      payment_method: payment_method_id,
+      payment_request_id: responseData.payment_request_id,
+      actions: responseData.actions || [],
+      // Add expiry date from V3 API response
+      expiry_date: responseData.expiry_date || responseData.expires_at || responseData.expired_at
+    };
+
+    // Handle different action types from V3 API
+    if (responseData.actions && responseData.actions.length > 0) {
+      const primaryAction = responseData.actions[0];
+      
+      if (primaryAction.type === 'REDIRECT_CUSTOMER') {
+        formattedResponse.payment_url = primaryAction.value;
+        formattedResponse.action_type = 'REDIRECT_CUSTOMER';
+        formattedResponse.redirect_url = primaryAction.value;
+      } else if (primaryAction.type === 'PRESENT_TO_CUSTOMER') {
+        formattedResponse.payment_url = primaryAction.value;
+        formattedResponse.action_type = 'PRESENT_TO_CUSTOMER';
+        formattedResponse.qr_string = primaryAction.value; // PaymentInterface expects qr_string
+        formattedResponse.qr_code = primaryAction.value;   // Keep for backward compatibility
+      }
+    }
 
     // Store payment data in database for later retrieval
     await storePaymentData(formattedResponse, payment_method_id, order);
@@ -174,28 +219,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send payment link WhatsApp notification
     await sendPaymentLinkNotification(formattedResponse, order);
 
-    console.log('[Xendit Direct Payment] Success:', {
+    console.log('[Xendit V3 Payment] Success:', {
       payment_method_id,
       external_id,
       amount,
-      status: formattedResponse.status
+      status: formattedResponse.status,
+      payment_request_id: formattedResponse.payment_request_id
     });
 
     return res.status(200).json(formattedResponse);
 
   } catch (error) {
-    console.error('[Xendit Direct Payment] Error:', error);
+    console.error('[Xendit V3 Payment] Error:', error);
+    
+    // Enhanced error logging
+    if (error instanceof Error) {
+      console.error('[Xendit V3 Payment] Error name:', error.name);
+      console.error('[Xendit V3 Payment] Error message:', error.message);
+      console.error('[Xendit V3 Payment] Error stack:', error.stack);
+    }
+    
     return res.status(500).json({ 
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
+      type: 'processing_error'
     });
   }
 }
 
-// Store payment data for later retrieval
+// Store payment data for later retrieval (V3 API compatible)
 async function storePaymentData(paymentData: any, paymentMethodId: string, order: any) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.log('[Store Payment] Skipping payment storage - missing Supabase config');
+    console.log('[Store Payment V3] Skipping payment storage - missing Supabase config');
     return;
   }
 
@@ -203,20 +258,24 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Store payment-specific data as JSON
+    // Store V3 API specific data as JSON
     const paymentSpecificData: any = {};
     
+    // V3 API response fields
+    if (paymentData.payment_request_id) paymentSpecificData.payment_request_id = paymentData.payment_request_id;
+    if (paymentData.actions) paymentSpecificData.actions = paymentData.actions;
+    if (paymentData.action_type) paymentSpecificData.action_type = paymentData.action_type;
+    if (paymentData.payment_url) paymentSpecificData.payment_url = paymentData.payment_url;
+    if (paymentData.redirect_url) paymentSpecificData.redirect_url = paymentData.redirect_url;
+    if (paymentData.qr_code) paymentSpecificData.qr_code = paymentData.qr_code;
+    
+    // Legacy fields for backward compatibility
     if (paymentData.qr_string) paymentSpecificData.qr_string = paymentData.qr_string;
-    if (paymentData.qr_url) paymentSpecificData.qr_url = paymentData.qr_url;
     if (paymentData.account_number) paymentSpecificData.account_number = paymentData.account_number;
     if (paymentData.bank_code) paymentSpecificData.bank_code = paymentData.bank_code;
-    if (paymentData.payment_url) paymentSpecificData.payment_url = paymentData.payment_url;
-    if (paymentData.action_type) paymentSpecificData.action_type = paymentData.action_type;
-    if (paymentData.payment_code) paymentSpecificData.payment_code = paymentData.payment_code;
-    if (paymentData.retail_outlet) paymentSpecificData.retail_outlet = paymentData.retail_outlet;
 
     const paymentRecord = {
-      xendit_id: paymentData.id,
+      xendit_id: paymentData.id || paymentData.payment_request_id,
       external_id: paymentData.external_id,
       payment_method: paymentMethodId,
       amount: paymentData.amount,
@@ -233,13 +292,13 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       .insert(paymentRecord);
 
     if (error) {
-      console.error('[Store Payment] Database error:', error);
+      console.error('[Store Payment V3] Database error:', error);
     } else {
-      console.log('[Store Payment] Successfully stored payment data for:', paymentData.id);
+      console.log('[Store Payment V3] Successfully stored payment data for:', paymentRecord.xendit_id);
     }
 
   } catch (error) {
-    console.error('[Store Payment] Error:', error);
+    console.error('[Store Payment V3] Error:', error);
   }
 }
 

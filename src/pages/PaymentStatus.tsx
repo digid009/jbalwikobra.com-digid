@@ -15,11 +15,14 @@ const PaymentStatus: React.FC = () => {
   const [paymentData, setPaymentData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const status = searchParams.get('status'); // 'success' or 'failed'
+  const status = searchParams.get('status'); // 'success', 'failed', or 'expired'
   const paymentId = searchParams.get('id');
   const orderId = searchParams.get('order_id');
+  const reason = searchParams.get('reason');
 
   const isSuccess = status === 'success';
+  const isExpired = status === 'expired';
+  const isFailed = status === 'failed' || isExpired;
 
   useEffect(() => {
     // Fetch payment data if payment ID is provided
@@ -172,19 +175,26 @@ const PaymentStatus: React.FC = () => {
               </div>
             </PNCard>
           ) : (
-            // Failed Status
+            // Failed/Expired Status
             <PNCard className="text-center space-y-6">
               <div className="flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <XCircle className="text-red-400" size={32} />
+                <div className={`w-16 h-16 ${isExpired ? 'bg-orange-500/20' : 'bg-red-500/20'} rounded-full flex items-center justify-center`}>
+                  {isExpired ? (
+                    <Clock className="text-orange-400" size={32} />
+                  ) : (
+                    <XCircle className="text-red-400" size={32} />
+                  )}
                 </div>
                 
                 <div className="space-y-2">
-                  <PNHeading level={2} className="text-red-400">
-                    Pembayaran Gagal
+                  <PNHeading level={2} className={isExpired ? "text-orange-400" : "text-red-400"}>
+                    {isExpired ? 'Waktu Pembayaran Habis' : 'Pembayaran Gagal'}
                   </PNHeading>
                   <PNText className="text-gray-300">
-                    Maaf, pembayaran Anda tidak dapat diproses.
+                    {isExpired 
+                      ? 'Maaf, waktu untuk menyelesaikan pembayaran telah habis.' 
+                      : 'Maaf, pembayaran Anda tidak dapat diproses.'
+                    }
                   </PNText>
                 </div>
               </div>
@@ -203,32 +213,52 @@ const PaymentStatus: React.FC = () => {
                   )}
                   <div className="flex justify-between">
                     <PNText className="text-sm text-gray-400">Status:</PNText>
-                    <PNText className="text-sm text-red-400">{paymentData.status || 'FAILED'}</PNText>
+                    <PNText className={`text-sm ${isExpired ? 'text-orange-400' : 'text-red-400'}`}>
+                      {isExpired ? 'EXPIRED' : (paymentData.status || 'FAILED')}
+                    </PNText>
                   </div>
+                  {isExpired && paymentData.expiry_date && (
+                    <div className="flex justify-between">
+                      <PNText className="text-sm text-gray-400">Kedaluwarsa:</PNText>
+                      <PNText className="text-sm text-gray-300">
+                        {new Date(paymentData.expiry_date).toLocaleString('id-ID')}
+                      </PNText>
+                    </div>
+                  )}
                 </div>
               )}
 
               <div className="space-y-4">
-                <div className="bg-yellow-500/20 p-4 rounded-lg text-left">
-                  <PNText className="text-sm text-yellow-400 font-semibold mb-2">
-                    Kemungkinan penyebab:
+                <div className={`${isExpired ? 'bg-orange-500/20' : 'bg-yellow-500/20'} p-4 rounded-lg text-left`}>
+                  <PNText className={`text-sm ${isExpired ? 'text-orange-400' : 'text-yellow-400'} font-semibold mb-2`}>
+                    {isExpired ? 'Apa yang terjadi?' : 'Kemungkinan penyebab:'}
                   </PNText>
                   <ul className="text-sm text-gray-300 space-y-1">
-                    <li>• Pembayaran dibatalkan</li>
-                    <li>• Waktu pembayaran habis</li>
-                    <li>• Saldo tidak mencukupi</li>
-                    <li>• Gangguan jaringan</li>
+                    {isExpired ? (
+                      <>
+                        <li>• Anda tidak menyelesaikan pembayaran dalam waktu yang ditentukan</li>
+                        <li>• Untuk keamanan, pembayaran otomatis dibatalkan setelah batas waktu</li>
+                        <li>• Silakan buat pesanan baru untuk melanjutkan</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• Pembayaran dibatalkan</li>
+                        <li>• Waktu pembayaran habis</li>
+                        <li>• Saldo tidak mencukupi</li>
+                        <li>• Gangguan jaringan</li>
+                      </>
+                    )}
                   </ul>
                 </div>
 
                 <div className="space-y-3">
                   <PNButton
-                    onClick={handleGoBack}
-                    className="w-full bg-pink-500 hover:bg-pink-600"
+                    onClick={handleGoHome}
+                    className={`w-full ${isExpired ? 'bg-orange-500 hover:bg-orange-600' : 'bg-pink-500 hover:bg-pink-600'}`}
                     size="lg"
                   >
-                    <ArrowLeft className="mr-2" size={16} />
-                    Coba Lagi
+                    <Home className="mr-2" size={16} />
+                    {isExpired ? 'Buat Pesanan Baru' : 'Coba Lagi'}
                   </PNButton>
                   
                   <PNButton

@@ -69,7 +69,7 @@ const AdminOrders: React.FC = () => {
           { value: '', label: 'Semua Status' },
           { value: 'pending', label: 'Pending' },
           { value: 'paid', label: 'Sudah Bayar' },
-          { value: 'completed', label: 'Selesai' },
+          { value: 'completed', label: 'Selesai (Termasuk Paid)' },
           { value: 'cancelled', label: 'Dibatalkan' }
         ]
       },
@@ -109,7 +109,12 @@ const AdminOrders: React.FC = () => {
       order.customer_email.toLowerCase().includes(searchLower) ||
       order.customer_phone.includes(searchLower);
 
-    const matchesStatus = !filterValues.status || order.status === filterValues.status;
+    // Handle "completed" status to include both 'paid' and 'completed' orders
+    const matchesStatus = !filterValues.status || 
+      (filterValues.status === 'completed' 
+        ? (order.status === 'paid' || order.status === 'completed')
+        : order.status === filterValues.status);
+    
     const matchesPayment = !filterValues.paymentMethod || order.payment_method === filterValues.paymentMethod;
     const matchesType = !filterValues.orderType || order.order_type === filterValues.orderType;
 
@@ -328,7 +333,8 @@ const AdminOrders: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/admin?action=orders');
+      // Fetch more orders to ensure we get all completed orders (increased to 200)
+      const response = await fetch('/api/admin?action=orders&limit=200');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -337,6 +343,8 @@ const AdminOrders: React.FC = () => {
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch orders');
       }
+      
+      console.log('[AdminOrders] Raw API response:', result);
       
       const mappedOrders = (result.data || []).map((r: any): OrderRow => ({
         id: r.id,
@@ -352,6 +360,12 @@ const AdminOrders: React.FC = () => {
         created_at: r.created_at ?? r.createdAt ?? new Date().toISOString(),
         payment_data: r.payment_data
       }));
+      
+      console.log('[AdminOrders] Mapped orders count:', mappedOrders.length);
+      console.log('[AdminOrders] Orders by status:', mappedOrders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
       
       setOrders(mappedOrders);
     } catch (e: any) {

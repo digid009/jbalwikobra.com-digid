@@ -217,7 +217,7 @@ const OrderFilters: React.FC<{
             <option value="" className="bg-gray-800 text-white">All Status</option>
             <option value="pending" className="bg-gray-800 text-white">Pending</option>
             <option value="paid" className="bg-gray-800 text-white">Paid</option>
-            <option value="completed" className="bg-gray-800 text-white">Completed</option>
+            <option value="completed" className="bg-gray-800 text-white">Completed (Including Paid)</option>
             <option value="cancelled" className="bg-gray-800 text-white">Cancelled</option>
           </select>
         </div>
@@ -298,8 +298,23 @@ const AdminOrdersV2: React.FC = () => {
       setLoading(true);
       setError('');
       
+      // Clear cache to ensure fresh data
+      if (adminService.clearOrdersCache) {
+        adminService.clearOrdersCache();
+      }
+      
       // Use adminService directly instead of API call
-      const result = await adminService.getOrders(1, 100); // Get first 100 orders
+      // Increase limit to ensure we get all orders (1000 should be enough for most cases)
+      const result = await adminService.getOrders(1, 1000);
+      
+      console.log('[AdminOrdersV2] Loaded orders:', {
+        total: result.data.length,
+        paid: result.data.filter(o => o.status === 'paid').length,
+        completed: result.data.filter(o => o.status === 'completed').length,
+        paidAndCompleted: result.data.filter(o => o.status === 'paid' || o.status === 'completed').length,
+        paidOrders: result.data.filter(o => o.status === 'paid').map(o => ({id: o.id, customer: o.customer_name, amount: o.amount})),
+        completedOrders: result.data.filter(o => o.status === 'completed').map(o => ({id: o.id, customer: o.customer_name, amount: o.amount}))
+      });
       
       setOrders(result.data);
       push('Orders data loaded successfully!', 'success');
@@ -356,7 +371,11 @@ const AdminOrdersV2: React.FC = () => {
         order.customer_email.toLowerCase().includes(searchLower) ||
         order.customer_phone.includes(searchLower);
 
-      const matchesStatus = !statusFilter || order.status === statusFilter;
+      // Handle "completed" status to include both 'paid' and 'completed' orders
+      const matchesStatus = !statusFilter || 
+        (statusFilter === 'completed' 
+          ? (order.status === 'paid' || order.status === 'completed')
+          : order.status === statusFilter);
       
       // Updated payment filter to check both payment_data and legacy payment_method
       const matchesPayment = !paymentFilter || 
@@ -666,6 +685,7 @@ const AdminOrdersV2: React.FC = () => {
                   <option value={20}>20</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
+                  <option value={1000}>All</option>
                 </select>
               </div>
 

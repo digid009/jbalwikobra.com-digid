@@ -886,6 +886,13 @@ export const adminService = {
     console.log('Admin stats cache cleared');
   },
 
+  // Clear orders cache to force fresh data
+  clearOrdersCache(): void {
+    // Clear all orders cache entries (all pages, limits, and filters)
+    adminCache.invalidatePattern('admin:orders:');
+    console.log('Admin orders cache cleared');
+  },
+
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
       let query = supabase
