@@ -11,6 +11,7 @@ import { AdminFlashSalesManagement } from '../../components/admin/flash-sales';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
 import { AdminHeader } from './components/AdminHeader';
 import AdminHeaderV2 from './components/AdminHeaderV2';
+import AdminWhatsAppSettings from './AdminWhatsAppSettings';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
@@ -21,8 +22,10 @@ import DataDiagnosticPage from '../DataDiagnosticPage';
 import CommandPalette from './components/CommandPalette';
 
 const AdminDashboard: React.FC = () => {
-  // Default to dashboard now that overview & legacy stats overview removed
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  // If Supabase isn't configured in development, default to Settings to avoid heavy stats calls
+  const hasSupabase = !!process.env.REACT_APP_SUPABASE_URL && !!process.env.REACT_APP_SUPABASE_ANON_KEY;
+  const initialTab: AdminTab = (!hasSupabase && process.env.NODE_ENV === 'development') ? 'settings' : 'dashboard';
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -51,6 +54,7 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Still try to load stats; adminService has safe fallbacks when Supabase is missing
     loadStats();
   }, []);
 
@@ -116,6 +120,8 @@ const AdminDashboard: React.FC = () => {
         return <AdminFlashSalesManagement onRefresh={loadStats} />;
       case 'reviews':
         return <AdminReviewsManagement />;
+      case 'settings':
+        return <AdminWhatsAppSettings />;
       default:
         return <AdminDashboardContentV2 onRefreshStats={refreshStats} />;
     }

@@ -3,6 +3,8 @@
  * Handles dynamic payment method fetching and direct payment processing
  */
 
+import { PaymentMethodUtils, PAYMENT_METHOD_CONFIGS, type PaymentMethodConfig } from '../config/paymentMethodConfig';
+
 export interface XenditPaymentMethod {
   id: string;
   name: string;
@@ -105,127 +107,21 @@ export async function createDirectPayment(input: CreateDirectPaymentInput): Prom
 
 /**
  * Fallback static payment methods when API is unavailable
+ * Now uses centralized configuration
  */
 function getStaticPaymentMethods(): XenditPaymentMethod[] {
-  return [
-    // E-Wallets
-    {
-      id: 'ovo',
-      name: 'OVO',
-      type: 'EWALLET',
-      description: 'Pembayaran instant dengan OVO',
-      icon: '�',
-      available: true,
-      processing_time: 'Instant',
-      popular: true,
-      min_amount: 10000,
-      max_amount: 10000000
-    },
-    {
-      id: 'dana',
-      name: 'DANA',
-      type: 'EWALLET',
-      description: 'Pembayaran instant dengan DANA',
-      icon: '�',
-      available: true,
-      processing_time: 'Instant',
-      popular: true,
-      min_amount: 10000,
-      max_amount: 10000000
-    },
-    {
-      id: 'gopay',
-      name: 'GoPay',
-      type: 'EWALLET',
-      description: 'Pembayaran instant dengan GoPay',
-      icon: '�',
-      available: true,
-      processing_time: 'Instant',
-      popular: true,
-      min_amount: 10000,
-      max_amount: 2000000
-    },
-    {
-      id: 'linkaja',
-      name: 'LinkAja',
-      type: 'EWALLET',
-      description: 'Pembayaran instant dengan LinkAja',
-      icon: '�',
-      available: true,
-      processing_time: 'Instant',
-      min_amount: 10000,
-      max_amount: 10000000
-    },
-    // Virtual Accounts
-    {
-      id: 'bca',
-      name: 'BCA Virtual Account',
-      type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BCA',
-      icon: '🔵',
-      available: true,
-      processing_time: '1-15 menit',
-      popular: true,
-      min_amount: 10000,
-      max_amount: 50000000
-    },
-    {
-      id: 'bni',
-      name: 'BNI Virtual Account',
-      type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BNI',
-      icon: '🟡',
-      available: true,
-      processing_time: '1-15 menit',
-      min_amount: 10000,
-      max_amount: 50000000
-    },
-    {
-      id: 'mandiri',
-      name: 'Mandiri Virtual Account',
-      type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account Mandiri',
-      icon: '🔵',
-      available: true,
-      processing_time: '1-15 menit',
-      min_amount: 10000,
-      max_amount: 50000000
-    },
-    {
-      id: 'bri',
-      name: 'BRI Virtual Account',
-      type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BRI',
-      icon: '🔴',
-      available: true,
-      processing_time: '1-15 menit',
-      min_amount: 10000,
-      max_amount: 50000000
-    },
-    // Other methods
-    {
-      id: 'qris',
-      name: 'QRIS',
-      type: 'QRIS',
-      description: 'Scan QR Code untuk bayar',
-      icon: '📱',
-      available: true,
-      processing_time: 'Instant',
-      popular: true,
-      min_amount: 1000,
-      max_amount: 10000000
-    },
-    {
-      id: 'credit_card',
-      name: 'Kartu Kredit/Debit',
-      type: 'CREDIT_CARD',
-      description: 'Visa, Mastercard, JCB',
-      icon: '💳',
-      available: true,
-      processing_time: 'Instant',
-      min_amount: 10000
-    }
-  ];
+  return PaymentMethodUtils.getAllActivated().map(config => ({
+    id: config.id,
+    name: config.name,
+    type: config.type,
+    description: `Pembayaran dengan ${config.name}`,
+    icon: getPaymentMethodIcon(config.type, config.id),
+    available: true,
+    processing_time: config.processingTime || 'Instant',
+    popular: config.popular || false,
+    min_amount: config.minAmount || 10000,
+    max_amount: config.maxAmount || 50000000
+  }));
 }
 
 /**

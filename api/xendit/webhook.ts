@@ -12,6 +12,7 @@ function mapStatus(x: string | undefined): 'pending'|'paid'|'completed'|'cancell
 async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId?: string) {
   try {
     // Get order details with product information and rental details
+    // Include both 'paid' and 'completed' statuses to handle providers that emit SETTLED/COMPLETED
     let q = sb.from('orders')
       .select(`
         id,
@@ -31,7 +32,7 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
           description
         )
       `)
-      .eq('status', 'paid')
+      .in('status', ['paid', 'completed'])
       .limit(1);
     
     if (invoiceId) q = q.eq('xendit_invoice_id', invoiceId);
@@ -51,68 +52,120 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
     
     // Generate notification message (different for rental vs purchase)
     const message = isRental 
-      ? `� **RENTAL ORDER - PAID** 
+      ? `🔥 *NEW RENTAL ORDER PAID!* 💰
 
-👤 **Customer:** ${order.customer_name || 'Guest'}
+📊 **RENTAL PESANAN BARU**
+━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 **Customer:** *${order.customer_name || 'Guest'}*
 📧 **Email:** ${order.customer_email || 'Not provided'}
-📱 **Phone:** ${order.customer_phone || 'Not provided'}
-📋 **Order ID:** ${order.id}
+📱 **WhatsApp:** *${order.customer_phone || 'Not provided'}*
 
-🎯 **Product:** ${productName}
-⏰ **Duration:** ${order.rental_duration || 'Not specified'}
-💰 **Amount:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
-✅ **Status:** PAID
+🆔 **Order ID:** \`${order.id}\`
+🎯 **Product:** *${productName}*
+⏰ **Duration:** *${order.rental_duration || 'Not specified'}*
+💰 **Amount:** *Rp ${Number(order.amount || 0).toLocaleString('id-ID')}*
 
+✅ **Status:** *PAID* ✅
 📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
 
-🚨 **ACTION REQUIRED:** Set up rental access for customer immediately!
+🚨 **ACTION REQUIRED:**
+• Setup rental access dalam 5-15 menit
+• Contact customer untuk video call verification
+• Prepare login credentials
+• Send rental guidelines dan aturan
+• Pastikan dokumen verifikasi valid
 
-#RentalPaid`
-      : `🎮 **PURCHASE ORDER - PAID** 
+⏱️ **DEADLINE:** 15 menit dari sekarang
 
-👤 **Customer:** ${order.customer_name || 'Guest'}
+📋 **CHECKLIST:**
+□ Siapkan akun rental
+□ Hubungi customer untuk jadwal video call
+□ Kirim panduan rental
+□ Dokumentasikan proses handover
+
+#RentalPaid #ActionRequired #VideoCallRequired`
+      : `🔥 *NEW PURCHASE ORDER PAID!* 💰
+
+📊 **PURCHASE PESANAN BARU**
+━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 **Customer:** *${order.customer_name || 'Guest'}*
 📧 **Email:** ${order.customer_email || 'Not provided'}
-📱 **Phone:** ${order.customer_phone || 'Not provided'}
-📋 **Order ID:** ${order.id}
+📱 **WhatsApp:** *${order.customer_phone || 'Not provided'}*
 
-🎯 **Product:** ${productName}
-💰 **Amount:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
-✅ **Status:** PAID
+🆔 **Order ID:** \`${order.id}\`
+🎯 **Product:** *${productName}*
+💰 **Amount:** *Rp ${Number(order.amount || 0).toLocaleString('id-ID')}*
 
+✅ **Status:** *PAID* ✅
 📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
 
-🚨 **ACTION REQUIRED:** Prepare account for delivery!
+🚨 **ACTION REQUIRED:**
+• Prepare account delivery dalam 5-30 menit
+• Send login credentials to customer
+• Include setup guide dan warranty info
+• Follow up untuk kepuasan customer
+• Pastikan akun sudah ditest sebelum dikirim
 
-#PurchasePaid`;
+⏱️ **DEADLINE:** 30 menit dari sekarang
 
-    // Send to WhatsApp group (admin notification)
-    const API_BASE_URL = 'https://notifapi.com';
-    const API_KEY = process.env.WHATSAPP_API_KEY;
-    const GROUP_ID = process.env.WHATSAPP_GROUP_ID || '120363421819020887@g.us'; // ORDERAN WEBSITE group
-    
-    if (!API_KEY) {
-      console.error('WHATSAPP_API_KEY environment variable not set');
-      return;
-    }
+📋 **CHECKLIST:**
+□ Test akun berfungsi normal
+□ Kirim detail login via WhatsApp
+□ Sertakan panduan lengkap
+□ Follow up dalam 24 jam
 
-    const response = await fetch(`${API_BASE_URL}/send_message_group_id`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        group_id: GROUP_ID,
-        key: API_KEY,
-        message: message
-      })
-    });
+#PurchasePaid #ActionRequired #FullOwnership`;
 
-    const result = await response.json();
-    
-    if (response.ok && result.code === 200) {
-      console.log(`[WhatsApp] Order paid notification sent successfully: ${result.results?.id_message}`);
+    // Use dynamic WhatsApp service for unified logging and idempotency
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+    const wa = new DynamicWhatsAppService();
+    // Use a single success context across paid/completed to prevent duplicates on SETTLED after PAID
+    const contextId = `order:${order.id}:success`;
+
+    // Idempotency: if already sent for this order+status, skip
+    const alreadySentGroup = await wa.hasMessageLog('order-paid-group', contextId);
+    if (!alreadySentGroup) {
+      const settings = await wa.getActiveProviderSettings();
+      
+      // Determine appropriate group based on order type and group configurations
+      let groupId = settings?.default_group_id; // fallback
+      
+      if (settings?.group_configurations) {
+        const groupConfigs = settings.group_configurations;
+        
+        if (isRental && groupConfigs.rental_orders) {
+          groupId = groupConfigs.rental_orders;
+        } else if (!isRental && groupConfigs.purchase_orders) {
+          groupId = groupConfigs.purchase_orders;
+        }
+        // For other order types, we could add flash_sales check here
+        // else if (order.order_type === 'flash_sale' && groupConfigs.flash_sales) {
+        //   groupId = groupConfigs.flash_sales;
+        // }
+      }
+      
+      const start = Date.now();
+      const resp = await wa.sendGroupMessage({
+        message,
+        groupId,
+        contextType: 'order-paid-group',
+        contextId
+      });
+      const duration = Date.now() - start;
+      if (resp.success) {
+        console.log('[WhatsApp] Admin group notified', { 
+          groupId, 
+          orderType: order.order_type,
+          isRental,
+          ms: duration 
+        });
+      } else {
+        console.error('[WhatsApp] Admin group notification failed:', resp.error);
+      }
     } else {
-      console.error('[WhatsApp] Failed to send order paid notification:', result);
+      console.log('[WhatsApp] Admin group already notified for', contextId);
     }
 
 
@@ -120,109 +173,108 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
     // Send notification to customer if phone number is provided
     if (order.customer_phone) {
       try {
-        // Clean phone number (remove non-digits and ensure it starts with 62)
-        let customerPhone = order.customer_phone.replace(/\D/g, '');
-        
-        // Handle different input formats
-        if (customerPhone.startsWith('62')) {
-          // Already in correct format (62xxxxxxxx)
-          // No change needed
-        } else if (customerPhone.startsWith('08')) {
-          // Indonesian format starting with 08 (08xxxxxxxx -> 62xxxxxxxx)
-          customerPhone = '62' + customerPhone.substring(1);
-        } else if (customerPhone.startsWith('8')) {
-          // Indonesian format without leading 0 (8xxxxxxxx -> 62xxxxxxxx)
-          customerPhone = '62' + customerPhone;
-        } else if (customerPhone.startsWith('0')) {
-          // Other Indonesian format starting with 0 (0xxxxxxxx -> 62xxxxxxxx)
-          customerPhone = '62' + customerPhone.substring(1);
-        } else if (customerPhone.length >= 8) {
-          // Assume it's Indonesian mobile without country code
-          customerPhone = '62' + customerPhone;
-        } else {
+        // Normalize phone using service's formatter (same logic as dynamic service)
+        const raw = String(order.customer_phone || '');
+        let customerPhone = raw.replace(/\D/g, '');
+        if (customerPhone.startsWith('8')) customerPhone = '62' + customerPhone;
+        else if (customerPhone.startsWith('08')) customerPhone = '62' + customerPhone.substring(1);
+        else if (customerPhone.startsWith('0')) customerPhone = '62' + customerPhone.substring(1);
+        else if (!customerPhone.startsWith('62') && customerPhone.length >= 8) customerPhone = '62' + customerPhone;
+        if (!/^62\d{8,15}$/.test(customerPhone)) {
           console.log(`[WhatsApp] Invalid phone number format: ${order.customer_phone}`);
           return;
         }
 
         // Generate customer notification message (different for rental vs purchase)
         const customerMessage = isRental 
-          ? `� **RENTAL PAYMENT CONFIRMED!**
+          ? `🎉 *RENTAL PAYMENT CONFIRMED!*
 
-Halo ${order.customer_name || 'Customer'},
+Halo ${order.customer_name || 'Customer'} 👋
 
-Terima kasih! Pembayaran rental Anda telah berhasil diproses.
+Terima kasih! Pembayaran rental Anda telah *BERHASIL DIPROSES* ✅
 
-📋 **Order ID:** ${order.id}
-🎯 **Product:** ${productName}
-⏰ **Duration:** ${order.rental_duration || 'Not specified'}
-💰 **Total:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
-✅ **Status:** PAID
+📋 **DETAIL RENTAL:**
+• Order ID: *${order.id}*
+• Product: *${productName}*
+• Duration: *${order.rental_duration || 'Sesuai pesanan'}*
+• Total Paid: *Rp ${Number(order.amount || 0).toLocaleString('id-ID')}*
+• Status: *PAID* ✅
+• Paid at: ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Baru saja'}
 
-📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
+🚀 **LANGKAH SELANJUTNYA:**
+• Tim kami akan mengatur akses rental dalam *5-15 menit*
+• Informasi login akan dikirim via WhatsApp
+• Anda akan diminta verifikasi data via *Video Call*
+• Rental dimulai setelah verifikasi selesai
 
-🚀 **Selanjutnya:**
-• Tim kami akan segera mengatur akses rental Anda
-• Informasi login akan dikirim dalam 5-15 menit
-• Gunakan akun sesuai durasi yang dipilih
+⚠️ **PERSIAPKAN DOKUMEN:**
+• KTP/Passport/SIM yang masih aktif
+• Foto selfie dengan dokumen
+• Koneksi internet stabil untuk video call
+
+📝 **PENTING:**
+• Rental tidak bisa diperpanjang otomatis
+• Backup data pribadi sebelum rental berakhir
+• Gunakan akun sesuai aturan yang berlaku
 • Jangan ubah password atau data akun
 
-⚠️ **PENTING:**
-• Rental dimulai setelah akun diberikan
-• Tidak ada perpanjangan otomatis
-• Backup data pribadi sebelum rental berakhir
-
-💬 **Support:** wa.me/6289653510125
+💬 **Support 24/7:** wa.me/6289653510125
 🌐 **Website:** https://jbalwikobra.com
 
-Selamat bermain! 🎮`
-          : `🎉 **PURCHASE PAYMENT CONFIRMED!**
+Terima kasih telah mempercayai JB Alwikobra! 🎮✨`
+          : `🎉 *PURCHASE PAYMENT CONFIRMED!*
 
-Halo ${order.customer_name || 'Customer'},
+Halo ${order.customer_name || 'Customer'} 👋
 
-Terima kasih! Pembayaran Anda telah berhasil diproses.
+Terima kasih! Pembayaran Anda telah *BERHASIL DIPROSES* ✅
 
-📋 **Order ID:** ${order.id}
-🎯 **Product:** ${productName}
-💰 **Total:** Rp ${Number(order.amount || 0).toLocaleString('id-ID')}
-✅ **Status:** PAID
+📋 **DETAIL PURCHASE:**
+• Order ID: *${order.id}*
+• Product: *${productName}*
+• Total Paid: *Rp ${Number(order.amount || 0).toLocaleString('id-ID')}*
+• Status: *PAID* ✅
+• Paid at: ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Baru saja'}
 
-📅 **Paid at:** ${order.paid_at ? new Date(order.paid_at).toLocaleString('id-ID') : 'Just now'}
-
-🚀 **Selanjutnya:**
-• Tim kami akan segera memproses pesanan Anda
-• Akun game akan dikirim melalui WhatsApp dalam 5-30 menit
+🚀 **LANGKAH SELANJUTNYA:**
+• Tim kami akan memproses pesanan dalam *5-30 menit*
+• Akun game akan dikirim melalui WhatsApp
 • Detail login dan panduan akan disertakan
-• Akun menjadi milik Anda sepenuhnya
+• Akun menjadi milik Anda *SEPENUHNYA*
 
-✅ **Yang Anda dapatkan:**
-• Full access permanent
-• Garansi 7 hari
-• Support after sales
-• Panduan penggunaan
+✅ **YANG ANDA DAPATKAN:**
+• *Full access permanent* - selamanya
+• *Support after sales* berkelanjutan
+• *Panduan lengkap* penggunaan akun
+• *Free konsultasi* setup dan optimasi
 
-💬 **Support:** wa.me/6289653510125
+🔒 **KEAMANAN TERJAMIN:**
+• Akun original dan legal
+• Data aman dan terlindungi
+• Transaksi tercatat resmi
+
+💬 **Support 24/7:** wa.me/6289653510125
 🌐 **Website:** https://jbalwikobra.com
 
-Terima kasih telah berbelanja di JB Alwikobra! 🎮`;
+Terima kasih telah berbelanja di JB Alwikobra! 🎮✨`;
 
-        const customerResponse = await fetch(`${API_BASE_URL}/send_message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            phone_no: customerPhone,
-            key: API_KEY,
-            message: customerMessage
-          })
+        // Idempotency per order+status for customer
+  const alreadySentCustomer = await wa.hasMessageLog('order-paid-customer', contextId);
+        if (alreadySentCustomer) {
+          console.log('[WhatsApp] Customer already notified for', contextId);
+          return;
+        }
+
+        // Use dynamic service for customer message
+        const sendRes = await wa.sendMessage({
+          phone: customerPhone,
+          message: customerMessage,
+          contextType: 'order-paid-customer',
+          contextId
         });
-
-        const customerResult = await customerResponse.json();
-        
-        if (customerResponse.ok && (customerResult.code === 200 || customerResult.status === 'success')) {
-          console.log(`[WhatsApp] Customer notification sent successfully to ${customerPhone}: ${customerResult.results?.id_message || customerResult.id_message || customerResult.message_id}`);
+        if (sendRes.success) {
+          console.log(`[WhatsApp] Customer notification sent to ${customerPhone}`);
         } else {
-          console.error('[WhatsApp] Failed to send customer notification:', customerResult);
+          console.error('[WhatsApp] Customer notification failed:', sendRes.error);
         }
       } catch (customerError) {
         console.error('[WhatsApp] Error sending customer notification:', customerError);
@@ -237,6 +289,21 @@ Terima kasih telah berbelanja di JB Alwikobra! 🎮`;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Admin test hook: send a WhatsApp group message using DB-configured provider
+  // Usage: POST /api/xendit/webhook?testGroupSend=1 { message, groupId? }
+  if ((req.query && (req.query as any).testGroupSend) || (req.body && (req.body as any).testGroupSend)) {
+    try {
+      const { message, groupId } = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+      const wa = new DynamicWhatsAppService();
+      const resp = await wa.sendGroupMessage({ message: message || 'Admin test message', groupId, contextType: 'admin-test', contextId: String(Date.now()) });
+      return res.status(resp.success ? 200 : 400).json(resp);
+    } catch (e: any) {
+      console.error('[Webhook testGroupSend] error', e);
+      return res.status(500).json({ error: e?.message || 'failed' });
+    }
+  }
 
   const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
@@ -415,8 +482,9 @@ export default async function handler(req: any, res: any) {
           await sb.from('products').update({ is_active: false, archived_at: new Date().toISOString() }).in('id', productIds);
         }
 
-        // Send WhatsApp group notification for paid orders
-        if (status === 'paid') {
+        // Send WhatsApp notifications for successful payments
+        // Some channels report final state as 'completed' (e.g., SETTLED), not 'paid'
+        if (status === 'paid' || status === 'completed') {
           await sendOrderPaidNotification(sb, invoiceId, externalId);
         }
       }

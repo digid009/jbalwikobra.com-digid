@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
 import { adminService } from '../services/adminService';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// NOTE: Do not create Supabase client at module load to avoid crashes in development
+// when env vars are not set. We'll lazily create a client inside the diagnostic runner.
+let supabase: SupabaseClient | null = null;
 
 interface DiagnosticData {
   orders: { count: number; sample: any[] };
@@ -33,6 +33,28 @@ export const DataDiagnosticPage: React.FC = () => {
     };
 
     try {
+      // Lazily create Supabase client if env configured
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey) {
+        errors.push('Supabase not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.');
+      } else if (!supabase) {
+        supabase = createClient(supabaseUrl, supabaseKey);
+      }
+
+      if (!supabase) {
+        // Still attempt to fetch admin stats via adminService (has fallbacks) and return early
+        try {
+          const stats = await adminService.getDashboardStats();
+          result.stats = stats;
+        } catch (statsError) {
+          errors.push(`Stats Error: ${statsError}`);
+        }
+        setDiagnostic(result);
+        setLoading(false);
+        return;
+      }
+
       // Check orders
       const { data: orders, error: ordersError, count: ordersCount } = await supabase
         .from('orders')
@@ -46,7 +68,7 @@ export const DataDiagnosticPage: React.FC = () => {
       }
 
       // Check users
-      const { data: users, error: usersError, count: usersCount } = await supabase
+  const { data: users, error: usersError, count: usersCount } = await supabase
         .from('users')
         .select('*', { count: 'exact' })
         .limit(3);
@@ -58,7 +80,7 @@ export const DataDiagnosticPage: React.FC = () => {
       }
 
       // Check products
-      const { data: products, error: productsError, count: productsCount } = await supabase
+  const { data: products, error: productsError, count: productsCount } = await supabase
         .from('products')
         .select('*', { count: 'exact' })
         .eq('is_active', true)
@@ -71,7 +93,7 @@ export const DataDiagnosticPage: React.FC = () => {
       }
 
       // Check reviews
-      const { data: reviews, error: reviewsError, count: reviewsCount } = await supabase
+  const { data: reviews, error: reviewsError, count: reviewsCount } = await supabase
         .from('reviews')
         .select('*', { count: 'exact' })
         .limit(3);

@@ -1,30 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-// Activated payment channels - based on your Xendit dashboard
-const ACTIVATED_EWALLET_CHANNELS = {
-  'shopeepay': 'SHOPEEPAY',
-  'gopay': 'GOPAY',
-  'dana': 'DANA',
-  'linkaja': 'LINKAJA'
-};
-
-const ACTIVATED_VIRTUAL_ACCOUNT_CHANNELS = {
-  'bjb': 'BJB',
-  'bni': 'BNI', 
-  'bri': 'BRI',
-  'bsi': 'BSI',
-  'cimb': 'CIMB',
-  'mandiri': 'MANDIRI',
-  'permata': 'PERMATA'
-};
-
-const ACTIVATED_RETAIL_CHANNELS = {
-  'indomaret': 'INDOMARET'
-};
-
-const ACTIVATED_QR_CHANNELS = {
-  'qris': 'QRIS'
-};
+import { PaymentMethodUtils, PAYMENT_METHOD_CONFIGS } from '../../src/config/paymentMethodConfig';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
@@ -32,6 +7,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Simple order creation function for direct payments
+// Prefer explicit SITE_URL; fall back to client var; default to www domain (apex may not resolve)
+const SITE_URL = process.env.SITE_URL || process.env.REACT_APP_SITE_URL || 'https://www.jbalwikobra.com';
+
 async function createOrderRecord(order: any, externalId: string, paymentMethodId: string) {
   if (!order || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.log('[Direct Payment] Skipping order creation - missing order data or Supabase config');
@@ -107,24 +85,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Validate that the payment method is activated on the account
-    const paymentMethodLower = payment_method_id.toLowerCase();
+    // Validate that the payment method is activated using centralized config
+    const paymentMethodConfig = PaymentMethodUtils.getConfig(payment_method_id);
     
-    // Check all activated channel types
-    const isActivatedEwallet = Object.keys(ACTIVATED_EWALLET_CHANNELS).includes(paymentMethodLower);
-    const isActivatedVA = Object.keys(ACTIVATED_VIRTUAL_ACCOUNT_CHANNELS).includes(paymentMethodLower);
-    const isActivatedRetail = Object.keys(ACTIVATED_RETAIL_CHANNELS).includes(paymentMethodLower);
-    const isActivatedQR = Object.keys(ACTIVATED_QR_CHANNELS).includes(paymentMethodLower);
-    
-    const isValidPaymentMethod = isActivatedEwallet || isActivatedVA || isActivatedRetail || isActivatedQR;
-    
-    if (!isValidPaymentMethod) {
-      const allAvailableMethods = [
-        ...Object.keys(ACTIVATED_EWALLET_CHANNELS),
-        ...Object.keys(ACTIVATED_VIRTUAL_ACCOUNT_CHANNELS),
-        ...Object.keys(ACTIVATED_RETAIL_CHANNELS),
-        ...Object.keys(ACTIVATED_QR_CHANNELS)
-      ];
+    if (!paymentMethodConfig) {
+      const allAvailableMethods = PaymentMethodUtils.getAllActivatedIds();
       
       console.error(`[Xendit Direct Payment] Payment method '${payment_method_id}' is not activated on this account`);
       return res.status(400).json({ 
@@ -133,11 +98,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Determine the appropriate Xendit endpoint based on payment method
-    let endpoint = '';
-    let payload: any = {};
-    // Common metadata for webhook reconciliation (works for payment_requests and qr_codes)
-    const meta = {
+    // Common metadata for webhook reconciliation
+    const metadata = {
       client_external_id: external_id,
       product_id: order?.product_id || null,
       user_id: order?.user_id || null,
@@ -149,121 +111,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rental_duration: order?.rental_duration || null
     };
 
-    if (isActivatedEwallet) {
-      // E-Wallet payment using Payment Request API (Latest)
-      endpoint = '/payment_requests';
-      const xenditChannelCode = ACTIVATED_EWALLET_CHANNELS[paymentMethodLower as keyof typeof ACTIVATED_EWALLET_CHANNELS];
-      
-      // Different E-wallets require different channel properties
-      let channelProperties: any = {};
-      
-      if (paymentMethodLower === 'shopeepay') {
-        channelProperties = {
-          success_redirect_url: success_redirect_url || 'https://jbalwikobra.com/success',
-          failure_redirect_url: failure_redirect_url || 'https://jbalwikobra.com/failed'
-        };
-      } else if (paymentMethodLower === 'gopay') {
-        channelProperties = {
-          success_redirect_url: success_redirect_url || 'https://jbalwikobra.com/success',
-          failure_redirect_url: failure_redirect_url || 'https://jbalwikobra.com/failed'
-        };
-      } else if (paymentMethodLower === 'dana') {
-        channelProperties = {
-          success_redirect_url: success_redirect_url || 'https://jbalwikobra.com/success',
-          failure_redirect_url: failure_redirect_url || 'https://jbalwikobra.com/failed'
-        };
-      } else if (paymentMethodLower === 'linkaja') {
-        channelProperties = {
-          success_redirect_url: success_redirect_url || 'https://jbalwikobra.com/success',
-          failure_redirect_url: failure_redirect_url || 'https://jbalwikobra.com/failed'
-        };
-      }
-      
-      payload = {
-        reference_id: external_id,
-        amount,
-        currency,
-        country: 'ID',
-        payment_method: {
-          type: 'EWALLET',
-          ewallet: {
-            channel_code: xenditChannelCode,
-            channel_properties: channelProperties
-          },
-          reusability: 'ONE_TIME_USE'
-        },
-        description: description || 'Payment',
-        metadata: meta
-      };
-    } else if (isActivatedVA) {
-      // Virtual Account payment using Payment Request API (Latest)
-      endpoint = '/payment_requests';
-      const bankCode = ACTIVATED_VIRTUAL_ACCOUNT_CHANNELS[paymentMethodLower as keyof typeof ACTIVATED_VIRTUAL_ACCOUNT_CHANNELS];
-      
-      payload = {
-        reference_id: external_id,
-        amount,
-        currency,
-        country: 'ID',
-        payment_method: {
-          type: 'VIRTUAL_ACCOUNT',
-          virtual_account: {
-            channel_code: bankCode,
-            channel_properties: {
-              customer_name: (customer?.given_names || 'Customer').replace(/bank|bni|bri|mandiri|bca|bsi|cimb|permata|institution/gi, '').trim() || 'Customer',
-              expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            }
-          },
-          reusability: 'ONE_TIME_USE'
-        },
-        description: description || 'Payment',
-        metadata: meta
-      };
-    } else if (isActivatedQR) {
-      // QRIS payment - keep existing working endpoint
-      endpoint = '/qr_codes';
-      payload = {
-        external_id,
-        type: 'DYNAMIC',
-        callback_url: 'https://jbalwikobra.com/api/xendit/webhook',
-        amount,
-        description: description || 'Payment',
-        metadata: meta
-      };
-    } else if (isActivatedRetail) {
-      // Retail outlet payment using Payment Request API (Latest)
-      endpoint = '/payment_requests';
-      const retailCode = ACTIVATED_RETAIL_CHANNELS[paymentMethodLower as keyof typeof ACTIVATED_RETAIL_CHANNELS];
-      
-      payload = {
-        reference_id: external_id,
-        amount,
-        currency,
-        country: 'ID',
-        payment_method: {
-          type: 'OVER_THE_COUNTER',
-          over_the_counter: {
-            channel_code: retailCode,
-            channel_properties: {
-              customer_name: (customer?.given_names || 'Customer').replace(/bank|bni|bri|mandiri|bca|bsi|cimb|permata|institution/gi, '').trim() || 'Customer',
-              expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            }
-          },
-          reusability: 'ONE_TIME_USE'
-        },
-        description: description || 'Payment',
-        metadata: meta
-      };
-    }
+    // Create payment payload using centralized configuration
+    const endpoint = paymentMethodConfig.apiEndpoint;
+    const payload = PaymentMethodUtils.createPaymentPayload(
+      paymentMethodConfig,
+      external_id,
+      amount,
+      currency,
+      description || 'Payment',
+      metadata,
+      customer?.given_names || 'Customer',
+      success_redirect_url || `${SITE_URL}/success`,
+      failure_redirect_url || `${SITE_URL}/failed`,
+      `${SITE_URL}/api/xendit/webhook`
+    );
 
-    if (!endpoint) {
-      return res.status(400).json({ 
-        error: `Unsupported payment method: ${payment_method_id}` 
-      });
-    }
-
-  // Create order record if order data provided
-  const createdOrder = await createOrderRecord(order, external_id, payment_method_id);
+    // Create order record if order data provided
+    const createdOrder = await createOrderRecord(order, external_id, payment_method_id);
 
     console.log('[Xendit Direct Payment] Making request to:', `${XENDIT_BASE_URL}${endpoint}`);
     console.log('[Xendit Direct Payment] Payload:', JSON.stringify(payload, null, 2));
@@ -295,54 +159,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Format response based on payment method type
-    let formattedResponse: any = {
-      id: responseData.id,
-      status: responseData.status,
-      external_id: responseData.reference_id || responseData.external_id || external_id,
-      payment_method: {
-        id: payment_method_id,
-        type: getPaymentMethodType(payment_method_id)
-      },
+    // Format response using centralized configuration
+    const formattedResponse = PaymentMethodUtils.formatResponse(
+      responseData,
+      paymentMethodConfig,
+      external_id,
       amount,
-      currency,
-      created: responseData.created || new Date().toISOString(),
-      expiry_date: responseData.expires_at || responseData.expiration_date
-    };
-
-    // Add method-specific fields for Payment Request API
-    if (responseData.actions && responseData.actions.length > 0) {
-      // Payment Request API - E-Wallet response
-      const redirectAction = responseData.actions.find((action: any) => action.action === 'AUTH');
-      if (redirectAction) {
-        formattedResponse.payment_url = redirectAction.url;
-        formattedResponse.action_type = redirectAction.action;
-      }
-    } else if (responseData.payment_method?.virtual_account) {
-      // Payment Request API - Virtual Account response
-      const va = responseData.payment_method.virtual_account;
-      formattedResponse.account_number = va.channel_properties?.account_number;
-      formattedResponse.bank_code = va.channel_code;
-    } else if (responseData.payment_method?.over_the_counter) {
-      // Payment Request API - Retail outlet response
-      const otc = responseData.payment_method.over_the_counter;
-      formattedResponse.payment_code = otc.channel_properties?.payment_code;
-      formattedResponse.retail_outlet = otc.channel_code;
-    } else if (responseData.qr_string) {
-      // QRIS response (unchanged)
-      formattedResponse.qr_string = responseData.qr_string;
-      formattedResponse.qr_url = responseData.qr_string;
-    } else if (responseData.account_number) {
-      // Legacy Virtual Account response
-      formattedResponse.account_number = responseData.account_number;
-      formattedResponse.bank_code = responseData.bank_code;
-    } else if (responseData.invoice_url) {
-      // Invoice response (credit card)
-      formattedResponse.payment_url = responseData.invoice_url;
-    }
+      currency
+    );
 
     // Store payment data in database for later retrieval
     await storePaymentData(formattedResponse, payment_method_id, order);
+
+    // Send payment link WhatsApp notification
+    await sendPaymentLinkNotification(formattedResponse, order);
 
     console.log('[Xendit Direct Payment] Success:', {
       payment_method_id,
@@ -413,18 +243,126 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
   }
 }
 
-function getPaymentMethodType(paymentMethodId: string): string {
-  const paymentMethodLower = paymentMethodId.toLowerCase();
-  
-  if (['ovo', 'dana', 'gopay', 'linkaja', 'shopeepay'].includes(paymentMethodLower)) {
-    return 'EWALLET';
-  } else if (['bca', 'bni', 'mandiri', 'bri', 'cimb', 'permata'].includes(paymentMethodLower)) {
-    return 'VIRTUAL_ACCOUNT';
-  } else if (paymentMethodLower === 'qris') {
-    return 'QRIS';
-  } else if (paymentMethodLower === 'credit_card') {
-    return 'CREDIT_CARD';
-  } else {
-    return 'OTHER';
+// Send payment link WhatsApp notification to customer
+async function sendPaymentLinkNotification(paymentData: any, order: any) {
+  try {
+    // Skip if no customer phone number
+    if (!order?.customer_phone) {
+      console.log('[Payment Link Notification] No customer phone provided, skipping notification');
+      return;
+    }
+
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+    const wa = new DynamicWhatsAppService();
+
+    // Get site URL for payment link
+    const SITE_URL = process.env.SITE_URL || process.env.REACT_APP_SITE_URL || 'https://www.jbalwikobra.com';
+    
+    // Create payment interface URL
+    const paymentParams = new URLSearchParams({
+      id: paymentData.id,
+      method: paymentData.payment_method || 'unknown',
+      amount: paymentData.amount?.toString() || '0',
+      external_id: paymentData.external_id || '',
+      description: paymentData.description || 'Payment'
+    });
+    
+    const paymentLink = `${SITE_URL}/payment?${paymentParams.toString()}`;
+    
+    // Format expiry date
+    const expiryText = paymentData.expiry_date 
+      ? new Date(paymentData.expiry_date).toLocaleString('id-ID', {
+          dateStyle: 'full',
+          timeStyle: 'short'
+        })
+      : '24 jam dari sekarang';
+
+    // Different messages for purchase vs rental
+    const isRental = order.order_type === 'rental';
+    const productName = order.product_name || 'Product';
+    const customerName = order.customer_name || 'Customer';
+    const amount = paymentData.amount || 0;
+    
+    const message = isRental 
+      ? `🎮 *RENTAL PAYMENT LINK*
+
+Halo ${customerName}! 👋
+
+Segera selesaikan pembayaran untuk rental akun *${productName}* senilai *Rp ${Number(amount).toLocaleString('id-ID')}* dengan durasi *${order.rental_duration || 'sesuai pilihan'}*.
+
+🔗 **Klik link berikut untuk melanjutkan pembayaran:**
+${paymentLink}
+
+⏰ **Link pembayaran berlaku sampai:**
+${expiryText}
+
+📋 **Detail Rental:**
+• Product: ${productName}
+• Durasi: ${order.rental_duration || 'Sesuai pilihan'}
+• Total: Rp ${Number(amount).toLocaleString('id-ID')}
+
+⚠️ **PENTING:**
+• Gunakan link di atas jika Anda keluar dari halaman pembayaran
+• Pembayaran akan dikonfirmasi otomatis
+• Akses rental dimulai setelah pembayaran berhasil
+
+💬 **Support:** wa.me/6289653510125
+🌐 **Website:** https://jbalwikobra.com
+
+Terima kasih! 🙏`
+      : `🎮 *PAYMENT LINK - PURCHASE*
+
+Halo ${customerName}! 👋
+
+Segera selesaikan pembayaran untuk pembelian akun *${productName}* senilai *Rp ${Number(amount).toLocaleString('id-ID')}*.
+
+🔗 **Klik link berikut untuk melanjutkan pembayaran:**
+${paymentLink}
+
+⏰ **Link pembayaran berlaku sampai:**
+${expiryText}
+
+📋 **Detail Order:**
+• Product: ${productName}
+• Total: Rp ${Number(amount).toLocaleString('id-ID')}
+• Type: Full Purchase
+
+✅ **Yang Anda dapatkan:**
+• Akun permanen milik Anda
+• Full access selamanya
+• Support after sales
+• Garansi 7 hari
+
+💬 **Support:** wa.me/6289653510125
+🌐 **Website:** https://jbalwikobra.com
+
+Terima kasih! 🙏`;
+
+    // Send notification with idempotency
+    const contextId = `payment-link:${paymentData.id}`;
+    const alreadySent = await wa.hasMessageLog('payment-link', contextId);
+    
+    if (alreadySent) {
+      console.log('[Payment Link Notification] Already sent for payment:', paymentData.id);
+      return;
+    }
+
+    const result = await wa.sendMessage({
+      phone: order.customer_phone,
+      message: message,
+      contextType: 'payment-link',
+      contextId: contextId
+    });
+
+    if (result.success) {
+      console.log(`[Payment Link Notification] Sent successfully to ${order.customer_phone} for payment ${paymentData.id}`);
+    } else {
+      console.error('[Payment Link Notification] Failed to send:', result.error);
+    }
+
+  } catch (error) {
+    console.error('[Payment Link Notification] Error:', error);
   }
 }
+
+

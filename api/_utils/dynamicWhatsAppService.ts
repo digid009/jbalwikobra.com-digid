@@ -69,9 +69,38 @@ export class DynamicWhatsAppService {
         provider_name: providerName
       });
 
-      if (error) {
-        console.error('Error getting API key:', error);
-        return null;
+      if (error || !data || data.length === 0) {
+        // Fallback: direct table lookup when RPC not available
+        try {
+          // 1) Find an active key, prioritize primary
+          const { data: keys } = await sb
+            .from('whatsapp_api_keys')
+            .select('id, api_key, provider_id, is_primary, is_active')
+            .eq('is_active', true)
+            .order('is_primary', { ascending: false })
+            .limit(1);
+
+          if (!keys || keys.length === 0) return null;
+          const keyRow: any = keys[0];
+
+          // 2) Get provider config
+          const { data: provider } = await sb
+            .from('whatsapp_providers')
+            .select('*')
+            .eq('id', keyRow.provider_id)
+            .maybeSingle();
+
+          if (!provider) return null;
+
+          return {
+            api_key: keyRow.api_key,
+            key_id: keyRow.id,
+            provider_config: provider
+          } as WhatsAppApiKey;
+        } catch (fallbackErr) {
+          console.error('Fallback getActiveApiKey error:', fallbackErr);
+          return null;
+        }
       }
 
       return data && data.length > 0 ? data[0] : null;
@@ -79,6 +108,14 @@ export class DynamicWhatsAppService {
       console.error('Error in getActiveApiKey:', error);
       return null;
     }
+  }
+
+  /**
+   * Get active provider settings (from DB) for convenience
+   */
+  async getActiveProviderSettings(): Promise<any | null> {
+    const api = await this.getActiveApiKey();
+    return api?.provider_config?.settings || null;
   }
 
   /**
@@ -193,6 +230,160 @@ export class DynamicWhatsAppService {
   }
 
   /**
+   * Send WhatsApp message to a group using provider configuration from DB.
+   * Falls back to provider-specific defaults (woo-wa/NotifAPI) when settings are absent.
+   */
+  async sendGroupMessage(params: {
+    message: string;
+    groupId?: string; // if not provided, use provider settings default_group_id
+    contextType?: string;
+    contextId?: string;
+  }): Promise<SendMessageResult> {
+    const startTime = Date.now();
+    try {
+      const apiConfig = await this.getActiveApiKey();
+      if (!apiConfig) {
+        return { success: false, error: 'No active WhatsApp API configuration found' };
+      }
+      const { api_key, key_id, provider_config } = apiConfig;
+      const provider = provider_config;
+
+      // Resolve group send endpoint & field names from settings or sensible defaults
+      const settings = (provider.settings || {}) as any;
+      const endpoint = settings.group_send_endpoint || '/send_message_group_id';
+      const groupField = settings.group_id_field_name || 'group_id';
+      const keyField = provider.key_field_name || 'key';
+      const messageField = provider.message_field_name || 'message';
+
+      // Resolve target group id
+      const targetGroupId = params.groupId || settings.default_group_id || '';
+      if (!targetGroupId) {
+        // Log but don't fail hard; avoid accidental sends to wrong targets
+        await this.logCustomMessage({
+          phone: 'group:UNKNOWN',
+          message: params.message,
+          success: false,
+          providerName: provider.name,
+          requestBody: { reason: 'missing_group_id' },
+          responseBody: { error: 'No groupId provided and no default_group_id in provider settings' },
+          responseStatus: 400,
+          contextType: params.contextType,
+          contextId: params.contextId,
+          responseTime: Date.now() - startTime
+        });
+        return { success: false, error: 'Missing groupId (and default_group_id not configured in provider settings)' };
+      }
+
+      const apiUrl = `${provider.base_url}${endpoint}`;
+      const requestBody: any = {};
+      requestBody[groupField] = targetGroupId;
+      requestBody[keyField] = api_key;
+      requestBody[messageField] = params.message;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      const responseData = await response.json().catch(() => ({}));
+      const responseTime = Date.now() - startTime;
+
+      const isSuccess = this.isResponseSuccessful(responseData, provider);
+      const messageId = this.extractMessageId(responseData, provider);
+
+      await this.logCustomMessage({
+        phone: `group:${targetGroupId}`,
+        message: params.message,
+        success: isSuccess,
+        providerName: provider.name,
+        requestBody,
+        responseBody: responseData,
+        responseStatus: response.status,
+        contextType: params.contextType,
+        contextId: params.contextId,
+        responseTime
+      });
+
+      if (isSuccess) {
+        return { success: true, messageId, provider: provider.display_name, responseTime };
+      }
+      return { success: false, error: responseData?.message || 'Send group failed', provider: provider.display_name, responseTime };
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      return { success: false, error: error instanceof Error ? error.message : 'Network error', responseTime };
+    }
+  }
+
+  /**
+   * List available WhatsApp groups/chats from the active provider.
+   * Uses provider.settings to resolve endpoint and field names.
+   */
+  async listGroups(): Promise<{ success: boolean; groups?: Array<{ id: string; name: string }>; error?: string }> {
+    try {
+      const apiConfig = await this.getActiveApiKey();
+      if (!apiConfig) return { success: false, error: 'No active WhatsApp API configuration found' };
+
+      const { api_key, provider_config } = apiConfig;
+      const provider = provider_config;
+      const settings = (provider.settings || {}) as any;
+  // Sensible defaults for Woo-WA/NotifAPI
+  const isWooWa = provider.name === 'woo-wa' || /woo|notifapi/i.test(provider.name || '');
+  const endpoint = settings.list_groups_endpoint || (isWooWa ? '/get_group_id' : '/list_groups');
+  const method = (settings.list_groups_method || (isWooWa ? 'POST' : 'POST')).toUpperCase();
+      const keyField = provider.key_field_name || 'key';
+      const nameField = settings.group_name_field || 'name';
+      const idField = settings.group_id_field_name || 'group_id';
+  const arrayField = settings.groups_array_field || (isWooWa ? 'results' : 'groups');
+      const authMode = settings.list_groups_auth_mode || 'body'; // 'body' | 'header' | 'query'
+      const headerName = settings.list_groups_auth_header || 'Authorization';
+      const headerTemplate = settings.list_groups_auth_header_template || 'Bearer {api_key}';
+
+      let url = `${provider.base_url}${endpoint}`;
+      const headers: any = { 'Accept': 'application/json' };
+      let body: any = undefined;
+
+      if (authMode === 'header') {
+        headers[headerName] = headerTemplate.replace('{api_key}', api_key);
+      } else if (authMode === 'query') {
+        const sep = url.includes('?') ? '&' : '?';
+        url = `${url}${sep}${encodeURIComponent(keyField)}=${encodeURIComponent(api_key)}`;
+      } else {
+        // body by default
+        body = { [keyField]: api_key };
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: method === 'POST' ? (body ? JSON.stringify(body) : undefined) : undefined
+      });
+      const data = await response.json().catch(() => ({}));
+
+      // Some providers nest data; allow mapping (support common keys and Woo-WA's `results`)
+      const groupsRaw = (data && (data[arrayField]
+        || data.results
+        || data.data
+        || data.result
+        || data.groups)) || [];
+      if (!Array.isArray(groupsRaw)) {
+        // Attempt a known structure e.g. [{ id, name }] or key/value pairs
+        return { success: false, error: 'Unexpected groups response structure' };
+      }
+
+      const groups = groupsRaw.map((g: any) => ({
+          id: String(g[idField] || g.id || g.jid || ''),
+          name: String(g[nameField] || g.name || g.subject || g.title || '')
+        }))
+        .filter(g => g.id && g.name);
+
+      return { success: true, groups };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'list_groups_failed' };
+    }
+  }
+
+  /**
    * Send verification code via WhatsApp
    */
   async sendVerificationCode(phone: string, code: string): Promise<SendMessageResult> {
@@ -258,6 +449,78 @@ Ada pertanyaan? Balas pesan ini! 💬`;
       contextType: 'welcome',
       contextId: `${name}-${Date.now()}`
     });
+  }
+
+  /**
+   * Check if a successful message log already exists for a given context
+   * Useful for idempotency: avoid duplicate sends for the same order/event
+   */
+  async hasMessageLog(contextType: string, contextId: string): Promise<boolean> {
+    try {
+      const sb = getSupabase();
+      if (!sb) return false;
+      const { data, error } = await sb
+        .from('whatsapp_message_logs')
+        .select('id')
+        .eq('context_type', contextType)
+        .eq('context_id', contextId)
+        .eq('success', true)
+        .limit(1);
+      if (error) {
+        console.error('Error checking message log:', error);
+        return false;
+      }
+      return !!(data && data.length);
+    } catch (err) {
+      console.error('hasMessageLog error:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Log a custom WhatsApp message attempt (e.g., admin group sends)
+   * This allows unified logging and idempotency checks even when not using sendMessage()
+   */
+  async logCustomMessage(params: {
+    phone: string; // use a pseudo phone like `group:<group_id>` for group messages
+    message: string;
+    success: boolean;
+    providerName?: string;
+    requestBody?: any;
+    responseBody?: any;
+    responseStatus?: number;
+    contextType?: string;
+    contextId?: string;
+    responseTime?: number;
+  }): Promise<void> {
+    try {
+      const sb = getSupabase();
+      if (!sb) return;
+
+      // Get an active API key to associate the log entry with
+      const apiConfig = await this.getActiveApiKey(params.providerName || 'woo-wa');
+      if (!apiConfig) {
+        console.warn('logCustomMessage: No active API key found for logging');
+        return;
+      }
+
+      await sb.rpc('log_whatsapp_message', {
+        p_api_key_id: apiConfig.key_id,
+        p_phone_number: params.phone,
+        p_message_type: 'text',
+        p_message_content: params.message,
+        p_request_body: params.requestBody || {},
+        p_response_body: params.responseBody || {},
+        p_response_status: params.responseStatus || 0,
+        p_success: params.success,
+        p_message_id: undefined,
+        p_context_type: params.contextType,
+        p_context_id: params.contextId,
+        p_response_time_ms: params.responseTime || 0
+      });
+    } catch (error) {
+      console.error('logCustomMessage error:', error);
+    }
   }
 
   /**

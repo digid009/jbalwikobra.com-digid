@@ -4,11 +4,23 @@ import { ordersService } from './ordersService';
 import { dbRowToDomainProduct } from './mappers/productMapper';
 
 // Use service role key from environment variables for admin operations
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
-const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, serviceKey);
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+const hasSupabase = !!supabaseUrl && !!serviceKey;
+const supabase = hasSupabase ? createClient(supabaseUrl as string, serviceKey as string) : null;
 
-console.log('AdminService: Using', serviceKey.includes('service_role') ? 'service role key' : 'anonymous key', 'for database access');
+try {
+  // Log in dev to make it obvious when running without DB
+  if (hasSupabase) {
+    console.log(
+      'AdminService: Using',
+      (serviceKey as string).includes('service_role') ? 'service role key' : 'anonymous key',
+      'for database access'
+    );
+  } else {
+    console.warn('AdminService: Supabase not configured — running with dev fallbacks');
+  }
+} catch {}
 
 export interface AdminStats {
   totalOrders: number;
@@ -755,6 +767,22 @@ export const adminService = {
     return service.completeOrder(orderId);
   },
   async getAdminStats(): Promise<AdminStats> {
+    // In development without Supabase, return safe fallback to avoid crashing the Admin UI
+    if (!hasSupabase) {
+      return {
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalUsers: 0,
+        totalProducts: 0,
+        totalReviews: 0,
+        averageRating: 0,
+        pendingOrders: 0,
+        completedOrders: 0,
+        totalFlashSales: 0,
+        activeFlashSales: 0
+      };
+    }
+
     return adminCache.getOrFetch('admin:stats', async () => {
       try {
         // Get all stats in parallel - optimized queries
@@ -767,13 +795,13 @@ export const adminService = {
           { count: paidOrders },
           ordersWithRevenue
         ] = await Promise.all([
-          supabase.from('users').select('id', { count: 'exact', head: true }),
-          supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-          supabase.from('orders').select('id', { count: 'exact', head: true }),
-          supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-          supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
-          supabase.from('orders').select('amount, status').in('status', ['paid', 'completed'])
+          (supabase as any).from('users').select('id', { count: 'exact', head: true }),
+          (supabase as any).from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+          (supabase as any).from('orders').select('id', { count: 'exact', head: true }),
+          (supabase as any).from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          (supabase as any).from('orders').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+          (supabase as any).from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+          (supabase as any).from('orders').select('amount, status').in('status', ['paid', 'completed'])
         ]);
 
         // Calculate total revenue from paid and completed orders

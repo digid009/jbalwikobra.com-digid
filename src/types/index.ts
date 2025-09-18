@@ -131,6 +131,7 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
+  whatsapp?: string; // Optional WhatsApp number for direct consultation
 }
 
 export interface Order {
