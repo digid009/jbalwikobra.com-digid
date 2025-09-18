@@ -112,6 +112,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Create Xendit V3 Payment Request payload
   const xenditChannelCode = getXenditChannelCode(payment_method_id);
+    
+    // Set expiry to 24 hours from now (Xendit typically accepts this format)
+    const requestExpiryDate = new Date();
+    requestExpiryDate.setHours(requestExpiryDate.getHours() + 24);
+    const expiryIsoString = requestExpiryDate.toISOString();
+    
     const paymentRequestPayload = {
       reference_id: external_id,
       type: "PAY",
@@ -129,6 +135,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         url: `${SITE_URL}/api/xendit/webhook`
       },
       description: description || `Payment for ${order?.product_name || 'product'}`,
+      // Request expiry date to be included in response
+      expiry_date: expiryIsoString,
+      expires_at: expiryIsoString, // Try both field names
+      expiration_date: expiryIsoString,
       metadata: {
         client_external_id: external_id,
         product_id: order?.product_id || null,
@@ -138,7 +148,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         customer_email: order?.customer_email || customer?.email || null,
         customer_phone: order?.customer_phone || customer?.mobile_number || null,
         rental_duration: order?.rental_duration || null,
-        amount: amount.toString()
+        amount: amount.toString(),
+        // Add expiry info to metadata as backup
+        requested_expiry: expiryIsoString
       }
     };
 
@@ -189,17 +201,74 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Format V3 API response
     let formattedResponse: any = {
-      id: responseData.payment_request_id,
-      external_id: responseData.reference_id,
-      amount: responseData.request_amount,
+      id: responseData.payment_request_id || responseData.id,
+      external_id: responseData.reference_id || responseData.external_id,
+      amount: responseData.request_amount || responseData.amount,
       currency: responseData.currency,
       status: responseData.status,
       payment_method: payment_method_id,
       payment_request_id: responseData.payment_request_id,
-      actions: responseData.actions || [],
-      // Add expiry date from V3 API response
-      expiry_date: responseData.expiry_date || responseData.expires_at || responseData.expired_at
+      actions: responseData.actions || []
     };
+
+    // Handle expiry date - Xendit V3 uses different field names
+    let expiryDate = null;
+    
+    // Log the complete response structure for debugging
+    console.log('[Xendit V3 Payment] Complete API response structure:');
+    console.log('[Xendit V3 Payment] All response fields:', Object.keys(responseData));
+    console.log('[Xendit V3 Payment] Full response data:', JSON.stringify(responseData, null, 2));
+    
+    // Try various field names that Xendit might use
+    const possibleExpiryFields = [
+      'expiry_date', 'expires_at', 'expired_at', 'expires', 'expiration_date',
+      'capture_expiry_date', 'payment_expiry_date', 'expiry', 'expire_at',
+      'expire_date', 'valid_until', 'due_date', 'timeout', 'ttl'
+    ];
+    
+    console.log('[Xendit V3 Payment] Checking for expiry fields:', possibleExpiryFields);
+    
+    for (const field of possibleExpiryFields) {
+      if (responseData[field]) {
+        expiryDate = responseData[field];
+        console.log(`[Xendit V3 Payment] ✅ Found expiry in field '${field}':`, expiryDate);
+        break;
+      } else {
+        console.log(`[Xendit V3 Payment] ❌ Field '${field}' not found or null`);
+      }
+    }
+    
+    // Check nested objects for expiry fields
+    if (!expiryDate && responseData.actions) {
+      console.log('[Xendit V3 Payment] Checking actions array for expiry fields...');
+      responseData.actions.forEach((action: any, index: number) => {
+        console.log(`[Xendit V3 Payment] Action ${index} fields:`, Object.keys(action));
+        for (const field of possibleExpiryFields) {
+          if (action[field]) {
+            expiryDate = action[field];
+            console.log(`[Xendit V3 Payment] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
+            break;
+          }
+        }
+      });
+    }
+    
+    // Check metadata for backup expiry
+    if (!expiryDate && responseData.metadata?.requested_expiry) {
+      expiryDate = responseData.metadata.requested_expiry;
+      console.log('[Xendit V3 Payment] ✅ Using metadata.requested_expiry as fallback:', expiryDate);
+    }
+    
+    if (!expiryDate) {
+      // Default to 24 hours from now if Xendit doesn't provide expiry
+      const defaultExpiry = new Date();
+      defaultExpiry.setHours(defaultExpiry.getHours() + 24);
+      expiryDate = defaultExpiry.toISOString();
+      console.log('[Xendit V3 Payment] ⚠️ No expiry from API, using default 24h expiry:', expiryDate);
+      console.log('[Xendit V3 Payment] 📋 Available response fields for debugging:', Object.keys(responseData));
+    }
+    
+    formattedResponse.expiry_date = expiryDate;
 
     // Handle different action types from V3 API
     if (responseData.actions && responseData.actions.length > 0) {
@@ -278,6 +347,49 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     if (paymentData.account_number) paymentSpecificData.account_number = paymentData.account_number;
     if (paymentData.bank_code) paymentSpecificData.bank_code = paymentData.bank_code;
 
+    // Ensure we always have an expiry date with comprehensive field checking
+    let expiryDate = null;
+    
+    console.log('[Store Payment V3] Checking paymentData for expiry fields...');
+    console.log('[Store Payment V3] PaymentData fields:', Object.keys(paymentData));
+    
+    // Try various field names that Xendit might use in the payment data
+    const possibleExpiryFields = [
+      'expiry_date', 'expires_at', 'expired_at', 'expires', 'expiration_date',
+      'capture_expiry_date', 'payment_expiry_date', 'expiry', 'expire_at',
+      'expire_date', 'valid_until', 'due_date', 'timeout', 'ttl'
+    ];
+    
+    for (const field of possibleExpiryFields) {
+      if (paymentData[field]) {
+        expiryDate = paymentData[field];
+        console.log(`[Store Payment V3] ✅ Found expiry in field '${field}':`, expiryDate);
+        break;
+      }
+    }
+    
+    // Check nested actions for expiry fields
+    if (!expiryDate && paymentData.actions) {
+      console.log('[Store Payment V3] Checking actions for expiry fields...');
+      paymentData.actions.forEach((action: any, index: number) => {
+        for (const field of possibleExpiryFields) {
+          if (action[field]) {
+            expiryDate = action[field];
+            console.log(`[Store Payment V3] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
+            break;
+          }
+        }
+      });
+    }
+    
+    if (!expiryDate) {
+      const defaultExpiry = new Date();
+      defaultExpiry.setHours(defaultExpiry.getHours() + 24); // 24 hours from now
+      expiryDate = defaultExpiry.toISOString();
+      console.log('[Store Payment V3] ⚠️ No expiry provided, using default 24h expiry:', expiryDate);
+      console.log('[Store Payment V3] 📋 Available paymentData fields for debugging:', Object.keys(paymentData));
+    }
+
     const paymentRecord = {
       xendit_id: paymentData.id || paymentData.payment_request_id,
       external_id: paymentData.external_id,
@@ -287,7 +399,7 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       status: paymentData.status,
       description: paymentData.description,
       payment_data: paymentSpecificData,
-      expiry_date: paymentData.expiry_date,
+      expiry_date: expiryDate,
       created_at: new Date().toISOString()
     };
 

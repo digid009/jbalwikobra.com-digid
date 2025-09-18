@@ -173,6 +173,13 @@ const SellPage: React.FC = () => {
     window.location.hash = '#sell-form';
   };
 
+  // When a user clicks a popular game, prefill selection and jump to the form
+  const handleSelectPopularGame = (gameName: string) => {
+    setSelectedGame(gameName);
+    // Slight delay to ensure state updates before scrolling
+    requestAnimationFrame(() => scrollToForm());
+  };
+
   // Features data
   const features = [
     {
@@ -226,8 +233,8 @@ const SellPage: React.FC = () => {
         loading={loadingGames}
       />
 
-      {/* Popular Games Section */}
-      <PopularGames games={popularGames} />
+  {/* Popular Games Section */}
+  <PopularGames games={popularGames} onGameSelect={handleSelectPopularGame} />
 
       {/* How It Works Section */}
       <HowItWorks />

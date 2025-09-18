@@ -17,98 +17,109 @@ import {
   Star,
   CheckCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  ArrowLeft,
+  Home,
+  Phone,
+  Mail,
+  Globe
 } from 'lucide-react';
 import { 
-  IOSContainer, 
-  IOSCard, 
-  IOSButton,
-  IOSHero 
-} from '../components/ios/IOSDesignSystem';
+  PNSection, 
+  PNContainer, 
+  PNCard, 
+  PNButton,
+  PNHeading,
+  PNText,
+  PNSectionHeader,
+  PNPill 
+} from '../components/ui/PinkNeonDesignSystem';
+import { useNavigate } from 'react-router-dom';
 
 const faqs = [
   {
     category: 'Akun & Registrasi',
-    q: 'Bagaimana cara membuat akun?',
-    a: 'Klik tombol "Masuk" di header, lalu pilih "Daftar". Masukkan email, password, dan nomor WhatsApp (opsional). Setelah registrasi, Anda akan mendapat pesan selamat datang jika nomor WhatsApp tersedia.'
+    q: 'Bagaimana cara daftar akun?',
+    a: 'Klik "Masuk" → pilih "Daftar" → masukkan email dan password → verifikasi WhatsApp (opsional). Setelah daftar, Anda akan mendapat notifikasi selamat datang.'
   },
   {
     category: 'Pembelian',
-    q: 'Bagaimana cara membeli akun game?',
-    a: 'Pilih produk dari katalog → Klik "Detail" → Pilih "Beli Sekarang" → Isi form pembelian dengan data lengkap → Klik "Proses Pembayaran" → Bayar melalui invoice Xendit yang dikirim → Detail akun akan dikirim setelah pembayaran terkonfirmasi.'
+    q: 'Bagaimana cara beli akun game?',
+    a: 'Pilih produk → klik "Beli Sekarang" → isi form lengkap → pilih metode pembayaran → bayar sesuai invoice → akun dikirim otomatis setelah pembayaran konfirmasi.'
   },
   {
     category: 'Pembelian',
-    q: 'Apa itu sistem rental dan bagaimana cara kerjanya?',
-    a: 'Sistem rental memungkinkan Anda menyewa akun untuk durasi tertentu (harian/bulanan). Klik tombol "Sewa" pada produk, pilih durasi yang diinginkan, dan lakukan pembayaran. Akun akan dikembalikan otomatis setelah masa sewa berakhir.'
+    q: 'Apa itu sistem rental?',
+    a: 'Rental adalah sewa akun untuk durasi tertentu (harian/bulanan). Klik "Sewa" → pilih durasi → bayar → gunakan akun sesuai periode → akun dikembalikan otomatis.'
   },
   {
     category: 'Pembayaran',
-    q: 'Metode pembayaran apa saja yang tersedia?',
-    a: 'Pembayaran diproses melalui Xendit dengan opsi: Transfer Bank (BCA, BNI, BRI, Mandiri, dll), E-Wallet (OVO, DANA, GoPay, LinkAja), Virtual Account, QRIS, dan Kartu Kredit/Debit. Pilih metode yang sesuai saat checkout.'
+    q: 'Metode pembayaran apa saja tersedia?',
+    a: 'Semua pembayaran via Xendit: Transfer Bank, E-Wallet (DANA, GoPay, OVO, ShopeePay), Virtual Account, QRIS, dan Kartu Kredit/Debit. Pilih metode saat checkout.'
   },
   {
     category: 'Pembayaran',
-    q: 'Berapa lama proses konfirmasi pembayaran?',
-    a: 'Pembayaran otomatis terkonfirmasi melalui webhook Xendit. Transfer bank biasanya 1-15 menit, e-wallet instan, virtual account 1-5 menit. Status pesanan akan diupdate otomatis di halaman "Riwayat Order".'
+    q: 'Berapa lama konfirmasi pembayaran?',
+    a: 'Otomatis via webhook Xendit: Transfer bank 1-15 menit, e-wallet instan, virtual account 1-5 menit. Status order update real-time di "Riwayat Order".'
   },
   {
     category: 'Keamanan',
     q: 'Apakah data saya aman?',
-    a: 'Ya, sangat aman. Kami menggunakan: Row Level Security (RLS) pada database, enkripsi data sensitif, pembayaran melalui Xendit (PCI DSS compliant), dan tidak menyimpan data kartu kredit. Semua transaksi dimonitor 24/7.'
+    a: 'Ya, sangat aman. Kami gunakan Row Level Security (RLS), enkripsi data sensitif, payment gateway Xendit (PCI DSS compliant), dan monitoring 24/7. Data kartu tidak disimpan.'
   },
   {
     category: 'Keamanan',
-    q: 'Bagaimana jika akun yang dibeli bermasalah?',
-    a: 'Kami memberikan garansi untuk semua akun. Jika ada masalah (akun tidak bisa login, data tidak sesuai, dll), hubungi admin dengan bukti pembelian. Tim support akan membantu troubleshoot atau memberikan replacement sesuai kebijakan.'
+    q: 'Jika akun bermasalah gimana?',
+    a: 'Garansi 100% untuk semua akun. Jika ada masalah (login gagal, data salah), hubungi admin dengan bukti beli. Tim support siap troubleshoot atau replacement sesuai kebijakan.'
   },
   {
     category: 'Fitur',
-    q: 'Bagaimana cara menggunakan wishlist?',
-    a: 'Klik ikon ❤️ pada produk untuk menambah ke wishlist. Akses wishlist melalui navigasi atau profile dashboard. Wishlist tersimpan otomatis dan tersinkron dengan akun Anda. Anda akan mendapat notifikasi jika ada flash sale untuk item wishlist.'
+    q: 'Bagaimana cara pakai wishlist?',
+    a: 'Klik ❤️ pada produk → akses via profile dashboard → tersimpan otomatis tersinkron → dapat notifikasi flash sale item wishlist.'
   },
   {
     category: 'Fitur',
-    q: 'Apa itu Flash Sale dan bagaimana cara mengikutinya?',
-    a: 'Flash Sale adalah diskon terbatas waktu dengan stok terbatas. Akses melalui menu "Flash Sale" atau notifikasi. Timer countdown menunjukkan sisa waktu. Tips: Tambahkan item ke wishlist untuk notifikasi flash sale otomatis.'
+    q: 'Apa itu Flash Sale?',
+    a: 'Diskon besar waktu terbatas dengan stok terbatas. Akses via menu "Flash Sale" atau notifikasi. Timer countdown show sisa waktu. Tips: Add ke wishlist untuk notifikasi otomatis.'
   },
   {
     category: 'Bantuan',
-    q: 'Bagaimana cara menghubungi customer service?',
-    a: 'Customer service tersedia melalui: WhatsApp (respon tercepat, 09:00-21:00 WIB), Email support, atau chat admin melalui tombol bantuan. Untuk masalah urgent, gunakan WhatsApp dengan menyertakan nomor order.'
+    q: 'Bagaimana hubungi customer service?',
+    a: 'WhatsApp (respon tercepat, 09:00-21:00 WIB), Email support, atau chat admin via tombol bantuan. Untuk urgent, gunakan WhatsApp dengan nomor order.'
   }
 ];
 
 const guides = [
   {
-    title: 'Panduan Pembelian Pertama',
+    title: 'Panduan Pembelian',
     steps: [
-      'Daftar akun dengan email valid',
-      'Verifikasi nomor WhatsApp (opsional)',
+      'Daftar dengan email valid',
+      'Verifikasi WhatsApp (opsional)',
       'Browse katalog produk',
-      'Pilih produk dan baca deskripsi',
+      'Pilih dan baca detail produk',
       'Klik "Beli Sekarang"',
-      'Isi data pembeli dengan lengkap',
+      'Isi data lengkap',
       'Pilih metode pembayaran',
-      'Selesaikan pembayaran dalam 24 jam',
-      'Tunggu konfirmasi dan pengiriman akun'
+      'Bayar dalam 24 jam',
+      'Terima akun via WhatsApp'
     ]
   },
   {
-    title: 'Tips Berbelanja Aman',
+    title: 'Tips Keamanan',
     steps: [
-      'Selalu login dengan akun resmi',
-      'Periksa detail produk dan harga',
-      'Gunakan metode pembayaran resmi',
+      'Gunakan akun resmi',
+      'Periksa detail dan harga',
+      'Bayar via metode resmi',
       'Simpan bukti pembayaran',
-      'Jangan share data akun dengan orang lain',
-      'Update password secara berkala',
-      'Hubungi admin jika ada yang mencurigakan'
+      'Jangan share data akun',
+      'Update password berkala',
+      'Report aktivitas mencurigakan'
     ]
   }
 ];
 
 const HelpPage: React.FC = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = React.useState<number | null>(0);
   const [selectedCategory, setSelectedCategory] = React.useState<string>('Semua');
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -136,271 +147,329 @@ const HelpPage: React.FC = () => {
   });
 
   return (
-  <div className="min-h-screen bg-black">
-      {/* Hero Section */}
-      <IOSHero
-        title="Pusat Bantuan"
-        subtitle="Temukan jawaban untuk pertanyaan umum, panduan lengkap, dan kontak support untuk pengalaman terbaik di JB Alwikobra"
-        icon={HelpCircle}
-        backgroundGradient="from-indigo-500 via-purple-500 to-pink-500"
-      >
-        <div className="max-w-md mx-auto relative">
-          <input 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-gray-900/30 backdrop-blur-sm border border-gray-600 rounded-xl pl-12 pr-4 py-3 min-h-[44px] text-white placeholder:text-white/80 focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-gray-700 text-sm sm:text-base" 
-            placeholder="Cari: pembelian, pembayaran, keamanan..." 
-          />
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80" />
-        </div>
-      </IOSHero>
-
-      <IOSContainer className="py-12">
-
-        {/* Quick Topics - Mobile Optimized */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-12">
-          <button 
-            onClick={() => setSelectedCategory('Akun & Registrasi')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <User className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Akun</p>
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('Pembelian')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <ShoppingBag className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Pembelian</p>
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('Pembayaran')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <CreditCard className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Pembayaran</p>
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('Keamanan')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <ShieldCheck className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Keamanan</p>
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('Fitur')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <Heart className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Wishlist</p>
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('Fitur')}
-            className="min-h-[80px] p-3 bg-black border border-gray-700 rounded-xl text-center hover:border-ios-accent/50 transition-colors"
-          >
-            <Zap className="mx-auto text-pink-500 mb-2" size={24} />
-            <p className="text-xs sm:text-sm font-medium text-white">Flash Sale</p>
-          </button>
-        </div>
-
-        {/* Mobile-First Category Filter */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`
-                  px-3 sm:px-4 py-2 min-h-[44px] rounded-lg font-medium transition-all duration-200 text-sm sm:text-base whitespace-nowrap
-                  ${selectedCategory === category 
-                    ? 'bg-pink-500 text-white shadow-lg' 
-                    : 'bg-black text-white hover:bg-black/80'
-                  }
-                `}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* FAQ Section */}
-          <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <MessageSquare className="text-pink-500" />
-              Pertanyaan Umum
-            </h2>
-            
-            <IOSCard className="divide-y divide-ios-border">
-              {filteredFaqs.map((item, idx) => (
-                <div key={idx} className="p-4 sm:p-6">
-                  <button
-                    onClick={() => setOpen(open === idx ? null : idx)}
-                    className="w-full text-left focus:outline-none min-h-[44px] flex items-start"
-                  >
-                    <div className="flex items-start justify-between w-full gap-3">
-                      <div className="flex-1">
-                        <span className="inline-block px-2 py-1 bg-pink-500/20 text-pink-500 text-xs rounded-full mb-2">
-                          {item.category}
-                        </span>
-                        <h3 className="font-semibold text-white text-base sm:text-lg pr-2">{item.q}</h3>
-                      </div>
-                      <ChevronDown 
-                        className={`transition-transform text-pink-500 flex-shrink-0 mt-1 ${open === idx ? 'rotate-180' : ''}`} 
-                        size={20}
-                      />
-                    </div>
-                  </button>
-                  {open === idx && (
-                    <div className="mt-4 text-white/70 leading-relaxed text-sm sm:text-base">
-                      {item.a}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </IOSCard>
-
-            {filteredFaqs.length === 0 && (
-              <IOSCard padding="large" className="text-center">
-                <Search className="mx-auto text-white/70 mb-4" size={48} />
-                <p className="text-white/70">Tidak ada FAQ yang cocok dengan pencarian Anda.</p>
-                <p className="text-white/70 text-sm mt-2">Coba gunakan kata kunci lain atau hubungi support.</p>
-              </IOSCard>
-            )}
+    <div className="min-h-screen bg-black">
+      {/* Pink Neon Hero Section */}
+      <PNSection padding="lg" className="bg-gradient-to-br from-pink-900/30 via-purple-900/20 to-black">
+        <PNContainer>
+          {/* Back Button */}
+          <div className="mb-8">
+            <PNButton 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/')}
+              className="group"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">Kembali ke Beranda</span>
+            </PNButton>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Contact */}
-            <IOSCard padding="large">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <MessageSquare className="text-pink-500" />
-                Butuh Bantuan Cepat?
-              </h3>
-              <p className="text-white/70 mb-4">
-                Tim support kami siap membantu Anda 24/7 melalui WhatsApp.
-              </p>
-              <a
-                href={`https://wa.me/${whatsappNumber}?text=Halo%20admin,%20saya%20butuh%20bantuan%20terkait%20JB%20Alwikobra`}
-                target="_blank"
-                rel="noreferrer"
-                className="block"
-              >
-                <IOSButton variant="primary" className="w-full bg-green-600 hover:bg-green-700">
-                  <MessageSquare size={18} />
-                  Chat WhatsApp Support
-                </IOSButton>
-              </a>
-              <div className="mt-4 space-y-2 text-sm text-white/70">
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-green-400" />
-                  <span>Respon dalam 5 menit</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-pink-400" />
-                  <span>Online: 09:00 - 21:00 WIB</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star size={16} className="text-yellow-400" />
-                  <span>Rating 4.9/5 customer satisfaction</span>
-                </div>
+          {/* Hero Content */}
+          <div className="text-center mb-12">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-full flex items-center justify-center">
+                <HelpCircle className="text-white" size={40} />
               </div>
-            </IOSCard>
-
-            {/* System Status */}
-            <IOSCard padding="large">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Settings className="text-pink-500" />
-                Status Sistem
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-white/70">Website</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-green-400 text-sm">Online</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/70">Pembayaran</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-green-400 text-sm">Normal</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/70">Database</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span className="text-green-400 text-sm">Optimal</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-white/70 mt-4">
-                Terakhir update: {new Date().toLocaleString('id-ID')}
-              </p>
-            </IOSCard>
-          </div>
-        </div>
-
-        {/* Guides Section */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-            <Sparkles className="text-pink-500" />
-            Panduan Lengkap
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            {guides.map((guide, idx) => (
-              <IOSCard key={idx} padding="large">
-                <h3 className="text-xl font-semibold text-white mb-4">{guide.title}</h3>
-                <div className="space-y-3">
-                  {guide.steps.map((step, stepIdx) => (
-                    <div key={stepIdx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                        {stepIdx + 1}
-                      </div>
-                      <p className="text-white/70">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </IOSCard>
-            ))}
-          </div>
-        </div>
-
-        {/* Still Need Help */}
-        <div className="mt-12">
-          <IOSCard padding="large" className="text-center bg-gradient-to-r from-ios-accent/10 to-ios-accent/5">
-            <AlertTriangle className="mx-auto text-yellow-400 mb-4" size={48} />
-            <h3 className="text-2xl font-bold text-white mb-4">Masih Belum Menemukan Jawaban?</h3>
-            <p className="text-white/70 mb-6 max-w-2xl mx-auto">
-              Tim support kami siap membantu menyelesaikan masalah spesifik Anda. Jangan ragu untuk menghubungi kami kapan saja.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href={`https://wa.me/${whatsappNumber}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block"
-              >
-                <IOSButton variant="primary" className="bg-green-600 hover:bg-green-700">
-                  WhatsApp Support
-                </IOSButton>
-              </a>
-              <a
-                href="mailto:support@jbalwikobra.com"
-                className="inline-block"
-              >
-                <IOSButton variant="primary">
-                  Email Support
-                </IOSButton>
-              </a>
             </div>
-          </IOSCard>
-        </div>
-      </IOSContainer>
+            
+            <PNHeading level={1} gradient className="mb-4 text-3xl lg:text-4xl">
+              Pusat Bantuan
+            </PNHeading>
+            
+            <PNText className="text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+              Temukan jawaban cepat, panduan lengkap, dan kontak support untuk pengalaman terbaik di JBalwikobra
+            </PNText>
+
+            {/* Search Bar */}
+            <div className="max-w-md mx-auto relative">
+              <input 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-black/50 backdrop-blur-sm border border-pink-500/30 rounded-2xl pl-14 pr-4 py-4 text-white placeholder:text-gray-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 text-base" 
+                placeholder="Cari: pembelian, pembayaran, keamanan..." 
+              />
+              <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-pink-400" />
+            </div>
+          </div>
+        </PNContainer>
+      </PNSection>
+
+      <PNSection padding="lg">
+        <PNContainer>
+
+          {/* Quick Topics */}
+          <div className="mb-12">
+            <PNHeading level={2} className="mb-6 text-center">
+              Topik Populer
+            </PNHeading>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Akun & Registrasi')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <User className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Akun</span>
+              </PNButton>
+              
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Pembelian')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <ShoppingBag className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Pembelian</span>
+              </PNButton>
+              
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Pembayaran')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <CreditCard className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Pembayaran</span>
+              </PNButton>
+              
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Keamanan')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <ShieldCheck className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Keamanan</span>
+              </PNButton>
+              
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Fitur')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <Heart className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Wishlist</span>
+              </PNButton>
+              
+              <PNButton 
+                variant="ghost"
+                onClick={() => setSelectedCategory('Fitur')}
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+              >
+                <Zap className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
+                <span className="text-sm font-medium text-white">Flash Sale</span>
+              </PNButton>
+            </div>
+          </div>
+
+          {/* Category Filter */}
+          <div className="mb-8">
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className="focus:outline-none"
+                >
+                  <PNPill active={selectedCategory === category}>
+                    {category}
+                  </PNPill>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* FAQ Section */}
+            <div className="lg:col-span-2">
+              <PNSectionHeader title="Pertanyaan Umum" subtitle="Jawaban cepat untuk pertanyaan paling sering" padX={false} />
+              
+              <PNCard className="divide-y divide-white/10">
+                {filteredFaqs.map((item, idx) => (
+                  <div key={idx} className="p-6">
+                    <PNButton
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => setOpen(open === idx ? null : idx)}
+                      className="text-left h-auto p-0"
+                    >
+                      <div className="flex items-start justify-between w-full gap-4">
+                        <div className="flex-1">
+                          <span className="inline-block px-3 py-1 bg-pink-500/20 text-pink-400 text-xs rounded-full mb-3 font-medium">
+                            {item.category}
+                          </span>
+                          <PNHeading level={3} className="text-base lg:text-lg pr-2">{item.q}</PNHeading>
+                        </div>
+                        <ChevronDown 
+                          className={`transition-transform text-pink-400 flex-shrink-0 mt-1 ${open === idx ? 'rotate-180' : ''}`} 
+                          size={20}
+                        />
+                      </div>
+                    </PNButton>
+                    {open === idx && (
+                      <div className="mt-4 text-gray-300 leading-relaxed text-sm lg:text-base">
+                        {item.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </PNCard>
+
+              {filteredFaqs.length === 0 && (
+                <PNCard className="text-center p-12">
+                  <Search className="mx-auto text-gray-500 mb-4" size={48} />
+                  <PNHeading level={3} className="mb-2">Tidak Ada Hasil</PNHeading>
+                  <PNText className="text-gray-400">Tidak ada FAQ yang cocok dengan pencarian Anda.</PNText>
+                  <PNText className="text-gray-500 text-sm mt-2">Coba kata kunci lain atau hubungi support.</PNText>
+                </PNCard>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Quick Contact */}
+              <PNCard className="p-6">
+                <PNHeading level={3} className="mb-4 flex items-center gap-2">
+                  <MessageSquare className="text-pink-400" />
+                  Butuh Bantuan?
+                </PNHeading>
+                <PNText className="text-gray-300 mb-4">
+                  Tim support siap membantu 24/7 via WhatsApp
+                </PNText>
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=Halo%20admin,%20saya%20butuh%20bantuan%20terkait%20JBalwikobra`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block"
+                >
+                  <PNButton variant="primary" fullWidth className="bg-green-600 hover:bg-green-700 mb-4">
+                    <MessageSquare size={18} className="mr-2" />
+                    Chat WhatsApp
+                  </PNButton>
+                </a>
+                <div className="space-y-2 text-sm text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-400" />
+                    <span>Respon dalam 5 menit</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-pink-400" />
+                    <span>Online: 09:00 - 21:00 WIB</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star size={16} className="text-yellow-400" />
+                    <span>Rating 4.9/5</span>
+                  </div>
+                </div>
+              </PNCard>
+
+              {/* System Status */}
+              <PNCard className="p-6">
+                <PNHeading level={3} className="mb-4 flex items-center gap-2">
+                  <Settings className="text-pink-400" />
+                  Status Sistem
+                </PNHeading>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300">Website</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-medium">Online</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300">Pembayaran</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-medium">Normal</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300">Database</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-medium">Optimal</span>
+                    </div>
+                  </div>
+                </div>
+                <PNText className="text-xs text-gray-500 mt-4">
+                  Update: {new Date().toLocaleString('id-ID')}
+                </PNText>
+              </PNCard>
+            </div>
+          </div>
+
+          {/* Guides Section */}
+          <div className="mt-16">
+            <PNSectionHeader title="Panduan Lengkap" subtitle="Langkah-langkah praktis agar transaksi lancar" />
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {guides.map((guide, idx) => (
+                <PNCard key={idx} className="p-6">
+                  <PNHeading level={3} className="mb-6">{guide.title}</PNHeading>
+                  <div className="space-y-4">
+                    {guide.steps.map((step, stepIdx) => (
+                      <div key={stepIdx} className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                          {stepIdx + 1}
+                        </div>
+                        <PNText className="text-gray-300 pt-1">{step}</PNText>
+                      </div>
+                    ))}
+                  </div>
+                </PNCard>
+              ))}
+            </div>
+          </div>
+
+          {/* Still Need Help CTA */}
+          <div className="mt-16">
+            <PNCard className="text-center p-12 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border-pink-500/20">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="text-white" size={32} />
+                  </div>
+                </div>
+                
+                <PNHeading level={2} className="mb-4">Masih Butuh Bantuan?</PNHeading>
+                <PNText className="text-gray-300 mb-8">
+                  Tim support kami siap membantu menyelesaikan masalah spesifik Anda. Jangan ragu menghubungi kapan saja.
+                </PNText>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                  <a
+                    href={`https://wa.me/${whatsappNumber}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <PNButton variant="primary" size="lg" className="bg-green-600 hover:bg-green-700 w-full">
+                      <Phone size={18} className="mr-2" />
+                      WhatsApp Support
+                    </PNButton>
+                  </a>
+                  <a href="mailto:support@jbalwikobra.com">
+                    <PNButton variant="secondary" size="lg" className="w-full">
+                      <Mail size={18} className="mr-2" />
+                      Email Support
+                    </PNButton>
+                  </a>
+                </div>
+              </div>
+            </PNCard>
+          </div>
+
+          {/* Bottom Navigation */}
+          <div className="mt-16 text-center">
+            <PNButton 
+              onClick={() => navigate('/')}
+              variant="ghost"
+              size="lg"
+              className="group"
+            >
+              <Home size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+              Kembali ke Beranda
+            </PNButton>
+          </div>
+        </PNContainer>
+      </PNSection>
     </div>
   );
 };

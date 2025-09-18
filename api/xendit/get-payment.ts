@@ -35,6 +35,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (paymentData) {
+      console.log('[Get Payment] Found payment data with status:', paymentData.status);
+      
       // Return the stored payment data
       return res.status(200).json({
         id: paymentData.xendit_id,
@@ -56,6 +58,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         action_type: paymentData.payment_data?.action_type,
         payment_code: paymentData.payment_data?.payment_code,
         retail_outlet: paymentData.payment_data?.retail_outlet
+      });
+    }
+
+    // If not in payments table, check orders table by xendit_invoice_id
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('xendit_invoice_id', id)
+      .single();
+
+    if (orderData && !orderError) {
+      console.log('[Get Payment] Found order data with status:', orderData.status);
+      
+      // Convert order data to payment format for consistency
+      const convertedStatus = orderData.status?.toUpperCase(); // Convert to uppercase for consistency
+      console.log('[Get Payment] Converted status to:', convertedStatus);
+      
+      return res.status(200).json({
+        id: orderData.xendit_invoice_id || id,
+        payment_method: orderData.payment_channel || orderData.payment_method || 'unknown',
+        amount: orderData.amount,
+        currency: orderData.currency || 'IDR',
+        status: convertedStatus,
+        external_id: orderData.client_external_id || orderData.id,
+        created: orderData.created_at,
+        description: `Order ${orderData.id}`,
+        expiry_date: orderData.expires_at,
+        
+        // Additional order data
+        order_id: orderData.id,
+        customer_name: orderData.customer_name,
+        customer_email: orderData.customer_email,
+        customer_phone: orderData.customer_phone,
+        paid_at: orderData.paid_at
       });
     }
 

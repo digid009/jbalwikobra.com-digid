@@ -214,7 +214,7 @@ async function attachInvoiceToOrder(orderId: string, invoice: any) {
       xendit_invoice_id: invoice?.id || null,
       xendit_invoice_url: invoice?.invoice_url || null,
       currency: invoice?.currency || 'IDR',
-      expires_at: invoice?.expiry_date ? new Date(invoice.expiry_date).toISOString() : null,
+      expires_at: invoice?.expiry_date ? new Date(invoice.expiry_date).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       payer_email: invoice?.payer_email || null,
     };
     await sb.from('orders').update(payload).eq('id', orderId);
@@ -277,6 +277,8 @@ export default async function handler(req: any, res: any) {
         failure_redirect_url: withOrderId(failure_redirect_url),
         customer,
         payment_methods: ACTIVATED_PAYMENT_METHODS, // Only show activated payment channels
+        // Set expiry date to 24 hours from now
+        expiry_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         metadata: {
           client_external_id: finalExternalId,
           product_id: order?.product_id || null,

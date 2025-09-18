@@ -40,17 +40,17 @@ const defaultStats: Stat[] = [
 
 export const StatsRow: React.FC<StatsRowProps> = ({ stats = defaultStats }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
       {stats.map((stat, index) => {
         const IconComponent = stat.icon;
         
         return (
           <div 
             key={index}
-            className={`flex items-center justify-center gap-3 p-3 sm:p-4 bg-gradient-to-r ${stat.gradient} rounded-xl border`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 lg:p-4 bg-gradient-to-r ${stat.gradient} rounded-xl border`}
           >
             <IconComponent className={`${stat.iconColor}`} size={20} />
-            <div className="text-left">
+            <div className="text-center sm:text-left">
               <PNText className="text-white font-semibold text-sm sm:text-base">
                 {stat.value}
               </PNText>

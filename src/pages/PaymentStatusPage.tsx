@@ -95,7 +95,7 @@ const PaymentStatusPage: React.FC = () => {
               </PNText>
               
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto pt-4">
                 {authed && (
                   <Link to="/orders">
                     <PNButton 
@@ -285,13 +285,13 @@ const PaymentStatusPage: React.FC = () => {
 
         {/* Action Buttons Section */}
         <PNSection padding="md">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mx-auto">
             {order.xendit_invoice_url && order.status === 'pending' && (
               <a 
                 href={order.xendit_invoice_url} 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex-1"
+                className="md:col-span-1"
               >
                 <PNButton size="lg" className="w-full flex items-center justify-center space-x-2">
                   <CreditCard size={20} />
@@ -300,7 +300,7 @@ const PaymentStatusPage: React.FC = () => {
               </a>
             )}
             
-            <Link to="/products" className="flex-1">
+            <Link to="/products" className="md:col-span-1">
               <PNButton 
                 variant="secondary" 
                 size="lg" 
@@ -311,7 +311,7 @@ const PaymentStatusPage: React.FC = () => {
               </PNButton>
             </Link>
             
-            <Link to="/" className="flex-1">
+            <Link to="/" className="md:col-span-1">
               <PNButton 
                 variant="ghost" 
                 size="lg" 

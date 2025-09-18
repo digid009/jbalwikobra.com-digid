@@ -51,53 +51,139 @@ const PaymentInterface: React.FC = () => {
     fetchPaymentData();
   }, [paymentId]);
 
-  // Payment status polling - check every 10 seconds for payment completion
+  // Payment status polling - check every 5 seconds for payment completion
   useEffect(() => {
-    if (!paymentData || paymentData.status === 'PAID' || paymentData.status === 'SUCCEEDED') {
+    // Helper function to check if payment is completed (handles all status variations)
+    const isPaymentCompleted = (status: string) => {
+      if (!status) return false;
+      const normalizedStatus = status.toLowerCase();
+      return normalizedStatus === 'paid' || 
+             normalizedStatus === 'succeeded' || 
+             normalizedStatus === 'completed' ||
+             normalizedStatus === 'success';
+    };
+
+    if (!paymentData || isPaymentCompleted(paymentData.status)) {
       return; // Don't poll if already paid or no payment data
     }
 
     const pollInterval = setInterval(async () => {
       try {
+        console.log('Polling payment status for ID:', paymentId);
+        
+        // Try primary method - check by payment ID
         const response = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
         if (response.ok) {
           const data = await response.json();
+          console.log('Payment status poll result:', data.status, '(raw status from API)');
           
-          // Check if payment is completed
-          if (data.status === 'PAID' || data.status === 'SUCCEEDED') {
+          // Check if payment is completed (handle all status variations)
+          if (isPaymentCompleted(data.status)) {
             console.log('Payment completed! Redirecting to success page...');
             clearInterval(pollInterval);
-            navigate(`/payment-status?status=success&id=${encodeURIComponent(paymentId)}`);
+            
+            // Use order_id if available, otherwise use payment id
+            const orderId = data.order_id || data.external_id || paymentId;
+            
+            // Redirect to success page
+            window.location.href = `/payment-status?status=success&order_id=${encodeURIComponent(orderId)}`;
             return;
           }
           
           // Update payment data if status changed
           if (data.status !== paymentData.status) {
+            console.log('Payment status changed from', paymentData.status, 'to', data.status);
             setPaymentData(data);
+          }
+        } else {
+          console.error('Payment poll failed with status:', response.status);
+        }
+
+        // Also try checking by external_id if we have it
+        if (paymentData.external_id && paymentData.external_id !== paymentId) {
+          try {
+            const externalResponse = await fetch(`/api/xendit/check-order-status?external_id=${encodeURIComponent(paymentData.external_id)}`);
+            if (externalResponse.ok) {
+              const externalData = await externalResponse.json();
+              console.log('Order status check result:', externalData.status, '(raw status from order check)');
+              
+              if (isPaymentCompleted(externalData.status)) {
+                console.log('Payment completed via order check! Redirecting to success page...');
+                clearInterval(pollInterval);
+                
+                // Redirect to success page using order ID
+                window.location.href = `/payment-status?status=success&order_id=${encodeURIComponent(externalData.order_id)}`;
+                return;
+              }
+            }
+          } catch (externalError) {
+            console.log('External ID check failed (not critical):', externalError);
           }
         }
       } catch (error) {
         console.error('Payment status polling error:', error);
       }
-    }, 10000); // Poll every 10 seconds
+    }, 5000); // Poll every 5 seconds for faster detection
 
     return () => clearInterval(pollInterval);
   }, [paymentData, paymentId, navigate]);
 
   const fetchPaymentData = async () => {
+    // Helper function to check if payment is completed (handles all status variations)
+    const isPaymentCompleted = (status: string) => {
+      if (!status) return false;
+      const normalizedStatus = status.toLowerCase();
+      return normalizedStatus === 'paid' || 
+             normalizedStatus === 'succeeded' || 
+             normalizedStatus === 'completed' ||
+             normalizedStatus === 'success';
+    };
+
     try {
       const response = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
       if (!response.ok) throw new Error('Payment not found');
       const data = await response.json();
       
+      console.log('Payment data received:', {
+        id: data.id,
+        status: data.status,
+        expiry_date: data.expiry_date,
+        created: data.created,
+        amount: data.amount
+      });
+      
       // Check if payment is already completed
-      if (data.status === 'PAID' || data.status === 'SUCCEEDED') {
-        console.log('Payment already completed! Redirecting to success page...');
-        navigate(`/payment-status?status=success&id=${encodeURIComponent(paymentId)}`);
+      if (isPaymentCompleted(data.status)) {
+        console.log('Payment already completed! Status:', data.status, '- Redirecting to success page...');
+        
+        // Use order_id if available, otherwise use payment id
+        const orderId = data.order_id || data.external_id || paymentId;
+        
+        // Redirect to success page
+        window.location.href = `/payment-status?status=success&order_id=${encodeURIComponent(orderId)}`;
         return;
       }
       
       setPaymentData(data);
+      
+      // Also check order status by external_id if available
+      if (data.external_id && data.external_id !== paymentId) {
+        try {
+          const orderResponse = await fetch(`/api/xendit/check-order-status?external_id=${encodeURIComponent(data.external_id)}`);
+          if (orderResponse.ok) {
+            const orderData = await orderResponse.json();
+            console.log('Order status check result:', orderData.status, '(during initial fetch)');
+            
+            if (isPaymentCompleted(orderData.status)) {
+              console.log('Payment completed via order check! Redirecting to success page...');
+              window.location.href = `/payment-status?status=success&order_id=${encodeURIComponent(orderData.order_id)}`;
+              return;
+            }
+          }
+        } catch (orderError) {
+          console.log('Order status check failed (not critical):', orderError);
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch payment data:', err);
       setError('Gagal memuat data pembayaran');
@@ -115,10 +201,23 @@ const PaymentInterface: React.FC = () => {
   };
 
   const getTimeRemaining = () => {
-    if (!paymentData?.expiry_date) return 'Tidak ada batas waktu';
+    let expiryDate;
+    
+    // Use provided expiry_date or calculate default expiry (24 hours from creation)
+    if (paymentData?.expiry_date) {
+      expiryDate = new Date(paymentData.expiry_date);
+    } else if (paymentData?.created) {
+      // Default: 24 hours from payment creation
+      expiryDate = new Date(paymentData.created);
+      expiryDate.setHours(expiryDate.getHours() + 24);
+    } else {
+      // Fallback: 24 hours from now
+      expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 24);
+    }
     
     const now = currentTime.getTime();
-    const expiry = new Date(paymentData.expiry_date).getTime();
+    const expiry = expiryDate.getTime();
     const diff = expiry - now;
     
     if (diff <= 0) return 'Kedaluwarsa';
@@ -135,19 +234,42 @@ const PaymentInterface: React.FC = () => {
   };
 
   const isTimeRunningOut = () => {
-    if (!paymentData?.expiry_date) return false;
+    let expiryDate;
+    
+    // Use provided expiry_date or calculate default expiry (24 hours from creation)
+    if (paymentData?.expiry_date) {
+      expiryDate = new Date(paymentData.expiry_date);
+    } else if (paymentData?.created) {
+      // Default: 24 hours from payment creation
+      expiryDate = new Date(paymentData.created);
+      expiryDate.setHours(expiryDate.getHours() + 24);
+    } else {
+      return false; // No time limit if no creation date
+    }
+    
     const now = currentTime.getTime();
-    const expiry = new Date(paymentData.expiry_date).getTime();
+    const expiry = expiryDate.getTime();
     const diff = expiry - now;
     return diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes
   };
 
   // Check for expiry
   useEffect(() => {
-    if (!paymentData?.expiry_date) return;
+    let expiryDate;
+    
+    // Use provided expiry_date or calculate default expiry (24 hours from creation)
+    if (paymentData?.expiry_date) {
+      expiryDate = new Date(paymentData.expiry_date);
+    } else if (paymentData?.created) {
+      // Default: 24 hours from payment creation
+      expiryDate = new Date(paymentData.created);
+      expiryDate.setHours(expiryDate.getHours() + 24);
+    } else {
+      return; // No expiry check if no date available
+    }
     
     const now = currentTime.getTime();
-    const expiry = new Date(paymentData.expiry_date).getTime();
+    const expiry = expiryDate.getTime();
     
     if (now >= expiry) {
       navigate(`/payment-status?status=expired&id=${encodeURIComponent(paymentData.id)}`);
@@ -216,29 +338,27 @@ const PaymentInterface: React.FC = () => {
                 <span className="font-medium">Kembali</span>
               </button>
 
-              {/* Enhanced Countdown Timer */}
-              {paymentData.expiry_date && (
-                <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-sm transition-all duration-300 ${
-                  isTimeRunningOut() 
-                    ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/50 shadow-lg shadow-red-500/25' 
-                    : 'bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/50 shadow-lg shadow-pink-500/25'
-                }`}>
-                  <div className="flex items-center space-x-4 px-6 py-4">
-                    <div className={`relative p-2 rounded-xl ${isTimeRunningOut() ? 'bg-red-500' : 'bg-pink-500'}`}>
-                      <Clock size={20} className="text-white" />
-                      {isTimeRunningOut() && (
-                        <div className="absolute inset-0 bg-red-400 rounded-xl animate-ping opacity-50"></div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-gray-300 mb-1">Sisa Waktu Pembayaran</div>
-                      <div className={`font-mono font-bold text-xl ${isTimeRunningOut() ? 'text-red-300' : 'text-white'}`}>
-                        {getTimeRemaining()}
-                      </div>
+              {/* Enhanced Countdown Timer - Always Visible */}
+              <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-sm transition-all duration-300 ${
+                isTimeRunningOut() 
+                  ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/50 shadow-lg shadow-red-500/25' 
+                  : 'bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/50 shadow-lg shadow-pink-500/25'
+              }`}>
+                <div className="flex items-center space-x-4 px-6 py-4">
+                  <div className={`relative p-2 rounded-xl ${isTimeRunningOut() ? 'bg-red-500' : 'bg-pink-500'}`}>
+                    <Clock size={20} className="text-white" />
+                    {isTimeRunningOut() && (
+                      <div className="absolute inset-0 bg-red-400 rounded-xl animate-ping opacity-50"></div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-300 mb-1">Sisa Waktu Pembayaran</div>
+                    <div className={`font-mono font-bold text-xl ${isTimeRunningOut() ? 'text-red-300' : 'text-white'}`}>
+                      {getTimeRemaining()}
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </PNCard>
         </PNSection>
