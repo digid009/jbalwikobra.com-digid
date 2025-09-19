@@ -414,6 +414,7 @@ export const PaymentMethods = React.memo(({
                   const isSelected = selectedMethod === method.id;
                   return (
                     <button
+                      type="button"
                       key={method.id}
                       onClick={() => onMethodSelect?.(method.id)}
                       className={`flex items-center space-x-3 p-3 rounded-lg backdrop-blur-sm transition-all ${
@@ -449,6 +450,7 @@ export const PaymentMethods = React.memo(({
           {!showAllMethods ? (
             <div className="text-center">
               <button
+                type="button"
                 onClick={toggleShowAllMethods}
                 className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors flex items-center justify-center space-x-2"
               >
@@ -462,6 +464,7 @@ export const PaymentMethods = React.memo(({
               {groupedMethods.map((group) => (
                 <div key={group.type} className="border border-white/10 rounded-xl overflow-hidden">
                   <button
+                    type="button"
                     onClick={() => toggleGroup(group.type)}
                     className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
                   >
@@ -489,6 +492,7 @@ export const PaymentMethods = React.memo(({
                       {group.methods.map((method) => {
                         return (
                           <button
+                            type="button"
                             key={method.id}
                             onClick={() => {
                               onMethodSelect?.(method.id);
@@ -514,6 +518,7 @@ export const PaymentMethods = React.memo(({
               {/* Hide Methods Button */}
               <div className="text-center pt-2">
                 <button
+                  type="button"
                   onClick={toggleShowAllMethods}
                   className="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center space-x-2 mx-auto"
                 >
@@ -599,6 +604,7 @@ export const PaymentMethods = React.memo(({
           {groupedMethods.map((group) => (
             <div key={group.type} className="border border-white/10 rounded-xl overflow-hidden">
               <button
+                type="button"
                 onClick={() => toggleGroup(group.type)}
                 className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
               >
