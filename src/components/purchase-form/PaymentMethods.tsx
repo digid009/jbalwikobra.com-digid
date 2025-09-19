@@ -92,13 +92,16 @@ export const PaymentMethods = React.memo(({
               : undefined
           }));
 
-        // Group methods by type
+        // Group methods by type, excluding popular methods to avoid duplication
         const groups: PaymentMethodGroup[] = [];
         const groupsMap: { [key: string]: XenditPaymentMethod[] } = {};
         
         filteredMethods.forEach(method => {
           const channel = activatedChannels.find(c => c.id === method.id);
           if (channel) {
+            // Skip popular methods in grouped section to avoid duplicates
+            if (popularChannels.some(pc => pc.id === method.id)) return;
+            
             const typeKey = channel.type;
             if (!groupsMap[typeKey]) groupsMap[typeKey] = [];
             
@@ -203,9 +206,13 @@ export const PaymentMethods = React.memo(({
           max_amount: method.id === 'gopay' ? 2000000 : 10000000
         }));
         
-  if (cancelled) return;
-  setPaymentMethods(staticMethods);
-  setGroupedMethods(groupPaymentMethods(staticXenditMethods));
+        // Filter out popular methods for grouped display to avoid duplicates
+        const popularMethodForFallback = ['qris']; // Only QRIS is popular in fallback
+        const nonPopularMethods = staticXenditMethods.filter(method => !popularMethodForFallback.includes(method.id));
+        
+        if (cancelled) return;
+        setPaymentMethods(staticMethods);
+        setGroupedMethods(groupPaymentMethods(nonPopularMethods));
         // Force popular methods to only show QRIS in fallback mode too
         setPopularMethods([
           {

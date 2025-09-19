@@ -231,6 +231,71 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     icon: '🏦'
   },
   {
+    id: 'bni',
+    name: 'BNI Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account BNI',
+    channel_code: 'BNI',
+    available: true, // ACTIVATED ✅
+    processing_time: '1-15 menit',
+    popular: true,
+    min_amount: 10000,
+    max_amount: 500000000, // BNI VA limit: 500 million
+    icon: '🟡'
+  },
+  {
+    id: 'bri',
+    name: 'BRI Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account BRI',
+    channel_code: 'BRI_VIRTUAL_ACCOUNT',
+    available: true, // ACTIVATED ✅
+    processing_time: '1-15 menit',
+    popular: true,
+    min_amount: 10000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
+    icon: '�'
+  },
+  {
+    id: 'bsi',
+    name: 'BSI Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account BSI',
+    channel_code: 'BSI_VIRTUAL_ACCOUNT',
+    available: true, // ACTIVATED ✅
+    processing_time: '1-15 menit',
+    popular: false,
+    min_amount: 10000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
+    icon: '🟢'
+  },
+  {
+    id: 'cimb',
+    name: 'CIMB Niaga Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account CIMB Niaga',
+    channel_code: 'CIMB_VIRTUAL_ACCOUNT',
+    available: true, // ACTIVATED ✅
+    processing_time: '1-15 menit',
+    popular: false,
+    min_amount: 10000,
+    max_amount: 500000000, // CIMB VA limit: 500 million
+    icon: '🔴'
+  },
+  {
+    id: 'mandiri',
+    name: 'Mandiri Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account Mandiri',
+    channel_code: 'MANDIRI_VIRTUAL_ACCOUNT',
+    available: true, // ACTIVATED ✅
+    processing_time: '1-15 menit',
+    popular: true,
+    min_amount: 10000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
+    icon: '�'
+  },
+  {
     id: 'permata',
     name: 'Permata Virtual Account',
     type: 'VIRTUAL_ACCOUNT',
