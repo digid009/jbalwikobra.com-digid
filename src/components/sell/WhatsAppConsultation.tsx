@@ -35,7 +35,7 @@ export const WhatsAppConsultation: React.FC<WhatsAppConsultationProps> = ({
   };
 
   return (
-    <PNSection padding="lg" className="bg-gradient-to-r from-green-50/5 to-emerald-50/5 border-y border-white/10">
+    <PNSection padding="lg" className="border-y border-white/10">
       <PNContainer>
         <PNCard className="p-6 sm:p-8 lg:p-10 max-w-5xl mx-auto bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 relative overflow-hidden">
           {/* Background decoration */}

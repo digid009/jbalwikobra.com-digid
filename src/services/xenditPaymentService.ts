@@ -120,7 +120,7 @@ function getStaticPaymentMethods(): XenditPaymentMethod[] {
     processing_time: config.processingTime || 'Instant',
     popular: config.popular || false,
     min_amount: config.minAmount || 10000,
-    max_amount: config.maxAmount || 50000000
+    max_amount: config.maxAmount || 1000000000
   }));
 }
 

@@ -309,9 +309,15 @@ const PaymentInterface: React.FC = () => {
             </div>
             <PNHeading level={1} className="text-red-400 mb-4">Terjadi Kesalahan</PNHeading>
             <PNText className="mb-8" color="muted">{error || 'Payment data tidak ditemukan'}</PNText>
-            <PNButton onClick={() => navigate('/')} size="lg" fullWidth>
-              <ArrowLeft size={18} className="mr-2" />
-              Kembali ke Beranda
+            <PNButton
+              onClick={() => navigate('/')}
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={18} />
+              <span>Kembali ke Beranda</span>
             </PNButton>
           </div>
         </PNContainer>
@@ -323,42 +329,21 @@ const PaymentInterface: React.FC = () => {
     <div className="min-h-screen bg-black text-white">
       <PNContainer>
         
-        {/* Pink Neon Header Section */}
+        {/* Compact Header: Back button only (timer moved below status badge) */}
         <PNSection padding="md">
-          <PNCard className="p-6 mb-8">
+          <PNCard className="p-4 mb-8">
             <div className="flex items-center justify-between">
               {/* Back Button with Pink Accent */}
-              <button 
+              <button
                 onClick={() => navigate('/')}
                 className="flex items-center space-x-3 text-gray-300 hover:text-white transition-all duration-200 group"
+                aria-label="Kembali ke beranda"
               >
                 <div className="p-2 bg-white/5 border border-white/10 rounded-xl group-hover:bg-pink-500/20 group-hover:border-pink-500/50 transition-all">
                   <ArrowLeft size={20} />
                 </div>
                 <span className="font-medium">Kembali</span>
               </button>
-
-              {/* Enhanced Countdown Timer - Always Visible */}
-              <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-sm transition-all duration-300 ${
-                isTimeRunningOut() 
-                  ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/50 shadow-lg shadow-red-500/25' 
-                  : 'bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/50 shadow-lg shadow-pink-500/25'
-              }`}>
-                <div className="flex items-center space-x-4 px-6 py-4">
-                  <div className={`relative p-2 rounded-xl ${isTimeRunningOut() ? 'bg-red-500' : 'bg-pink-500'}`}>
-                    <Clock size={20} className="text-white" />
-                    {isTimeRunningOut() && (
-                      <div className="absolute inset-0 bg-red-400 rounded-xl animate-ping opacity-50"></div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-gray-300 mb-1">Sisa Waktu Pembayaran</div>
-                    <div className={`font-mono font-bold text-xl ${isTimeRunningOut() ? 'text-red-300' : 'text-white'}`}>
-                      {getTimeRemaining()}
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </PNCard>
         </PNSection>
@@ -411,6 +396,24 @@ const PaymentInterface: React.FC = () => {
               <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 text-yellow-300 px-6 py-3 rounded-2xl backdrop-blur-sm">
                 <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
                 <span className="font-semibold">Menunggu Pembayaran</span>
+              </div>
+
+              {/* Big Countdown directly under status badge */}
+              <div
+                className={`mt-5 w-full max-w-sm mx-auto rounded-2xl border backdrop-blur-sm px-6 py-5 ${
+                  isTimeRunningOut()
+                    ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/50 shadow-lg shadow-red-500/25'
+                    : 'bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border-pink-500/40 shadow-lg shadow-pink-500/20'
+                }`}
+                aria-live="polite"
+              >
+                <div className="flex items-center justify-center space-x-3 mb-1">
+                  <Clock size={20} className="text-white/90" />
+                  <span className="text-xs tracking-wide text-gray-200/90">Sisa Waktu Pembayaran</span>
+                </div>
+                <div className={`text-center font-mono font-extrabold ${isTimeRunningOut() ? 'text-red-200' : 'text-white'}`}>
+                  <span className="text-4xl lg:text-5xl leading-none">{getTimeRemaining()}</span>
+                </div>
               </div>
 
               {/* Payment Method Info */}

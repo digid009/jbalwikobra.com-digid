@@ -37,7 +37,7 @@ const defaultSteps: Step[] = [
 
 export const HowItWorks: React.FC<HowItWorksProps> = ({ steps = defaultSteps }) => {
   return (
-    <PNSection padding="lg" id="how-it-works" className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border-y border-white/10">
+  <PNSection padding="lg" id="how-it-works" className="border-y border-white/10">
       <PNContainer>
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}

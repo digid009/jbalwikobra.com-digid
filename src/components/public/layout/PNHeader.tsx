@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, Bell, Menu, X, User } from 'lucide-react';
+import { Search, Heart, Bell, Menu, X, User, Receipt } from 'lucide-react';
 import { useAuth } from '../../../contexts/TraditionalAuthContext';
 import { SettingsService } from '../../../services/settingsService';
 import type { WebsiteSettings } from '../../../types';
 import { PNContainer } from '../../ui/PinkNeonDesignSystem';
+import { notificationService } from '../../../services/notificationService';
+import { enhancedAuthService } from '../../../services/enhancedAuthService';
 
 const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(' ');
 
@@ -26,6 +28,7 @@ const PNHeader: React.FC = () => {
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState<number>(0);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +47,22 @@ const PNHeader: React.FC = () => {
     // close drawer on route change
     setOpen(false);
   }, [location.pathname]);
+
+  // Load unread notifications count and poll lightly
+  useEffect(() => {
+    let active = true;
+    let timer: any;
+    const load = async () => {
+      try {
+        const uid = await enhancedAuthService.getCurrentUserId();
+        const count = await notificationService.getUnreadCount(uid);
+        if (active) setUnread(count);
+      } catch {}
+      timer = setTimeout(load, 20000); // 20s
+    };
+    load();
+    return () => { active = false; if (timer) clearTimeout(timer); };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +133,7 @@ const PNHeader: React.FC = () => {
 
             {/* Right: search + actions */}
             <div className="flex items-center gap-2">
-              <form onSubmit={handleSearch} className="hidden md:block">
+              <form onSubmit={handleSearch} className="hidden lg:block">
                 <div className="relative">
                   <input
                     value={query}
@@ -128,15 +147,21 @@ const PNHeader: React.FC = () => {
               <Link to="/wishlist" className="p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white" aria-label="Wishlist">
                 <Heart className="w-5 h-5" />
               </Link>
-              <Link to="/notifications" className="p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white" aria-label="Notifikasi">
+              <Link to="/notifications" className="relative p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white" aria-label="Notifikasi">
                 <Bell className="w-5 h-5" />
+                {unread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-pink-500 text-[10px] text-white flex items-center justify-center">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
               </Link>
-              <Link to="/cart" className="p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white" aria-label="Keranjang">
-                <ShoppingBag className="w-5 h-5" />
+              {/* Replace cart with Orders/Transactions */}
+              <Link to="/orders" className="p-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white" aria-label="Pesanan">
+                <Receipt className="w-5 h-5" />
               </Link>
               <Link
                 to={user ? '/profile' : '/auth'}
-                className="hidden md:inline-flex items-center h-9 px-3 rounded-xl text-sm font-medium bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white hover:from-pink-600 hover:to-fuchsia-700"
+                className="inline-flex md:inline-flex items-center h-9 px-3 rounded-xl text-sm font-medium bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white hover:from-pink-600 hover:to-fuchsia-700"
               >
                 {user ? 'Profil' : 'Masuk'}
               </Link>

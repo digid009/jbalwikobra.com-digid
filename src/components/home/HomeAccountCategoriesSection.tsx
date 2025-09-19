@@ -30,7 +30,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
           subtitle="Berbagai pilihan untuk Anda"
           padX={false}
           action={
-            <Link to="/products" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">
+            <Link to="/products?category=all" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">
               Lihat Semua <ChevronRight size={16} />
             </Link>
           }
@@ -56,7 +56,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
           subtitle="Berbagai pilihan akun untuk Anda"
           padX={false}
           action={
-            <Link to="/products" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">
+            <Link to="/products?category=all" className="text-sm text-pink-300 hover:text-pink-200 transition-colors flex items-center gap-1">
               Lihat Semua <ChevronRight size={16} />
             </Link>
           }
@@ -68,7 +68,7 @@ const HomeAccountCategoriesSection: React.FC = () => {
           {categories.map((c) => (
             <Link
               key={c.id}
-              to={`/products?search=${encodeURIComponent(c.name)}`}
+              to={`/products?category=${encodeURIComponent(c.name)}`}
               className="block min-w-[160px] md:min-w-0 snap-start group focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/60 rounded-2xl"
             >
               <PNCard className="p-4 hover:bg-white/10 transition-colors h-full">

@@ -110,13 +110,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: data.error || 'Login failed' };
       }
 
-      // Map backend field names to frontend
+      // Map backend field names to frontend (robust mapping)
       const mappedUser = {
         ...data.user,
-        isAdmin: data.user.is_admin,
-        phoneVerified: data.user.phone_verified,
-        profileCompleted: data.user.profile_completed
-      };
+        // snake_case -> camelCase
+        isAdmin: data.user.is_admin ?? false,
+        phoneVerified: data.user.phone_verified ?? false,
+        profileCompleted: data.user.profile_completed ?? false,
+        createdAt: data.user.created_at || data.user.createdAt || new Date().toISOString(),
+        // Normalize common aliases
+        name: data.user.name || data.user.full_name || data.user.username || '',
+        email: data.user.email || data.user.user_email || '',
+        phone: data.user.phone || data.user.whatsapp || data.user.phone_number || ''
+      } as User;
 
       // Store session data
       localStorage.setItem('session_token', data.session_token);
@@ -193,10 +199,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Map backend field names to frontend
       const mappedUser = {
         ...data.user,
-        isAdmin: data.user.is_admin,
-        phoneVerified: data.user.phone_verified,
-        profileCompleted: data.user.profile_completed
-      };
+        isAdmin: data.user.is_admin ?? false,
+        phoneVerified: data.user.phone_verified ?? false,
+        profileCompleted: data.user.profile_completed ?? false,
+        createdAt: data.user.created_at || data.user.createdAt || new Date().toISOString(),
+        name: data.user.name || data.user.full_name || data.user.username || '',
+        email: data.user.email || data.user.user_email || '',
+        phone: data.user.phone || data.user.whatsapp || data.user.phone_number || ''
+      } as User;
 
       // Store session data
       localStorage.setItem('session_token', data.session_token);
@@ -256,10 +266,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mappedUser = {
         ...user,
         ...data.user,
-        isAdmin: data.user.is_admin,
-        phoneVerified: data.user.phone_verified,
-        profileCompleted: true
-      };
+        isAdmin: data.user.is_admin ?? false,
+        phoneVerified: data.user.phone_verified ?? false,
+        profileCompleted: true,
+        createdAt: data.user.created_at || user.createdAt || new Date().toISOString(),
+        name: data.user.name || data.user.full_name || name || user.name || '',
+        email: data.user.email || email || user.email || '',
+        phone: data.user.phone || data.user.whatsapp || user.phone || ''
+      } as User;
       localStorage.setItem('user_data', JSON.stringify(mappedUser));
       setUser(mappedUser);
 
@@ -343,10 +357,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Map backend field names to frontend
           const mappedUser = {
             ...data.user,
-            isAdmin: data.user.is_admin,
-            phoneVerified: data.user.phone_verified,
-            profileCompleted: data.user.profile_completed
-          };
+            isAdmin: data.user.is_admin ?? false,
+            phoneVerified: data.user.phone_verified ?? false,
+            profileCompleted: data.user.profile_completed ?? false,
+            createdAt: data.user.created_at || data.user.createdAt || new Date().toISOString(),
+            name: data.user.name || data.user.full_name || data.user.username || '',
+            email: data.user.email || data.user.user_email || '',
+            phone: data.user.phone || data.user.whatsapp || data.user.phone_number || ''
+          } as User;
           // Update user data with latest from server
           localStorage.setItem('user_data', JSON.stringify(mappedUser));
           setUser(mappedUser);

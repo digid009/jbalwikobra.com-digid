@@ -155,7 +155,7 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     processing_time: '1-15 menit',
     popular: true,
     min_amount: 10000,
-    max_amount: 50000000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
     icon: '�'
   },
   {
@@ -168,7 +168,7 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     processing_time: '1-15 menit',
     popular: false,
     min_amount: 10000,
-    max_amount: 50000000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
     icon: '🟢'
   },
   {
@@ -194,7 +194,7 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     processing_time: '1-15 menit',
     popular: true,
     min_amount: 10000,
-    max_amount: 50000000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
     icon: '�'
   },
   {
@@ -207,7 +207,7 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     processing_time: '1-15 menit',
     popular: false,
     min_amount: 10000,
-    max_amount: 50000000,
+    max_amount: 1000000000, // Updated to match backend: 1 billion
     icon: '🟣'
   },
   // DISABLED VIRTUAL ACCOUNTS - NOT ACTIVATED ON YOUR ACCOUNT
@@ -264,7 +264,7 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     available: true, // Usually activated by default
     processing_time: 'Instant',
     min_amount: 10000,
-    max_amount: 50000000,
+    max_amount: 1000000000, // Updated to support high-value transactions
     icon: '💳'
   }
 ];

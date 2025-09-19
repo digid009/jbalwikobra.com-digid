@@ -115,7 +115,14 @@ const HomePage: React.FC = () => {
       if (signal.aborted) return;
 
       const flashSaleProducts = flashSalesResult.status === 'fulfilled' 
-        ? flashSalesResult.value.map(sale => sale.product)
+        ? flashSalesResult.value
+            .map(sale => sale.product)
+            .sort((a, b) => {
+              // Sort by nearest countdown end time first
+              const endTimeA = a.flashSaleEndTime ? new Date(a.flashSaleEndTime).getTime() : Infinity;
+              const endTimeB = b.flashSaleEndTime ? new Date(b.flashSaleEndTime).getTime() : Infinity;
+              return endTimeA - endTimeB;
+            })
         : [];
       
       const popularGames = popularGamesResult.status === 'fulfilled'

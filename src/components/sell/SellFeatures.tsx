@@ -37,7 +37,7 @@ const defaultFeatures: Feature[] = [
 
 export const SellFeatures: React.FC<SellFeaturesProps> = ({ features = defaultFeatures }) => {
   return (
-    <PNSection padding="lg" className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-y border-white/10">
+  <PNSection padding="lg" className="border-y border-white/10">
       <PNContainer>
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}

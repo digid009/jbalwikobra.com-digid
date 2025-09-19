@@ -27,7 +27,7 @@ export const PopularGames: React.FC<PopularGamesProps> = ({
   onGameSelect 
 }) => {
   return (
-    <PNSection padding="lg" className="bg-gradient-to-br from-gray-900/20 to-black/20 border-y border-white/10">
+    <PNSection padding="lg" className="border-y border-white/10">
       <PNContainer>
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}

@@ -195,7 +195,7 @@ function getStaticFallbackMethods(amount?: number) {
       processing_time: '1-15 menit',
       popular: true,
       min_amount: 10000,
-      max_amount: 50000000
+      max_amount: 1000000000 // Updated to 1 billion for high-value support
     },
     {
       id: 'bni',
@@ -205,7 +205,7 @@ function getStaticFallbackMethods(amount?: number) {
       available: true,
       processing_time: '1-15 menit',
       min_amount: 10000,
-      max_amount: 50000000
+      max_amount: 1000000000 // Updated to 1 billion for high-value support
     },
     {
       id: 'bri',
@@ -215,7 +215,7 @@ function getStaticFallbackMethods(amount?: number) {
       available: true,
       processing_time: '1-15 menit',
       min_amount: 10000,
-      max_amount: 50000000
+      max_amount: 1000000000 // Updated to 1 billion for high-value support
     },
     {
       id: 'credit_card',
@@ -224,7 +224,8 @@ function getStaticFallbackMethods(amount?: number) {
       description: 'Visa, Mastercard, JCB',
       available: true,
       processing_time: 'Instant',
-      min_amount: 10000
+      min_amount: 10000,
+      max_amount: 1000000000 // Updated to 1 billion for high-value support
     }
   ];
 

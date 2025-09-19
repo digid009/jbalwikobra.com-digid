@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Check, Clock, X, Settings } from 'lucide-react';
 import { IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
 import { PageWrapper, ConsistentLayout } from '../components/layout/ConsistentLayout';
+import { notificationService, AppNotification } from '../services/notificationService';
+import { enhancedAuthService } from '../services/enhancedAuthService';
 
-interface Notification {
+type NotificationType = 'order' | 'payment' | 'system' | 'promo' | 'product' | 'feed_post';
+interface NotificationUI {
   id: string;
-  type: 'order' | 'payment' | 'system' | 'promo';
+  type: NotificationType;
   title: string;
   message: string;
   timestamp: string;
@@ -14,7 +17,7 @@ interface Notification {
 }
 
 const NotificationsPage: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread' | 'order' | 'promo'>('all');
 
@@ -22,47 +25,22 @@ const NotificationsPage: React.FC = () => {
     loadNotifications();
   }, []);
 
+  const mapToUI = (n: AppNotification): NotificationUI => ({
+    id: n.id,
+    type: (n.type as NotificationType) || 'system',
+    title: n.title,
+    message: n.body || '',
+    timestamp: n.created_at,
+    isRead: n.is_read,
+    actionUrl: n.link_url || undefined
+  });
+
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      // Mock notifications data
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'order',
-          title: 'Pesanan Berhasil',
-          message: 'Pesanan #ORD-001 telah berhasil diproses. Akun game akan segera dikirim.',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          isRead: false,
-          actionUrl: '/orders/ORD-001'
-        },
-        {
-          id: '2',
-          type: 'payment',
-          title: 'Pembayaran Dikonfirmasi',
-          message: 'Pembayaran untuk pesanan #ORD-002 telah dikonfirmasi. Terima kasih!',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          isRead: false
-        },
-        {
-          id: '3',
-          type: 'promo',
-          title: 'Flash Sale Dimulai!',
-          message: 'Flash sale akun Mobile Legends dimulai. Diskon hingga 70%!',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-          isRead: true,
-          actionUrl: '/flash-sales'
-        },
-        {
-          id: '4',
-          type: 'system',
-          title: 'Pemeliharaan Sistem',
-          message: 'Sistem akan menjalani pemeliharaan rutin pada 12 September 2025 pukul 02:00 WIB.',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-          isRead: true
-        }
-      ];
-      setNotifications(mockNotifications);
+      const uid = await enhancedAuthService.getCurrentUserId();
+      const latest = await notificationService.getLatest(20, uid);
+      setNotifications(latest.map(mapToUI));
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -70,18 +48,25 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      const uid = await enhancedAuthService.getCurrentUserId();
+      await notificationService.markAsRead(id, uid);
+      await loadNotifications();
+    } catch (e) {
+      // Optimistic fallback
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      const uid = await enhancedAuthService.getCurrentUserId();
+      await notificationService.markAllAsRead(uid);
+      await loadNotifications();
+    } catch (e) {
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    }
   };
 
   const deleteNotification = (id: string) => {
@@ -97,7 +82,7 @@ const NotificationsPage: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: NotificationUI['type']) => {
     switch (type) {
       case 'order':
         return '🛒';
@@ -112,7 +97,7 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const getNotificationColor = (type: Notification['type']) => {
+  const getNotificationColor = (type: NotificationUI['type']) => {
     switch (type) {
       case 'order':
         return 'border-l-blue-500';

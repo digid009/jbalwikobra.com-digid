@@ -94,28 +94,23 @@ const PaymentStatus: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <PNContainer className="py-6">
+      <PNContainer className="py-8">
         <div className="max-w-md mx-auto">
           {isSuccess ? (
             // Success Status
-            <PNCard className="text-center space-y-6">
+            <PNCard className="text-center space-y-6 p-8">
               <div className="flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center ring-1 ring-green-400/40">
                   <CheckCircle className="text-green-400" size={32} />
                 </div>
-                
                 <div className="space-y-2">
-                  <PNHeading level={2} className="text-green-400">
-                    Pembayaran Berhasil!
-                  </PNHeading>
-                  <PNText className="text-gray-300">
-                    Terima kasih! Pembayaran Anda telah berhasil diproses.
-                  </PNText>
+                  <PNHeading level={2} className="text-green-400">Pembayaran Berhasil!</PNHeading>
+                  <PNText className="text-gray-300">Terima kasih! Pembayaran Anda telah berhasil diproses.</PNText>
                 </div>
               </div>
 
               {paymentData && (
-                <div className="bg-gray-800/50 p-4 rounded-lg space-y-2 text-left">
+                <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-2 text-left">
                   <div className="flex justify-between">
                     <PNText className="text-sm text-gray-400">ID Pembayaran:</PNText>
                     <PNText className="text-sm font-mono">{paymentData.id}</PNText>
@@ -142,65 +137,50 @@ const PaymentStatus: React.FC = () => {
               )}
 
               <div className="space-y-4">
-                <div className="bg-blue-500/20 p-4 rounded-lg">
+                <div className="bg-blue-500/15 border border-blue-400/30 p-5 rounded-xl">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <Clock className="text-blue-400" size={16} />
-                    <PNText className="text-sm text-blue-400">Mengarahkan ke beranda dalam</PNText>
+                    <PNText className="text-sm text-blue-300">Mengarahkan ke beranda dalam</PNText>
                   </div>
-                  <PNText className="text-2xl font-bold text-blue-400">{countdown} detik</PNText>
+                  <div className="text-3xl font-extrabold text-blue-300">{countdown} detik</div>
                 </div>
 
                 <div className="space-y-3">
                   <PNButton
                     onClick={handleGoHome}
-                    className="w-full bg-green-500 hover:bg-green-600"
+                    variant="primary"
                     size="lg"
+                    fullWidth
+                    className="flex items-center justify-center gap-2"
                   >
-                    <Home className="mr-2" size={16} />
-                    Kembali ke Beranda
+                    <Home size={18} />
+                    <span>Kembali ke Beranda</span>
                   </PNButton>
-                  
                   <div className="text-center">
-                    <PNText className="text-sm text-gray-400">
-                      • Pesanan Anda sedang diproses
-                    </PNText>
-                    <PNText className="text-sm text-gray-400">
-                      • Akun akan dikirim via WhatsApp dalam 5-30 menit
-                    </PNText>
-                    <PNText className="text-sm text-gray-400">
-                      • Tim support siap membantu: wa.me/6289653510125
-                    </PNText>
+                    <PNText className="text-sm text-gray-400">• Pesanan Anda sedang diproses</PNText>
+                    <PNText className="text-sm text-gray-400">• Akun akan dikirim via WhatsApp dalam 5-30 menit</PNText>
+                    <PNText className="text-sm text-gray-400">• Tim support siap membantu: wa.me/6289653510125</PNText>
                   </div>
                 </div>
               </div>
             </PNCard>
           ) : (
             // Failed/Expired Status
-            <PNCard className="text-center space-y-6">
+            <PNCard className="text-center space-y-6 p-8">
               <div className="flex flex-col items-center space-y-4">
-                <div className={`w-16 h-16 ${isExpired ? 'bg-orange-500/20' : 'bg-red-500/20'} rounded-full flex items-center justify-center`}>
-                  {isExpired ? (
-                    <Clock className="text-orange-400" size={32} />
-                  ) : (
-                    <XCircle className="text-red-400" size={32} />
-                  )}
+                <div className={`w-16 h-16 ${isExpired ? 'bg-orange-500/20 ring-1 ring-orange-400/40' : 'bg-red-500/20 ring-1 ring-red-400/40'} rounded-full flex items-center justify-center`}>
+                  {isExpired ? <Clock className="text-orange-400" size={32} /> : <XCircle className="text-red-400" size={32} />}
                 </div>
-                
                 <div className="space-y-2">
-                  <PNHeading level={2} className={isExpired ? "text-orange-400" : "text-red-400"}>
+                  <PNHeading level={2} className={isExpired ? 'text-orange-400' : 'text-red-400'}>
                     {isExpired ? 'Waktu Pembayaran Habis' : 'Pembayaran Gagal'}
                   </PNHeading>
-                  <PNText className="text-gray-300">
-                    {isExpired 
-                      ? 'Maaf, waktu untuk menyelesaikan pembayaran telah habis.' 
-                      : 'Maaf, pembayaran Anda tidak dapat diproses.'
-                    }
-                  </PNText>
+                  <PNText className="text-gray-300">{isExpired ? 'Maaf, waktu untuk menyelesaikan pembayaran telah habis.' : 'Maaf, pembayaran Anda tidak dapat diproses.'}</PNText>
                 </div>
               </div>
 
               {paymentData && (
-                <div className="bg-gray-800/50 p-4 rounded-lg space-y-2 text-left">
+                <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-2 text-left">
                   <div className="flex justify-between">
                     <PNText className="text-sm text-gray-400">ID Pembayaran:</PNText>
                     <PNText className="text-sm font-mono">{paymentData.id}</PNText>
@@ -213,26 +193,20 @@ const PaymentStatus: React.FC = () => {
                   )}
                   <div className="flex justify-between">
                     <PNText className="text-sm text-gray-400">Status:</PNText>
-                    <PNText className={`text-sm ${isExpired ? 'text-orange-400' : 'text-red-400'}`}>
-                      {isExpired ? 'EXPIRED' : (paymentData.status || 'FAILED')}
-                    </PNText>
+                    <PNText className={`text-sm ${isExpired ? 'text-orange-400' : 'text-red-400'}`}>{isExpired ? 'EXPIRED' : (paymentData.status || 'FAILED')}</PNText>
                   </div>
                   {isExpired && paymentData.expiry_date && (
                     <div className="flex justify-between">
                       <PNText className="text-sm text-gray-400">Kedaluwarsa:</PNText>
-                      <PNText className="text-sm text-gray-300">
-                        {new Date(paymentData.expiry_date).toLocaleString('id-ID')}
-                      </PNText>
+                      <PNText className="text-sm text-gray-300">{new Date(paymentData.expiry_date).toLocaleString('id-ID')}</PNText>
                     </div>
                   )}
                 </div>
               )}
 
               <div className="space-y-4">
-                <div className={`${isExpired ? 'bg-orange-500/20' : 'bg-yellow-500/20'} p-4 rounded-lg text-left`}>
-                  <PNText className={`text-sm ${isExpired ? 'text-orange-400' : 'text-yellow-400'} font-semibold mb-2`}>
-                    {isExpired ? 'Apa yang terjadi?' : 'Kemungkinan penyebab:'}
-                  </PNText>
+                <div className={`${isExpired ? 'bg-orange-500/15 border border-orange-400/30' : 'bg-yellow-500/15 border border-yellow-400/30'} p-4 rounded-xl text-left`}>
+                  <PNText className={`${isExpired ? 'text-orange-400' : 'text-yellow-400'} font-semibold mb-2`}>{isExpired ? 'Apa yang terjadi?' : 'Kemungkinan penyebab:'}</PNText>
                   <ul className="text-sm text-gray-300 space-y-1">
                     {isExpired ? (
                       <>
@@ -254,30 +228,27 @@ const PaymentStatus: React.FC = () => {
                 <div className="space-y-3">
                   <PNButton
                     onClick={handleGoHome}
-                    className={`w-full ${isExpired ? 'bg-orange-500 hover:bg-orange-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                    variant="primary"
                     size="lg"
+                    fullWidth
+                    className="flex items-center justify-center gap-2"
                   >
-                    <Home className="mr-2" size={16} />
-                    {isExpired ? 'Buat Pesanan Baru' : 'Coba Lagi'}
+                    <Home size={18} />
+                    <span>{isExpired ? 'Buat Pesanan Baru' : 'Coba Lagi'}</span>
                   </PNButton>
-                  
                   <PNButton
                     onClick={handleGoHome}
                     variant="secondary"
-                    className="w-full"
                     size="lg"
+                    fullWidth
+                    className="flex items-center justify-center gap-2"
                   >
-                    <Home className="mr-2" size={16} />
-                    Kembali ke Beranda
+                    <Home size={18} />
+                    <span>Kembali ke Beranda</span>
                   </PNButton>
-                  
                   <div className="text-center">
-                    <PNText className="text-sm text-gray-400">
-                      Butuh bantuan? Hubungi customer service:
-                    </PNText>
-                    <PNText className="text-sm text-pink-400">
-                      wa.me/6289653510125
-                    </PNText>
+                    <PNText className="text-sm text-gray-400">Butuh bantuan? Hubungi customer service:</PNText>
+                    <PNText className="text-sm text-pink-400">wa.me/6289653510125</PNText>
                   </div>
                 </div>
               </div>

@@ -49,6 +49,7 @@ const TermsPage = React.lazy(() => import('./pages/TermsPage'));
 const FeedPage = React.lazy(() => import('./pages/FeedPage'));
 const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
 
 // Lazy load admin pages (biggest performance impact)
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
@@ -217,6 +218,7 @@ function App() {
                           <Route path="/payment-status" element={<PaymentStatus />} />
                           <Route path="/payment" element={<PaymentInterface />} />
                           <Route path="/orders" element={<OrderHistoryPage />} />
+                          <Route path="/notifications" element={<NotificationsPage />} />
                           {/* Hidden design system showcase - not linked in navigation */}
                           <Route path="/internal/design-system" element={<DesignSystemShowcase />} />
                           {/* 404 Not Found - Catch all routes */}

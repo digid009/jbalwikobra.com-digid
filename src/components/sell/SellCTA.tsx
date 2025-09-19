@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageCircle, ArrowRight } from 'lucide-react';
-import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../ui/PinkNeonDesignSystem';
+import { PNSection, PNContainer, PNHeading, PNText, PNButton, PNCard } from '../ui/PinkNeonDesignSystem';
 import { StatsRow } from './StatsRow';
 
 interface SellCTAProps {
@@ -9,10 +9,12 @@ interface SellCTAProps {
 
 export const SellCTA: React.FC<SellCTAProps> = ({ onGetStarted }) => {
   return (
-    <PNSection padding="lg" className="border-t border-white/10 bg-gradient-to-br from-pink-900/20 to-purple-900/20">
+    <PNSection padding="lg" className="border-t border-white/10 relative">
       <PNContainer>
         <div className="max-w-4xl mx-auto">
-          <div className="text-center">
+          <PNCard className="relative isolate overflow-hidden text-center p-8 lg:p-10">
+            <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-fuchsia-500/5" />
+            <div>
             {/* Main CTA Heading */}
             <div className="mb-10">
               <PNHeading level={2} gradient className="mb-6 text-2xl lg:text-3xl">
@@ -33,7 +35,7 @@ export const SellCTA: React.FC<SellCTAProps> = ({ onGetStarted }) => {
             <PNButton 
               size="lg" 
               onClick={onGetStarted}
-              className="px-8 py-4 group"
+              className="px-8 py-4 group flex items-center justify-center gap-2"
             >
               <MessageCircle size={20} className="group-hover:scale-110 transition-transform duration-300" />
               <span className="font-semibold">Mulai Sekarang</span>
@@ -54,7 +56,8 @@ export const SellCTA: React.FC<SellCTAProps> = ({ onGetStarted }) => {
               </PNText>
             </div>
           </div>
-        </div>
+            </div>
+          </PNCard>
         </div>
       </PNContainer>
     </PNSection>

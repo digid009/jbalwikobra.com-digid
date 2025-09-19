@@ -26,7 +26,8 @@ import { useWishlist } from '../contexts/WishlistContext';
 import { useConfirmation } from '../components/ConfirmationModal';
 import { useToast } from '../components/Toast';
 import { supabase } from '../services/supabase';
-import { IOSContainer, IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
+import { PNSection, PNContainer, PNCard, PNHeading, PNText, PNButton } from '../components/ui/PinkNeonDesignSystem';
+import { enhancedAuthService } from '../services/enhancedAuthService';
 
 interface UserProfile {
   name: string;
@@ -108,13 +109,31 @@ const ProfilePage: React.FC = () => {
     fetchOrderCount();
   }, [user]);
 
-  const loadProfile = () => {
-    // Load from localStorage or API
-    const savedProfile = localStorage.getItem('userProfile');
-    if (savedProfile) {
-      const parsed = JSON.parse(savedProfile);
-      setProfile(prev => ({...prev, ...parsed}));
-      setIsValidPhone(!!parsed.whatsapp);
+  const loadProfile = async () => {
+    try {
+      // Prefer unified auth service profile (reads from user_data/user_profile consistently)
+      const current = await enhancedAuthService.getCurrentUserProfile();
+      const name = current?.name ?? user?.name ?? '';
+      const email = current?.email ?? user?.email ?? '';
+      const phone = current?.phone ?? user?.phone ?? '';
+      setProfile(prev => ({
+        ...prev,
+        name,
+        email,
+        whatsapp: phone,
+        joinDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('id-ID') : prev.joinDate
+      }));
+      setIsValidPhone(!!phone);
+    } catch (e) {
+      // Fallback: try legacy key if any (backward-compat)
+      const legacy = localStorage.getItem('user_profile') || localStorage.getItem('userProfile');
+      if (legacy) {
+        try {
+          const parsed = JSON.parse(legacy);
+          setProfile(prev => ({ ...prev, ...parsed }));
+          setIsValidPhone(!!parsed.whatsapp || !!parsed.phone);
+        } catch {}
+      }
     }
   };
 
@@ -138,9 +157,25 @@ const ProfilePage: React.FC = () => {
     });
 
     if (confirmed) {
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-      setIsEditing(false);
-      showToast('Profil berhasil disimpan', 'success');
+      // Persist via enhanced auth service (writes to unified user_profile cache)
+      try {
+        await enhancedAuthService.updateProfile({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.whatsapp
+        });
+        setIsEditing(false);
+        showToast('Profil berhasil disimpan', 'success');
+      } catch (e) {
+        // Fallback to local storage for resilience
+        localStorage.setItem('user_profile', JSON.stringify({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.whatsapp
+        }));
+        setIsEditing(false);
+        showToast('Profil disimpan secara lokal', 'info');
+      }
     }
   };
 
@@ -169,123 +204,101 @@ const ProfilePage: React.FC = () => {
 
   return (
     <AuthRequired>
-  <div className="min-h-screen bg-black text-white">
-        <IOSContainer maxWidth="lg" className="pt-20 pb-20">
-            {/* Profile Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500/15 via-purple-500/15 to-indigo-500/15 border border-gray-700 backdrop-blur-sm mb-8">
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-30" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")`
-              }}></div>
-              
-              <div className="relative p-8">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  {/* User Info */}
-                  <div className="flex items-center space-x-6">
-                    {/* Avatar */}
-                    <div className="relative">
-                      <div className="w-24 h-24 bg-gradient-to-br from-pink-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-xl ring-4 ring-white/10">
-                        <User size={40} className="text-white" />
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center ring-4 ring-black/50">
-                        <Check size={16} className="text-white" />
-                      </div>
+      <div className="min-h-screen bg-black text-white">
+        {/* Hero header */}
+        <PNSection padding="lg" className="border-b border-white/10">
+          <PNContainer>
+            <PNCard className="relative isolate overflow-hidden p-6 sm:p-8 lg:p-10">
+              <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-fuchsia-500/5" />
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                {/* User */}
+                <div className="flex items-center gap-5">
+                  <div className="relative">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-xl shadow-pink-500/25">
+                      <User size={36} className="text-white" />
                     </div>
-                    
-                    {/* User Details */}
-                    <div>
-                      <h1 className="text-3xl font-bold text-white mb-2">
-                        {profile.name || 'Pengguna Baru'}
-                      </h1>
-                      <p className="text-white/70 mb-1 flex items-center">
-                        <Mail size={16} className="mr-2 text-white/70" />
-                        {profile.email}
-                      </p>
-                      <p className="text-white/70 text-sm flex items-center">
-                        <Star size={16} className="mr-2 text-yellow-400" />
-                        Member sejak {profile.joinDate}
-                      </p>
+                    <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center ring-4 ring-black/40">
+                      <Check size={14} className="text-white" />
                     </div>
                   </div>
-
-                  {/* Edit Button */}
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className={`px-6 py-3 rounded-xl font-medium transition-all transform hover:scale-105 flex items-center space-x-2 ${
-                      isEditing
-                        ? 'bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25'
-                        : 'bg-black border border-gray-700 text-white hover:bg-gray-900/20'
-                    }`}
-                  >
-                    {isEditing ? <X size={20} /> : <Edit size={20} />}
-                    <span>{isEditing ? 'Batal' : 'Edit Profil'}</span>
-                  </button>
-                </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-9000/20 rounded-lg flex items-center justify-center">
-                        <Package size={20} className="text-pink-400" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">{profile.totalOrders}</div>
-                        <div className="text-white/70 text-sm">Pesanan</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center">
-                        <Heart size={20} className="text-pink-400" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">{profile.wishlistCount}</div>
-                        <div className="text-white/70 text-sm">Wishlist</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                        <Trophy size={20} className="text-yellow-400" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">0</div>
-                        <div className="text-white/70 text-sm">Poin</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-black rounded-xl p-4 border border-gray-700 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                        <Crown size={20} className="text-purple-400" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">Basic</div>
-                        <div className="text-white/70 text-sm">Level</div>
-                      </div>
-                    </div>
+                  <div>
+                    <PNHeading level={1} className="mb-1">{profile.name || 'Pengguna Baru'}</PNHeading>
+                    <PNText className="flex items-center gap-2"><Mail size={14} className="text-white/70" />{profile.email}</PNText>
+                    <PNText className="text-sm flex items-center gap-2"><Star size={14} className="text-yellow-400" />Member sejak {profile.joinDate}</PNText>
                   </div>
                 </div>
+
+                <PNButton
+                  variant={isEditing ? 'ghost' : 'secondary'}
+                  size="lg"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="flex items-center gap-2"
+                >
+                  {isEditing ? <X size={18} /> : <Edit size={18} />}
+                  {isEditing ? 'Batal' : 'Edit Profil'}
+                </PNButton>
               </div>
-            </div>
 
-            {/* Edit Form Section */}
-            {isEditing && (
-              <IOSCard padding="large" className="bg-black border border-gray-700 mb-8">
-                <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                  <Edit size={24} className="mr-3 text-pink-400" />
-                  Edit Informasi Profil
-                </h2>
-                
+              {/* Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                <PNCard className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                      <Package size={18} className="text-pink-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{profile.totalOrders}</div>
+                      <PNText className="text-sm">Pesanan</PNText>
+                    </div>
+                  </div>
+                </PNCard>
+                <PNCard className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 border border-pink-400/30 flex items-center justify-center">
+                      <Heart size={18} className="text-pink-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{profile.wishlistCount}</div>
+                      <PNText className="text-sm">Wishlist</PNText>
+                    </div>
+                  </div>
+                </PNCard>
+                <PNCard className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-yellow-500/20 border border-yellow-400/30 flex items-center justify-center">
+                      <Trophy size={18} className="text-yellow-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">0</div>
+                      <PNText className="text-sm">Poin</PNText>
+                    </div>
+                  </div>
+                </PNCard>
+                <PNCard className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                      <Crown size={18} className="text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">Basic</div>
+                      <PNText className="text-sm">Level</PNText>
+                    </div>
+                  </div>
+                </PNCard>
+              </div>
+            </PNCard>
+          </PNContainer>
+        </PNSection>
+
+        {/* Edit form */}
+        {isEditing && (
+          <PNSection padding="lg" className="border-b border-white/10">
+            <PNContainer>
+              <PNCard className="p-6 sm:p-8">
+                <PNHeading level={2} className="mb-6">Edit Informasi Profil</PNHeading>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-3">
+                    <label className="block text-sm font-medium text-white/80 mb-2">
                       <User size={16} className="inline mr-2" />
                       Nama Lengkap
                     </label>
@@ -293,13 +306,13 @@ const ProfilePage: React.FC = () => {
                       type="text"
                       value={profile.name}
                       onChange={(e) => setProfile({...profile, name: e.target.value})}
-                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white/70 focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full px-5 py-4 min-h-[52px] border-2 border-white/10 bg-black/50 text-white rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition"
                       placeholder="Masukkan nama lengkap"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-3">
+                    <label className="block text-sm font-medium text-white/80 mb-2">
                       <Mail size={16} className="inline mr-2" />
                       Email
                     </label>
@@ -307,13 +320,13 @@ const ProfilePage: React.FC = () => {
                       type="email"
                       value={profile.email}
                       onChange={(e) => setProfile({...profile, email: e.target.value})}
-                      className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder:text-white/70 focus:border-ios-accent focus:ring-2 focus:ring-ios-accent/30 transition-all"
+                      className="w-full px-5 py-4 min-h-[52px] border-2 border-white/10 bg-black/50 text-white rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition"
                       placeholder="Masukkan email"
                     />
                   </div>
 
                   <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-3">
+                    <label className="block text-sm font-medium text-white/80 mb-2">
                       <Phone size={16} className="inline mr-2" />
                       Nomor WhatsApp
                     </label>
@@ -326,35 +339,32 @@ const ProfilePage: React.FC = () => {
                     />
                   </div>
                 </div>
-
                 <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                  <IOSButton fullWidth onClick={saveProfile}>
-                    <div className="flex items-center gap-2">
-                      <Check size={20} />
-                      <span>Simpan Perubahan</span>
-                    </div>
-                  </IOSButton>
-                  <IOSButton variant="secondary" fullWidth onClick={() => { setIsEditing(false); loadProfile(); }}>
-                    <div className="flex items-center gap-2">
-                      <X size={20} />
-                      <span>Batal</span>
-                    </div>
-                  </IOSButton>
+                  <PNButton size="lg" onClick={saveProfile} className="flex items-center justify-center gap-2">
+                    <Check size={18} />
+                    Simpan Perubahan
+                  </PNButton>
+                  <PNButton size="lg" variant="ghost" onClick={() => { setIsEditing(false); loadProfile(); }} className="flex items-center justify-center gap-2">
+                    <X size={18} />
+                    Batal
+                  </PNButton>
                 </div>
-              </IOSCard>
-            )}
+              </PNCard>
+            </PNContainer>
+          </PNSection>
+        )}
 
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Quick actions */}
+        <PNSection padding="lg" className="border-b border-white/10">
+          <PNContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {profileMenuItems.map((item, index) => (
                 <Link
                   key={index}
                   to={item.path}
-                  className="group relative overflow-hidden rounded-2xl bg-black border border-gray-700 transition-all transform hover:scale-[1.02] hover:shadow-xl hover:shadow-black/10 hover:border-ios-accent/50"
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
                 >
-                  {/* Background Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -376,40 +386,29 @@ const ProfilePage: React.FC = () => {
                 </Link>
               ))}
             </div>
-
-            {/* Additional Actions */}
-            <div className="space-y-4">
-              {/* Help & Support */}
-              <Link
-                to="/help"
-                className="group w-full bg-black rounded-2xl p-6 border border-gray-700 transition-all transform hover:scale-[1.01] flex items-center justify-between hover:border-ios-accent/50"
-              >
-                <div className="flex items-center space-x-4">
+            <div className="space-y-4 mt-8">
+              <Link to="/help" className="group w-full rounded-2xl p-6 border border-white/10 bg-white/5 hover:bg-white/10 transition flex items-center justify-between">
+                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-yellow-500/20 border border-yellow-500/20 flex items-center justify-center">
                     <Shield size={20} className="text-yellow-400" />
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold transition-colors">
-                      Bantuan & Dukungan
-                    </h3>
-                    <p className="text-white/70 text-sm">FAQ, Kontak Support, Panduan</p>
+                    <h3 className="text-white font-semibold">Bantuan & Dukungan</h3>
+                    <PNText className="text-sm">FAQ, Kontak Support, Panduan</PNText>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-white/70 transition-colors" />
+                <ChevronRight size={20} className="text-white/70" />
               </Link>
 
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-2xl p-6 transition-all group"
-              >
-                <div className="flex items-center justify-center space-x-3">
-                  <LogOut size={20} className="text-red-400" />
-                  <span className="text-red-400 font-medium">Keluar dari Akun</span>
+              <PNButton onClick={handleLogout} variant="ghost" size="lg" className="w-full border border-red-500/40 text-red-300 hover:bg-red-500/10">
+                <div className="flex items-center justify-center gap-2">
+                  <LogOut size={18} />
+                  Keluar dari Akun
                 </div>
-              </button>
+              </PNButton>
             </div>
-          </IOSContainer>
+          </PNContainer>
+        </PNSection>
       </div>
     </AuthRequired>
   );

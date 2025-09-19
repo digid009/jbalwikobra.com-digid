@@ -148,8 +148,8 @@ const HelpPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Pink Neon Hero Section */}
-      <PNSection padding="lg" className="bg-gradient-to-br from-pink-900/30 via-purple-900/20 to-black">
+  {/* Pink Neon Hero Section - PN black theme */}
+  <PNSection padding="lg" className="border-b border-white/10">
         <PNContainer>
           {/* Back Button */}
           <div className="mb-8">
@@ -157,10 +157,10 @@ const HelpPage: React.FC = () => {
               variant="ghost" 
               size="sm"
               onClick={() => navigate('/')}
-              className="group"
+      className="group flex items-center gap-2"
             >
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="font-medium">Kembali ke Beranda</span>
+      <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+      <span className="font-medium">Kembali ke Beranda</span>
             </PNButton>
           </div>
 
@@ -181,11 +181,11 @@ const HelpPage: React.FC = () => {
             </PNText>
 
             {/* Search Bar */}
-            <div className="max-w-md mx-auto relative">
+      <div className="max-w-md mx-auto relative">
               <input 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-black/50 backdrop-blur-sm border border-pink-500/30 rounded-2xl pl-14 pr-4 py-4 text-white placeholder:text-gray-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 text-base" 
+        className="w-full bg-black/50 backdrop-blur-sm border border-white/10 rounded-2xl pl-14 pr-4 py-4 text-white placeholder:text-gray-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 text-base" 
                 placeholder="Cari: pembelian, pembayaran, keamanan..." 
               />
               <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-pink-400" />
@@ -206,7 +206,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Akun & Registrasi')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <User className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Akun</span>
@@ -215,7 +215,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Pembelian')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <ShoppingBag className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Pembelian</span>
@@ -224,7 +224,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Pembayaran')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <CreditCard className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Pembayaran</span>
@@ -233,7 +233,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Keamanan')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <ShieldCheck className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Keamanan</span>
@@ -242,7 +242,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Fitur')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <Heart className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Wishlist</span>
@@ -251,7 +251,7 @@ const HelpPage: React.FC = () => {
               <PNButton 
                 variant="ghost"
                 onClick={() => setSelectedCategory('Fitur')}
-                className="h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 group"
+                className="h-20 flex flex-col items-center justify-center gap-2 bg-white/5 border border-white/10 hover:border-pink-500/40 hover:bg-pink-500/10 group"
               >
                 <Zap className="text-pink-400 group-hover:scale-110 transition-transform" size={28} />
                 <span className="text-sm font-medium text-white">Flash Sale</span>
@@ -325,7 +325,7 @@ const HelpPage: React.FC = () => {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Quick Contact */}
-              <PNCard className="p-6">
+              <PNCard className="p-6 relative overflow-hidden">
                 <PNHeading level={3} className="mb-4 flex items-center gap-2">
                   <MessageSquare className="text-pink-400" />
                   Butuh Bantuan?
@@ -333,18 +333,19 @@ const HelpPage: React.FC = () => {
                 <PNText className="text-gray-300 mb-4">
                   Tim support siap membantu 24/7 via WhatsApp
                 </PNText>
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-fuchsia-500/5" />
                 <a
                   href={`https://wa.me/${whatsappNumber}?text=Halo%20admin,%20saya%20butuh%20bantuan%20terkait%20JBalwikobra`}
                   target="_blank"
                   rel="noreferrer"
-                  className="block"
+                  className="block relative z-10"
                 >
-                  <PNButton variant="primary" fullWidth className="bg-green-600 hover:bg-green-700 mb-4">
-                    <MessageSquare size={18} className="mr-2" />
-                    Chat WhatsApp
+                  <PNButton variant="primary" fullWidth className="mb-4 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 border-0 text-white">
+                    <MessageSquare size={18} />
+                    <span className="font-semibold">Chat WhatsApp</span>
                   </PNButton>
                 </a>
-                <div className="space-y-2 text-sm text-gray-400">
+                <div className="space-y-2 text-sm text-gray-400 relative z-10">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-green-400" />
                     <span>Respon dalam 5 menit</span>
@@ -421,7 +422,8 @@ const HelpPage: React.FC = () => {
 
           {/* Still Need Help CTA */}
           <div className="mt-16">
-            <PNCard className="text-center p-12 bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 border-pink-500/20">
+            <PNCard className="text-center p-12 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-fuchsia-500/5 pointer-events-none" />
               <div className="max-w-2xl mx-auto">
                 <div className="flex justify-center mb-6">
                   <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
@@ -434,21 +436,21 @@ const HelpPage: React.FC = () => {
                   Tim support kami siap membantu menyelesaikan masalah spesifik Anda. Jangan ragu menghubungi kapan saja.
                 </PNText>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto relative z-10">
                   <a
                     href={`https://wa.me/${whatsappNumber}`}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <PNButton variant="primary" size="lg" className="bg-green-600 hover:bg-green-700 w-full">
-                      <Phone size={18} className="mr-2" />
-                      WhatsApp Support
+                    <PNButton variant="primary" size="lg" className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 border-0 text-white">
+                      <Phone size={18} />
+                      <span className="font-semibold">WhatsApp Support</span>
                     </PNButton>
                   </a>
                   <a href="mailto:support@jbalwikobra.com">
-                    <PNButton variant="secondary" size="lg" className="w-full">
-                      <Mail size={18} className="mr-2" />
-                      Email Support
+                    <PNButton variant="secondary" size="lg" className="w-full flex items-center justify-center gap-2">
+                      <Mail size={18} />
+                      <span className="font-semibold">Email Support</span>
                     </PNButton>
                   </a>
                 </div>
@@ -462,10 +464,10 @@ const HelpPage: React.FC = () => {
               onClick={() => navigate('/')}
               variant="ghost"
               size="lg"
-              className="group"
+              className="group inline-flex items-center justify-center gap-2"
             >
-              <Home size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-              Kembali ke Beranda
+              <Home size={18} className="group-hover:scale-110 transition-transform" />
+              <span className="font-semibold">Kembali ke Beranda</span>
             </PNButton>
           </div>
         </PNContainer>

@@ -44,8 +44,8 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
     onPriceChange(formatPrice(value));
   };
 
-  // Check if form is valid for submission
-  const isFormValid = selectedGame && accountName.trim() && accountDetails.trim();
+  // Check if form is valid for submission - At least game must be selected
+  const isFormValid = selectedGame && selectedGame.trim() !== '';
 
   return (
     <PNSection padding="lg" id="sell-form" className="border-y border-white/10">
@@ -62,18 +62,14 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
           </div>
 
           {/* Form Card */}
-          <PNCard className="p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-black/50 to-gray-900/50 border border-white/10 relative overflow-hidden">
+          <PNCard className="p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-black/50 to-gray-900/50 border border-white/10 relative isolate">
             {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl translate-y-12 -translate-x-12"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl -translate-y-16 translate-x-16 pointer-events-none -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl translate-y-12 -translate-x-12 pointer-events-none -z-10"></div>
             
-            <div className="space-y-8 relative z-10">
+            <div className="space-y-6 relative z-10">
               {/* Game Selection */}
-              <FormField 
-                label="Game" 
-                required
-                helpText="Pilih game yang ingin dijual"
-              >
+              <FormField label="">
                 <select
                   value={selectedGame}
                   onChange={(e) => onGameChange(e.target.value)}
@@ -82,7 +78,7 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
                            hover:border-white/20 text-base shadow-sm focus:shadow-lg focus:shadow-pink-500/20"
                   required
                 >
-                  <option value="">{loading ? 'Memuat…' : 'Pilih game...'}</option>
+                  <option value="">{loading ? 'Memuat…' : 'Pilih game yang ingin dijual...'}</option>
                   {gameOptions.map(game => (
                     <option key={game} value={game} className="bg-black text-white py-2">
                       {game}
@@ -92,16 +88,12 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
               </FormField>
 
               {/* Account Name */}
-              <FormField 
-                label="Nama Akun" 
-                required
-                helpText="Nama akun atau username dalam game"
-              >
+              <FormField label="">
                 <input
                   type="text"
                   value={accountName}
                   onChange={(e) => onNameChange(e.target.value)}
-                  placeholder="Masukkan nama akun"
+                  placeholder="Masukkan nama akun atau username"
                   className="w-full px-5 py-4 min-h-[52px] border-2 border-white/10 bg-black/50 text-white rounded-xl 
                            focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200
                            hover:border-white/20 text-base placeholder:text-gray-500 shadow-sm focus:shadow-lg focus:shadow-pink-500/20"
@@ -110,11 +102,7 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
               </FormField>
 
               {/* Account Details */}
-              <FormField 
-                label="Detail Akun" 
-                required
-                helpText="Jelaskan level, rank, skin, hero yang dimiliki, dll. Semakin detail semakin akurat penilaian"
-              >
+              <FormField label="">
                 <textarea
                   value={accountDetails}
                   onChange={(e) => onDetailsChange(e.target.value)}
@@ -128,15 +116,12 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
               </FormField>
 
               {/* Price Estimation */}
-              <FormField 
-                label="Estimasi Harga" 
-                helpText="Berapa harga yang Anda harapkan? (Opsional)"
-              >
+              <FormField label="">
                 <input
                   type="text"
                   value={estimatedPrice}
                   onChange={(e) => handlePriceChange(e.target.value)}
-                  placeholder="Contoh: Rp 2,000,000"
+                  placeholder="Estimasi harga (contoh: Rp 2,000,000)"
                   className="w-full px-5 py-4 min-h-[52px] border-2 border-white/10 bg-black/50 text-white rounded-xl 
                            focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200
                            hover:border-white/20 text-base placeholder:text-gray-500 shadow-sm focus:shadow-lg focus:shadow-pink-500/20"
@@ -145,45 +130,27 @@ export const SellForm = forwardRef<HTMLDivElement, SellFormProps>(({
             </div>
 
             {/* Tips Section */}
-            <TipsSection />
-
-            {/* CTA Buttons */}
-            <div className="mt-8">
-              {/* Desktop CTA */}
-              <div className="hidden sm:block text-center">
-                <PNButton 
-                  size="lg" 
-                  onClick={onSubmit}
-                  className="px-8 py-4 flex items-center justify-center gap-3 mx-auto"
-                  disabled={!isFormValid}
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span>Hubungi Admin</span>
-                  <ArrowRight className="w-5 h-5" />
-                </PNButton>
-                <PNText className="mt-4 text-gray-400">
-                  Admin akan menghubungi dalam 24 jam
-                </PNText>
-              </div>
-
-              {/* Mobile CTA - Fixed at bottom */}
-              <div className="sm:hidden">
-                <div className="h-20" />
-                <div className="fixed left-4 right-4 bottom-20 z-50">
-                  <PNButton 
-                    onClick={onSubmit}
-                    className="w-full shadow-2xl flex items-center justify-center gap-3"
-                    size="lg"
-                    disabled={!isFormValid}
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    <span>Hubungi Admin</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </PNButton>
-                </div>
-              </div>
+            <div className="relative z-10">
+              <TipsSection />
             </div>
           </PNCard>
+
+          {/* CTA Button - Visible on ALL screen sizes */}
+          <div className="mt-8 relative z-20 text-center">
+            <PNButton 
+              size="lg" 
+              onClick={onSubmit}
+              className="w-full md:w-auto px-8 py-4 flex items-center justify-center gap-3 mx-auto relative z-30 min-h-[56px]"
+              disabled={!isFormValid}
+            >
+              <MessageCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium">Hubungi Admin</span>
+              <ArrowRight className="w-5 h-5 flex-shrink-0" />
+            </PNButton>
+            <PNText className="mt-4 text-gray-400">
+              Admin akan menghubungi dalam 24 jam
+            </PNText>
+          </div>
         </div>
       </PNContainer>
     </PNSection>

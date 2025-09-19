@@ -575,7 +575,7 @@ export class ProductService {
       if (hasFlashSaleJoin === false) {
         throw new Error('REL_SKIP');
       }
-  const { data, error } = await supabase
+      const { data, error } = await supabase
         .from('flash_sales')
         .select(`
           *,
@@ -586,8 +586,9 @@ export class ProductService {
           )
         `)
         .eq('is_active', true)
-        .gte('end_time', new Date().toISOString());
-
+        .gte('end_time', new Date().toISOString())
+        .order('end_time', { ascending: true }); // Sort by nearest countdown end first
+      
       if (!error && data) {
         hasFlashSaleJoin = true;
       }
@@ -600,7 +601,9 @@ export class ProductService {
           .from('flash_sales')
           .select('*')
           .eq('is_active', true)
-          .gte('end_time', new Date().toISOString());
+          .gte('end_time', new Date().toISOString())
+          .order('end_time', { ascending: true }); // Sort by nearest countdown end first
+        
         if (err2) {
           console.error('Supabase error:', err2);
           const flashSaleProducts = sampleProducts.filter(p => p.isFlashSale);
@@ -615,7 +618,7 @@ export class ProductService {
             isActive: true,
             createdAt: product.createdAt,
             product
-          }));
+          })).sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()); // Sort by nearest countdown end first
         }
         hasFlashSaleJoin = false;
   const ids = (basic || []).map((b: any) => b.product_id);
@@ -744,7 +747,7 @@ export class ProductService {
         isActive: true,
         createdAt: product.createdAt,
         product
-      }));
+      })).sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()); // Sort by nearest countdown end first
     }
   }
 

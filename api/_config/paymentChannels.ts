@@ -41,15 +41,15 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     available: true,
     processing_time: 'Instant',
     min_amount: 10_000,
-    max_amount: 2_000_000,
+    max_amount: 1_000_000,
     popular: true,
   },
   // Virtual Accounts
   { id: 'bni', name: 'BNI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BNI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000, popular: true },
-  { id: 'bri', name: 'BRI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000 },
-  { id: 'mandiri', name: 'Mandiri VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'MANDIRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000 },
-  { id: 'bsi', name: 'BSI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BSI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000 },
-  { id: 'permata', name: 'Permata VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'PERMATA', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000 },
+  { id: 'bri', name: 'BRI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
+  { id: 'mandiri', name: 'Mandiri VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'MANDIRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
+  { id: 'bsi', name: 'BSI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BSI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
+  { id: 'permata', name: 'Permata VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'PERMATA', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
   // Over the counter
   { id: 'indomaret', name: 'Indomaret', type: 'OVER_THE_COUNTER', channel_code: 'INDOMARET', available: true, processing_time: 'Instant setelah bayar', min_amount: 10_000, max_amount: 2_500_000, popular: true },
 ];

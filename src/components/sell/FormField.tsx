@@ -17,10 +17,12 @@ export const FormField: React.FC<FormFieldProps> = ({
   children
 }) => {
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-semibold text-white mb-3">
-        {label} {required && <span className="text-pink-400">*</span>}
-      </label>
+    <div className="space-y-2">
+      {label && (
+        <label className="block text-sm font-semibold text-white mb-3">
+          {label} {required && <span className="text-pink-400">*</span>}
+        </label>
+      )}
       {children}
       {helpText && (
         <PNText className="text-sm text-gray-400">

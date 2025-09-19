@@ -9,23 +9,15 @@ import { GameDataService } from '../services/gameDataService';
 import { SellForm } from '../components/sell/SellForm';
 import { SellHero } from '../components/sell/SellHero';
 import { PopularGames } from '../components/sell/PopularGames';
-import { SellFeatures } from '../components/sell/SellFeatures';
 import { SellCTA } from '../components/sell/SellCTA';
 import { HowItWorks } from '../components/sell/HowItWorks';
-import { WhatsAppConsultation } from '../components/sell/WhatsAppConsultation';
 import { GameTitle } from '../types';
 import {
   MessageCircle,
-  DollarSign,
   Shield,
-  Star,
-  Clock,
-  CheckCircle,
-  ArrowRight,
   Smartphone,
   Gamepad2,
-  Trophy,
-  Users
+  Trophy
 } from 'lucide-react';
 
 const SellPage: React.FC = () => {
@@ -180,40 +172,12 @@ const SellPage: React.FC = () => {
     requestAnimationFrame(() => scrollToForm());
   };
 
-  // Features data
-  const features = [
-    {
-      icon: Shield,
-      title: 'Transaksi Aman',
-      description: 'Sistem escrow melindungi pembeli dan penjual'
-    },
-    {
-      icon: DollarSign,
-      title: 'Harga Terbaik',
-      description: 'Dapatkan harga maksimal untuk akun Anda'
-    },
-    {
-      icon: Clock,
-      title: 'Proses Cepat',
-      description: 'Evaluasi dan penjualan dalam 24 jam'
-    },
-    {
-      icon: Users,
-      title: 'Dipercaya 1000+',
-      description: 'Sudah melayani ribuan gamer Indonesia'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white pb-20 md:pb-0">
       {/* Hero Section */}
       <SellHero 
         onGetStarted={scrollToForm} 
         onLearnMore={scrollToForm}
-      />
-
-      {/* WhatsApp Consultation Section */}
-      <WhatsAppConsultation 
         whatsappNumber={whatsappNumber}
       />
 
@@ -238,9 +202,6 @@ const SellPage: React.FC = () => {
 
       {/* How It Works Section */}
       <HowItWorks />
-
-      {/* Features Section */}
-      <SellFeatures features={features} />
 
       {/* Final CTA Section */}
       <SellCTA onGetStarted={scrollToForm} />
