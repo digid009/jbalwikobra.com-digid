@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Package, Users, Zap, ListOrdered, Image as ImageIcon, Settings as SettingsIcon, Gamepad2, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import FloatingNotifications from '../pages/admin/FloatingNotifications';
+import AdminFloatingNotifications from '../pages/admin/AdminFloatingNotifications';
 
 const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -77,8 +77,8 @@ const AdminLayout: React.FC = () => {
         </main>
       </div>
       
-      {/* FloatingNotifications - muncul di semua halaman admin */}
-      <FloatingNotifications />
+      {/* AdminFloatingNotifications - muncul di semua halaman admin */}
+      <AdminFloatingNotifications />
     </div>
   );
 };

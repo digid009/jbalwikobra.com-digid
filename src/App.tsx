@@ -10,6 +10,7 @@ import PNFooter from './components/public/layout/PNFooter';
 import './App.css';
 import './styles/global-design-system.css';
 import './styles/admin-design-system.css';
+import './styles/admin-readability-enhancement.css';
 import './styles/public-pages.css';
 import './styles/bottom-navigation.css';
 import { forceFixedPositioning } from './utils/forceFixedPositioning';
@@ -23,7 +24,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
 import { enhancedProductService } from './services/enhancedProductService';
-import FloatingNotifications from './components/FloatingNotifications';
+import UserFloatingNotifications from './components/UserFloatingNotifications';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -181,7 +182,7 @@ function App() {
           {/* New PN public header; keep legacy header import for compatibility in other routes */}
           <PNHeader />
                     {/* Floating notifications for public app */}
-                    <FloatingNotifications />
+                    <UserFloatingNotifications />
                     <main className="flex-1 pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">

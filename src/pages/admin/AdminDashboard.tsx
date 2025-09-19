@@ -9,9 +9,11 @@ import AdminFeedManagement from './components/AdminFeedManagement';
 import { AdminBannersManagement } from './components/AdminBannersManagement';
 import { AdminFlashSalesManagement } from '../../components/admin/flash-sales';
 import { AdminReviewsManagement } from './components/AdminReviewsManagement';
+import { AdminNotificationsPage } from './components/AdminNotificationsPage';
 import { AdminHeader } from './components/AdminHeader';
 import AdminHeaderV2 from './components/AdminHeaderV2';
 import AdminWhatsAppSettings from './AdminWhatsAppSettings';
+import AdminSettings from './AdminSettings';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
@@ -105,7 +107,7 @@ const AdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <AdminDashboardContentV2 onRefreshStats={loadStats} />;
+        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={setActiveTab} />;
       case 'orders':
         return <AdminOrdersV2 />;
       case 'users':
@@ -120,10 +122,12 @@ const AdminDashboard: React.FC = () => {
         return <AdminFlashSalesManagement onRefresh={loadStats} />;
       case 'reviews':
         return <AdminReviewsManagement />;
+      case 'notifications':
+        return <AdminNotificationsPage />;
       case 'settings':
-        return <AdminWhatsAppSettings />;
+        return <AdminSettings />;
       default:
-        return <AdminDashboardContentV2 onRefreshStats={refreshStats} />;
+        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={setActiveTab} />;
     }
   };
 

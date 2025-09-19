@@ -23,6 +23,10 @@ const PNHero: React.FC = () => {
 
   const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
   const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
+  
+  // Use hero settings from admin settings
+  const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';
+  const heroSubtitle = settings?.heroSubtitle || 'Beli, jual, dan rental akun game favorit dengan aman, cepat, dan terpercaya';
 
   return (
     <PNSection padding="lg">
@@ -34,8 +38,8 @@ const PNHero: React.FC = () => {
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-fuchsia-600/20 rounded-full blur-3xl" />
           </div>
           <div className="relative z-10 text-center max-w-xl mx-auto">
-            <PNHeading level={1} gradient className="mb-3">Gaming Marketplace #1</PNHeading>
-            <PNText className="mb-6">Beli, jual, dan rental akun game favorit dengan aman, cepat, dan terpercaya</PNText>
+            <PNHeading level={1} gradient className="mb-3">{heroTitle}</PNHeading>
+            <PNText className="mb-6">{heroSubtitle}</PNText>
 
             <div className="space-y-3">
               {/* Top Up Game button */}

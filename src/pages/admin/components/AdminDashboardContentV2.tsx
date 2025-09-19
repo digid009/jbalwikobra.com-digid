@@ -13,9 +13,7 @@ import {
   Bell,
   ArrowUpRight,
   ArrowDownRight,
-  Eye,
   BarChart3,
-  PieChart,
   TrendingUp as TrendingUpIcon,
   Zap
 } from 'lucide-react';
@@ -24,9 +22,11 @@ import { AdminNotification } from '../../../services/adminNotificationService';
 import { prefetchManager } from '../../../services/intelligentPrefetch';
 import { OrderAnalyticsChart } from './OrderAnalyticsChart';
 import { adminService } from '../../../services/adminService';
+import { AdminTab } from './structure/adminTypes';
 
 interface AdminDashboardContentProps {
   onRefreshStats?: () => void;
+  onNavigate?: (tab: AdminTab) => void;
 }
 
 interface DashboardMetrics {
@@ -181,7 +181,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
   );
 };
 
-export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ onRefreshStats }) => {
+export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ onRefreshStats, onNavigate }) => {
   // Raw data from API
   const [dashboardStats, setDashboardStats] = useState<AdminDashboardStats>({
     orders: { count: 0, completed: 0, pending: 0, revenue: 0, completedRevenue: 0 },
@@ -323,28 +323,28 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       title: 'Add Product',
       description: 'Create new product listing',
       icon: Package,
-      onClick: () => window.location.href = '/admin/products',
+      onClick: () => onNavigate?.('products'),
       color: 'blue' as const
     },
     {
       title: 'View Orders',
       description: 'Manage customer orders',
       icon: ShoppingCart,
-      onClick: () => window.location.href = '/admin/orders',
+      onClick: () => onNavigate?.('orders'),
       color: 'green' as const
     },
     {
       title: 'User Management',
       description: 'Manage user accounts',
       icon: Users,
-      onClick: () => window.location.href = '/admin/users',
+      onClick: () => onNavigate?.('users'),
       color: 'purple' as const
     },
     {
-      title: 'Analytics',
-      description: 'View detailed reports',
-      icon: BarChart3,
-      onClick: () => window.location.href = '/admin/analytics',
+      title: 'Flash Sales',
+      description: 'Manage flash sales',
+      icon: Zap,
+      onClick: () => onNavigate?.('flash-sales'),
       color: 'orange' as const
     }
   ];
@@ -450,44 +450,6 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
           {/* Order Analytics Chart */}
           <div className="lg:col-span-2">
             <OrderAnalyticsChart loading={loading} />
-          </div>
-        </div>
-
-        {/* Analytics Preview */}
-        <div className="bg-black border border-gray-800 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-pink-500/10 rounded-lg">
-                <PieChart className="w-5 h-5 text-pink-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Analytics Overview</h3>
-            </div>
-            <button
-              onClick={() => window.location.href = '/admin/analytics'}
-              className="flex items-center space-x-2 text-sm text-pink-400 hover:text-pink-300 transition-colors"
-            >
-              <span>View Details</span>
-              <Eye className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
-              <p className="text-2xl font-bold text-white mb-1">{dashboardMetrics.conversionRate}%</p>
-              <p className="text-sm text-gray-400">Conversion Rate</p>
-            </div>
-            <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
-              <p className="text-2xl font-bold text-white mb-1">
-                Rp {dashboardMetrics.avgOrderValue.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-400">Avg Order Value</p>
-            </div>
-            <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
-              <p className="text-2xl font-bold text-white mb-1">
-                {dashboardMetrics.customerRating > 0 ? `${dashboardMetrics.customerRating.toFixed(1)}/5` : '0/5'}
-              </p>
-              <p className="text-sm text-gray-400">Customer Rating</p>
-            </div>
           </div>
         </div>
       </div>

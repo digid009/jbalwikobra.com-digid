@@ -10,7 +10,7 @@ type NotificationItem = AdminNotification & {
   _reappearCount?: number;
 };
 
-const FloatingNotifications: React.FC = () => {
+const AdminFloatingNotifications: React.FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [dismissedNotifications, setDismissedNotifications] = useState<Map<string, number>>(new Map());
@@ -174,7 +174,7 @@ const FloatingNotifications: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      console.log(`🔄 FloatingNotifications: Marking notification ${notificationId} as read...`);
+      console.log(`🔄 AdminFloatingNotifications: Marking notification ${notificationId} as read...`);
       
       // Clear any existing reappear timer
       const existingTimer = reappearTimersRef.current.get(notificationId);
@@ -195,13 +195,13 @@ const FloatingNotifications: React.FC = () => {
       
       // Make API call to mark as read
       await adminNotificationService.markAsRead(notificationId);
-      console.log(`✅ FloatingNotifications: Successfully marked notification ${notificationId} as read - will not reappear`);
+      console.log(`✅ AdminFloatingNotifications: Successfully marked notification ${notificationId} as read - will not reappear`);
     } catch (error) {
-      console.error('❌ FloatingNotifications: Failed to mark notification as read:', error);
+      console.error('❌ AdminFloatingNotifications: Failed to mark notification as read:', error);
       
       // Re-fetch latest notifications if error occurs to restore state
       try {
-        console.log('🔄 FloatingNotifications: Attempting to restore state after error...');
+        console.log('🔄 AdminFloatingNotifications: Attempting to restore state after error...');
         const latest = await adminNotificationService.getAdminNotifications(5);
         if (latest?.length) {
           const unreadFiltered = latest.filter(n => 
@@ -214,10 +214,10 @@ const FloatingNotifications: React.FC = () => {
             !n.message.toLowerCase().includes('[debug mode]')
           );
           setItems(unreadFiltered.map(n => ({ ...n, _ts: Date.now() })));
-          console.log('✅ FloatingNotifications: State restored after error');
+          console.log('✅ AdminFloatingNotifications: State restored after error');
         }
       } catch (refetchError) {
-        console.error('❌ FloatingNotifications: Failed to refetch notifications:', refetchError);
+        console.error('❌ AdminFloatingNotifications: Failed to refetch notifications:', refetchError);
       }
     }
   };
@@ -427,4 +427,4 @@ const FloatingNotifications: React.FC = () => {
   );
 };
 
-export default FloatingNotifications;
+export default AdminFloatingNotifications;

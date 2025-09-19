@@ -6,7 +6,7 @@ import { supabase } from '../services/supabase';
 
 type NotificationItem = AppNotification & { _ts: number };
 
-const FloatingNotifications: React.FC = () => {
+const UserFloatingNotifications: React.FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const lastSeenRef = useRef<string | null>(null);
@@ -130,4 +130,4 @@ const FloatingNotifications: React.FC = () => {
   );
 };
 
-export default FloatingNotifications;
+export default UserFloatingNotifications;

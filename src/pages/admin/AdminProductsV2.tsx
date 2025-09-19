@@ -249,14 +249,14 @@ const AdminProductsV2: React.FC = () => {
   };
 
   const handleDeleteProduct = async (product: Product) => {
-    if (confirm(`Are you sure you want to archive product: ${product.name}?`)) {
+    if (confirm(`Are you sure you want to permanently delete product: ${product.name}?\n\nThis action cannot be undone.`)) {
       try {
         await adminService.deleteProduct(product.id);
-        push(`Product "${product.name}" has been archived successfully`, 'success');
+        push(`Product "${product.name}" has been deleted successfully`, 'success');
         setCachedResults(new Map()); // Clear cache
         loadProducts(true); // Force reload the products list
       } catch (error: any) {
-        push(`Failed to archive product: ${error.message}`, 'error');
+        push(`Failed to delete product: ${error.message}`, 'error');
       }
     }
   };

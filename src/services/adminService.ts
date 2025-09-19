@@ -331,8 +331,71 @@ class AdminService {
   /** Permanently delete a product by id */
   async deleteProduct(id: string): Promise<boolean> {
     try {
+      if (!supabase) {
+        console.error('[adminService.deleteProduct] Supabase not configured');
+        return false;
+      }
+
+      // First, get the product data to know what images to delete
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('images')
+        .eq('id', id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('[adminService.deleteProduct] Error fetching product:', fetchError);
+        // Continue with deletion even if we can't fetch images
+      }
+
+      // Delete related rental options first
+      const { error: rentalError } = await supabase
+        .from('rental_options')
+        .delete()
+        .eq('product_id', id);
+
+      if (rentalError) {
+        console.warn('[adminService.deleteProduct] Error deleting rental options:', rentalError);
+        // Continue with product deletion even if rental deletion fails
+      }
+
+      // Delete product images from storage if they exist
+      if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+        try {
+          const imagePaths: string[] = [];
+          for (const imageUrl of product.images) {
+            if (typeof imageUrl === 'string') {
+              // Extract path from URL like: https://...supabase.co/storage/v1/object/public/product-images/filename.jpg
+              const pathMatch = imageUrl.match(/\/storage\/v1\/object\/public\/product-images\/(.+)/);
+              if (pathMatch) {
+                imagePaths.push(pathMatch[1]);
+              }
+            }
+          }
+
+          if (imagePaths.length > 0) {
+            const { error: storageError } = await supabase.storage
+              .from('product-images')
+              .remove(imagePaths);
+
+            if (storageError) {
+              console.warn('[adminService.deleteProduct] Error deleting images from storage:', storageError);
+              // Continue with product deletion even if image cleanup fails
+            } else {
+              console.log(`[adminService.deleteProduct] Deleted ${imagePaths.length} images from storage`);
+            }
+          }
+        } catch (imageError) {
+          console.warn('[adminService.deleteProduct] Error processing images:', imageError);
+          // Continue with product deletion
+        }
+      }
+
+      // Finally, delete the product itself
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
+      
+      console.log(`[adminService.deleteProduct] Successfully deleted product ${id} and related data`);
       return true;
     } catch (e) {
       console.error('[adminService.deleteProduct] error', e);

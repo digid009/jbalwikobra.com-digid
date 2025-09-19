@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../../utils/cn';
-import FloatingNotifications from '../FloatingNotifications';
+import AdminFloatingNotifications from '../AdminFloatingNotifications';
 import Footer from '../../../components/Footer';
 
 interface DashboardLayoutProps {
@@ -37,8 +37,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </main>
       {showFooter && (footer ?? <Footer />)}
-      {/* FloatingNotifications - muncul di semua halaman admin */}
-      <FloatingNotifications />
+      {/* AdminFloatingNotifications - muncul di semua halaman admin */}
+      <AdminFloatingNotifications />
     </div>
   );
 };

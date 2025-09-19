@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { AdminStats, AdminNotification, adminService } from '../../../services/adminService';
 import { SettingsService } from '../../../services/settingsService';
+import { supabase } from '../../../services/supabase';
+import { adminNotificationService } from '../../../services/adminNotificationService';
 import { WebsiteSettings } from '../../../types';
 import { AdminTab } from './structure/adminTypes';
 
@@ -40,6 +42,8 @@ const navigationItems: NavigationItem[] = [
   { id: 'banners', label: 'Banners', icon: ImageIcon },
   { id: 'flash-sales', label: 'Flash Sales', icon: Zap },
   { id: 'reviews', label: 'Reviews', icon: Star },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 interface AdminHeaderV2Props {
@@ -129,9 +133,54 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Command palette integration
   const [dispatchOpenEvent] = useState(() => () => {
     window.dispatchEvent(new CustomEvent('open-command-palette'));
   });
+
+  // Mark notification as read
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      // Optimistically update UI
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId ? { ...notif, is_read: true } : notif
+        )
+      );
+      
+      // Make API call
+      await adminNotificationService.markAsRead(notificationId);
+      console.log(`✅ AdminHeaderV2: Successfully marked notification ${notificationId} as read`);
+      
+      // Reload notifications to sync with server state
+      loadNotifications();
+    } catch (error) {
+      console.error('❌ AdminHeaderV2: Failed to mark notification as read:', error);
+      // Reload notifications on error to get correct state
+      loadNotifications();
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllNotificationsAsRead = async () => {
+    try {
+      // Optimistically update UI
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, is_read: true }))
+      );
+      
+      // Make API call
+      await adminNotificationService.markAllAsRead();
+      console.log('✅ AdminHeaderV2: Successfully marked all notifications as read');
+      
+      // Reload notifications to sync with server state
+      loadNotifications();
+    } catch (error) {
+      console.error('❌ AdminHeaderV2: Failed to mark all notifications as read:', error);
+      // Reload notifications on error to get correct state
+      loadNotifications();
+    }
+  };
 
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
@@ -186,8 +235,11 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={() => dispatchOpenEvent()}
+                  onFocus={() => dispatchOpenEvent()}
                   placeholder="Search anything... (Ctrl+K)"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-xl bg-gray-900/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-xl bg-gray-900/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                  readOnly
                 />
               </div>
             </div>
@@ -235,7 +287,8 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                         notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${
+                            onClick={() => markNotificationAsRead(notification.id)}
+                            className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer ${
                               !notification.is_read ? 'bg-pink-500/5' : ''
                             }`}
                           >
@@ -268,10 +321,24 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                         ))
                       )}
                     </div>
-                    <div className="p-3 border-t border-gray-700">
+                    <div className="p-3 border-t border-gray-700 space-y-2">
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAllNotificationsAsRead();
+                          }}
+                          className="w-full text-center text-xs text-pink-400 hover:text-pink-300 transition-colors py-1 px-2 rounded hover:bg-pink-500/10"
+                        >
+                          Mark All as Read ({unreadCount})
+                        </button>
+                      )}
                       <button 
-                        onClick={() => setShowNotifications(false)}
-                        className="w-full text-center text-xs text-pink-400 hover:text-pink-300 transition-colors"
+                        onClick={() => {
+                          setActiveTab('notifications');
+                          setShowNotifications(false);
+                        }}
+                        className="w-full text-center text-xs text-gray-400 hover:text-gray-300 transition-colors py-1"
                       >
                         View All Notifications
                       </button>
@@ -332,7 +399,32 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
               </div>
 
               {/* Logout */}
-              <button className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200">
+              <button 
+                onClick={async () => {
+                  try {
+                    if (window.confirm('Are you sure you want to logout?')) {
+                      // Clear any stored admin sessions
+                      localStorage.removeItem('adminAuth');
+                      localStorage.removeItem('adminSession');
+                      localStorage.removeItem('adminCache');
+                      
+                      // If using Supabase auth
+                      if (supabase?.auth) {
+                        await supabase.auth.signOut();
+                      }
+                      
+                      // Redirect to login or home page
+                      window.location.href = '/';
+                    }
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                    // Force redirect even if auth cleanup fails
+                    window.location.href = '/';
+                  }
+                }}
+                className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200"
+                title="Logout"
+              >
                 <LogOut className="w-5 h-5" />
               </button>
 
@@ -417,8 +509,11 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onClick={() => dispatchOpenEvent()}
+                    onFocus={() => dispatchOpenEvent()}
                     placeholder="Search anything..."
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-700 rounded-xl bg-gray-800/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-700 rounded-xl bg-gray-800/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent cursor-pointer"
+                    readOnly
                   />
                 </div>
               </div>
@@ -432,11 +527,41 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                   <Store className="w-5 h-5" />
                   <span>Back to Store</span>
                 </button>
-                <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white transition-all duration-200">
+                <button
+                  onClick={() => {
+                    setActiveTab('settings');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white transition-all duration-200"
+                >
                   <Settings className="w-5 h-5" />
                   <span>Settings</span>
                 </button>
-                <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200">
+                <button 
+                  onClick={async () => {
+                    try {
+                      if (window.confirm('Are you sure you want to logout?')) {
+                        // Clear any stored admin sessions
+                        localStorage.removeItem('adminAuth');
+                        localStorage.removeItem('adminSession');
+                        localStorage.removeItem('adminCache');
+                        
+                        // If using Supabase auth
+                        if (supabase?.auth) {
+                          await supabase.auth.signOut();
+                        }
+                        
+                        // Redirect to login or home page
+                        window.location.href = '/';
+                      }
+                    } catch (error) {
+                      console.error('Logout error:', error);
+                      // Force redirect even if auth cleanup fails
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200"
+                >
                   <LogOut className="w-5 h-5" />
                   <span>Logout</span>
                 </button>
