@@ -184,7 +184,7 @@ function getStaticFallbackMethods(amount?: number) {
       processing_time: '1-15 menit',
       popular: true,
       min_amount: 10000,
-      max_amount: 50000000
+      max_amount: 500000000 // BCA VA limit: 500 million
     },
     {
       id: 'mandiri',

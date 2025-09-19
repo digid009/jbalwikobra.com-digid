@@ -44,12 +44,21 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     max_amount: 1_000_000,
     popular: true,
   },
-  // Virtual Accounts
-  { id: 'bni', name: 'BNI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BNI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 50_000_000, popular: true },
-  { id: 'bri', name: 'BRI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
-  { id: 'mandiri', name: 'Mandiri VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'MANDIRI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
-  { id: 'bsi', name: 'BSI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BSI', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
-  { id: 'permata', name: 'Permata VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'PERMATA', available: true, processing_time: '1-15 menit', min_amount: 1000, max_amount: 1_000_000_000 },
+  // Virtual Accounts - Using exact Xendit channel codes
+  { id: 'bca', name: 'BCA VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BCA', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 500_000_000, popular: true },
+  { id: 'bni', name: 'BNI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BNI', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 500_000_000, popular: true },
+  { id: 'bri', name: 'BRI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BRI', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 1_000_000_000, popular: true },
+  { id: 'mandiri', name: 'Mandiri VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'MANDIRI', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 500_000_000, popular: true },
+  { id: 'bsi', name: 'BSI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BSI', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 200_000_000, popular: false },
+  { id: 'cimb', name: 'CIMB VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'CIMB', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 500_000_000, popular: false },
+  { id: 'permata', name: 'Permata VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'PERMATA', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 500_000_000, popular: false },
+  { id: 'bjb', name: 'BJB VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BJB', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000, popular: false },
+  { id: 'bca', name: 'BCA VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BCA', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 50_000_000, popular: true },
+  { id: 'bsi', name: 'BSI VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BSI', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000 },
+  { id: 'permata', name: 'Permata VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'PERMATA', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000 },
+  { id: 'cimb', name: 'CIMB Niaga VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'CIMB', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000 },
+  { id: 'bjb', name: 'BJB VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'BJB', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000 },
+  { id: 'muamalat', name: 'Muamalat VA', type: 'VIRTUAL_ACCOUNT', channel_code: 'MUAMALAT', available: true, processing_time: 'Instant', min_amount: 1000, max_amount: 100_000_000 },
   // Over the counter
   { id: 'indomaret', name: 'Indomaret', type: 'OVER_THE_COUNTER', channel_code: 'INDOMARET', available: true, processing_time: 'Instant setelah bayar', min_amount: 10_000, max_amount: 2_500_000, popular: true },
 ];

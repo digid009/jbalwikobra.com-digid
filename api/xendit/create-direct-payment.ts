@@ -110,153 +110,315 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Create Xendit V3 Payment Request payload
-  const xenditChannelCode = getXenditChannelCode(payment_method_id);
+    // Create Xendit Payment Request payload - Use different APIs for different channel types
+    const xenditChannelCode = getXenditChannelCode(payment_method_id);
     
-    // Set expiry to 24 hours from now (Xendit typically accepts this format)
+    // Set expiry to 24 hours from now
     const requestExpiryDate = new Date();
     requestExpiryDate.setHours(requestExpiryDate.getHours() + 24);
     const expiryIsoString = requestExpiryDate.toISOString();
     
-    const paymentRequestPayload = {
-      reference_id: external_id,
-      type: "PAY",
-      country: "ID",
-      currency: currency,
-      request_amount: amount,
-      capture_method: "AUTOMATIC",
-      channel_code: xenditChannelCode,
-      channel_properties: {
-        success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
-        failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
-      },
-      // CRITICAL: Add webhook URL for payment notifications
-      webhook: {
-        url: `${SITE_URL}/api/xendit/webhook`
-      },
-      description: description || `Payment for ${order?.product_name || 'product'}`,
-      // Request expiry date to be included in response
-      expiry_date: expiryIsoString,
-      expires_at: expiryIsoString, // Try both field names
-      expiration_date: expiryIsoString,
-      metadata: {
-        client_external_id: external_id,
-        product_id: order?.product_id || null,
-        user_id: order?.user_id || null,
-        order_type: order?.order_type || 'purchase',
-        customer_name: order?.customer_name || customer?.given_names || null,
-        customer_email: order?.customer_email || customer?.email || null,
-        customer_phone: order?.customer_phone || customer?.mobile_number || null,
-        rental_duration: order?.rental_duration || null,
-        amount: amount.toString(),
-        // Add expiry info to metadata as backup
-        requested_expiry: expiryIsoString
-      }
-    };
+    let apiEndpoint: string;
+    let requestPayload: any;
+    let apiVersion = '2024-11-11';
+
+    // Use different API endpoints based on payment method type
+    if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      // For Virtual Accounts, use the Invoice API which is more reliable and flexible
+      apiEndpoint = `${XENDIT_BASE_URL}/v2/invoices`;
+      apiVersion = '2018-05-15'; // Stable Invoice API version
+      
+      requestPayload = {
+        external_id: external_id,
+        amount: amount,
+        description: description || `Payment for ${order?.product_name || 'product'}`,
+        invoice_duration: 86400, // 24 hours
+        customer: {
+          given_names: order?.customer_name || customer?.given_names || 'Customer',
+          mobile_number: customer?.mobile_number || '+62000000000',
+          email: customer?.email || 'customer@example.com'
+        },
+        payment_methods: [xenditChannelCode], // Specify bank for VA
+        currency: currency,
+        should_send_email: false,
+        success_redirect_url: success_redirect_url || `${SITE_URL}/payment-success?external_id=${external_id}`,
+        failure_redirect_url: failure_redirect_url || `${SITE_URL}/payment-failed?external_id=${external_id}`
+      };
+      
+      console.log('[Xendit Invoice Payment] Using V2 Invoice API for Virtual Account');
+      console.log('[Xendit Invoice Payment] Bank Code being sent:', xenditChannelCode);
+      console.log('[Xendit Invoice Payment] Payment Method ID:', payment_method_id);
+      
+    } else if (paymentChannel.type === 'QRIS' || paymentChannel.type === 'EWALLET') {
+      // QRIS and E-Wallets use the V3 Payment Requests API
+      apiEndpoint = `${XENDIT_BASE_URL}/v3/payment_requests`;
+      
+      requestPayload = {
+        reference_id: external_id,
+        type: "PAY",
+        country: "ID", 
+        currency: currency,
+        request_amount: amount,
+        capture_method: "AUTOMATIC",
+        channel_code: xenditChannelCode,
+        channel_properties: {
+          success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
+          failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
+        },
+        webhook: {
+          url: `${SITE_URL}/api/xendit/webhook`
+        },
+        description: description || `Payment for ${order?.product_name || 'product'}`,
+        expiry_date: expiryIsoString,
+        expires_at: expiryIsoString,
+        metadata: {
+          client_external_id: external_id,
+          product_id: order?.product_id || null,
+          user_id: order?.user_id || null,
+          order_type: order?.order_type || 'purchase',
+          customer_name: order?.customer_name || customer?.given_names || null,
+          customer_email: order?.customer_email || customer?.email || null,
+          customer_phone: order?.customer_phone || customer?.mobile_number || null,
+          rental_duration: order?.rental_duration || null,
+          amount: amount.toString(),
+          requested_expiry: expiryIsoString
+        }
+      };
+      
+      console.log('[Xendit V3 Payment] Using V3 Payment Requests API for QRIS/E-Wallet');
+      
+    } else if (paymentChannel.type === 'OVER_THE_COUNTER') {
+      // Over-the-counter payments use V2 API
+      apiEndpoint = `${XENDIT_BASE_URL}/v2/payment_requests`;
+      apiVersion = '2022-07-31';
+      
+      requestPayload = {
+        reference_id: external_id,
+        amount: amount,
+        currency: currency,
+        channel_code: xenditChannelCode,
+        channel_properties: {
+          customer_name: order?.customer_name || customer?.given_names || 'Customer',
+          success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
+          failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
+        },
+        webhook: {
+          url: `${SITE_URL}/api/xendit/webhook`
+        },
+        description: description || `Payment for ${order?.product_name || 'product'}`,
+        expires_at: expiryIsoString,
+        metadata: {
+          client_external_id: external_id,
+          product_id: order?.product_id || null,
+          user_id: order?.user_id || null,
+          order_type: order?.order_type || 'purchase',
+          customer_name: order?.customer_name || customer?.given_names || null,
+          customer_email: order?.customer_email || customer?.email || null,
+          customer_phone: order?.customer_phone || customer?.mobile_number || null,
+          rental_duration: order?.rental_duration || null,
+          amount: amount.toString(),
+          requested_expiry: expiryIsoString
+        }
+      };
+      
+      console.log('[Xendit OTC Payment] Using V2 Payment Requests API for Over-the-Counter');
+      
+    } else {
+      // Fallback to V3 API for other payment types
+      apiEndpoint = `${XENDIT_BASE_URL}/v3/payment_requests`;
+      
+      requestPayload = {
+        reference_id: external_id,
+        type: "PAY",
+        country: "ID",
+        currency: currency,
+        request_amount: amount,
+        capture_method: "AUTOMATIC",
+        channel_code: xenditChannelCode,
+        channel_properties: {
+          success_return_url: success_redirect_url || `${SITE_URL}/payment-status?status=success`,
+          failure_return_url: failure_redirect_url || `${SITE_URL}/payment-status?status=failed`
+        },
+        webhook: {
+          url: `${SITE_URL}/api/xendit/webhook`
+        },
+        description: description || `Payment for ${order?.product_name || 'product'}`,
+        expiry_date: expiryIsoString,
+        metadata: {
+          client_external_id: external_id,
+          product_id: order?.product_id || null,
+          user_id: order?.user_id || null,
+          order_type: order?.order_type || 'purchase',
+          customer_name: order?.customer_name || customer?.given_names || null,
+          customer_email: order?.customer_email || customer?.email || null,
+          customer_phone: order?.customer_phone || customer?.mobile_number || null,
+          rental_duration: order?.rental_duration || null,
+          amount: amount.toString(),
+          requested_expiry: expiryIsoString
+        }
+      };
+      
+      console.log('[Xendit Payment] Using V3 Payment Requests API (fallback)');
+    }
 
     // Create order record if order data provided
     const createdOrder = await createOrderRecord(order, external_id, payment_method_id);
 
-    console.log('[Xendit V3 Payment] Making request to:', `${XENDIT_BASE_URL}/v3/payment_requests`);
-    console.log('[Xendit V3 Payment] Payload:', JSON.stringify(paymentRequestPayload, null, 2));
+    console.log('[Xendit Payment] Making request to:', apiEndpoint);
+    console.log('[Xendit Payment] Channel type:', paymentChannel.type);
+    console.log('[Xendit Payment] Channel code:', xenditChannelCode);
+    console.log('[Xendit Payment] Payload:', JSON.stringify(requestPayload, null, 2));
 
     // Prepare headers with required API version and idempotency
     const headers: Record<string, string> = {
       'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
       'Content-Type': 'application/json',
-      // Use the latest supported API version for Xendit Payment Requests V3
-      'api-version': '2024-11-11',
+      'api-version': apiVersion,
     };
     if (external_id) headers['x-idempotency-key'] = String(external_id);
 
     // Log headers safely (exclude Authorization)
     const { Authorization: _hidden, ...safeHeaders } = headers as any;
-    console.log('[Xendit V3 Payment] Headers being sent:', JSON.stringify(safeHeaders, null, 2));
-    console.log('[Xendit V3 Payment] Full URL:', `${XENDIT_BASE_URL}/v3/payment_requests`);
+    console.log('[Xendit Payment] Headers being sent:', JSON.stringify(safeHeaders, null, 2));
+    console.log('[Xendit Payment] Full URL:', apiEndpoint);
 
-    // Make request to Xendit V3 API
-    const response = await fetch(`${XENDIT_BASE_URL}/v3/payment_requests`, {
+    // Make request to Xendit API
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify(paymentRequestPayload)
+      body: JSON.stringify(requestPayload)
     });
 
     const responseData = await response.json();
-    console.log('[Xendit V3 Payment] Response status:', response.status);
-    console.log('[Xendit V3 Payment] Response data:', JSON.stringify(responseData, null, 2));
+    console.log('[Xendit Payment] Response status:', response.status);
+    console.log('[Xendit Payment] Complete response data:', JSON.stringify(responseData, null, 2));
+    console.log('[Xendit Payment] API endpoint used:', apiEndpoint);
+    console.log('[Xendit Payment] Payment channel type:', paymentChannel.type);
 
     if (!response.ok) {
-      console.error('[Xendit V3 Payment] API Error:', responseData);
-      return res.status(response.status).json({ 
-        error: responseData.message || 'Payment creation failed',
+      console.error('[Xendit Payment] API Error:', responseData);
+      
+      // Handle specific Xendit error cases
+      let userFriendlyMessage = responseData.message || 'Payment creation failed';
+      let suggestions = [];
+      
+      if (responseData.error_code === 'NOT_FOUND' || responseData.message?.includes('not found')) {
+        userFriendlyMessage = `Payment method ${paymentChannel.name} is currently not available`;
+        suggestions.push('Please try a different payment method');
+        
+        // Suggest alternative payment methods
+        const availableChannels = getActivatedPaymentChannels()
+          .filter(c => c.id !== payment_method_id)
+          .slice(0, 3)
+          .map(c => c.name);
+        
+        if (availableChannels.length > 0) {
+          suggestions.push(`Available alternatives: ${availableChannels.join(', ')}`);
+        }
+      }
+      
+      return res.status(400).json({ 
+        error: userFriendlyMessage,
+        suggestions: suggestions,
         details: responseData,
+        available_methods: getActivatedPaymentChannels().map(c => ({
+          id: c.id,
+          name: c.name,
+          type: c.type
+        })),
         debug_info: {
-          endpoint: `${XENDIT_BASE_URL}/v3/payment_requests`,
+          endpoint: apiEndpoint,
           payment_method: payment_method_id,
           channel_code: xenditChannelCode,
-          payload: paymentRequestPayload
+          channel_type: paymentChannel.type,
+          api_version: apiVersion,
+          original_error: responseData.error_code || responseData.message
         }
       });
     }
 
-    // Format V3 API response
-    let formattedResponse: any = {
-      id: responseData.payment_request_id || responseData.id,
-      external_id: responseData.reference_id || responseData.external_id,
-      amount: responseData.request_amount || responseData.amount,
-      currency: responseData.currency,
-      status: responseData.status,
-      payment_method: payment_method_id,
-      payment_request_id: responseData.payment_request_id,
-      actions: responseData.actions || []
-    };
+    // Format API response - handle Virtual Account API format
+    let formattedResponse: any;
+    
+    if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      // Virtual Account API has immediate VA number in response
+      formattedResponse = {
+        id: responseData.id,
+        external_id: responseData.external_id,
+        amount: responseData.expected_amount || amount,
+        currency: currency,
+        status: responseData.status,
+        payment_method: payment_method_id,
+        virtual_account_number: responseData.account_number,
+        bank_name: paymentChannel.name,
+        bank_code: responseData.bank_code,
+        account_holder_name: responseData.name,
+        transfer_amount: responseData.expected_amount || amount,
+        expiry_date: responseData.expiration_date,
+        actions: []
+      };
+      
+      console.log('[Xendit VA Payment] ✅ Virtual Account created successfully:');
+      console.log('[Xendit VA Payment] - VA ID:', responseData.id);
+      console.log('[Xendit VA Payment] - Status:', responseData.status);
+      console.log('[Xendit VA Payment] - VA Number:', responseData.account_number);
+      console.log('[Xendit VA Payment] - Bank Code:', responseData.bank_code);
+      console.log('[Xendit VA Payment] - Expected Amount:', responseData.expected_amount);
+    } else {
+      // Payment Request API format for other payment types
+      formattedResponse = {
+        id: responseData.payment_request_id || responseData.id,
+        external_id: responseData.reference_id || responseData.external_id,
+        amount: responseData.request_amount || responseData.amount,
+        currency: responseData.currency,
+        status: responseData.status,
+        payment_method: payment_method_id,
+        payment_request_id: responseData.payment_request_id || responseData.id,
+        actions: responseData.actions || []
+      };
+    }
 
-    // Handle expiry date - Xendit V3 uses different field names
+    // Handle expiry date - different API versions use different field names
     let expiryDate = null;
     
-    // Log the complete response structure for debugging
-    console.log('[Xendit V3 Payment] Complete API response structure:');
-    console.log('[Xendit V3 Payment] All response fields:', Object.keys(responseData));
-    console.log('[Xendit V3 Payment] Full response data:', JSON.stringify(responseData, null, 2));
-    
-    // Try various field names that Xendit might use
-    const possibleExpiryFields = [
-      'expiry_date', 'expires_at', 'expired_at', 'expires', 'expiration_date',
-      'capture_expiry_date', 'payment_expiry_date', 'expiry', 'expire_at',
-      'expire_date', 'valid_until', 'due_date', 'timeout', 'ttl'
-    ];
-    
-    console.log('[Xendit V3 Payment] Checking for expiry fields:', possibleExpiryFields);
-    
-    for (const field of possibleExpiryFields) {
-      if (responseData[field]) {
-        expiryDate = responseData[field];
-        console.log(`[Xendit V3 Payment] ✅ Found expiry in field '${field}':`, expiryDate);
-        break;
-      } else {
-        console.log(`[Xendit V3 Payment] ❌ Field '${field}' not found or null`);
-      }
-    }
-    
-    // Check nested objects for expiry fields
-    if (!expiryDate && responseData.actions) {
-      console.log('[Xendit V3 Payment] Checking actions array for expiry fields...');
-      responseData.actions.forEach((action: any, index: number) => {
-        console.log(`[Xendit V3 Payment] Action ${index} fields:`, Object.keys(action));
-        for (const field of possibleExpiryFields) {
-          if (action[field]) {
-            expiryDate = action[field];
-            console.log(`[Xendit V3 Payment] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
-            break;
-          }
+    if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      // Invoice API uses expiry_date field
+      expiryDate = responseData.expiry_date;
+      console.log('[Xendit VA Payment] Invoice API expiry date:', expiryDate);
+    } else {
+      // Payment Request API - try various field names
+      const possibleExpiryFields = [
+        'expiry_date', 'expires_at', 'expired_at', 'expires', 'expiration_date',
+        'capture_expiry_date', 'payment_expiry_date', 'expiry', 'expire_at',
+        'expire_date', 'valid_until', 'due_date', 'timeout', 'ttl'
+      ];
+      
+      for (const field of possibleExpiryFields) {
+        if (responseData[field]) {
+          expiryDate = responseData[field];
+          console.log(`[Xendit Payment] ✅ Found expiry in field '${field}':`, expiryDate);
+          break;
         }
-      });
+      }
+      
+      // Check nested objects for expiry fields (V3 API)
+      if (!expiryDate && responseData.actions) {
+        responseData.actions.forEach((action: any, index: number) => {
+          for (const field of possibleExpiryFields) {
+            if (action[field]) {
+              expiryDate = action[field];
+              console.log(`[Xendit Payment] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
+              break;
+            }
+          }
+        });
+      }
     }
     
     // Check metadata for backup expiry
     if (!expiryDate && responseData.metadata?.requested_expiry) {
       expiryDate = responseData.metadata.requested_expiry;
-      console.log('[Xendit V3 Payment] ✅ Using metadata.requested_expiry as fallback:', expiryDate);
+      console.log('[Xendit Payment] ✅ Using metadata.requested_expiry as fallback:', expiryDate);
     }
     
     if (!expiryDate) {
@@ -264,14 +426,73 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const defaultExpiry = new Date();
       defaultExpiry.setHours(defaultExpiry.getHours() + 24);
       expiryDate = defaultExpiry.toISOString();
-      console.log('[Xendit V3 Payment] ⚠️ No expiry from API, using default 24h expiry:', expiryDate);
-      console.log('[Xendit V3 Payment] 📋 Available response fields for debugging:', Object.keys(responseData));
+      console.log('[Xendit Payment] ⚠️ No expiry from API, using default 24h expiry:', expiryDate);
+      console.log('[Xendit Payment] 📋 Available response fields for debugging:', Object.keys(responseData));
     }
     
     formattedResponse.expiry_date = expiryDate;
 
-    // Handle different action types from V3 API
-    if (responseData.actions && responseData.actions.length > 0) {
+    // Handle Virtual Account specific processing
+    if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      // Update response with Invoice API format for Virtual Accounts
+      formattedResponse.invoice_url = responseData.invoice_url;
+      formattedResponse.expiry_date = responseData.expiry_date;
+      formattedResponse.bank_name = paymentChannel.name;
+      formattedResponse.bank_code = xenditChannelCode;
+      formattedResponse.available_banks = responseData.available_banks || [];
+      formattedResponse.available_virtual_account_banks = responseData.available_virtual_account_banks || [];
+      
+      console.log('[Xendit Invoice Payment] ✅ Invoice created successfully for Virtual Account:');
+      console.log('[Xendit Invoice Payment] - Invoice ID:', responseData.id);
+      console.log('[Xendit Invoice Payment] - Status:', responseData.status);
+      console.log('[Xendit Invoice Payment] - Invoice URL:', responseData.invoice_url);
+      console.log('[Xendit Invoice Payment] - Available Banks:', responseData.available_banks?.length || 0);
+      console.log('[Xendit Invoice Payment] - Available VA Banks:', responseData.available_virtual_account_banks?.length || 0);
+      
+      // Try to extract Virtual Account details from available banks
+      if (responseData.available_banks && responseData.available_banks.length > 0) {
+        const targetBank = responseData.available_banks.find((bank: any) => 
+          bank.bank_code === xenditChannelCode || bank.bank_code === xenditChannelCode.toUpperCase()
+        ) || responseData.available_banks[0];
+        
+        if (targetBank) {
+          formattedResponse.virtual_account_number = targetBank.virtual_account_number || targetBank.account_number;
+          formattedResponse.bank_code = targetBank.bank_code;
+          formattedResponse.bank_name = targetBank.bank_name || paymentChannel.name;
+          formattedResponse.account_holder_name = targetBank.account_holder_name;
+          formattedResponse.transfer_amount = targetBank.transfer_amount || amount;
+          
+          console.log('[Xendit Invoice Payment] ✅ Bank details found:');
+          console.log('[Xendit Invoice Payment] - VA Number:', targetBank.virtual_account_number || targetBank.account_number);
+          console.log('[Xendit Invoice Payment] - Bank Code:', targetBank.bank_code);
+          console.log('[Xendit Invoice Payment] - Account Holder:', targetBank.account_holder_name);
+        }
+      }
+      
+      // Try alternative VA bank extraction if available
+      if (!formattedResponse.virtual_account_number && responseData.available_virtual_account_banks && responseData.available_virtual_account_banks.length > 0) {
+        const targetBank = responseData.available_virtual_account_banks.find((bank: any) => 
+          bank.bank_code === xenditChannelCode || bank.bank_code === xenditChannelCode.toUpperCase()
+        ) || responseData.available_virtual_account_banks[0];
+        
+        if (targetBank && targetBank.virtual_account_number) {
+          formattedResponse.virtual_account_number = targetBank.virtual_account_number;
+          formattedResponse.bank_code = targetBank.bank_code;
+          formattedResponse.bank_name = targetBank.bank_name || paymentChannel.name;
+          
+          console.log('[Xendit Invoice Payment] ✅ VA Bank details extracted:');
+          console.log('[Xendit Invoice Payment] - VA Number:', targetBank.virtual_account_number);
+          console.log('[Xendit Invoice Payment] - Bank Code:', targetBank.bank_code);
+        }
+      }
+      
+      // Always include invoice URL as fallback payment method
+      formattedResponse.payment_url = responseData.invoice_url;
+      
+      console.log('[Xendit Invoice Payment] ✅ Invoice processing complete');
+      
+    } else if (responseData.actions && responseData.actions.length > 0) {
+      // V3 API action-based response format (QRIS, E-Wallets)
       const primaryAction = responseData.actions[0];
       
       if (primaryAction.type === 'REDIRECT_CUSTOMER') {
@@ -284,6 +505,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         formattedResponse.qr_string = primaryAction.value; // PaymentInterface expects qr_string
         formattedResponse.qr_code = primaryAction.value;   // Keep for backward compatibility
       }
+      console.log('[Xendit V3 Payment] Action-based payment details extracted');
+      
+    } else if (responseData.payment_url) {
+      // Direct payment URL (fallback)
+      formattedResponse.payment_url = responseData.payment_url;
+      console.log('[Xendit Payment] Direct payment URL extracted');
     }
 
     // Store payment data in database for later retrieval
@@ -292,24 +519,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send payment link WhatsApp notification
     await sendPaymentLinkNotification(formattedResponse, order);
 
-    console.log('[Xendit V3 Payment] Success:', {
+    console.log('[Xendit Payment] Success:', {
       payment_method_id,
+      channel_type: paymentChannel.type,
       external_id,
       amount,
       status: formattedResponse.status,
-      payment_request_id: formattedResponse.payment_request_id
+      payment_request_id: formattedResponse.payment_request_id,
+      api_endpoint: apiEndpoint,
+      api_version: apiVersion
     });
 
     return res.status(200).json(formattedResponse);
 
   } catch (error) {
-    console.error('[Xendit V3 Payment] Error:', error);
+    console.error('[Xendit Payment] Error:', error);
     
     // Enhanced error logging
     if (error instanceof Error) {
-      console.error('[Xendit V3 Payment] Error name:', error.name);
-      console.error('[Xendit V3 Payment] Error message:', error.message);
-      console.error('[Xendit V3 Payment] Error stack:', error.stack);
+      console.error('[Xendit Payment] Error name:', error.name);
+      console.error('[Xendit Payment] Error message:', error.message);
+      console.error('[Xendit Payment] Error stack:', error.stack);
     }
     
     return res.status(500).json({ 
@@ -320,10 +550,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-// Store payment data for later retrieval (V3 API compatible)
+// Store payment data for later retrieval (Multi-API compatible)
 async function storePaymentData(paymentData: any, paymentMethodId: string, order: any) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.log('[Store Payment V3] Skipping payment storage - missing Supabase config');
+    console.log('[Store Payment] Skipping payment storage - missing Supabase config');
     return;
   }
 
@@ -331,21 +561,28 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Store V3 API specific data as JSON
+    // Store payment data as JSON - compatible with both V2 and V3 APIs
     const paymentSpecificData: any = {};
     
-    // V3 API response fields
+    // Universal fields (both V2 and V3)
     if (paymentData.payment_request_id) paymentSpecificData.payment_request_id = paymentData.payment_request_id;
+    if (paymentData.payment_url) paymentSpecificData.payment_url = paymentData.payment_url;
+    
+    // V3 API specific fields
     if (paymentData.actions) paymentSpecificData.actions = paymentData.actions;
     if (paymentData.action_type) paymentSpecificData.action_type = paymentData.action_type;
-    if (paymentData.payment_url) paymentSpecificData.payment_url = paymentData.payment_url;
     if (paymentData.redirect_url) paymentSpecificData.redirect_url = paymentData.redirect_url;
     if (paymentData.qr_code) paymentSpecificData.qr_code = paymentData.qr_code;
-    
-    // Legacy fields for backward compatibility
     if (paymentData.qr_string) paymentSpecificData.qr_string = paymentData.qr_string;
+    
+    // V2 API specific fields (Virtual Accounts)
     if (paymentData.account_number) paymentSpecificData.account_number = paymentData.account_number;
+    if (paymentData.virtual_account_number) paymentSpecificData.virtual_account_number = paymentData.virtual_account_number;
     if (paymentData.bank_code) paymentSpecificData.bank_code = paymentData.bank_code;
+    if (paymentData.bank_name) paymentSpecificData.bank_name = paymentData.bank_name;
+    if (paymentData.invoice_url) paymentSpecificData.invoice_url = paymentData.invoice_url;
+    if (paymentData.account_holder_name) paymentSpecificData.account_holder_name = paymentData.account_holder_name;
+    if (paymentData.transfer_amount) paymentSpecificData.transfer_amount = paymentData.transfer_amount;
 
     // Ensure we always have an expiry date with comprehensive field checking
     let expiryDate = null;

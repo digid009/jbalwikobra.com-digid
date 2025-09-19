@@ -52,8 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Payment method specific data (stored as JSON)
         qr_string: paymentData.payment_data?.qr_string,
         qr_url: paymentData.payment_data?.qr_url,
+        
+        // Virtual Account data - support both field name formats
+        virtual_account_number: paymentData.payment_data?.virtual_account_number || paymentData.payment_data?.account_number,
         account_number: paymentData.payment_data?.account_number,
         bank_code: paymentData.payment_data?.bank_code,
+        bank_name: paymentData.payment_data?.bank_name,
+        invoice_url: paymentData.payment_data?.invoice_url,
+        account_holder_name: paymentData.payment_data?.account_holder_name,
+        transfer_amount: paymentData.payment_data?.transfer_amount,
+        
+        // Other payment data
         payment_url: paymentData.payment_data?.payment_url,
         action_type: paymentData.payment_data?.action_type,
         payment_code: paymentData.payment_data?.payment_code,

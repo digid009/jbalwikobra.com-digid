@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Clock, CreditCard, ArrowLeft, QrCode, Shield, Smartphone, CheckCircle, AlertTriangle, Zap, Star } from 'lucide-react';
+import { Clock, CreditCard, ArrowLeft, QrCode, Shield, Smartphone, CheckCircle, AlertTriangle, Zap, Star, Building2, Copy, Camera } from 'lucide-react';
 import { PNContainer, PNCard, PNHeading, PNText, PNButton, PNSection, PNSectionHeader } from '../components/ui/PinkNeonDesignSystem';
 import QRCode from 'react-qr-code';
 
@@ -21,6 +21,10 @@ interface PaymentData {
   expiry_date?: string;
   qr_string?: string;
   description?: string;
+  virtual_account_number?: string;
+  bank_code?: string;
+  bank_name?: string;
+  invoice_url?: string;
 }
 
 const PaymentInterface: React.FC = () => {
@@ -484,6 +488,118 @@ const PaymentInterface: React.FC = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            </PNCard>
+          </PNSection>
+        )}
+
+        {/* Virtual Account Section */}
+        {(paymentData.virtual_account_number || paymentData.invoice_url) && (
+          <PNSection padding="md">
+            <PNCard className="p-8 relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
+              
+              <div className="relative">
+                {/* Section Header */}
+                <div className="text-center mb-8">
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl">
+                      <Building2 className="text-white" size={28} />
+                    </div>
+                    <div className="text-left">
+                      <PNHeading level={2} gradient>Transfer Bank Virtual Account</PNHeading>
+                      <PNText color="muted" className="text-sm">Transfer ke nomor virtual account {paymentData.bank_name || paymentData.bank_code}</PNText>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Virtual Account Details or Invoice Link */}
+                {paymentData.virtual_account_number ? (
+                  <div className="space-y-6 mb-8">
+                    {/* Bank Information */}
+                    <div className="text-center p-6 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl border border-blue-500/20">
+                      <PNText className="text-sm text-gray-400 mb-2">Bank</PNText>
+                      <PNHeading level={3} className="text-2xl font-bold">
+                        {paymentData.bank_name || `Bank ${paymentData.bank_code?.toUpperCase()}`}
+                      </PNHeading>
+                    </div>
+
+                    {/* Virtual Account Number */}
+                    <div className="text-center p-6 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl border border-green-500/20">
+                      <PNText className="text-sm text-gray-400 mb-2">Nomor Virtual Account</PNText>
+                      <div className="font-mono text-2xl lg:text-3xl font-bold text-white tracking-wider bg-gray-800/50 px-4 py-3 rounded-xl border border-gray-600/50">
+                        {paymentData.virtual_account_number}
+                      </div>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(paymentData.virtual_account_number)}
+                        className="mt-3 inline-flex items-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors"
+                      >
+                        <Copy size={16} />
+                        <span>Salin Nomor</span>
+                      </button>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-center p-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl border border-purple-500/20">
+                      <PNText className="text-sm text-gray-400 mb-2">Jumlah Transfer</PNText>
+                      <PNHeading level={3} className="text-2xl font-bold text-purple-300">
+                        {formatCurrency(paymentData.amount)}
+                      </PNHeading>
+                    </div>
+                  </div>
+                ) : (
+                  /* Invoice URL as fallback */
+                  <div className="space-y-6 mb-8">
+                    <div className="text-center p-6 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-2xl border border-indigo-500/20">
+                      <PNHeading level={3} className="text-xl mb-4">
+                        Klik tombol di bawah untuk melihat detail Virtual Account
+                      </PNHeading>
+                      <PNButton
+                        onClick={() => window.open(paymentData.invoice_url, '_blank')}
+                        className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-semibold"
+                      >
+                        Lihat Detail Pembayaran
+                      </PNButton>
+                      <PNText color="muted" className="text-sm mt-3">
+                        Halaman ini akan menampilkan nomor Virtual Account yang dapat Anda gunakan untuk transfer
+                      </PNText>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Steps */}
+                <div className="space-y-4">
+                  <PNHeading level={3} className="text-center mb-6">Cara Transfer Virtual Account</PNHeading>
+                  <div className="grid gap-4">
+                    {[
+                      { icon: Smartphone, text: "Buka aplikasi mobile banking atau ATM" },
+                      { icon: Building2, text: "Pilih menu Transfer > Virtual Account / Rekening Ponsel" },
+                      { icon: Copy, text: paymentData.virtual_account_number ? `Masukkan nomor VA: ${paymentData.virtual_account_number}` : "Masukkan nomor Virtual Account (lihat detail pembayaran)" },
+                      { icon: CreditCard, text: `Transfer sejumlah: ${formatCurrency(paymentData.amount)}` },
+                      { icon: CheckCircle, text: "Konfirmasi transfer dan selesai!" }
+                    ].map((step, index) => (
+                      <div key={index} className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-2xl border border-gray-600/50">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white text-sm font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex items-center space-x-3 flex-1">
+                          <step.icon size={20} className="text-blue-400 flex-shrink-0" />
+                          <PNText className="text-sm leading-relaxed">{step.text}</PNText>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expiry Information */}
+                {paymentData.expiry_date && (
+                  <div className="mt-6 text-center p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-2xl border border-yellow-500/20">
+                    <PNText color="muted" className="text-sm">
+                      Virtual Account berlaku hingga: <span className="font-semibold text-yellow-300">{new Date(paymentData.expiry_date).toLocaleString('id-ID')}</span>
+                    </PNText>
+                  </div>
+                )}
               </div>
             </PNCard>
           </PNSection>

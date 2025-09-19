@@ -77,7 +77,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'BJB',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 500000000, // BJB VA limit: 500 million
     processingTime: '1-15 menit'
   },
   bni: {
@@ -87,7 +87,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'BNI',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 500000000, // BNI VA limit: 500 million
     processingTime: '1-15 menit',
     popular: true
   },
@@ -98,7 +98,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'BRI',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 1000000000, // BRI VA limit: 1 billion (already correct)
     processingTime: '1-15 menit'
   },
   bsi: {
@@ -108,7 +108,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'BSI',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 1000000000, // BSI VA limit: 1 billion (already correct)
     processingTime: '1-15 menit'
   },
   cimb: {
@@ -118,7 +118,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'CIMB',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 500000000, // CIMB VA limit: 500 million
     processingTime: '1-15 menit'
   },
   mandiri: {
@@ -128,7 +128,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'MANDIRI',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 1000000000, // Mandiri VA limit: 1 billion (already correct)
     processingTime: '1-15 menit',
     popular: true
   },
@@ -139,7 +139,7 @@ export const PAYMENT_METHOD_CONFIGS: Record<string, PaymentMethodConfig> = {
     xenditCode: 'PERMATA',
     apiEndpoint: '/payment_requests',
     minAmount: 10000,
-    maxAmount: 50000000,
+    maxAmount: 1000000000, // Permata VA limit: 1 billion (already correct)
     processingTime: '1-15 menit'
   },
 
