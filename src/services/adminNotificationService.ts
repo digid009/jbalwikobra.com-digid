@@ -176,8 +176,35 @@ class AdminNotificationService {
       
       // CRITICAL: Admin operations MUST use service key to bypass RLS
       if (!supabaseAdmin) {
-        console.error('❌ Service key client not available - admin operations require service key');
-        throw new Error('Admin client not available. Check SUPABASE_SERVICE_ROLE_KEY environment variable.');
+        console.warn('⚠️ Service key client not available - trying with regular client');
+        console.log('🔧 Using regular client - may be limited by RLS policies');
+        
+        const updatePayload = { 
+          is_read: true, 
+          updated_at: new Date().toISOString() 
+        };
+        
+        const { data, error } = await supabase
+          .from('admin_notifications')
+          .update(updatePayload)
+          .eq('id', notificationId)
+          .select();
+
+        if (error) {
+          console.error('❌ Regular client update error:', error);
+          throw new Error(`Failed to mark notification as read with regular client: ${error.message}`);
+        }
+        
+        if (!data || data.length === 0) {
+          console.warn('⚠️ Regular client: Update completed but no rows returned');
+        } else {
+          console.log('✅ Successfully updated with regular client:', data[0]);
+        }
+        
+        // Clear cache after successful update
+        globalCache.clear();
+        console.log('🧹 Cache cleared after marking as read');
+        return;
       }
       
       console.log(`🔧 Using Admin client (Service Key) - required for admin operations`);

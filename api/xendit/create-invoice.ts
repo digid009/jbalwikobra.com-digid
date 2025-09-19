@@ -27,20 +27,45 @@ const ACTIVATED_PAYMENT_METHODS = [
 // Simple admin notification function for serverless environment
 async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'new_order', customerPhone?: string) {
   try {
+    const titles = {
+      new_order: 'Bang! ada yang ORDER nih!',
+      paid_order: 'Bang! ALHAMDULILLAH udah di bayar nih',
+      order_cancelled: 'Bang! ada yang CANCEL order nih!'
+    };
+
+    const formatAmount = (amount: number) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+
+    const messages = {
+      new_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, belum di bayar sih, tapi moga aja di bayar amin.`,
+      paid_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, udah di bayar Alhamdulillah.`,
+      order_cancelled: `namanya ${customerName}, produktnya ${productName} di cancel nih.`
+    };
+
     const notification = {
-      title: 'New Order Received',
-      message: `${customerName} placed an order for ${productName}`,
       type,
+      title: titles[type] || 'New Order Received',
+      message: messages[type] || `${customerName} placed an order for ${productName}`,
+      order_id: orderId,
+      customer_name: customerName,
+      product_name: productName,
+      amount,
+      is_read: false,
       metadata: {
-        order_id: orderId,
-        customer_name: customerName,
-        product_name: productName,
-        amount,
+        priority: type === 'paid_order' ? 'high' : 'normal',
+        category: 'order',
         customer_phone: customerPhone
       },
-      is_read: false,
       created_at: new Date().toISOString()
     };
+
+    console.log('[Admin] Creating notification with payload:', notification);
 
     const { error } = await sb
       .from('admin_notifications')
@@ -48,9 +73,13 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
 
     if (error) {
       console.error('[Admin] Notification insert error:', error);
+      throw error;
+    } else {
+      console.log('[Admin] Notification created successfully');
     }
   } catch (error) {
     console.error('[Admin] Notification creation failed:', error);
+    throw error; // Re-throw to handle it in the calling function
   }
 }
 

@@ -388,218 +388,67 @@ export const PaymentMethods = React.memo(({
   }
 
   function renderPaymentMethods() {
-    if (!showSelection) {
-      // Display only mode - show grouped payment methods
+    // Render popular methods section
+    const renderPopularMethods = () => {
+      if (popularMethods.length === 0) return null;
+      
       return (
-        <PNCard className="space-y-4 p-3 sm:p-5 bg-black border border-white/10">
-          <div className="flex items-center space-x-2 mb-4 flex-wrap">
-            <CreditCard className="text-pink-400" size={20} />
-            <PNHeading level={3} className="!mb-0 flex-1 min-w-0">Metode Pembayaran Tersedia</PNHeading>
-            {source !== 'xendit_api' && (
-              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full flex-shrink-0">
-                {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Mode Offline'}
-              </span>
-            )}
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 mb-3">
+            <Star className="text-pink-400" size={16} />
+            <PNText className="font-medium text-pink-400">Metode Populer</PNText>
           </div>
-
-          {/* Popular Methods Section */}
-          {popularMethods.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center space-x-2 mb-3">
-                <Star className="text-pink-400" size={16} />
-                <PNText className="font-medium text-pink-400">Metode Populer</PNText>
-              </div>
-              <div className="grid grid-cols-1 gap-2">
-                {popularMethods.map((method) => {
-                  const isSelected = selectedMethod === method.id;
-                  return (
-                    <button
-                      type="button"
-                      key={method.id}
-                      onClick={() => onMethodSelect?.(method.id)}
-                      className={`flex items-center space-x-3 p-3 rounded-lg backdrop-blur-sm transition-all ${
-                        isSelected 
-                          ? 'bg-pink-500/20 border-2 border-pink-400' 
-                          : 'bg-pink-500/10 border border-pink-500/30 hover:bg-pink-500/15'
-                      }`}
-                    >
-                      {method.icon}
-                      <div className="flex-1 min-w-0 text-left">
-                        <PNText className="font-medium text-sm truncate">{method.name}</PNText>
-                        <PNText className="text-xs text-gray-400 truncate">{method.description}</PNText>
-                      </div>
-                      {isSelected && <Check size={16} className="text-pink-400 flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Payment Method Validation Error */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="text-red-400" size={16} />
-                <PNText className="text-red-400 text-sm">{error}</PNText>
-              </div>
-            </div>
-          )}
-
-          {/* Grouped Methods */}
-          {!showAllMethods ? (
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={toggleShowAllMethods}
-                className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors flex items-center justify-center space-x-2"
-              >
-                <CreditCard className="text-pink-400" size={20} />
-                <PNText className="font-medium">Lihat metode pembayaran lainnya</PNText>
-                <ChevronDown className="text-gray-400" size={20} />
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {groupedMethods.map((group) => (
-                <div key={group.type} className="border border-white/10 rounded-xl overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group.type)}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      {getGroupIcon(group.icon)}
-                      <div className="text-left flex-1 min-w-0">
-                        <PNText className="font-medium text-sm truncate">{group.name}</PNText>
-                        <PNText className="text-xs text-gray-400 truncate">{group.description}</PNText>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
-                        {group.methods.length} metode
-                      </span>
-                      {expandedGroups.has(group.type) ? (
-                        <ChevronUp className="text-gray-400" size={20} />
-                      ) : (
-                        <ChevronDown className="text-gray-400" size={20} />
-                      )}
-                    </div>
-                  </button>
-
-                  {expandedGroups.has(group.type) && (
-                    <div className="p-3 bg-black/20 space-y-2">
-                      {group.methods.map((method) => {
-                        return (
-                          <button
-                            type="button"
-                            key={method.id}
-                            onClick={() => {
-                              onMethodSelect?.(method.id);
-                              if (onDirectPayment) {
-                                setTimeout(() => onDirectPayment(method.id), 100);
-                              }
-                            }}
-                            className="w-full flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors group"
-                          >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                              {getPaymentIcon(method.type, method.id)}
-                              <PNText className="font-medium text-left text-sm truncate">{method.name}</PNText>
-                            </div>
-                            <Check className="text-transparent group-hover:text-gray-400 transition-colors" size={16} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {/* Hide Methods Button */}
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={toggleShowAllMethods}
-                  className="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center space-x-2 mx-auto"
+          <div className="grid grid-cols-1 gap-2">
+            {popularMethods.map((method) => {
+              const isSelected = selectedMethod === method.id;
+              return (
+                <div
+                  key={method.id}
+                  onClick={() => {
+                    onMethodSelect?.(method.id);
+                    if (onDirectPayment && showSelection) {
+                      setTimeout(() => onDirectPayment(method.id), 100);
+                    }
+                  }}
+                  className={`cursor-pointer transition-all duration-200 p-3 rounded-lg border flex items-center space-x-3 ${
+                    isSelected 
+                      ? 'border-pink-500 bg-pink-500/10' 
+                      : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5'
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <ChevronUp size={16} />
-                  <span>Sembunyikan metode pembayaran</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Shield className="text-gray-300" size={16} />
-              <PNText className="text-sm text-gray-300">
-                Pembayaran aman dengan enkripsi SSL
-              </PNText>
-            </div>
-            {source === 'xendit_api' && (
-              <PNText className="text-xs text-green-400 mt-1 ml-6">
-                Data pembayaran diperbarui secara real-time dari Xendit
-              </PNText>
-            )}
-          </div>
-        </PNCard>
-      );
-    }
-
-    // Selection mode - allow users to choose payment method
-    return (
-      <PNCard className="space-y-4 p-3 sm:p-5 bg-black border border-white/10">
-        <div className="flex items-center space-x-2 mb-4 flex-wrap">
-          <CreditCard className="text-pink-400" size={20} />
-          <PNHeading level={3} className="!mb-0 flex-1 min-w-0">
-            Pilih Metode Pembayaran
-          </PNHeading>
-          {source !== 'xendit_api' && (
-            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full flex-shrink-0">
-              {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Mode Offline'}
-            </span>
-          )}
-        </div>
-
-        {/* Popular Methods Section */}
-        {popularMethods.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center space-x-2 mb-3">
-              <Star className="text-pink-400" size={16} />
-              <PNText className="font-medium text-pink-400">Metode Populer</PNText>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {popularMethods.map((method) => {
-                const isSelected = selectedMethod === method.id;
-                return (
-                  <div
-                    key={method.id}
-                    onClick={() => {
-                      onMethodSelect?.(method.id);
-                      if (onDirectPayment) {
-                        setTimeout(() => onDirectPayment(method.id), 100);
-                      }
-                    }}
-                    className={`cursor-pointer transition-all duration-200 p-3 rounded-lg border flex items-center space-x-3 ${
-                      isSelected 
-                        ? 'border-pink-500 bg-pink-500/10' 
-                        : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5'
-                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {method.icon}
-                    <div className="flex-1 min-w-0">
-                      <PNText className="font-medium text-sm truncate">{method.name}</PNText>
-                      <PNText className="text-xs text-gray-400 truncate">{method.description}</PNText>
-                    </div>
-                    {isSelected && <Check size={16} className="text-pink-400 flex-shrink-0" />}
+                  {method.icon}
+                  <div className="flex-1 min-w-0">
+                    <PNText className="font-medium text-sm truncate">{method.name}</PNText>
+                    <PNText className="text-xs text-gray-400 truncate">{method.description}</PNText>
                   </div>
-                );
-              })}
-            </div>
+                  {isSelected && <Check size={16} className="text-pink-400 flex-shrink-0" />}
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      );
+    };
 
-        {/* Grouped Methods */}
+    // Render grouped methods section
+    const renderGroupedMethods = () => {
+      if (!showSelection && !showAllMethods) {
+        return (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={toggleShowAllMethods}
+              className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors flex items-center justify-center space-x-2"
+            >
+              <CreditCard className="text-pink-400" size={20} />
+              <PNText className="font-medium">Lihat metode pembayaran lainnya</PNText>
+              <ChevronDown className="text-gray-400" size={20} />
+            </button>
+          </div>
+        );
+      }
+
+      return (
         <div className="space-y-4">
           {groupedMethods.map((group) => (
             <div key={group.type} className="border border-white/10 rounded-xl overflow-hidden">
@@ -637,7 +486,7 @@ export const PaymentMethods = React.memo(({
                         key={method.id}
                         onClick={() => {
                           onMethodSelect?.(method.id);
-                          if (onDirectPayment) {
+                          if (onDirectPayment && showSelection) {
                             setTimeout(() => onDirectPayment(method.id), 100);
                           }
                         }}
@@ -670,21 +519,73 @@ export const PaymentMethods = React.memo(({
               )}
             </div>
           ))}
-        </div>
-
-        <div className="mt-4 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <Shield className="text-gray-300" size={16} />
-            <PNText className="text-sm text-gray-300">
-              Semua pembayaran diproses aman dengan enkripsi SSL
-            </PNText>
-          </div>
-          {source === 'xendit_api' && (
-            <PNText className="text-xs text-green-400 mt-1 ml-6">
-              Data pembayaran diperbarui secara real-time dari Xendit
-            </PNText>
+          
+          {!showSelection && showAllMethods && (
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={toggleShowAllMethods}
+                className="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center space-x-2 mx-auto"
+              >
+                <ChevronUp size={16} />
+                <span>Sembunyikan metode pembayaran</span>
+              </button>
+            </div>
           )}
         </div>
+      );
+    };
+
+    // Render security footer
+    const renderSecurityFooter = () => (
+      <div className="mt-4 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg">
+        <div className="flex items-center space-x-2">
+          <Shield className="text-gray-300" size={16} />
+          <PNText className="text-sm text-gray-300">
+            {showSelection ? 'Semua pembayaran diproses aman dengan enkripsi SSL' : 'Pembayaran aman dengan enkripsi SSL'}
+          </PNText>
+        </div>
+        {source === 'xendit_api' && (
+          <PNText className="text-xs text-green-400 mt-1 ml-6">
+            Data pembayaran diperbarui secara real-time dari Xendit
+          </PNText>
+        )}
+      </div>
+    );
+
+    // Main render
+    return (
+      <PNCard className="space-y-4 p-3 sm:p-5 bg-black border border-white/10">
+        <div className="flex items-center space-x-2 mb-4 flex-wrap">
+          <CreditCard className="text-pink-400" size={20} />
+          <PNHeading level={3} className="!mb-0 flex-1 min-w-0">
+            {showSelection ? 'Pilih Metode Pembayaran' : 'Metode Pembayaran Tersedia'}
+          </PNHeading>
+          {source !== 'xendit_api' && (
+            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full flex-shrink-0">
+              {process.env.NODE_ENV === 'development' ? 'Dev Mode' : 'Mode Offline'}
+            </span>
+          )}
+        </div>
+
+        {/* Payment Method Validation Error */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="text-red-400" size={16} />
+              <PNText className="text-red-400 text-sm">{error}</PNText>
+            </div>
+          </div>
+        )}
+
+        {/* Popular Methods Section */}
+        {renderPopularMethods()}
+
+        {/* Grouped Methods Section */}
+        {renderGroupedMethods()}
+
+        {/* Security Footer */}
+        {renderSecurityFooter()}
       </PNCard>
     );
   }
