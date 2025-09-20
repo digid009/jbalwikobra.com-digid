@@ -87,6 +87,78 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
   }
 }
 
+// Separate function specifically for creating admin database notifications when payment is completed
+async function createAdminPaidNotification(sb: any, invoiceId?: string, externalId?: string) {
+  try {
+    console.log('[Admin] Looking for order to create paid notification:', { invoiceId, externalId });
+    
+    // Query for order with paid status to ensure we only notify for actually paid orders
+    let q = sb.from('orders')
+      .select(`
+        id,
+        customer_name,
+        customer_email,
+        customer_phone,
+        amount,
+        status,
+        order_type,
+        rental_duration,
+        products (
+          id,
+          name,
+          price,
+          description
+        )
+      `)
+      .in('status', ['paid', 'completed'])
+      .limit(1);
+    
+    if (invoiceId) q = q.eq('xendit_invoice_id', invoiceId);
+    else if (externalId) q = q.eq('client_external_id', externalId);
+    
+    const { data: orders, error: queryError } = await q;
+    
+    if (queryError) {
+      console.error('[Admin] Database query error for notification:', queryError);
+      return;
+    }
+    
+    const order = orders?.[0];
+    
+    if (!order) {
+      console.log('[Admin] No paid order found for creating paid notification');
+      return;
+    }
+
+    console.log('[Admin] Found paid order for notification:', {
+      id: order.id,
+      status: order.status,
+      order_type: order.order_type
+    });
+
+    // Get product name
+    const product = order.products;
+    const productName = product?.name || 'Unknown Product';
+
+    // Create the admin notification
+    await createOrderNotification(
+      sb,
+      order.id,
+      order.customer_name || 'Guest Customer',
+      productName,
+      Number(order.amount || 0),
+      'paid_order',
+      order.customer_phone,
+      order.order_type
+    );
+    
+    console.log('[Admin] Paid order database notification created successfully');
+    
+  } catch (error) {
+    console.error('[Admin] Failed to create paid order database notification:', error);
+  }
+}
+
 async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId?: string) {
   try {
     // Get order details with product information and rental details
@@ -123,6 +195,13 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
       console.log('[WhatsApp] No paid order found for notification');
       return;
     }
+
+    console.log('[WhatsApp] Found order for notification:', {
+      id: order.id,
+      status: order.status,
+      order_type: order.order_type,
+      amount: order.amount
+    });
 
     const product = order.products;
     const productName = product?.name || 'Unknown Product';
@@ -361,24 +440,6 @@ Terima kasih telah berbelanja di JB Alwikobra! 🎮✨`;
       console.log('[WhatsApp] No customer phone number provided, skipping customer notification');
     }
 
-    // Create admin database notification for paid order (CRITICAL ADDITION)
-    try {
-      console.log('[Admin] Creating database notification for paid order:', order.id);
-      await createOrderNotification(
-        sb,
-        order.id,
-        order.customer_name || 'Guest Customer',
-        productName,
-        Number(order.amount || 0),
-        'paid_order',
-        order.customer_phone,
-        order.order_type
-      );
-      console.log('[Admin] Database notification created successfully for paid order:', order.id);
-    } catch (notificationError) {
-      console.error('[Admin] Failed to create database notification for paid order:', notificationError);
-    }
-
   } catch (error) {
     console.error('[WhatsApp] Error sending order paid notification:', error);
   }
@@ -568,7 +629,11 @@ export default async function handler(req: any, res: any) {
 
     // Archive product on successful payment
     try {
+      console.log('[Webhook] Processing complete:', { updated, status, invoiceId, externalId });
+      
       if (updated > 0 && (status === 'paid' || status === 'completed')) {
+        console.log('[Webhook] Order updated successfully, proceeding with notifications');
+        
         // Find related product id(s) for the updated orders and archive them
         let q = sb.from('orders').select('product_id').limit(50);
         if (invoiceId) q = q.eq('xendit_invoice_id', invoiceId);
@@ -582,14 +647,46 @@ export default async function handler(req: any, res: any) {
         // Send WhatsApp notifications for successful payments
         // Some channels report final state as 'completed' (e.g., SETTLED), not 'paid'
         if (status === 'paid' || status === 'completed') {
+          console.log('[Webhook] Calling sendOrderPaidNotification with:', { invoiceId, externalId });
           await sendOrderPaidNotification(sb, invoiceId, externalId);
+          
+          // Create admin database notification separately
+          console.log('[Webhook] Creating admin database notification for paid order');
+          try {
+            await createAdminPaidNotification(sb, invoiceId, externalId);
+            console.log('[Webhook] Admin database notification completed successfully');
+          } catch (adminNotificationError) {
+            console.error('[Webhook] Admin database notification failed:', adminNotificationError);
+          }
+        }
+      } else {
+        console.log('[Webhook] No orders updated or status not paid/completed:', { updated, status });
+        
+        // Still try to send notification if we have identifiers and the status is paid
+        if ((status === 'paid' || status === 'completed') && (invoiceId || externalId)) {
+          console.log('[Webhook] Attempting notification despite no updates');
+          await sendOrderPaidNotification(sb, invoiceId, externalId);
+          
+          // Also try admin database notification
+          console.log('[Webhook] Attempting admin database notification despite no updates');
+          try {
+            await createAdminPaidNotification(sb, invoiceId, externalId);
+            console.log('[Webhook] Admin database notification completed successfully (fallback)');
+          } catch (adminNotificationError) {
+            console.error('[Webhook] Admin database notification failed (fallback):', adminNotificationError);
+          }
         }
       }
     } catch (e) {
       console.error('Failed to archive product after payment:', e);
     }
 
-    return res.status(200).json({ ok: true, updated, by: updated ? (invoiceId ? 'invoice_id' : 'external_id') : 'none' });
+    return res.status(200).json({ 
+      ok: true, 
+      updated, 
+      by: updated ? (invoiceId ? 'invoice_id' : 'external_id') : 'none',
+      notification_attempted: (status === 'paid' || status === 'completed') && (invoiceId || externalId)
+    });
   } catch (e: any) {
     console.error('Webhook error:', e);
     return res.status(500).json({ error: 'Internal server error', message: e?.message || String(e) });
