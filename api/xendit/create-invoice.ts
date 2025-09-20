@@ -48,34 +48,55 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
       order_cancelled: `namanya ${customerName}, produktnya ${productName} di cancel nih.`
     };
 
+    // Ensure orderId is a valid UUID or null
+    let validOrderId = null;
+    if (orderId && typeof orderId === 'string') {
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+      if (isValidUUID) {
+        validOrderId = orderId;
+      } else {
+        console.warn('[Admin] Invalid UUID format for orderId:', orderId, 'Using null instead');
+      }
+    }
+
     const notification = {
       type,
       title: titles[type] || 'New Order Received',
       message: messages[type] || `${customerName} placed an order for ${productName}`,
-      order_id: orderId,
+      order_id: validOrderId, // Use validated UUID or null
       customer_name: customerName,
       product_name: productName,
-      amount,
+      amount: Math.round(Number(amount)), // Ensure it's an integer for BIGINT
       is_read: false,
       metadata: {
         priority: type === 'paid_order' ? 'high' : 'normal',
         category: 'order',
-        customer_phone: customerPhone
+        customer_phone: customerPhone,
+        original_order_id: orderId // Keep original for debugging
       },
       created_at: new Date().toISOString()
     };
 
     console.log('[Admin] Creating notification with payload:', notification);
 
-    const { error } = await sb
+    const { data, error } = await sb
       .from('admin_notifications')
-      .insert(notification);
+      .insert(notification)
+      .select('*')
+      .single();
 
     if (error) {
       console.error('[Admin] Notification insert error:', error);
+      console.error('[Admin] Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     } else {
-      console.log('[Admin] Notification created successfully');
+      console.log('[Admin] Notification created successfully with ID:', data?.id);
+      return data;
     }
   } catch (error) {
     console.error('[Admin] Notification creation failed:', error);
