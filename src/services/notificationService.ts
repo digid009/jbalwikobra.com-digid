@@ -82,17 +82,20 @@ class NotificationService {
   async markAsRead(notificationId: string, userId?: string | null): Promise<void> {
     if (!userId) return; // guests: skip
     try {
+      console.log('🔄 NotificationService: markAsRead called for notification:', notificationId, 'user:', userId);
       // Use RPC that handles both owned and global notifications
       const { error } = await supabase.rpc('mark_notification_read', { n_id: notificationId, u_id: userId });
       if (error) {
-        console.error('Failed to mark notification as read:', error);
+        console.error('❌ NotificationService: RPC mark_notification_read failed:', error);
         throw error;
       }
+      console.log('✅ NotificationService: RPC mark_notification_read completed successfully');
       
       // More comprehensive cache invalidation
       this.invalidateCache(userId);
+      console.log('✅ NotificationService: Cache invalidated for user:', userId);
     } catch (e) {
-      console.error('markAsRead failed:', e);
+      console.error('❌ NotificationService: markAsRead failed:', e);
       // Re-throw the error so the UI can handle it properly
       throw e;
     }
@@ -101,16 +104,19 @@ class NotificationService {
   async markAllAsRead(userId?: string | null): Promise<void> {
     if (!userId) return; // guests: skip
     try {
+      console.log('🔄 NotificationService: markAllAsRead called for user:', userId);
       const { error } = await supabase.rpc('mark_all_notifications_read', { u_id: userId });
       if (error) {
-        console.error('Failed to mark all notifications as read:', error);
+        console.error('❌ NotificationService: RPC mark_all_notifications_read failed:', error);
         throw error;
       }
+      console.log('✅ NotificationService: RPC mark_all_notifications_read completed successfully');
       
       // More comprehensive cache invalidation
       this.invalidateCache(userId);
+      console.log('✅ NotificationService: Cache invalidated for user:', userId);
     } catch (e) {
-      console.error('markAllAsRead failed:', e);
+      console.error('❌ NotificationService: markAllAsRead failed:', e);
       // Re-throw the error so the UI can handle it properly
       throw e;
     }
