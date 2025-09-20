@@ -24,27 +24,38 @@ class AdminNotificationService {
   async getAdminNotifications(limit = 10): Promise<AdminNotification[]> {
     const key = `${this.cacheTag}:recent:${limit}`;
     return globalCache.getOrSet(key, async () => {
-      console.log(`🔄 Fetching admin notifications from database (limit: ${limit})`);
-      const { data, error } = await supabase
-        .from('admin_notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      console.log(`🔄 Fetching admin notifications (limit: ${limit})`);
+      try {
+        // Prefer direct DB read if anon client has permissions
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('admin_notifications')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
 
-      if (error) {
-        console.error('❌ Failed to fetch admin notifications:', error);
-        throw error;
+          if (!error && data) {
+            console.log(`✅ Fetched ${data.length} admin notifications from DB`);
+            return data as AdminNotification[];
+          }
+          if (error) throw error;
+        }
+      } catch (dbErr) {
+        console.warn('⚠️ Direct DB fetch failed, will fallback to API proxy:', dbErr);
       }
-      
-      console.log(`✅ Fetched ${data?.length || 0} admin notifications from database`);
-      const notifications = (data || []) as AdminNotification[];
-      
-      // Log read status for debugging
-      const readCount = notifications.filter(n => n.is_read).length;
-      const unreadCount = notifications.filter(n => !n.is_read).length;
-      console.log(`📊 Notification status - Read: ${readCount}, Unread: ${unreadCount}`);
-      
-      return notifications;
+
+      // Fallback to server API proxy using service-role on server
+      try {
+        const resp = await fetch(`/api/admin-notifications?action=recent&limit=${encodeURIComponent(String(limit))}`);
+        if (!resp.ok) throw new Error(`API ${resp.status}`);
+        const body = await resp.json();
+        const arr = (body?.data || []) as AdminNotification[];
+        console.log(`✅ Fetched ${arr.length} admin notifications via API`);
+        return arr;
+      } catch (apiErr) {
+        console.error('❌ Failed to fetch admin notifications via API:', apiErr);
+        throw apiErr;
+      }
     }, { ttl: 30_000, tags: [this.cacheTag] });
   }
 
@@ -176,35 +187,31 @@ class AdminNotificationService {
       
       // CRITICAL: Admin operations MUST use service key to bypass RLS
       if (!supabaseAdmin) {
-        console.warn('⚠️ Service key client not available - trying with regular client');
-        console.log('🔧 Using regular client - may be limited by RLS policies');
-        
-        const updatePayload = { 
-          is_read: true, 
-          updated_at: new Date().toISOString() 
-        };
-        
-        const { data, error } = await supabase
-          .from('admin_notifications')
-          .update(updatePayload)
-          .eq('id', notificationId)
-          .select();
-
-        if (error) {
-          console.error('❌ Regular client update error:', error);
-          throw new Error(`Failed to mark notification as read with regular client: ${error.message}`);
+        console.warn('⚠️ Service key client not available on client. Using server API.');
+        try {
+          const resp = await fetch('/api/admin-notifications?action=mark-read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: notificationId })
+          });
+          if (!resp.ok) throw new Error(`API ${resp.status}`);
+          globalCache.clear();
+          console.log('🧹 Cache cleared after marking as read via API');
+          return;
+        } catch (apiErr) {
+          console.error('❌ API mark-read failed, attempting direct client (may fail with RLS)...', apiErr);
+          if (supabase) {
+            const updatePayload = { is_read: true, updated_at: new Date().toISOString() };
+            const { error } = await supabase
+              .from('admin_notifications')
+              .update(updatePayload)
+              .eq('id', notificationId);
+            if (error) throw error;
+            globalCache.clear();
+            return;
+          }
+          throw apiErr;
         }
-        
-        if (!data || data.length === 0) {
-          console.warn('⚠️ Regular client: Update completed but no rows returned');
-        } else {
-          console.log('✅ Successfully updated with regular client:', data[0]);
-        }
-        
-        // Clear cache after successful update
-        globalCache.clear();
-        console.log('🧹 Cache cleared after marking as read');
-        return;
       }
       
       console.log(`🔧 Using Admin client (Service Key) - required for admin operations`);
@@ -285,28 +292,24 @@ class AdminNotificationService {
     try {
       console.log('🔄 Marking all notifications as read...');
       
-      // CRITICAL: Admin operations MUST use service key to bypass RLS
-      if (!supabaseAdmin) {
-        console.error('❌ Service key client not available - admin operations require service key');
-        throw new Error('Admin client not available. Check SUPABASE_SERVICE_ROLE_KEY environment variable.');
+      // Prefer service-role client if available, else fallback to API
+      if (supabaseAdmin) {
+        console.log('🔧 Using Admin client (Service Key) for mark all as read');
+        const { error } = await supabaseAdmin
+          .from('admin_notifications')
+          .update({ is_read: true, updated_at: new Date().toISOString() })
+          .eq('is_read', false);
+        if (error) throw error;
+        this.invalidateCache();
+        console.log('✅ Cache invalidated after mark all as read');
+        return;
       }
-      
-      console.log('🔧 Using Admin client (Service Key) for mark all as read');
-      
-      const { data, error } = await supabaseAdmin
-        .from('admin_notifications')
-        .update({ is_read: true, updated_at: new Date().toISOString() })
-        .eq('is_read', false)
-        .select();
 
-      if (error) {
-        console.error('❌ Error marking all as read:', error);
-        throw error;
-      }
-      
-      console.log(`✅ Successfully marked ${data?.length || 0} notifications as read`);
+      // API fallback
+      const resp = await fetch('/api/admin-notifications?action=mark-all', { method: 'POST' });
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
       this.invalidateCache();
-      console.log('✅ Cache invalidated after mark all as read');
+      console.log('✅ Cache invalidated after mark all (API)');
     } catch (error) {
       console.error('❌ Failed to mark all notifications as read:', error);
       throw error;
