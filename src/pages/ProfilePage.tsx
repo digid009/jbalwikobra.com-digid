@@ -38,6 +38,14 @@ interface UserProfile {
   wishlistCount: number;
 }
 
+interface RecentOrder {
+  id: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'completed' | 'cancelled';
+  created_at: string;
+  payment_channel?: string | null;
+}
+
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +60,7 @@ const ProfilePage: React.FC = () => {
     totalOrders: 0,
     wishlistCount: wishlistItems.length
   });
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isValidPhone, setIsValidPhone] = useState(false);
 
@@ -86,27 +95,40 @@ const ProfilePage: React.FC = () => {
 
   // Fetch real order count when user is available
   useEffect(() => {
-    const fetchOrderCount = async () => {
+    const fetchOrderData = async () => {
       if (!user || !supabase) return;
       
       try {
-        const { count, error } = await supabase
+        // Fetch order count
+        const { count, error: countError } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id);
           
-        if (!error && count !== null) {
+        if (!countError && count !== null) {
           setProfile(prev => ({
             ...prev,
             totalOrders: count
           }));
         }
+
+        // Fetch recent orders (last 3)
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, amount, status, created_at, payment_channel')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+          
+        if (!ordersError && ordersData) {
+          setRecentOrders(ordersData);
+        }
       } catch (error) {
-        console.error('Error fetching order count:', error);
+        console.error('Error fetching order data:', error);
       }
     };
 
-    fetchOrderCount();
+    fetchOrderData();
   }, [user]);
 
   const loadProfile = async () => {
@@ -290,6 +312,64 @@ const ProfilePage: React.FC = () => {
           </PNContainer>
         </PNSection>
 
+        {/* Recent Orders Section */}
+        {recentOrders.length > 0 && (
+          <PNSection padding="lg" className="border-b border-white/10">
+            <PNContainer>
+              <PNCard className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <PNHeading level={3} className="flex items-center gap-2">
+                    <Package size={20} className="text-pink-400" />
+                    Pesanan Terbaru
+                  </PNHeading>
+                  <Link 
+                    to="/orders" 
+                    className="text-pink-400 hover:text-pink-300 text-sm font-medium flex items-center gap-1 transition-colors"
+                  >
+                    Lihat Semua
+                    <ChevronRight size={16} />
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {recentOrders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="text-sm font-mono text-gray-300">{order.id.slice(0, 8)}...</div>
+                          <div className={`text-xs px-2 py-1 rounded ${
+                            order.status === 'paid' ? 'bg-green-600 text-white' :
+                            order.status === 'pending' ? 'bg-yellow-600 text-white' :
+                            order.status === 'completed' ? 'bg-blue-600 text-white' :
+                            'bg-red-600 text-white'
+                          }`}>
+                            {order.status === 'paid' ? 'Lunas' :
+                             order.status === 'pending' ? 'Menunggu' :
+                             order.status === 'completed' ? 'Selesai' :
+                             'Dibatalkan'}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(order.created_at).toLocaleDateString('id-ID')}
+                          {order.payment_channel && (
+                            <span className="ml-2">
+                              via {order.payment_channel.toLowerCase().replace(/_/g, ' ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-white">
+                          Rp {Number(order.amount).toLocaleString('id-ID')}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </PNCard>
+            </PNContainer>
+          </PNSection>
+        )}
+
         {/* Edit form */}
         {isEditing && (
           <PNSection padding="lg" className="border-b border-white/10">
@@ -354,7 +434,7 @@ const ProfilePage: React.FC = () => {
           </PNSection>
         )}
 
-        {/* Quick actions */}
+        {/* Menu section */}
         <PNSection padding="lg" className="border-b border-white/10">
           <PNContainer>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
