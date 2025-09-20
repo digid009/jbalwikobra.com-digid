@@ -25,12 +25,15 @@ const ACTIVATED_PAYMENT_METHODS = [
 ];
 
 // Simple admin notification function for serverless environment
-async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'new_order', customerPhone?: string) {
+async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'new_order', customerPhone?: string, orderType?: string) {
   try {
+    const isRental = orderType === 'rental';
+    const typeLabel = isRental ? 'RENTAL' : 'PURCHASE';
+    
     const titles = {
-      new_order: 'Bang! ada yang ORDER nih!',
-      paid_order: 'Bang! ALHAMDULILLAH udah di bayar nih',
-      order_cancelled: 'Bang! ada yang CANCEL order nih!'
+      new_order: `Bang! ada yang ORDER ${typeLabel} nih!`,
+      paid_order: `Bang! ALHAMDULILLAH ${typeLabel} udah di bayar nih`,
+      order_cancelled: `Bang! ada yang CANCEL ${typeLabel} order nih!`
     };
 
     const formatAmount = (amount: number) => {
@@ -43,9 +46,9 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
     };
 
     const messages = {
-      new_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, belum di bayar sih, tapi moga aja di bayar amin.`,
-      paid_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, udah di bayar Alhamdulillah.`,
-      order_cancelled: `namanya ${customerName}, produktnya ${productName} di cancel nih.`
+      new_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'order RENTAL' : 'order PURCHASE'}, belum di bayar sih, tapi moga aja di bayar amin.`,
+      paid_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'RENTAL udah di bayar' : 'PURCHASE udah di bayar'} Alhamdulillah.`,
+      order_cancelled: `namanya ${customerName}, ${isRental ? 'RENTAL' : 'PURCHASE'} produktnya ${productName} di cancel nih.`
     };
 
     // Ensure orderId is a valid UUID or null
@@ -71,6 +74,7 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
       metadata: {
         priority: type === 'paid_order' ? 'high' : 'normal',
         category: 'order',
+        order_type: orderType || 'purchase',
         customer_phone: customerPhone,
         original_order_id: orderId // Keep original for debugging
       },
@@ -208,6 +212,37 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
         throw error;
       }
       console.log('[createOrderIfProvided] Upserted order successfully:', data?.id);
+      
+      // Create admin notification for new order (upsert path - CRITICAL FIX)
+      try {
+        // Get product name if product_id exists
+        let productName = 'Unknown Product';
+        if (data?.product_id) {
+          const productRes = await sb
+            .from('products')
+            .select('name')
+            .eq('id', data.product_id)
+            .single();
+          if (productRes.data) {
+            productName = productRes.data.name;
+          }
+        }
+
+        await createOrderNotification(
+          sb,
+          data.id,
+          data.customer_name || 'Guest Customer',
+          productName,
+          Number(data.amount || 0),
+          'new_order',
+          data.customer_phone,
+          data.order_type
+        );
+        console.log('[Admin] New order notification created successfully (upsert path)');
+      } catch (notificationError) {
+        console.error('[Admin] Failed to create new order notification (upsert path):', notificationError);
+      }
+      
       return data;
     } else {
       console.log('[createOrderIfProvided] Inserting new order without client_external_id');
@@ -240,7 +275,8 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
           productName,
           Number(data.amount || 0),
           'new_order',
-          data.customer_phone
+          data.customer_phone,
+          data.order_type
         );
         console.log('[Admin] New order notification created successfully');
       } catch (notificationError) {

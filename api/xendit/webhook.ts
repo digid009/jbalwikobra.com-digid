@@ -9,6 +9,84 @@ function mapStatus(x: string | undefined): 'pending'|'paid'|'completed'|'cancell
   return 'pending';
 }
 
+// Admin notification function for database notifications
+async function createOrderNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, type: string = 'paid_order', customerPhone?: string, orderType?: string) {
+  try {
+    const isRental = orderType === 'rental';
+    const typeLabel = isRental ? 'RENTAL' : 'PURCHASE';
+    
+    const titles = {
+      new_order: `Bang! ada yang ORDER ${typeLabel} nih!`,
+      paid_order: `Bang! ALHAMDULILLAH ${typeLabel} udah di bayar nih`,
+      order_cancelled: `Bang! ada yang CANCEL ${typeLabel} order nih!`
+    };
+
+    const formatAmount = (amount: number) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+
+    const messages = {
+      new_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'order RENTAL' : 'order PURCHASE'}, belum di bayar sih, tapi moga aja di bayar amin.`,
+      paid_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'RENTAL udah di bayar' : 'PURCHASE udah di bayar'} Alhamdulillah.`,
+      order_cancelled: `namanya ${customerName}, ${isRental ? 'RENTAL' : 'PURCHASE'} produktnya ${productName} di cancel nih.`
+    };
+
+    // Ensure orderId is a valid UUID or null
+    let validOrderId = null;
+    if (orderId && typeof orderId === 'string') {
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+      if (isValidUUID) {
+        validOrderId = orderId;
+      } else {
+        console.warn('[Admin] Invalid UUID format for orderId:', orderId, 'Using null instead');
+      }
+    }
+
+    const notification = {
+      type,
+      title: titles[type] || 'Payment Received',
+      message: messages[type] || `${customerName} paid for ${productName}`,
+      order_id: validOrderId,
+      customer_name: customerName,
+      product_name: productName,
+      amount: Math.round(Number(amount)),
+      is_read: false,
+      metadata: {
+        priority: type === 'paid_order' ? 'high' : 'normal',
+        category: 'payment',
+        order_type: orderType || 'purchase',
+        customer_phone: customerPhone,
+        original_order_id: orderId
+      },
+      created_at: new Date().toISOString()
+    };
+
+    console.log('[Admin] Creating paid order notification:', notification);
+
+    const { data, error } = await sb
+      .from('admin_notifications')
+      .insert(notification)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[Admin] Paid notification insert error:', error);
+      throw error;
+    } else {
+      console.log('[Admin] Paid order notification created successfully with ID:', data?.id);
+      return data;
+    }
+  } catch (error) {
+    console.error('[Admin] Failed to create paid order notification:', error);
+    throw error;
+  }
+}
+
 async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId?: string) {
   try {
     // Get order details with product information and rental details
@@ -282,6 +360,25 @@ Terima kasih telah berbelanja di JB Alwikobra! 🎮✨`;
     } else {
       console.log('[WhatsApp] No customer phone number provided, skipping customer notification');
     }
+
+    // Create admin database notification for paid order (CRITICAL ADDITION)
+    try {
+      console.log('[Admin] Creating database notification for paid order:', order.id);
+      await createOrderNotification(
+        sb,
+        order.id,
+        order.customer_name || 'Guest Customer',
+        productName,
+        Number(order.amount || 0),
+        'paid_order',
+        order.customer_phone,
+        order.order_type
+      );
+      console.log('[Admin] Database notification created successfully for paid order:', order.id);
+    } catch (notificationError) {
+      console.error('[Admin] Failed to create database notification for paid order:', notificationError);
+    }
+
   } catch (error) {
     console.error('[WhatsApp] Error sending order paid notification:', error);
   }
