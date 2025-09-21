@@ -21,6 +21,28 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // DUPLICATE PREVENTION: Check for recent duplicate orders (within 2 minutes)
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: existingOrders, error: checkError } = await supabase
+      .from('orders')
+      .select('id, client_external_id, created_at')
+      .eq('customer_email', order.customer_email)
+      .eq('amount', order.amount)
+      .gte('created_at', twoMinutesAgo)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (checkError) {
+      console.warn('[Direct Payment] Error checking for duplicates:', checkError);
+      // Continue with order creation if duplicate check fails
+    } else if (existingOrders && existingOrders.length > 0) {
+      const existingOrder = existingOrders[0];
+      console.log('[Direct Payment] 🚫 Duplicate order detected - returning existing order');
+      console.log(`   Existing: ${existingOrder.id} (${existingOrder.created_at})`);
+      console.log(`   Customer: ${order.customer_email}, Amount: ${order.amount}`);
+      return existingOrder;
+    }
+
     const orderPayload = {
       client_external_id: externalId,
       product_id: order.product_id || null,
