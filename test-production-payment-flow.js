@@ -1,5 +1,6 @@
 // Test Production Payment Flow
 // This script tests the complete payment flow and admin integration
+require('dotenv').config({ path: '.env.local' });
 const { createClient } = require('@supabase/supabase-js');
 
 // Production environment variables

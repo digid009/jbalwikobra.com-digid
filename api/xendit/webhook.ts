@@ -554,6 +554,57 @@ export default async function handler(req: any, res: any) {
       if (!e2) updated = (up2 || []).length;
     }
 
+    // CRITICAL FIX: Also update payments table status
+    // Update payments table by external_id to sync payment status
+    if (externalId) {
+      const paymentUpdateData: any = {
+        status: status.toUpperCase(), // Payments table uses uppercase status
+      };
+      
+      // Add paid_at if payment is completed
+      if (status === 'paid' || status === 'completed') {
+        paymentUpdateData.paid_at = paidAt;
+      }
+
+      const { data: paymentUpdate, error: paymentError } = await sb
+        .from('payments')
+        .update(paymentUpdateData)
+        .eq('external_id', externalId)
+        .select('id');
+
+      if (!paymentError && paymentUpdate && paymentUpdate.length > 0) {
+        console.log(`[Webhook] Successfully updated ${paymentUpdate.length} payment record(s) to status: ${status.toUpperCase()}`);
+      } else if (paymentError) {
+        console.error('[Webhook] Error updating payments table:', paymentError);
+      } else {
+        console.log('[Webhook] No payment records found to update for external_id:', externalId);
+      }
+    }
+
+    // Also try updating by xendit_id if available
+    if (invoiceId) {
+      const paymentUpdateData: any = {
+        status: status.toUpperCase(), // Payments table uses uppercase status
+      };
+      
+      // Add paid_at if payment is completed
+      if (status === 'paid' || status === 'completed') {
+        paymentUpdateData.paid_at = paidAt;
+      }
+
+      const { data: paymentUpdateById, error: paymentErrorById } = await sb
+        .from('payments')
+        .update(paymentUpdateData)
+        .eq('xendit_id', invoiceId)
+        .select('id');
+
+      if (!paymentErrorById && paymentUpdateById && paymentUpdateById.length > 0) {
+        console.log(`[Webhook] Successfully updated ${paymentUpdateById.length} payment record(s) by xendit_id to status: ${status.toUpperCase()}`);
+      } else if (paymentErrorById) {
+        console.error('[Webhook] Error updating payments table by xendit_id:', paymentErrorById);
+      }
+    }
+
     // If nothing updated yet, try to create/upsert order from metadata for resilience
     if (updated === 0) {
       const meta = (data.metadata || {}) as any;
@@ -591,6 +642,20 @@ export default async function handler(req: any, res: any) {
             .eq('client_external_id', clientId)
             .select('id');
           if (!e3) updated = (up3 || []).length;
+
+          // Also update payments table for the upserted order
+          const paymentUpdateData: any = {
+            status: status.toUpperCase(),
+          };
+          
+          if (status === 'paid' || status === 'completed') {
+            paymentUpdateData.paid_at = paidAt;
+          }
+
+          await sb
+            .from('payments')
+            .update(paymentUpdateData)
+            .eq('external_id', clientId);
         }
       }
       // If still nothing updated and we have at least an externalId, insert a minimal placeholder order
@@ -623,6 +688,20 @@ export default async function handler(req: any, res: any) {
             .eq('client_external_id', externalId)
             .select('id');
           updated = (up4 || []).length;
+
+          // Also update payments table for the inserted order
+          const paymentUpdateData: any = {
+            status: status.toUpperCase(),
+          };
+          
+          if (status === 'paid' || status === 'completed') {
+            paymentUpdateData.paid_at = paidAt;
+          }
+
+          await sb
+            .from('payments')
+            .update(paymentUpdateData)
+            .eq('external_id', externalId);
         }
       }
     }
