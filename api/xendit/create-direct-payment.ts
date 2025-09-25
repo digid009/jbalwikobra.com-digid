@@ -14,6 +14,7 @@ const SITE_URL = process.env.SITE_URL || process.env.REACT_APP_SITE_URL || 'http
 async function createOrderRecord(order: any, externalId: string, paymentMethodId: string) {
   if (!order || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.log('[Direct Payment] Skipping order creation - missing order data or Supabase config');
+    console.log('[Direct Payment] Order data received:', JSON.stringify(order, null, 2));
     return null;
   }
 
@@ -46,9 +47,9 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     const orderPayload = {
       client_external_id: externalId,
       product_id: order.product_id || null,
-      customer_name: order.customer_name,
-      customer_email: order.customer_email,
-      customer_phone: order.customer_phone,
+      customer_name: order.customer_name || 'Customer',
+      customer_email: order.customer_email || 'customer@jbalwikobra.com',
+      customer_phone: order.customer_phone || '6200000000000',
       order_type: order.order_type || 'purchase',
       amount: order.amount,
       payment_method: 'xendit',
@@ -66,6 +67,7 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
 
     if (error) {
       console.error('[Direct Payment] Order creation error:', error);
+      console.error('[Direct Payment] Failed order payload:', JSON.stringify(orderPayload, null, 2));
       return null;
     }
 
@@ -662,9 +664,10 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       created_at: new Date().toISOString()
     };
 
+    // Use upsert to prevent duplicate payment records
     const { error } = await supabase
       .from('payments')
-      .insert(paymentRecord);
+      .upsert(paymentRecord, { onConflict: 'external_id' });
 
     if (error) {
       console.error('[Store Payment V3] Database error:', error);
