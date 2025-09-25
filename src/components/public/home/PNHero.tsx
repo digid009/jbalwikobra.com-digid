@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ShoppingBag, TrendingUp, Rocket, MessageCircle } from 'lucide-react';
+import { Zap, ShoppingBag, TrendingUp, Rocket, MessageCircle, Star } from 'lucide-react';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
 import { SettingsService } from '../../../services/settingsService';
 import type { WebsiteSettings } from '../../../types';
@@ -23,6 +23,7 @@ const PNHero: React.FC = () => {
 
   const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
   const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
+  const heroButtonUrl = settings?.heroButtonUrl || 'https://jbalwikobra.com/special-offer';
   
   // Use hero settings from admin settings
   const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';
@@ -47,7 +48,16 @@ const PNHero: React.FC = () => {
                 <a href={topupGameUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="primary" size="lg" fullWidth className="flex items-center justify-center gap-2">
                     <Rocket size={18} />
-                    Top Up Game Murah
+                    Top Up Semua Game, Murah!
+                  </PNButton>
+                </a>
+              </div>
+              {/* New Hero Button */}
+              <div>
+                <a href={heroButtonUrl} target="_blank" rel="noopener noreferrer">
+                  <PNButton variant="secondary" size="lg" fullWidth className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
+                    <Star size={18} />
+                    RekBer - Aman & Terpercaya
                   </PNButton>
                 </a>
               </div>

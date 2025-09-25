@@ -94,6 +94,7 @@ const AdminSettings: React.FC = () => {
           // Additional URLs
           topupGameUrl: s.topupGameUrl || '',
           whatsappChannelUrl: s.whatsappChannelUrl || '',
+          heroButtonUrl: s.heroButtonUrl || '',
         };
         setForm(formData);
         setOriginalForm({ ...formData });
@@ -654,6 +655,26 @@ const AdminSettings: React.FC = () => {
                   />
                   <p className="text-xs text-gray-400 mt-2">
                     URL untuk halaman top up game
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-200 mb-3">
+                    <SettingsIcon className="w-4 h-4 inline mr-2" />
+                    Hero Button URL
+                  </label>
+                  <input 
+                    type="url"
+                    value={form.heroButtonUrl} 
+                    onChange={e => editMode ? setForm((p: any) => ({...p, heroButtonUrl: e.target.value})) : undefined} 
+                    className={`${adminInputBase} ${!editMode ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                    placeholder="https://example.com/special-offer"
+                    disabled={!editMode}
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    URL untuk tombol penawaran spesial di hero section homepage
                   </p>
                 </div>
               </div>

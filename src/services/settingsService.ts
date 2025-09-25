@@ -77,6 +77,7 @@ export class SettingsService {
         socialMediaEnabled: data.social_media_enabled ?? true,
         topupGameUrl: data.topup_game_url ?? undefined,
         whatsappChannelUrl: data.whatsapp_channel_url ?? undefined,
+        heroButtonUrl: data.hero_button_url ?? undefined,
         updatedAt: data.updated_at ?? undefined,
       };
       
@@ -122,6 +123,7 @@ export class SettingsService {
         social_media_enabled: input.socialMediaEnabled ?? current.socialMediaEnabled ?? true,
         topup_game_url: input.topupGameUrl ?? current.topupGameUrl ?? null,
         whatsapp_channel_url: input.whatsappChannelUrl ?? current.whatsappChannelUrl ?? null,
+        hero_button_url: input.heroButtonUrl ?? current.heroButtonUrl ?? null,
       };
       if (input.logoFile instanceof File) {
         const result = await uploadFile(input.logoFile, 'settings');
@@ -166,6 +168,7 @@ export class SettingsService {
         socialMediaEnabled: row.social_media_enabled ?? current.socialMediaEnabled ?? true,
         topupGameUrl: row.topup_game_url ?? current.topupGameUrl,
         whatsappChannelUrl: row.whatsapp_channel_url ?? current.whatsappChannelUrl,
+        heroButtonUrl: row.hero_button_url ?? current.heroButtonUrl,
         updatedAt: row.updated_at ?? new Date().toISOString(),
       };
   // Invalidate/refresh cache

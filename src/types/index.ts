@@ -124,6 +124,7 @@ export interface WebsiteSettings {
   socialMediaEnabled?: boolean;
   topupGameUrl?: string; // URL for Top Up Game feature
   whatsappChannelUrl?: string; // URL for WhatsApp channel
+  heroButtonUrl?: string; // URL for new hero button
   updatedAt?: string;
 }
 

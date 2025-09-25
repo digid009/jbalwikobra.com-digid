@@ -47,4 +47,4 @@ async function testWhatsAppService() {
   }
 }
 
-testWhatsAppService();
+testWhatsAppService
