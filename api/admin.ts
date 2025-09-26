@@ -201,6 +201,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return respond(res, ok ? 200 : 400, ok ? { success: true } : { error: 'update_failed' });
     }
 
+    if (req.method === 'POST' && action === 'update-settings') {
+      if (!supabase) return respond(res, 500, { error: 'database_unavailable' });
+      
+      try {
+        const settingsData = req.body || {};
+        console.log('🔧 Admin API: Updating website settings', settingsData);
+        
+        // Get current settings first
+        const { data: current } = await supabase
+          .from('website_settings')
+          .select('*')
+          .single();
+          
+        if (current) {
+          // Update existing settings
+          const { data, error } = await supabase
+            .from('website_settings')
+            .update(settingsData)
+            .eq('id', current.id)
+            .select()
+            .single();
+            
+          if (error) {
+            console.error('❌ Admin API: Settings update error', error);
+            return respond(res, 400, { error: 'update_failed', details: error.message });
+          }
+          
+          console.log('✅ Admin API: Settings updated successfully');
+          return respond(res, 200, { success: true, data });
+        } else {
+          // Create new settings record
+          const { data, error } = await supabase
+            .from('website_settings')
+            .insert(settingsData)
+            .select()
+            .single();
+            
+          if (error) {
+            console.error('❌ Admin API: Settings insert error', error);
+            return respond(res, 400, { error: 'insert_failed', details: error.message });
+          }
+          
+          console.log('✅ Admin API: Settings created successfully');
+          return respond(res, 200, { success: true, data });
+        }
+      } catch (e: any) {
+        console.error('❌ Admin API: Settings operation failed', e);
+        return respond(res, 500, { error: 'settings_operation_failed', message: e.message });
+      }
+    }
+
     const page = parseIntSafe(req.query.page, 1);
     const limit = Math.min(parseIntSafe(req.query.limit, 20), 100);
 
@@ -234,6 +285,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
         const data = await timeSeries(days, startDate, endDate);
         return respond(res, 200, { data });
+      }
+      case 'settings': {
+        if (!supabase) return respond(res, 500, { error: 'database_unavailable' });
+        
+        try {
+          const { data, error } = await supabase
+            .from('website_settings')
+            .select('*')
+            .single();
+            
+          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('❌ Admin API: Settings fetch error', error);
+            return respond(res, 500, { error: 'fetch_failed', details: error.message });
+          }
+          
+          return respond(res, 200, { data: data || {} });
+        } catch (e: any) {
+          console.error('❌ Admin API: Settings fetch failed', e);
+          return respond(res, 500, { error: 'settings_fetch_failed', message: e.message });
+        }
       }
       default:
         return respond(res, 400, { error: 'unknown_action', action });

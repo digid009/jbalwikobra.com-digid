@@ -3,8 +3,151 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function (app) {
-  // In development, register mock endpoints for /api/admin-whatsapp
+  // In development, register mock endpoints for /api/admin-whatsapp and /api/admin with real DB
   if (process.env.NODE_ENV !== 'production') {
+    // Import Supabase client for real database operations in development
+    let supabase = null;
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+      
+      console.log('🔧 setupProxy: Supabase config check', {
+        url: supabaseUrl ? 'LOADED' : 'MISSING',
+        key: supabaseServiceKey ? 'LOADED' : 'MISSING'
+      });
+      
+      if (supabaseUrl && supabaseServiceKey) {
+        supabase = createClient(supabaseUrl, supabaseServiceKey);
+        console.log('✅ setupProxy: Supabase client created successfully');
+      } else {
+        console.warn('⚠️ setupProxy: Missing Supabase configuration');
+      }
+    } catch (error) {
+      console.error('❌ setupProxy: Failed to create Supabase client:', error.message);
+    }
+
+    // Real admin API endpoint with database operations
+    app.get('/api/admin', async (req, res) => {
+      console.log('🚀 setupProxy: GET /api/admin called with query:', req.query);
+      const action = req.query.action;
+      
+      if (action === 'settings') {
+        console.log('🔧 Dev Admin API: GET settings (real DB)');
+        
+        if (!supabase) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(500).send(JSON.stringify({ error: 'database_unavailable' }));
+          return;
+        }
+        
+        try {
+          const { data, error } = await supabase
+            .from('website_settings')
+            .select('*')
+            .single();
+            
+          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('❌ Dev Admin API: Settings fetch error', error);
+            res.setHeader('Content-Type', 'application/json');
+            res.status(500).send(JSON.stringify({ error: 'fetch_failed', details: error.message }));
+            return;
+          }
+          
+          console.log('✅ Dev Admin API: Settings fetched from real DB', data ? 'Found data' : 'No data');
+          res.setHeader('Content-Type', 'application/json');
+          res.status(200).send(JSON.stringify({ data: data || {} }));
+        } catch (e) {
+          console.error('❌ Dev Admin API: Settings fetch failed', e);
+          res.setHeader('Content-Type', 'application/json');
+          res.status(500).send(JSON.stringify({ error: 'settings_fetch_failed', message: e.message }));
+        }
+        return;
+      }
+      
+      // Default response for other actions
+      res.setHeader('Content-Type', 'application/json');
+      res.status(400).send(JSON.stringify({ error: 'unsupported_action', action }));
+    });
+
+    app.post('/api/admin', async (req, res) => {
+      console.log('🚀 setupProxy: POST /api/admin called with query:', req.query);
+      const action = req.query.action;
+      
+      if (action === 'update-settings') {
+        console.log('🔧 Dev Admin API: POST settings update (real DB)');
+        
+        if (!supabase) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(500).send(JSON.stringify({ error: 'database_unavailable' }));
+          return;
+        }
+        
+        let buf = '';
+        req.on('data', (chunk) => (buf += chunk));
+        req.on('end', async () => {
+          try {
+            const settingsData = buf ? JSON.parse(buf) : {};
+            console.log('� Dev Admin API: Updating website settings', settingsData);
+            
+            // Get current settings first
+            const { data: current } = await supabase
+              .from('website_settings')
+              .select('*')
+              .single();
+              
+            if (current) {
+              // Update existing settings
+              const { data, error } = await supabase
+                .from('website_settings')
+                .update(settingsData)
+                .eq('id', current.id)
+                .select()
+                .single();
+                
+              if (error) {
+                console.error('❌ Dev Admin API: Settings update error', error);
+                res.setHeader('Content-Type', 'application/json');
+                res.status(400).send(JSON.stringify({ error: 'update_failed', details: error.message }));
+                return;
+              }
+              
+              console.log('✅ Dev Admin API: Settings updated successfully in real DB');
+              res.setHeader('Content-Type', 'application/json');
+              res.status(200).send(JSON.stringify({ success: true, data }));
+            } else {
+              // Create new settings record
+              const { data, error } = await supabase
+                .from('website_settings')
+                .insert(settingsData)
+                .select()
+                .single();
+                
+              if (error) {
+                console.error('❌ Dev Admin API: Settings insert error', error);
+                res.setHeader('Content-Type', 'application/json');
+                res.status(400).send(JSON.stringify({ error: 'insert_failed', details: error.message }));
+                return;
+              }
+              
+              console.log('✅ Dev Admin API: Settings created successfully in real DB');
+              res.setHeader('Content-Type', 'application/json');
+              res.status(200).send(JSON.stringify({ success: true, data }));
+            }
+          } catch (e) {
+            console.error('❌ Dev Admin API: Settings operation failed', e);
+            res.setHeader('Content-Type', 'application/json');
+            res.status(500).send(JSON.stringify({ error: 'settings_operation_failed', message: e.message }));
+          }
+        });
+        return;
+      }
+      
+      // Default response for other actions
+      res.setHeader('Content-Type', 'application/json');
+      res.status(400).send(JSON.stringify({ error: 'unsupported_action', action }));
+    });
+
     // In-memory mock provider
     const provider = {
       id: 'dev-mock',
@@ -79,9 +222,16 @@ module.exports = function (app) {
       createProxyMiddleware({
         target: process.env.REACT_APP_SUPABASE_URL,
         changeOrigin: true,
-        // Skip proxy for Xendit API calls - let them be handled by local Vercel functions or mocks
+        // Skip proxy for Xendit and admin API calls - let them be handled by local Vercel functions or mocks
         skip: function (req) {
-          return req.url.startsWith('/api/xendit');
+          const shouldSkip = req.url.startsWith('/api/xendit') || req.url.startsWith('/api/admin');
+          console.log('🔍 Proxy skip check:', {
+            url: req.url,
+            shouldSkip: shouldSkip,
+            startsWithAdmin: req.url.startsWith('/api/admin'),
+            startsWithXendit: req.url.startsWith('/api/xendit')
+          });
+          return shouldSkip;
         },
         pathRewrite: (path) => {
           // 1. Remove /api prefix

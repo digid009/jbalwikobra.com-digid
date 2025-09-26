@@ -56,7 +56,13 @@ const AdminSettings: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
+        console.log('🔍 AdminSettings: Loading website settings...');
         const s = await SettingsService.get();
+        console.log('✅ AdminSettings: Settings loaded:', {
+          heroButtonUrl: s.heroButtonUrl,
+          topupGameUrl: s.topupGameUrl,
+          whatsappChannelUrl: s.whatsappChannelUrl
+        });
         setSettings(s);
         const formData = {
           // General Settings
@@ -129,8 +135,8 @@ const AdminSettings: React.FC = () => {
       setLogoPreview('');
       setFaviconPreview('');
       
-      // Reload settings
-      const updatedSettings = await SettingsService.get();
+      // Force refresh settings to bypass cache
+      const updatedSettings = await SettingsService.forceRefresh();
       setSettings(updatedSettings);
       
       // Update original form and exit edit mode
