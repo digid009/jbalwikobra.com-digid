@@ -57,7 +57,7 @@ const PNHero: React.FC = () => {
                 <a href={heroButtonUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="secondary" size="lg" fullWidth className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
                     <Star size={18} />
-                    RekBer - Aman & Terpercaya. Klik Disini!
+                    RekBer Klik Disini!
                   </PNButton>
                 </a>
               </div>
@@ -65,13 +65,13 @@ const PNHero: React.FC = () => {
                 <Link to="/products">
                   <PNButton variant="secondary" size="md" fullWidth className="flex items-center justify-center gap-2">
                     <ShoppingBag size={16} />
-                    Lihat Stok Akun. Klik Disini!
+                    Lihat Stok Akun Disini!
                   </PNButton>
                 </Link>
                 <Link to="/sell">
                   <PNButton variant="ghost" size="md" fullWidth className="flex items-center justify-center gap-2">
                     <TrendingUp size={16} />
-                    Klik Disini untuk Jual Akun
+                    Jual Akunmu Disini!
                   </PNButton>
                 </Link>
               </div>
