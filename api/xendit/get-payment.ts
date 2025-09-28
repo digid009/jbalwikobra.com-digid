@@ -39,8 +39,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // DEBUG: Log the raw payment data to understand what's stored
       console.log('[Get Payment] Raw payment_data field:', JSON.stringify(paymentData.payment_data, null, 2));
+      console.log('[Get Payment] Stored payment_method:', paymentData.payment_method);
       
-      // Return the stored payment data
+      // CRITICAL FIX: Check if this is a VA payment that's missing VA details
+      const isVAPayment = paymentData.payment_method === 'invoice' || 
+                         paymentData.payment_method === 'bri' || 
+                         paymentData.payment_method === 'bni' || 
+                         paymentData.payment_method === 'mandiri' ||
+                         paymentData.payment_method === 'bca';
+      
+      const hasVADetails = !!(paymentData.payment_data?.account_number || paymentData.payment_data?.virtual_account_number);
+      
+      console.log('[Get Payment] VA Payment check:', { isVAPayment, hasVADetails });
+      
+      // If this is a VA payment but missing VA details, try to get them from fixed_virtual_accounts table
+      if (isVAPayment && !hasVADetails) {
+        console.log('[Get Payment] 🔄 VA payment missing details - checking fixed_virtual_accounts table');
+        
+        try {
+          const { data: fixedVAData, error: vaError } = await supabase
+            .from('fixed_virtual_accounts')
+            .select('*')
+            .eq('external_id', paymentData.external_id)
+            .single();
+          
+          if (fixedVAData && !vaError) {
+            console.log('[Get Payment] ✅ Found Fixed VA data:', fixedVAData.account_number);
+            
+            // Return with VA details from fixed_virtual_accounts table
+            return res.status(200).json({
+              id: paymentData.xendit_id,
+              payment_method: paymentData.payment_method || 'unknown',
+              amount: paymentData.amount,
+              currency: paymentData.currency || 'IDR',
+              status: paymentData.status,
+              external_id: paymentData.external_id,
+              created: paymentData.created_at,
+              description: paymentData.description,
+              expiry_date: paymentData.expiry_date,
+              
+              // VA details from fixed_virtual_accounts table
+              account_number: fixedVAData.account_number,
+              virtual_account_number: fixedVAData.account_number,
+              bank_code: fixedVAData.bank_code,
+              bank_name: `${fixedVAData.bank_code} VA`,
+              account_holder_name: fixedVAData.name,
+              transfer_amount: fixedVAData.expected_amount,
+              invoice_url: paymentData.payment_data?.invoice_url || paymentData.payment_data?.payment_url,
+              
+              // Other payment data
+              payment_url: paymentData.payment_data?.payment_url,
+              qr_string: paymentData.payment_data?.qr_string,
+              qr_url: paymentData.payment_data?.qr_url
+            });
+          } else {
+            console.log('[Get Payment] ⚠️ No Fixed VA data found:', vaError?.message);
+          }
+        } catch (error) {
+          console.error('[Get Payment] Error fetching Fixed VA data:', error);
+        }
+      }
+      
+      // Return the stored payment data (original behavior)
       return res.status(200).json({
         id: paymentData.xendit_id,
         payment_method: paymentData.payment_method || 'unknown',
