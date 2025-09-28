@@ -65,7 +65,7 @@ const PNHero: React.FC = () => {
                 <Link to="/products">
                   <PNButton variant="secondary" size="md" fullWidth className="flex items-center justify-center gap-2">
                     <ShoppingBag size={16} />
-                    Lihat Stok Akun Disini!
+                    Stok Akun Disini!
                   </PNButton>
                 </Link>
                 <Link to="/sell">

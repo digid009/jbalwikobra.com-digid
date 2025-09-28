@@ -8,6 +8,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Product, Customer, RentalOption } from '../types';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
+import { useTracking } from './useTracking';
 import { calculateTimeRemaining, formatCurrency } from '../utils/helpers';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../components/Toast';
@@ -52,6 +53,14 @@ export const useProductDetail = () => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
+  const {
+    trackProductView,
+    trackAddToWishlist,
+    trackRemoveFromWishlist,
+    trackBeginCheckout,
+    trackPurchase,
+    trackWhatsAppContact
+  } = useTracking();
 
   // Submission tracking to prevent race conditions
   const submissionInProgress = useRef(false);
@@ -216,6 +225,27 @@ export const useProductDetail = () => {
           }));
         }, 500); // Small delay to let UI render
       }
+      
+      // Simple product view tracking
+      if (data) {
+        try {
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: 'view_item',
+            currency: 'IDR',
+            value: data.price,
+            items: [{
+              item_id: data.id,
+              item_name: data.name,
+              category: 'gaming_accounts',
+              price: data.price,
+              quantity: 1
+            }]
+          });
+        } catch (error) {
+          console.warn('Failed to track product view:', error);
+        }
+      }
     } catch (err) {
       setState(prev => ({
         ...prev,
@@ -278,7 +308,28 @@ export const useProductDetail = () => {
       showCheckoutForm: true,
       checkoutType: 'purchase'
     }));
-  }, []);
+    
+    // Simple checkout tracking
+    if (state.product) {
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'begin_checkout',
+          currency: 'IDR',
+          value: state.product.price,
+          items: [{
+            item_id: state.product.id,
+            item_name: state.product.name,
+            category: 'gaming_accounts',
+            price: state.product.price,
+            quantity: 1
+          }]
+        });
+      } catch (error) {
+        console.warn('Failed to track begin checkout:', error);
+      }
+    }
+  }, [state.product, trackBeginCheckout]);
 
   const handleRental = useCallback((rental: RentalOption) => {
     setRentalState({ selectedRental: rental });
@@ -287,7 +338,21 @@ export const useProductDetail = () => {
       showCheckoutForm: true,
       checkoutType: 'rental'
     }));
-  }, []);
+    
+    // Track rental checkout initiation
+    if (state.product) {
+      try {
+        trackBeginCheckout({
+          id: state.product.id,
+          name: state.product.name,
+          category: (state.product as any).categoryData?.name || 'gaming_accounts',
+          price: rental.price
+        }, 'rental');
+      } catch (error) {
+        console.warn('Failed to track rental begin checkout:', error);
+      }
+    }
+  }, [state.product, trackBeginCheckout]);
 
   const closeCheckout = useCallback(() => {
     setCheckoutState(prev => ({
@@ -439,8 +504,37 @@ export const useProductDetail = () => {
 
     if (isInWishlist(state.product.id)) {
       removeFromWishlist(state.product.id);
+      // Track wishlist removal
+      try {
+        trackRemoveFromWishlist({
+          id: state.product.id,
+          name: state.product.name,
+          category: (state.product as any).categoryData?.name || 'gaming_accounts',
+          price: state.product.price
+        });
+      } catch (error) {
+        console.warn('Failed to track remove from wishlist:', error);
+      }
     } else {
       addToWishlist(wishlistItem);
+      // Simple wishlist tracking
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'add_to_wishlist',
+          currency: 'IDR',
+          value: state.product.price,
+          items: [{
+            item_id: state.product.id,
+            item_name: state.product.name,
+            category: 'gaming_accounts',
+            price: state.product.price,
+            quantity: 1
+          }]
+        });
+      } catch (error) {
+        console.warn('Failed to track add to wishlist:', error);
+      }
     }
   }, [state.product, isInWishlist, addToWishlist, removeFromWishlist]);
 

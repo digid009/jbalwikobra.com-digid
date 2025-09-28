@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 import { useToast } from '../components/Toast';
+import { useTracking } from '../hooks/useTracking';
 import PhoneInput from '../components/PhoneInput';
 import PasswordInput from '../components/PasswordInput';
 import { IOSButton, IOSCard } from '../components/ios/IOSDesignSystem';
@@ -16,6 +17,7 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, signup, verifyPhone, completeProfile } = useAuth();
   const { showToast } = useToast();
+  const { trackLogin, trackSignUp } = useTracking();
 
   // Login tab state
   const [loginTab, setLoginTab] = useState<'email' | 'phone'>('email');
@@ -78,6 +80,17 @@ const AuthPage: React.FC = () => {
 
       showToast('Login berhasil!', 'success');
       
+      // Simple login tracking
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'login',
+          method: loginTab
+        });
+      } catch (error) {
+        console.warn('Failed to track login:', error);
+      }
+      
       // Check if profile is completed
       if (!result.profileCompleted) {
         setMode('complete');
@@ -132,6 +145,17 @@ const AuthPage: React.FC = () => {
       setVerificationData({ userId: result.userId!, code: '' });
       setMode('verify');
       showToast(result.message || 'Kode verifikasi telah dikirim ke WhatsApp', 'success');
+      
+      // Simple signup tracking
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'sign_up',
+          method: 'phone'
+        });
+      } catch (error) {
+        console.warn('Failed to track signup:', error);
+      }
       
     } catch (error) {
       showToast('Terjadi kesalahan. Silakan coba lagi.', 'error');

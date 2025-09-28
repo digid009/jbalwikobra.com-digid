@@ -8,6 +8,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Product, Customer, RentalOption } from '../types';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
+import { useTracking } from './useTracking';
 import { calculateTimeRemaining, formatCurrency } from '../utils/helpers';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../components/Toast';
@@ -56,6 +57,7 @@ export const useFlashSaleProductDetail = () => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
+  const { trackFlashSale, trackProductView, trackBeginCheckout, trackPurchase } = useTracking();
 
   // Flash sale data from navigation state
   const flashSaleData = (location as any)?.state?.flashSaleData;
