@@ -1,6 +1,17 @@
 # 🎯 Step 6: Create Additional GTM Tags for Key Events
 
-Now that you have basic page view tracking working, let's add tags for the important business events.
+✅ **You have:** Basic page view tracking working
+🎯 **Next:** Add tags for purchases, product views, wishlist, etc.
+
+Your React app is now sending these events to dataLayer:
+- `view_item` (when viewing products)
+- `purchase` (when completing purchase) 
+- `add_to_wishlist` (when adding to wishlist)
+- `begin_checkout` (when starting checkout)
+- `sign_up` (when registering)
+- `login` (when logging in)
+
+Now create GTM tags to capture these events and send them to Google Analytics.
 
 ## 📊 **Create These Additional Tags in GTM:**
 

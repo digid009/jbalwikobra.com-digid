@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 import { useToast } from '../components/Toast';
-import { useTracking } from '../hooks/useTracking';
 import PhoneInput from '../components/PhoneInput';
 import PasswordInput from '../components/PasswordInput';
 import { IOSButton, IOSCard } from '../components/ios/IOSDesignSystem';
@@ -17,7 +16,6 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, signup, verifyPhone, completeProfile } = useAuth();
   const { showToast } = useToast();
-  const { trackLogin, trackSignUp } = useTracking();
 
   // Login tab state
   const [loginTab, setLoginTab] = useState<'email' | 'phone'>('email');

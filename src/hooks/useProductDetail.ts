@@ -8,7 +8,6 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Product, Customer, RentalOption } from '../types';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
-import { useTracking } from './useTracking';
 import { calculateTimeRemaining, formatCurrency } from '../utils/helpers';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../components/Toast';
@@ -53,14 +52,6 @@ export const useProductDetail = () => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
-  const {
-    trackProductView,
-    trackAddToWishlist,
-    trackRemoveFromWishlist,
-    trackBeginCheckout,
-    trackPurchase,
-    trackWhatsAppContact
-  } = useTracking();
 
   // Submission tracking to prevent race conditions
   const submissionInProgress = useRef(false);
@@ -329,7 +320,7 @@ export const useProductDetail = () => {
         console.warn('Failed to track begin checkout:', error);
       }
     }
-  }, [state.product, trackBeginCheckout]);
+  }, [state.product]);
 
   const handleRental = useCallback((rental: RentalOption) => {
     setRentalState({ selectedRental: rental });
@@ -339,20 +330,27 @@ export const useProductDetail = () => {
       checkoutType: 'rental'
     }));
     
-    // Track rental checkout initiation
+    // Simple rental checkout tracking
     if (state.product) {
       try {
-        trackBeginCheckout({
-          id: state.product.id,
-          name: state.product.name,
-          category: (state.product as any).categoryData?.name || 'gaming_accounts',
-          price: rental.price
-        }, 'rental');
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'begin_checkout',
+          currency: 'IDR',
+          value: rental.price,
+          items: [{
+            item_id: state.product.id,
+            item_name: state.product.name,
+            category: 'gaming_accounts',
+            price: rental.price,
+            quantity: 1
+          }]
+        });
       } catch (error) {
         console.warn('Failed to track rental begin checkout:', error);
       }
     }
-  }, [state.product, trackBeginCheckout]);
+  }, [state.product]);
 
   const closeCheckout = useCallback(() => {
     setCheckoutState(prev => ({
@@ -504,13 +502,20 @@ export const useProductDetail = () => {
 
     if (isInWishlist(state.product.id)) {
       removeFromWishlist(state.product.id);
-      // Track wishlist removal
+      // Simple wishlist removal tracking
       try {
-        trackRemoveFromWishlist({
-          id: state.product.id,
-          name: state.product.name,
-          category: (state.product as any).categoryData?.name || 'gaming_accounts',
-          price: state.product.price
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'remove_from_wishlist',
+          currency: 'IDR',
+          value: state.product.price,
+          items: [{
+            item_id: state.product.id,
+            item_name: state.product.name,
+            category: 'gaming_accounts',
+            price: state.product.price,
+            quantity: 1
+          }]
         });
       } catch (error) {
         console.warn('Failed to track remove from wishlist:', error);
