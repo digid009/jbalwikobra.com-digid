@@ -119,6 +119,52 @@ module.exports = function (app) {
       }));
     });
 
+    // Mock create-direct-payment endpoint for development testing
+    app.post('/api/xendit/create-direct-payment', (req, res) => {
+      let buf = '';
+      req.on('data', (chunk) => (buf += chunk));
+      req.on('end', () => {
+        try {
+          const body = buf ? JSON.parse(buf) : {};
+          console.log('🔧 Mock Xendit API: create-direct-payment', body);
+          
+          // Mock successful Fixed VA response
+          const mockResponse = {
+            id: `mock-invoice-${Date.now()}`,
+            external_id: body.external_id || `test-${Date.now()}`,
+            amount: body.amount || 150000,
+            currency: 'IDR',
+            status: 'PENDING',
+            payment_method: body.payment_method_id || 'mandiri',
+            
+            // Fixed VA mock data
+            virtual_account_number: `8808${Date.now().toString().slice(-8)}`,
+            account_number: `8808${Date.now().toString().slice(-8)}`,
+            bank_code: body.payment_method_id?.toUpperCase() || 'MANDIRI',
+            bank_name: body.payment_method_id?.includes('mandiri') ? 'Mandiri Virtual Account' : 
+                       body.payment_method_id?.includes('bni') ? 'BNI Virtual Account' :
+                       body.payment_method_id?.includes('bri') ? 'BRI Virtual Account' : 'Virtual Account',
+            account_holder_name: body.customer?.given_names || 'Test Customer',
+            transfer_amount: body.amount || 150000,
+            fixed_va_id: `va-${Date.now()}`,
+            
+            // Additional fields
+            expiry_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            invoice_url: `https://checkout.xendit.co/web/mock-${Date.now()}`,
+            created: new Date().toISOString(),
+            description: body.description || 'Mock payment for development'
+          };
+          
+          res.setHeader('Content-Type', 'application/json');
+          res.status(200).send(JSON.stringify(mockResponse));
+        } catch (error) {
+          console.error('🔧 Mock API Error:', error);
+          res.setHeader('Content-Type', 'application/json');
+          res.status(400).send(JSON.stringify({ error: 'Invalid request body' }));
+        }
+      });
+    });
+
     // Minimal mock for webhook test send used by AdminWhatsAppSettings
     app.post('/api/xendit/webhook', (req, res) => {
       if (req.url.includes('testGroupSend')) {

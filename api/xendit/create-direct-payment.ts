@@ -14,7 +14,7 @@ const SITE_URL = process.env.SITE_URL || process.env.REACT_APP_SITE_URL || 'http
 async function createOrderRecord(order: any, externalId: string, paymentMethodId: string) {
   if (!order || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.log('[Direct Payment] Skipping order creation - missing order data or Supabase config');
-    console.log('[Direct Payment] Order data received:', JSON.stringify(order, null, 2));
+
     return null;
   }
 
@@ -145,12 +145,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let apiEndpoint: string;
     let requestPayload: any;
     let apiVersion = '2024-11-11';
+    let vaData: any = null; // For storing Fixed VA data
 
     // Use different API endpoints based on payment method type
     if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
-      // For Virtual Accounts, use the Invoice API which is more reliable and flexible
+      // NEW APPROACH: Use Fixed VA + Invoice binding for immediate VA numbers
+      console.log('[Xendit Fixed VA] Using Fixed VA + Invoice binding approach');
+      console.log('[Xendit Fixed VA] Bank Code:', xenditChannelCode);
+      console.log('[Xendit Fixed VA] Payment Method ID:', payment_method_id);
+      
+      // Step 1: Create Fixed Virtual Account
+      const vaExternalId = `va-${external_id}-${Date.now()}`;
+      
+      const fixedVAPayload = {
+        external_id: vaExternalId,
+        bank_code: xenditChannelCode,
+        name: order?.customer_name || customer?.given_names || 'Customer',
+        expected_amount: amount,
+        is_closed: true, // Only accept exact amount
+        expiration_date: expiryIsoString,
+        description: description || `Payment for ${order?.product_name || 'product'}`
+      };
+
+      // Create the Fixed VA first
+      const vaResponse = await fetch(`${XENDIT_BASE_URL}/virtual_accounts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+          'Content-Type': 'application/json',
+          'Xendit-API-Version': '2017-10-31'
+        },
+        body: JSON.stringify(fixedVAPayload)
+      });
+
+      if (!vaResponse.ok) {
+        const vaError = await vaResponse.text();
+        console.error('[Xendit Fixed VA] Failed to create Fixed VA:', vaResponse.status, vaError);
+        return res.status(vaResponse.status).json({
+          error: 'Failed to create Virtual Account',
+          details: vaError
+        });
+      }
+
+      vaData = await vaResponse.json(); // Store VA data for later use
+      console.log('[Xendit Fixed VA] ✅ Fixed VA created:', vaData.id, vaData.account_number);
+
+      // Step 2: Create Invoice with Fixed VA binding
       apiEndpoint = `${XENDIT_BASE_URL}/v2/invoices`;
-      apiVersion = '2018-05-15'; // Stable Invoice API version
+      apiVersion = '2018-05-15';
       
       requestPayload = {
         external_id: external_id,
@@ -162,16 +204,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           mobile_number: customer?.mobile_number || '+62000000000',
           email: customer?.email || 'customer@example.com'
         },
-        payment_methods: [xenditChannelCode], // Specify bank for VA
+        payment_methods: [xenditChannelCode],
         currency: currency,
         should_send_email: false,
         success_redirect_url: success_redirect_url || `${SITE_URL}/payment-success?external_id=${external_id}`,
-        failure_redirect_url: failure_redirect_url || `${SITE_URL}/payment-failed?external_id=${external_id}`
+        failure_redirect_url: failure_redirect_url || `${SITE_URL}/payment-failed?external_id=${external_id}`,
+        // BIND THE FIXED VA TO THE INVOICE
+        callback_virtual_account_id: vaData.id
       };
-      
-      console.log('[Xendit Invoice Payment] Using V2 Invoice API for Virtual Account');
-      console.log('[Xendit Invoice Payment] Bank Code being sent:', xenditChannelCode);
-      console.log('[Xendit Invoice Payment] Payment Method ID:', payment_method_id);
+
+      console.log('[Xendit Fixed VA] Creating Invoice with VA binding:', vaData.id);
       
     } else if (paymentChannel.type === 'QRIS' || paymentChannel.type === 'EWALLET') {
       // QRIS and E-Wallets use the V3 Payment Requests API
@@ -315,7 +357,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const responseData = await response.json();
     console.log('[Xendit Payment] Response status:', response.status);
-    console.log('[Xendit Payment] Complete response data:', JSON.stringify(responseData, null, 2));
+
     console.log('[Xendit Payment] API endpoint used:', apiEndpoint);
     console.log('[Xendit Payment] Payment channel type:', paymentChannel.type);
 
@@ -382,12 +424,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         actions: []
       };
       
-      console.log('[Xendit VA Payment] ✅ Virtual Account created successfully:');
-      console.log('[Xendit VA Payment] - VA ID:', responseData.id);
-      console.log('[Xendit VA Payment] - Status:', responseData.status);
-      console.log('[Xendit VA Payment] - VA Number:', responseData.account_number);
-      console.log('[Xendit VA Payment] - Bank Code:', responseData.bank_code);
-      console.log('[Xendit VA Payment] - Expected Amount:', responseData.expected_amount);
+      console.log('[Xendit VA Payment] ✅ VA created:', responseData.id, responseData.account_number);
     } else {
       // Payment Request API format for other payment types
       formattedResponse = {
@@ -420,7 +457,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (const field of possibleExpiryFields) {
         if (responseData[field]) {
           expiryDate = responseData[field];
-          console.log(`[Xendit Payment] ✅ Found expiry in field '${field}':`, expiryDate);
+
           break;
         }
       }
@@ -431,7 +468,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           for (const field of possibleExpiryFields) {
             if (action[field]) {
               expiryDate = action[field];
-              console.log(`[Xendit Payment] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
+
               break;
             }
           }
@@ -442,7 +479,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Check metadata for backup expiry
     if (!expiryDate && responseData.metadata?.requested_expiry) {
       expiryDate = responseData.metadata.requested_expiry;
-      console.log('[Xendit Payment] ✅ Using metadata.requested_expiry as fallback:', expiryDate);
+
     }
     
     if (!expiryDate) {
@@ -458,20 +495,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Handle Virtual Account specific processing
     if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
-      // Update response with Invoice API format for Virtual Accounts
+      // NEW: Use Fixed VA data that we created and bound to the invoice
       formattedResponse.invoice_url = responseData.invoice_url;
-      formattedResponse.expiry_date = responseData.expiry_date;
+      formattedResponse.expiry_date = responseData.expiry_date || expiryDate;
       formattedResponse.bank_name = paymentChannel.name;
       formattedResponse.bank_code = xenditChannelCode;
-      formattedResponse.available_banks = responseData.available_banks || [];
-      formattedResponse.available_virtual_account_banks = responseData.available_virtual_account_banks || [];
       
-      console.log('[Xendit Invoice Payment] ✅ Invoice created successfully for Virtual Account:');
-      console.log('[Xendit Invoice Payment] - Invoice ID:', responseData.id);
-      console.log('[Xendit Invoice Payment] - Status:', responseData.status);
-      console.log('[Xendit Invoice Payment] - Invoice URL:', responseData.invoice_url);
-      console.log('[Xendit Invoice Payment] - Available Banks:', responseData.available_banks?.length || 0);
-      console.log('[Xendit Invoice Payment] - Available VA Banks:', responseData.available_virtual_account_banks?.length || 0);
+      // IMPORTANT: Use the Fixed VA data we created earlier
+      if (vaData) {
+        formattedResponse.virtual_account_number = vaData.account_number;
+        formattedResponse.account_number = vaData.account_number;
+        formattedResponse.bank_code = vaData.bank_code;
+        formattedResponse.account_holder_name = vaData.name;
+        formattedResponse.transfer_amount = vaData.expected_amount;
+        formattedResponse.fixed_va_id = vaData.id;
+        
+        console.log('[Xendit Fixed VA] ✅ Invoice created with Fixed VA:', responseData.id, vaData.account_number);
+      } else {
+        console.warn('[Xendit Fixed VA] ⚠️ vaData not available in scope');
+      }
       
       // Try to extract Virtual Account details from available banks
       if (responseData.available_banks && responseData.available_banks.length > 0) {
@@ -486,10 +528,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           formattedResponse.account_holder_name = targetBank.account_holder_name;
           formattedResponse.transfer_amount = targetBank.transfer_amount || amount;
           
-          console.log('[Xendit Invoice Payment] ✅ Bank details found:');
-          console.log('[Xendit Invoice Payment] - VA Number:', targetBank.virtual_account_number || targetBank.account_number);
-          console.log('[Xendit Invoice Payment] - Bank Code:', targetBank.bank_code);
-          console.log('[Xendit Invoice Payment] - Account Holder:', targetBank.account_holder_name);
+          console.log('[Xendit Invoice Payment] ✅ Bank details found:', targetBank.bank_code, targetBank.virtual_account_number || targetBank.account_number);
         }
       }
       
@@ -504,16 +543,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           formattedResponse.bank_code = targetBank.bank_code;
           formattedResponse.bank_name = targetBank.bank_name || paymentChannel.name;
           
-          console.log('[Xendit Invoice Payment] ✅ VA Bank details extracted:');
-          console.log('[Xendit Invoice Payment] - VA Number:', targetBank.virtual_account_number);
-          console.log('[Xendit Invoice Payment] - Bank Code:', targetBank.bank_code);
+          console.log('[Xendit Invoice Payment] ✅ VA Bank details extracted:', targetBank.bank_code, targetBank.virtual_account_number);
         }
       }
       
       // Always include invoice URL as fallback payment method
       formattedResponse.payment_url = responseData.invoice_url;
       
-      console.log('[Xendit Invoice Payment] ✅ Invoice processing complete');
+
       
     } else if (responseData.actions && responseData.actions.length > 0) {
       // V3 API action-based response format (QRIS, E-Wallets)
@@ -529,12 +566,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         formattedResponse.qr_string = primaryAction.value; // PaymentInterface expects qr_string
         formattedResponse.qr_code = primaryAction.value;   // Keep for backward compatibility
       }
-      console.log('[Xendit V3 Payment] Action-based payment details extracted');
+
       
     } else if (responseData.payment_url) {
       // Direct payment URL (fallback)
       formattedResponse.payment_url = responseData.payment_url;
-      console.log('[Xendit Payment] Direct payment URL extracted');
+
+    }
+
+    // Store Fixed VA data in database if created
+    if (vaData && paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      await storeFixedVAData(vaData, external_id);
     }
 
     // Store payment data in database for later retrieval
@@ -571,6 +613,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: error instanceof Error ? error.message : 'Unknown error',
       type: 'processing_error'
     });
+  }
+}
+
+// Store Fixed VA data in database
+async function storeFixedVAData(vaData: any, externalId: string) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.log('[Store Fixed VA] Skipping VA storage - missing Supabase config');
+    return;
+  }
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { error } = await supabase
+      .from('fixed_virtual_accounts')
+      .upsert({
+        xendit_va_id: vaData.id,
+        external_id: vaData.external_id,
+        bank_code: vaData.bank_code,
+        account_number: vaData.account_number,
+        name: vaData.name,
+        expected_amount: vaData.expected_amount,
+        status: vaData.status,
+        expiration_date: vaData.expiration_date,
+        is_closed: vaData.is_closed,
+        merchant_code: vaData.merchant_code,
+        currency: vaData.currency || 'IDR',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'external_id' });
+
+    if (error) {
+      console.error('[Store Fixed VA] Database error:', error);
+    } else {
+      console.log('[Store Fixed VA] ✅ Fixed VA stored successfully:', vaData.id);
+    }
+  } catch (error) {
+    console.error('[Store Fixed VA] Error:', error);
   }
 }
 
@@ -611,8 +692,7 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     // Ensure we always have an expiry date with comprehensive field checking
     let expiryDate = null;
     
-    console.log('[Store Payment V3] Checking paymentData for expiry fields...');
-    console.log('[Store Payment V3] PaymentData fields:', Object.keys(paymentData));
+    console.log('[Store Payment V3] Storing payment data with fields:', Object.keys(paymentData));
     
     // Try various field names that Xendit might use in the payment data
     const possibleExpiryFields = [
@@ -624,19 +704,19 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     for (const field of possibleExpiryFields) {
       if (paymentData[field]) {
         expiryDate = paymentData[field];
-        console.log(`[Store Payment V3] ✅ Found expiry in field '${field}':`, expiryDate);
+
         break;
       }
     }
     
     // Check nested actions for expiry fields
     if (!expiryDate && paymentData.actions) {
-      console.log('[Store Payment V3] Checking actions for expiry fields...');
+
       paymentData.actions.forEach((action: any, index: number) => {
         for (const field of possibleExpiryFields) {
           if (action[field]) {
             expiryDate = action[field];
-            console.log(`[Store Payment V3] ✅ Found expiry in action[${index}].${field}:`, expiryDate);
+
             break;
           }
         }

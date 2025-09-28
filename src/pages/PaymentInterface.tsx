@@ -22,9 +22,12 @@ interface PaymentData {
   qr_string?: string;
   description?: string;
   virtual_account_number?: string;
+  account_number?: string;
   bank_code?: string;
   bank_name?: string;
   invoice_url?: string;
+  account_holder_name?: string;
+  transfer_amount?: number;
 }
 
 const PaymentInterface: React.FC = () => {
@@ -54,6 +57,83 @@ const PaymentInterface: React.FC = () => {
     }
     fetchPaymentData();
   }, [paymentId]);
+
+  // Poll for VA number if it's missing (for Invoice API Virtual Account payments)
+  useEffect(() => {
+    if (paymentData && 
+        paymentData.payment_method && 
+        paymentData.payment_method.includes('Virtual Account') &&
+        !paymentData.virtual_account_number && 
+        !paymentData.account_number &&
+        paymentData.invoice_url) {
+      
+      console.log('VA number missing, attempting to fetch from Xendit invoice...');
+      
+      // Try to get VA details directly from Xendit invoice
+      const fetchVAFromInvoice = async () => {
+        try {
+          const response = await fetch(`/api/xendit/get-invoice-details?invoice_id=${paymentData.id}`);
+          if (response.ok) {
+            const invoiceData = await response.json();
+            
+            if (invoiceData.virtual_account_number) {
+              console.log('VA number found from invoice:', invoiceData.virtual_account_number);
+              setPaymentData(prev => ({
+                ...prev!,
+                virtual_account_number: invoiceData.virtual_account_number,
+                bank_code: invoiceData.bank_code,
+                bank_name: invoiceData.bank_name,
+                account_holder_name: invoiceData.account_holder_name,
+                transfer_amount: invoiceData.transfer_amount
+              }));
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching VA from invoice:', error);
+        }
+      };
+      
+      // Initial attempt
+      fetchVAFromInvoice();
+      
+      // If still no VA number after initial attempt, start polling
+      const pollTimeout = setTimeout(() => {
+        const pollForVA = setInterval(async () => {
+          console.log('Polling for VA details...');
+          
+          try {
+            // First try the invoice endpoint
+            await fetchVAFromInvoice();
+            
+            // Then try the regular payment endpoint
+            const response = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (data.virtual_account_number || data.account_number) {
+                console.log('VA number found in polling:', data.virtual_account_number || data.account_number);
+                setPaymentData(data);
+                clearInterval(pollForVA);
+              }
+            }
+          } catch (error) {
+            console.error('Error polling for VA number:', error);
+          }
+        }, 5000); // Poll every 5 seconds
+        
+        // Stop polling after 60 seconds
+        setTimeout(() => {
+          console.log('Stopping VA polling after 60 seconds');
+          clearInterval(pollForVA);
+        }, 60000);
+        
+        return () => clearInterval(pollForVA);
+      }, 2000); // Wait 2 seconds before starting polling
+      
+      return () => clearTimeout(pollTimeout);
+    }
+  }, [paymentData, paymentId]);
 
   // Payment status polling - check every 5 seconds for payment completion
   useEffect(() => {
@@ -154,6 +234,14 @@ const PaymentInterface: React.FC = () => {
         expiry_date: data.expiry_date,
         created: data.created,
         amount: data.amount
+      });
+      console.log('🔍 FULL PAYMENT DATA IN FRONTEND:', JSON.stringify(data, null, 2));
+      console.log('🔍 VA DATA CHECK:', {
+        virtual_account_number: data.virtual_account_number,
+        account_number: data.account_number,
+        bank_code: data.bank_code,
+        bank_name: data.bank_name,
+        invoice_url: data.invoice_url
       });
       
       // Check if payment is already completed
@@ -494,7 +582,7 @@ const PaymentInterface: React.FC = () => {
         )}
 
         {/* Virtual Account Section */}
-        {(paymentData.virtual_account_number || paymentData.invoice_url) && (
+        {(paymentData.virtual_account_number || paymentData.account_number || paymentData.invoice_url) && (
           <PNSection padding="md">
             <PNCard className="p-8 relative overflow-hidden">
               {/* Background Pattern */}
@@ -515,7 +603,7 @@ const PaymentInterface: React.FC = () => {
                 </div>
                 
                 {/* Virtual Account Details or Invoice Link */}
-                {paymentData.virtual_account_number ? (
+                {(paymentData.virtual_account_number || paymentData.account_number) ? (
                   <div className="space-y-6 mb-8">
                     {/* Bank Information */}
                     <div className="text-center p-6 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl border border-blue-500/20">
@@ -529,10 +617,10 @@ const PaymentInterface: React.FC = () => {
                     <div className="text-center p-6 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl border border-green-500/20">
                       <PNText className="text-sm text-gray-400 mb-2">Nomor Virtual Account</PNText>
                       <div className="font-mono text-2xl lg:text-3xl font-bold text-white tracking-wider bg-gray-800/50 px-4 py-3 rounded-xl border border-gray-600/50">
-                        {paymentData.virtual_account_number}
+                        {paymentData.virtual_account_number || paymentData.account_number}
                       </div>
                       <button
-                        onClick={() => navigator.clipboard.writeText(paymentData.virtual_account_number)}
+                        onClick={() => navigator.clipboard.writeText(paymentData.virtual_account_number || paymentData.account_number || '')}
                         className="mt-3 inline-flex items-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors"
                       >
                         <Copy size={16} />
@@ -575,7 +663,7 @@ const PaymentInterface: React.FC = () => {
                     {[
                       { icon: Smartphone, text: "Buka aplikasi mobile banking atau ATM" },
                       { icon: Building2, text: "Pilih menu Transfer > Virtual Account / Rekening Ponsel" },
-                      { icon: Copy, text: paymentData.virtual_account_number ? `Masukkan nomor VA: ${paymentData.virtual_account_number}` : "Masukkan nomor Virtual Account (lihat detail pembayaran)" },
+                      { icon: Copy, text: paymentData.virtual_account_number || paymentData.account_number ? `Masukkan nomor VA: ${paymentData.virtual_account_number || paymentData.account_number}` : "Masukkan nomor Virtual Account (lihat detail pembayaran)" },
                       { icon: CreditCard, text: `Transfer sejumlah: ${formatCurrency(paymentData.amount)}` },
                       { icon: CheckCircle, text: "Konfirmasi transfer dan selesai!" }
                     ].map((step, index) => (
