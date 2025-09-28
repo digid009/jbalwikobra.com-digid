@@ -699,10 +699,13 @@ async function storeFixedVAData(vaData: any, externalId: string) {
 
 // Store payment data for later retrieval (Multi-API compatible)
 async function storePaymentData(paymentData: any, paymentMethodId: string, order: any) {
-  console.log('[Store Payment V3] 🔍 Input parameters:', {
+  console.log('[Store Payment V3] 🔍 CRITICAL DEBUG - Input parameters:', {
     paymentData_payment_method: paymentData.payment_method,
     paymentMethodId_param: paymentMethodId,
-    paymentData_has_va: !!(paymentData.virtual_account_number || paymentData.account_number)
+    paymentData_has_va: !!(paymentData.virtual_account_number || paymentData.account_number),
+    paymentData_account_number: paymentData.account_number,
+    paymentData_bank_code: paymentData.bank_code,
+    paymentData_keys: Object.keys(paymentData)
   });
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.log('[Store Payment] Skipping payment storage - missing Supabase config');
@@ -727,10 +730,19 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     if (paymentData.qr_code) paymentSpecificData.qr_code = paymentData.qr_code;
     if (paymentData.qr_string) paymentSpecificData.qr_string = paymentData.qr_string;
     
-    // V2 API specific fields (Virtual Accounts) - use more robust checks
-    if (paymentData.account_number !== undefined) paymentSpecificData.account_number = paymentData.account_number;
-    if (paymentData.virtual_account_number !== undefined) paymentSpecificData.virtual_account_number = paymentData.virtual_account_number;
-    if (paymentData.bank_code !== undefined) paymentSpecificData.bank_code = paymentData.bank_code;
+    // CRITICAL: Force VA field extraction for Virtual Account payments
+    if (paymentData.account_number !== undefined) {
+      paymentSpecificData.account_number = paymentData.account_number;
+      console.log('[Store Payment V3] ✅ Extracted account_number:', paymentData.account_number);
+    }
+    if (paymentData.virtual_account_number !== undefined) {
+      paymentSpecificData.virtual_account_number = paymentData.virtual_account_number;
+      console.log('[Store Payment V3] ✅ Extracted virtual_account_number:', paymentData.virtual_account_number);
+    }
+    if (paymentData.bank_code !== undefined) {
+      paymentSpecificData.bank_code = paymentData.bank_code;
+      console.log('[Store Payment V3] ✅ Extracted bank_code:', paymentData.bank_code);
+    }
     if (paymentData.bank_name !== undefined) paymentSpecificData.bank_name = paymentData.bank_name;
     if (paymentData.invoice_url !== undefined) paymentSpecificData.invoice_url = paymentData.invoice_url;
     if (paymentData.account_holder_name !== undefined) paymentSpecificData.account_holder_name = paymentData.account_holder_name;
@@ -781,7 +793,8 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     const paymentRecord = {
       xendit_id: paymentData.id || paymentData.payment_request_id,
       external_id: paymentData.external_id,
-      payment_method: paymentMethodId, // Should be the original payment_method_id like "bri"
+      // CRITICAL FIX: Always use paymentMethodId parameter, never paymentData.payment_method
+      payment_method: paymentMethodId, // This MUST be the original payment_method_id like "bri", not from Xendit response
       amount: paymentData.amount,
       currency: paymentData.currency || 'IDR',
       status: paymentData.status,
