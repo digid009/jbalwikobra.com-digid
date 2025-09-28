@@ -816,22 +816,65 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       payment_data_keys: Object.keys(paymentSpecificData)
     });
 
+    // CRITICAL: Add database verification step
+    console.log('[Store Payment V3] 🔧 About to store:', JSON.stringify(paymentRecord, null, 2));
+
     // Use upsert to prevent duplicate payment records
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('payments')
-      .upsert(paymentRecord, { onConflict: 'external_id' });
+      .upsert(paymentRecord, { onConflict: 'external_id' })
+      .select(); // Return the inserted data
 
     if (error) {
-      console.error('[Store Payment V3] Database error:', error);
+      console.error('[Store Payment V3] ❌ CRITICAL DATABASE ERROR:', error);
+      console.error('[Store Payment V3] 📋 Failed record:', JSON.stringify(paymentRecord, null, 2));
+      
+      // Try alternative storage method for VA payments
+      if (paymentMethodId === 'bri' || paymentMethodId === 'bni' || paymentMethodId === 'mandiri') {
+        console.log('[Store Payment V3] 🔄 Attempting emergency VA storage...');
+        try {
+          const emergencyRecord = {
+            xendit_id: paymentData.id,
+            external_id: paymentData.external_id,
+            payment_method: paymentMethodId, // Force correct payment method
+            amount: paymentData.amount,
+            currency: 'IDR',
+            status: paymentData.status || 'PENDING',
+            description: 'Emergency VA storage',
+            payment_data: {
+              account_number: paymentData.account_number,
+              virtual_account_number: paymentData.virtual_account_number,
+              bank_code: paymentData.bank_code,
+              bank_name: paymentData.bank_name
+            },
+            expiry_date: expiryDate,
+            created_at: new Date().toISOString()
+          };
+          
+          const { error: emergencyError } = await supabase
+            .from('payments')
+            .insert(emergencyRecord);
+            
+          if (emergencyError) {
+            console.error('[Store Payment V3] ❌ Emergency storage also failed:', emergencyError);
+          } else {
+            console.log('[Store Payment V3] ✅ Emergency VA storage succeeded');
+          }
+        } catch (emergencyErr) {
+          console.error('[Store Payment V3] ❌ Emergency storage exception:', emergencyErr);
+        }
+      }
     } else {
-      console.log('[Store Payment V3] Successfully stored payment data for:', paymentRecord.xendit_id);
+      console.log('[Store Payment V3] ✅ Successfully stored payment data for:', paymentRecord.xendit_id);
+      console.log('[Store Payment V3] 📋 Stored data:', JSON.stringify(data, null, 2));
       
       // Additional debug for VA payments
       if (paymentMethodId.includes('bri') || paymentMethodId.includes('bni') || paymentMethodId.includes('mandiri')) {
         console.log('[Store Payment V3] 🏦 VA Payment stored successfully with VA data:', {
           account_number: paymentSpecificData.account_number,
           virtual_account_number: paymentSpecificData.virtual_account_number,
-          bank_code: paymentSpecificData.bank_code
+          bank_code: paymentSpecificData.bank_code,
+          stored_payment_method: data?.[0]?.payment_method
         });
       }
     }
