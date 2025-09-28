@@ -37,6 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (paymentData) {
       console.log('[Get Payment] Found payment data with status:', paymentData.status);
       
+      // DEBUG: Log the raw payment data to understand what's stored
+      console.log('[Get Payment] Raw payment_data field:', JSON.stringify(paymentData.payment_data, null, 2));
+      
       // Return the stored payment data
       return res.status(200).json({
         id: paymentData.xendit_id,

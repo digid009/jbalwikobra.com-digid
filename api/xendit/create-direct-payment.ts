@@ -168,7 +168,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       // Create the Fixed VA first
-      const vaResponse = await fetch(`${XENDIT_BASE_URL}/virtual_accounts`, {
+      const vaResponse = await fetch(`${XENDIT_BASE_URL}/callback_virtual_accounts`, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
@@ -407,24 +407,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let formattedResponse: any;
     
     if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
-      // Virtual Account API has immediate VA number in response
+      // For Fixed VA + Invoice binding, responseData is Invoice response, not VA response
+      // We need to use the vaData we stored from Fixed VA creation
       formattedResponse = {
         id: responseData.id,
-        external_id: responseData.external_id,
-        amount: responseData.expected_amount || amount,
+        external_id: responseData.external_id || external_id,
+        amount: responseData.amount || amount,
         currency: currency,
         status: responseData.status,
         payment_method: payment_method_id,
-        virtual_account_number: responseData.account_number,
+        // FIXED: Use vaData instead of responseData for VA details
+        virtual_account_number: vaData?.account_number || responseData.account_number,
+        account_number: vaData?.account_number || responseData.account_number, // Ensure account_number is always set
         bank_name: paymentChannel.name,
-        bank_code: responseData.bank_code,
-        account_holder_name: responseData.name,
-        transfer_amount: responseData.expected_amount || amount,
-        expiry_date: responseData.expiration_date,
-        actions: []
+        bank_code: vaData?.bank_code || responseData.bank_code || xenditChannelCode,
+        account_holder_name: vaData?.name || responseData.name,
+        transfer_amount: vaData?.expected_amount || responseData.expected_amount || amount,
+        expiry_date: responseData.expiry_date || responseData.expiration_date,
+        actions: [],
+        // Additional fields for Fixed VA
+        fixed_va_id: vaData?.id,
+        invoice_url: responseData.invoice_url
       };
       
-      console.log('[Xendit VA Payment] ✅ VA created:', responseData.id, responseData.account_number);
+      console.log('[Xendit VA Payment] ✅ Response formatted with VA data:', {
+        invoice_id: responseData.id,
+        va_number: formattedResponse.virtual_account_number,
+        bank_code: formattedResponse.bank_code,
+        vaData_available: !!vaData,
+        our_payment_method: formattedResponse.payment_method,
+        xendit_response_payment_method: responseData.payment_method
+      });
     } else {
       // Payment Request API format for other payment types
       formattedResponse = {
@@ -501,18 +514,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       formattedResponse.bank_name = paymentChannel.name;
       formattedResponse.bank_code = xenditChannelCode;
       
-      // IMPORTANT: Use the Fixed VA data we created earlier
-      if (vaData) {
-        formattedResponse.virtual_account_number = vaData.account_number;
-        formattedResponse.account_number = vaData.account_number;
-        formattedResponse.bank_code = vaData.bank_code;
-        formattedResponse.account_holder_name = vaData.name;
-        formattedResponse.transfer_amount = vaData.expected_amount;
-        formattedResponse.fixed_va_id = vaData.id;
+      // VA data is already set in the initial formattedResponse above
+      // Add the account_number field for backwards compatibility
+      if (formattedResponse.virtual_account_number) {
+        formattedResponse.account_number = formattedResponse.virtual_account_number;
         
-        console.log('[Xendit Fixed VA] ✅ Invoice created with Fixed VA:', responseData.id, vaData.account_number);
+        console.log('[Xendit Fixed VA] ✅ VA data properly formatted:', {
+          invoice_id: responseData.id,
+          va_number: formattedResponse.virtual_account_number, 
+          bank_code: formattedResponse.bank_code,
+          account_holder: formattedResponse.account_holder_name,
+          amount: formattedResponse.transfer_amount
+        });
       } else {
-        console.warn('[Xendit Fixed VA] ⚠️ vaData not available in scope');
+        console.error('[Xendit Fixed VA] ❌ CRITICAL: VA number missing in formatted response!');
+        console.error('[Xendit Fixed VA] 📋 vaData available:', !!vaData);
+        console.error('[Xendit Fixed VA] 📋 vaData.account_number:', vaData?.account_number);
+        console.error('[Xendit Fixed VA] 📋 responseData keys:', Object.keys(responseData));
       }
       
       // Try to extract Virtual Account details from available banks
@@ -580,6 +598,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Store payment data in database for later retrieval
+    console.log('[Xendit Payment] 🏦 About to store payment data:', {
+      payment_method_from_formatted: formattedResponse.payment_method,
+      payment_method_id_param: payment_method_id,
+      has_va_data: !!(formattedResponse.virtual_account_number || formattedResponse.account_number)
+    });
     await storePaymentData(formattedResponse, payment_method_id, order);
 
     // Send payment link WhatsApp notification
@@ -596,6 +619,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       api_version: apiVersion
     });
 
+    // DEBUG: Log the complete formatted response for Virtual Account payments
+    if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
+      console.log('[Xendit Payment] 🔍 COMPLETE VA RESPONSE:', JSON.stringify(formattedResponse, null, 2));
+      console.log('[Xendit Payment] 🏦 VA Number Check:', formattedResponse.virtual_account_number || formattedResponse.account_number || 'NOT SET');
+      
+      // Add debug info to response
+      formattedResponse._debug = {
+        va_fields_before_storage: {
+          account_number: formattedResponse.account_number,
+          virtual_account_number: formattedResponse.virtual_account_number,
+          bank_code: formattedResponse.bank_code,
+          bank_name: formattedResponse.bank_name
+        }
+      };
+    }
+
+    // TEMPORARY: Add a marker to verify deployment
+    formattedResponse._deployment_test = "CODE_CHANGES_DEPLOYED";
+    
     return res.status(200).json(formattedResponse);
 
   } catch (error) {
@@ -657,6 +699,11 @@ async function storeFixedVAData(vaData: any, externalId: string) {
 
 // Store payment data for later retrieval (Multi-API compatible)
 async function storePaymentData(paymentData: any, paymentMethodId: string, order: any) {
+  console.log('[Store Payment V3] 🔍 Input parameters:', {
+    paymentData_payment_method: paymentData.payment_method,
+    paymentMethodId_param: paymentMethodId,
+    paymentData_has_va: !!(paymentData.virtual_account_number || paymentData.account_number)
+  });
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.log('[Store Payment] Skipping payment storage - missing Supabase config');
     return;
@@ -680,14 +727,14 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     if (paymentData.qr_code) paymentSpecificData.qr_code = paymentData.qr_code;
     if (paymentData.qr_string) paymentSpecificData.qr_string = paymentData.qr_string;
     
-    // V2 API specific fields (Virtual Accounts)
-    if (paymentData.account_number) paymentSpecificData.account_number = paymentData.account_number;
-    if (paymentData.virtual_account_number) paymentSpecificData.virtual_account_number = paymentData.virtual_account_number;
-    if (paymentData.bank_code) paymentSpecificData.bank_code = paymentData.bank_code;
-    if (paymentData.bank_name) paymentSpecificData.bank_name = paymentData.bank_name;
-    if (paymentData.invoice_url) paymentSpecificData.invoice_url = paymentData.invoice_url;
-    if (paymentData.account_holder_name) paymentSpecificData.account_holder_name = paymentData.account_holder_name;
-    if (paymentData.transfer_amount) paymentSpecificData.transfer_amount = paymentData.transfer_amount;
+    // V2 API specific fields (Virtual Accounts) - use more robust checks
+    if (paymentData.account_number !== undefined) paymentSpecificData.account_number = paymentData.account_number;
+    if (paymentData.virtual_account_number !== undefined) paymentSpecificData.virtual_account_number = paymentData.virtual_account_number;
+    if (paymentData.bank_code !== undefined) paymentSpecificData.bank_code = paymentData.bank_code;
+    if (paymentData.bank_name !== undefined) paymentSpecificData.bank_name = paymentData.bank_name;
+    if (paymentData.invoice_url !== undefined) paymentSpecificData.invoice_url = paymentData.invoice_url;
+    if (paymentData.account_holder_name !== undefined) paymentSpecificData.account_holder_name = paymentData.account_holder_name;
+    if (paymentData.transfer_amount !== undefined) paymentSpecificData.transfer_amount = paymentData.transfer_amount;
 
     // Ensure we always have an expiry date with comprehensive field checking
     let expiryDate = null;
@@ -734,7 +781,7 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     const paymentRecord = {
       xendit_id: paymentData.id || paymentData.payment_request_id,
       external_id: paymentData.external_id,
-      payment_method: paymentMethodId,
+      payment_method: paymentMethodId, // Should be the original payment_method_id like "bri"
       amount: paymentData.amount,
       currency: paymentData.currency || 'IDR',
       status: paymentData.status,
@@ -743,6 +790,18 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       expiry_date: expiryDate,
       created_at: new Date().toISOString()
     };
+
+    // DEBUG: Log what's being stored for ALL payments to catch VA payments
+    console.log('[Store Payment V3] 🏦 STORING PAYMENT DATA:', {
+      xendit_id: paymentRecord.xendit_id,
+      external_id: paymentRecord.external_id,
+      payment_method: paymentRecord.payment_method,
+      paymentMethodId_param: paymentMethodId,
+      has_account_number: !!paymentSpecificData.account_number,
+      has_virtual_account_number: !!paymentSpecificData.virtual_account_number,
+      has_bank_code: !!paymentSpecificData.bank_code,
+      payment_data_keys: Object.keys(paymentSpecificData)
+    });
 
     // Use upsert to prevent duplicate payment records
     const { error } = await supabase
@@ -753,6 +812,15 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
       console.error('[Store Payment V3] Database error:', error);
     } else {
       console.log('[Store Payment V3] Successfully stored payment data for:', paymentRecord.xendit_id);
+      
+      // Additional debug for VA payments
+      if (paymentMethodId.includes('bri') || paymentMethodId.includes('bni') || paymentMethodId.includes('mandiri')) {
+        console.log('[Store Payment V3] 🏦 VA Payment stored successfully with VA data:', {
+          account_number: paymentSpecificData.account_number,
+          virtual_account_number: paymentSpecificData.virtual_account_number,
+          bank_code: paymentSpecificData.bank_code
+        });
+      }
     }
 
   } catch (error) {
