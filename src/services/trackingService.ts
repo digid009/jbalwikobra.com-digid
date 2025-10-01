@@ -59,6 +59,7 @@ class TrackingService {
   private GTM_ID = process.env.REACT_APP_GTM_CONTAINER_ID;
   private GA4_ID = process.env.REACT_APP_GA4_MEASUREMENT_ID;
   private GOOGLE_ADS_ID = process.env.REACT_APP_GOOGLE_ADS_ID;
+  private debugMode = process.env.REACT_APP_GA4_DEBUG === 'true';
 
   constructor() {
     this.initializeDataLayer();
@@ -92,6 +93,10 @@ class TrackingService {
     if (typeof window === 'undefined' || !window.dataLayer) return;
 
     try {
+      // Inject debug flag if enabled (helps GA4 DebugView)
+      if (this.debugMode && typeof data === 'object' && data && !('debug_mode' in data)) {
+        data.debug_mode = true;
+      }
       window.dataLayer.push(data);
       this.log('DataLayer push:', data);
     } catch (error) {
@@ -263,14 +268,8 @@ class TrackingService {
       }]
     });
 
-    // Google Ads wishlist conversion
-    if (window.gtag && this.GOOGLE_ADS_ID) {
-      window.gtag('event', 'conversion', {
-        send_to: `${this.GOOGLE_ADS_ID}/wishlist-conversion`,
-        value: product.price,
-        currency: 'IDR'
-      });
-    }
+    // NOTE: Removed direct Google Ads conversion firing.
+    // Conversion should be handled via GTM tag listening to add_to_wishlist if desired.
 
     this.log('Add to wishlist tracked:', product.name);
   }
@@ -354,15 +353,8 @@ class TrackingService {
       }))
     });
 
-    // Google Ads purchase conversion
-    if (window.gtag && this.GOOGLE_ADS_ID) {
-      window.gtag('event', 'conversion', {
-        send_to: `${this.GOOGLE_ADS_ID}/purchase-conversion`,
-        value: purchaseData.value,
-        currency: purchaseData.currency,
-        transaction_id: purchaseData.transaction_id
-      });
-    }
+    // NOTE: Removed inline Google Ads conversion call; GTM should fire the official
+    // Google Ads Conversion Tag (ID + Label) on the 'purchase' event.
 
     this.log('Purchase tracked:', purchaseData.transaction_id);
   }
@@ -385,15 +377,7 @@ class TrackingService {
       transaction_type: 'rental'
     });
 
-    // Google Ads rental conversion
-    if (window.gtag && this.GOOGLE_ADS_ID) {
-      window.gtag('event', 'conversion', {
-        send_to: `${this.GOOGLE_ADS_ID}/rental-conversion`,
-        value: rentalData.value,
-        currency: rentalData.currency,
-        transaction_id: rentalData.rental_id
-      });
-    }
+    // NOTE: Removed direct Ads rental conversion firing; manage in GTM if needed.
 
     this.log('Rental tracked:', rentalData.rental_id);
   }
@@ -416,12 +400,7 @@ class TrackingService {
       timestamp: Date.now()
     });
 
-    // Google Ads signup conversion
-    if (window.gtag && this.GOOGLE_ADS_ID) {
-      window.gtag('event', 'conversion', {
-        send_to: `${this.GOOGLE_ADS_ID}/signup-conversion`
-      });
-    }
+    // NOTE: Removed direct Ads signup conversion; configure GTM tag on sign_up event if required.
 
     this.log('User signup tracked:', method);
   }
@@ -481,8 +460,19 @@ class TrackingService {
   trackWhatsAppContact(productId?: string, contactType: 'rental' | 'purchase' | 'inquiry' = 'inquiry') {
     const user = this.getCurrentUser();
 
+    // Primary event (original naming)
     this.pushToDataLayer({
       event: 'whatsapp_contact',
+      contact_type: contactType,
+      product_id: productId,
+      user_type: user.type,
+      user_id: user.id,
+      timestamp: Date.now()
+    });
+
+    // Alias event for Google Ads 'Contact' conversion tag
+    this.pushToDataLayer({
+      event: 'contact',
       contact_type: contactType,
       product_id: productId,
       user_type: user.type,

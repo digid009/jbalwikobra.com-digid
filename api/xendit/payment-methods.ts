@@ -175,16 +175,72 @@ function getStaticFallbackMethods(amount?: number) {
       min_amount: 1000,
       max_amount: 10000000
     },
+    // BCA Virtual Account - REMOVED (not activated)
+    // {
+    //   id: 'bca',
+    //   name: 'BCA Virtual Account',
+    //   type: 'VIRTUAL_ACCOUNT',
+    //   description: 'Transfer melalui Virtual Account BCA',
+    //   available: false, // NOT ACTIVATED
+    //   processing_time: '1-15 menit',
+    //   popular: false,
+    //   min_amount: 10000,
+    //   max_amount: 500000000 // BCA VA limit: 500 million
+    // },
     {
-      id: 'bca',
-      name: 'BCA Virtual Account',
+      id: 'bjb',
+      name: 'BJB Virtual Account',
       type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BCA',
+      description: 'Transfer melalui Virtual Account BJB',
       available: true,
-      processing_time: '1-15 menit',
+      processing_time: 'Instant',
+      popular: false,
+      min_amount: 10000,
+      max_amount: 500000000
+    },
+    {
+      id: 'bni',
+      name: 'BNI Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BNI',
+      available: true,
+      processing_time: 'Instant',
       popular: true,
       min_amount: 10000,
-      max_amount: 500000000 // BCA VA limit: 500 million
+      max_amount: 500000000
+    },
+    {
+      id: 'bri',
+      name: 'BRI Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BRI',
+      available: true,
+      processing_time: 'Instant',
+      popular: true,
+      min_amount: 10000,
+      max_amount: 1000000000
+    },
+    {
+      id: 'bsi',
+      name: 'BSI Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account BSI',
+      available: true,
+      processing_time: 'Instant',
+      popular: false,
+      min_amount: 10000,
+      max_amount: 100000000
+    },
+    {
+      id: 'cimb',
+      name: 'CIMB Niaga Virtual Account',
+      type: 'VIRTUAL_ACCOUNT',
+      description: 'Transfer melalui Virtual Account CIMB Niaga',
+      available: true,
+      processing_time: 'Instant',
+      popular: false,
+      min_amount: 10000,
+      max_amount: 100000000
     },
     {
       id: 'mandiri',
@@ -195,27 +251,18 @@ function getStaticFallbackMethods(amount?: number) {
       processing_time: '1-15 menit',
       popular: true,
       min_amount: 10000,
-      max_amount: 1000000000 // Updated to 1 billion for high-value support
+      max_amount: 500000000
     },
     {
-      id: 'bni',
-      name: 'BNI Virtual Account',
+      id: 'permata',
+      name: 'Permata Virtual Account',
       type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BNI',
+      description: 'Transfer melalui Virtual Account Permata',
       available: true,
-      processing_time: '1-15 menit',
+      processing_time: 'Instant',
+      popular: false,
       min_amount: 10000,
-      max_amount: 1000000000 // Updated to 1 billion for high-value support
-    },
-    {
-      id: 'bri',
-      name: 'BRI Virtual Account',
-      type: 'VIRTUAL_ACCOUNT',
-      description: 'Transfer melalui Virtual Account BRI',
-      available: true,
-      processing_time: '1-15 menit',
-      min_amount: 10000,
-      max_amount: 1000000000 // Updated to 1 billion for high-value support
+      max_amount: 100000000
     },
     {
       id: 'credit_card',

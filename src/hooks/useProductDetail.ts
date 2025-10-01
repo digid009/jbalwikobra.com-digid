@@ -11,6 +11,7 @@ import { SettingsService } from '../services/settingsService';
 import { calculateTimeRemaining, formatCurrency } from '../utils/helpers';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useToast } from '../components/Toast';
+import { useTracking } from './useTracking';
 
 // Mobile-first constants
 const MOBILE_CONSTANTS = {
@@ -52,6 +53,7 @@ export const useProductDetail = () => {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { showToast } = useToast();
+  const { trackProductView, trackBeginCheckout } = useTracking();
 
   // Submission tracking to prevent race conditions
   const submissionInProgress = useRef(false);
@@ -220,22 +222,14 @@ export const useProductDetail = () => {
       // Simple product view tracking
       if (data) {
         try {
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({
-            event: 'view_item',
-            currency: 'IDR',
-            value: data.price,
-            items: [{
-              item_id: data.id,
-              item_name: data.name,
-              category: 'gaming_accounts',
-              price: data.price,
-              quantity: 1
-            }]
+          trackProductView({
+            id: data.id,
+            name: data.name,
+            category: (data as any).category || (data as any).categoryId || 'gaming_accounts',
+            price: data.price,
+            image: data.image
           });
-        } catch (error) {
-          console.warn('Failed to track product view:', error);
-        }
+        } catch (e) { console.warn('Failed to track product view via service:', e); }
       }
     } catch (err) {
       setState(prev => ({
@@ -244,7 +238,7 @@ export const useProductDetail = () => {
         error: 'Failed to load product details'
       }));
     }
-  }, [id, cameFromFlashSaleCard, shouldOpenCheckoutModal]);
+  }, [id, cameFromFlashSaleCard, shouldOpenCheckoutModal, trackProductView]);
 
   // Setup gallery images
   useEffect(() => {
@@ -303,24 +297,15 @@ export const useProductDetail = () => {
     // Simple checkout tracking
     if (state.product) {
       try {
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
-          event: 'begin_checkout',
-          currency: 'IDR',
-          value: state.product.price,
-          items: [{
-            item_id: state.product.id,
-            item_name: state.product.name,
-            category: 'gaming_accounts',
-            price: state.product.price,
-            quantity: 1
-          }]
-        });
-      } catch (error) {
-        console.warn('Failed to track begin checkout:', error);
-      }
+        trackBeginCheckout({
+          id: state.product.id,
+          name: state.product.name,
+          category: (state.product as any).category || (state.product as any).categoryId || 'gaming_accounts',
+          price: state.product.price
+        }, 'purchase');
+      } catch (e) { console.warn('Failed to track begin checkout via service:', e); }
     }
-  }, [state.product]);
+  }, [state.product, trackBeginCheckout]);
 
   const handleRental = useCallback((rental: RentalOption) => {
     setRentalState({ selectedRental: rental });
@@ -333,24 +318,15 @@ export const useProductDetail = () => {
     // Simple rental checkout tracking
     if (state.product) {
       try {
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
-          event: 'begin_checkout',
-          currency: 'IDR',
-          value: rental.price,
-          items: [{
-            item_id: state.product.id,
-            item_name: state.product.name,
-            category: 'gaming_accounts',
-            price: rental.price,
-            quantity: 1
-          }]
-        });
-      } catch (error) {
-        console.warn('Failed to track rental begin checkout:', error);
-      }
+        trackBeginCheckout({
+          id: state.product.id,
+          name: state.product.name,
+          category: (state.product as any).category || (state.product as any).categoryId || 'gaming_accounts',
+          price: rental.price
+        }, 'rental');
+      } catch (e) { console.warn('Failed to track rental begin checkout via service:', e); }
     }
-  }, [state.product]);
+  }, [state.product, trackBeginCheckout]);
 
   const closeCheckout = useCallback(() => {
     setCheckoutState(prev => ({

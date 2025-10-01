@@ -26,6 +26,7 @@ interface PaymentData {
   bank_code?: string;
   bank_name?: string;
   invoice_url?: string;
+  payment_url?: string;
   account_holder_name?: string;
   transfer_amount?: number;
 }
@@ -57,6 +58,66 @@ const PaymentInterface: React.FC = () => {
     }
     fetchPaymentData();
   }, [paymentId]);
+
+  // Poll for QR string if it's missing for QRIS payments
+  useEffect(() => {
+    if (paymentData && 
+        (paymentMethod?.toLowerCase() === 'qris' || paymentData.payment_method?.toLowerCase() === 'qris') &&
+        !paymentData.qr_string &&
+        paymentData.status !== 'PAID' &&
+        paymentData.status !== 'COMPLETED') {
+      
+      console.log('🔄 QRIS QR string missing, starting polling...');
+      
+      const pollForQRString = async () => {
+        try {
+          console.log('🔍 Polling for QR string...');
+          const response = await fetch(`/api/xendit/get-payment?id=${paymentId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('📥 Polling response - QR string present:', !!data.qr_string);
+            
+            if (data.qr_string) {
+              console.log('✅ QR string found during polling!');
+              setPaymentData(prev => ({
+                ...prev!,
+                qr_string: data.qr_string,
+                qr_url: data.qr_url
+              }));
+              return true; // Found QR string
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error polling for QR string:', error);
+        }
+        return false; // QR string not found
+      };
+      
+      // Initial poll after 2 seconds
+      const initialPoll = setTimeout(async () => {
+        const found = await pollForQRString();
+        if (!found) {
+          // Start interval polling if not found initially
+          const pollInterval = setInterval(async () => {
+            const found = await pollForQRString();
+            if (found) {
+              clearInterval(pollInterval);
+            }
+          }, 5000); // Poll every 5 seconds
+          
+          // Stop polling after 60 seconds
+          setTimeout(() => {
+            console.log('⏰ Stopping QR string polling after 60 seconds');
+            clearInterval(pollInterval);
+          }, 60000);
+          
+          return () => clearInterval(pollInterval);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(initialPoll);
+    }
+  }, [paymentData, paymentId, paymentMethod]);
 
   // Poll for VA number if it's missing (for Invoice API Virtual Account payments)
   useEffect(() => {
@@ -242,6 +303,12 @@ const PaymentInterface: React.FC = () => {
         bank_code: data.bank_code,
         bank_name: data.bank_name,
         invoice_url: data.invoice_url
+      });
+      console.log('🔍 QRIS DATA CHECK:', {
+        payment_method: data.payment_method,
+        qr_string: data.qr_string ? `Present (${data.qr_string.length} chars)` : 'NOT PRESENT',
+        qr_url: data.qr_url,
+        action_type: data.action_type
       });
       
       // Check if payment is already completed
@@ -518,7 +585,7 @@ const PaymentInterface: React.FC = () => {
         </PNSection>
 
         {/* Enhanced QR Code Section */}
-        {paymentData.qr_string && (
+        {(paymentData.qr_string || (paymentMethod && paymentMethod.toLowerCase() === 'qris')) && (
           <PNSection padding="md">
             <PNCard className="p-8 relative overflow-hidden">
               {/* Background Pattern */}
@@ -542,11 +609,23 @@ const PaymentInterface: React.FC = () => {
                 <div className="text-center mb-8">
                   <div className="relative inline-block">
                     <div className="bg-white p-8 rounded-3xl shadow-2xl shadow-pink-500/10 border-4 border-pink-500/20">
-                      <QRCode 
-                        value={paymentData.qr_string} 
-                        size={280}
-                        style={{ maxWidth: "100%", height: "auto" }}
-                      />
+                      {paymentData.qr_string ? (
+                        <QRCode 
+                          value={paymentData.qr_string} 
+                          size={280}
+                          style={{ maxWidth: "100%", height: "auto" }}
+                        />
+                      ) : (
+                        <div className="w-70 h-70 flex items-center justify-center bg-gray-100 rounded-2xl">
+                          <div className="text-center text-gray-600">
+                            <QrCode size={64} className="mx-auto mb-4 text-gray-400" />
+                            <p className="text-sm">QR Code sedang dimuat...</p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Payment ID: {paymentData.id}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {/* Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 rounded-3xl blur-xl -z-10 animate-pulse"></div>

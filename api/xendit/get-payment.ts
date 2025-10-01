@@ -100,6 +100,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
       
+      // CRITICAL FIX: If this is a QRIS payment but QR string is missing, try to fetch from Xendit
+      const isQRISPayment = paymentData.payment_method === 'qris' || paymentData.payment_method === 'QRIS';
+      const hasQRString = !!(paymentData.payment_data?.qr_string);
+      
+      console.log('[Get Payment] QRIS check:', { isQRISPayment, hasQRString });
+      
+      if (isQRISPayment && !hasQRString) {
+        console.log('[Get Payment] 🔄 QRIS payment missing QR string - attempting to fetch from Xendit API');
+        
+        try {
+          const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
+          if (XENDIT_SECRET_KEY) {
+            const xenditResponse = await fetch(`https://api.xendit.co/v3/payment_requests/${paymentData.xendit_id}`, {
+              headers: {
+                'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (xenditResponse.ok) {
+              const xenditData = await xenditResponse.json();
+              console.log('[Get Payment] 📥 Xendit API response received');
+              
+              if (xenditData.actions && xenditData.actions.length > 0) {
+                const presentAction = xenditData.actions.find((action: any) => action.type === 'PRESENT_TO_CUSTOMER');
+                if (presentAction && presentAction.value) {
+                  console.log('[Get Payment] ✅ Found QR string in Xendit API!');
+                  
+                  // Update our database with the QR string
+                  const updatedPaymentData = {
+                    ...paymentData.payment_data,
+                    qr_string: presentAction.value,
+                    qr_url: presentAction.value
+                  };
+                  
+                  await supabase
+                    .from('payments')
+                    .update({ payment_data: updatedPaymentData })
+                    .eq('xendit_id', id);
+                  
+                  // Return with QR string
+                  return res.status(200).json({
+                    id: paymentData.xendit_id,
+                    payment_method: paymentData.payment_method || 'unknown',
+                    amount: paymentData.amount,
+                    currency: paymentData.currency || 'IDR',
+                    status: paymentData.status,
+                    external_id: paymentData.external_id,
+                    created: paymentData.created_at,
+                    description: paymentData.description,
+                    expiry_date: paymentData.expiry_date,
+                    
+                    // QR string from Xendit API
+                    qr_string: presentAction.value,
+                    qr_url: presentAction.value,
+                    
+                    // Other payment data
+                    virtual_account_number: paymentData.payment_data?.virtual_account_number || paymentData.payment_data?.account_number,
+                    account_number: paymentData.payment_data?.account_number,
+                    bank_code: paymentData.payment_data?.bank_code,
+                    bank_name: paymentData.payment_data?.bank_name,
+                    invoice_url: paymentData.payment_data?.invoice_url,
+                    account_holder_name: paymentData.payment_data?.account_holder_name,
+                    transfer_amount: paymentData.payment_data?.transfer_amount,
+                    payment_url: paymentData.payment_data?.payment_url,
+                    action_type: paymentData.payment_data?.action_type,
+                    payment_code: paymentData.payment_data?.payment_code,
+                    retail_outlet: paymentData.payment_data?.retail_outlet
+                  });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('[Get Payment] Error fetching QR string from Xendit:', error);
+        }
+      }
+      
       // Return the stored payment data (original behavior)
       return res.status(200).json({
         id: paymentData.xendit_id,

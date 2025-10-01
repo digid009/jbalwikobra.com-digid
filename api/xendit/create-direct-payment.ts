@@ -157,15 +157,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Step 1: Create Fixed Virtual Account
       const vaExternalId = `va-${external_id}-${Date.now()}`;
       
-      const fixedVAPayload = {
+      const fixedVAPayload: any = {
         external_id: vaExternalId,
         bank_code: xenditChannelCode,
-        name: order?.customer_name || customer?.given_names || 'Customer',
+        name: order?.customer_name || customer?.given_names || 'Customer Payment',
         expected_amount: amount,
         is_closed: true, // Only accept exact amount
-        expiration_date: expiryIsoString,
-        description: description || `Payment for ${order?.product_name || 'product'}`
+        expiration_date: expiryIsoString
       };
+      
+      // CRITICAL FIX: Some banks don't support description field in Fixed VA creation
+      const banksWithoutDescriptionSupport = [
+        'PERMATA_VIRTUAL_ACCOUNT', 
+        'PERMATA',
+        'BSI_VIRTUAL_ACCOUNT',
+        'BSI',
+        'CIMB_VIRTUAL_ACCOUNT',
+        'CIMB',
+        'BNI_VIRTUAL_ACCOUNT',
+        'BNI',
+        'MANDIRI_VIRTUAL_ACCOUNT',
+        'MANDIRI',
+        'BJB_VIRTUAL_ACCOUNT',
+        'BJB'
+      ];
+      
+      if (!banksWithoutDescriptionSupport.includes(xenditChannelCode)) {
+        fixedVAPayload.description = description || `Payment for ${order?.product_name || 'product'}`;
+      } else {
+        console.log(`[Xendit Fixed VA] Skipping description for ${xenditChannelCode} (not supported)`);
+      }
+      
+      console.log('[Xendit Fixed VA] Payload for', xenditChannelCode, ':', JSON.stringify(fixedVAPayload, null, 2));
 
       // Create the Fixed VA first
       const vaResponse = await fetch(`${XENDIT_BASE_URL}/callback_virtual_accounts`, {
@@ -216,13 +239,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[Xendit Fixed VA] Creating Invoice with VA binding:', vaData.id);
       
     } else if (paymentChannel.type === 'QRIS' || paymentChannel.type === 'EWALLET') {
-      // QRIS and E-Wallets use the V3 Payment Requests API
+      // QRIS and E-Wallets use the V3 Payment Requests API (BACK TO V3 - WAS WORKING BEFORE)
       apiEndpoint = `${XENDIT_BASE_URL}/v3/payment_requests`;
       
+      // RESTORE THE ORIGINAL V3 FORMAT THAT WAS WORKING
       requestPayload = {
         reference_id: external_id,
         type: "PAY",
-        country: "ID", 
+        country: "ID",
         currency: currency,
         request_amount: amount,
         capture_method: "AUTOMATIC",
@@ -234,8 +258,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         webhook: {
           url: `${SITE_URL}/api/xendit/webhook`
         },
-        description: description || `Payment for ${order?.product_name || 'product'}`,
-        expiry_date: expiryIsoString,
+        description: `Payment for ${order?.product_name || 'product'}`,
         expires_at: expiryIsoString,
         metadata: {
           client_external_id: external_id,
@@ -251,7 +274,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       };
       
-      console.log('[Xendit V3 Payment] Using V3 Payment Requests API for QRIS/E-Wallet');
+      console.log('[Xendit V3 Payment] Using V3 Payment Requests API for QRIS/E-Wallet (RESTORED)');
       
     } else if (paymentChannel.type === 'OVER_THE_COUNTER') {
       // Over-the-counter payments use V2 API
@@ -357,9 +380,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const responseData = await response.json();
     console.log('[Xendit Payment] Response status:', response.status);
-
     console.log('[Xendit Payment] API endpoint used:', apiEndpoint);
     console.log('[Xendit Payment] Payment channel type:', paymentChannel.type);
+    
+    // CRITICAL DEBUG: Log the full Xendit response for QRIS payments
+    if (paymentChannel.type === 'QRIS') {
+      console.log('[Xendit QRIS Payment] 🔍 FULL XENDIT RESPONSE:', JSON.stringify(responseData, null, 2));
+      console.log('[Xendit QRIS Payment] 🔍 Actions present:', !!responseData.actions);
+      console.log('[Xendit QRIS Payment] 🔍 Actions count:', responseData.actions ? responseData.actions.length : 0);
+      if (responseData.actions) {
+        responseData.actions.forEach((action: any, index: number) => {
+          console.log(`[Xendit QRIS Payment] 🔍 Action ${index}:`, {
+            type: action.type,
+            has_value: !!action.value,
+            value_preview: action.value ? action.value.substring(0, 50) + '...' : 'NO VALUE'
+          });
+        });
+      }
+    }
 
     if (!response.ok) {
       console.error('[Xendit Payment] API Error:', responseData);
@@ -574,6 +612,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // V3 API action-based response format (QRIS, E-Wallets)
       const primaryAction = responseData.actions[0];
       
+      console.log('[Xendit V3 Payment] 🔍 CRITICAL DEBUG - QRIS Action Details:', {
+        action_type: primaryAction.type,
+        action_value: primaryAction.value ? `Present (${primaryAction.value.length} chars)` : 'MISSING',
+        action_value_preview: primaryAction.value ? primaryAction.value.substring(0, 50) + '...' : 'NO VALUE',
+        all_actions: responseData.actions.map(a => ({ type: a.type, has_value: !!a.value }))
+      });
+      
       if (primaryAction.type === 'REDIRECT_CUSTOMER') {
         formattedResponse.payment_url = primaryAction.value;
         formattedResponse.action_type = 'REDIRECT_CUSTOMER';
@@ -583,6 +628,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         formattedResponse.action_type = 'PRESENT_TO_CUSTOMER';
         formattedResponse.qr_string = primaryAction.value; // PaymentInterface expects qr_string
         formattedResponse.qr_code = primaryAction.value;   // Keep for backward compatibility
+        
+        console.log('[Xendit V3 Payment] ✅ QR String set successfully:', {
+          qr_string_length: formattedResponse.qr_string ? formattedResponse.qr_string.length : 0,
+          qr_string_preview: formattedResponse.qr_string ? formattedResponse.qr_string.substring(0, 50) + '...' : 'NOT SET'
+        });
       }
 
       
@@ -728,7 +778,15 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     if (paymentData.action_type) paymentSpecificData.action_type = paymentData.action_type;
     if (paymentData.redirect_url) paymentSpecificData.redirect_url = paymentData.redirect_url;
     if (paymentData.qr_code) paymentSpecificData.qr_code = paymentData.qr_code;
-    if (paymentData.qr_string) paymentSpecificData.qr_string = paymentData.qr_string;
+    if (paymentData.qr_string) {
+      paymentSpecificData.qr_string = paymentData.qr_string;
+      console.log('[Store Payment V3] ✅ QRIS QR String being stored:', {
+        qr_string_length: paymentData.qr_string.length,
+        qr_string_preview: paymentData.qr_string.substring(0, 50) + '...'
+      });
+    } else {
+      console.log('[Store Payment V3] ❌ QRIS QR String MISSING from paymentData!');
+    }
     
     // CRITICAL: Force VA field extraction for Virtual Account payments
     if (paymentData.account_number !== undefined) {
@@ -819,10 +877,10 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     // CRITICAL: Add database verification step
     console.log('[Store Payment V3] 🔧 About to store:', JSON.stringify(paymentRecord, null, 2));
 
-    // Use upsert to prevent duplicate payment records
+    // Use upsert to prevent duplicate payment records - use xendit_id as conflict key
     const { data, error } = await supabase
       .from('payments')
-      .upsert(paymentRecord, { onConflict: 'external_id' })
+      .upsert(paymentRecord, { onConflict: 'xendit_id' })
       .select(); // Return the inserted data
 
     if (error) {

@@ -27,11 +27,11 @@ export interface ActivatedPaymentChannel {
 
 /**
  * ACTIVATED PAYMENT CHANNELS ONLY
- * Update this list to match your actual Xendit account activations
- * Remove or set available: false for channels not activated on your account
+ * Updated to match exactly with Xendit dashboard activation status
+ * All channels listed below are confirmed activated
  */
 export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
-  // E-Wallets - ONLY ACTIVATED CHANNELS FROM YOUR XENDIT DASHBOARD
+  // E-Wallets - ONLY ACTIVATED CHANNELS
   {
     id: 'astrapay',
     name: 'AstraPay',
@@ -45,87 +45,36 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     max_amount: 10000000,
     icon: '💳'
   },
-  // DISABLED E-WALLETS - NOT ACTIVATED ON YOUR ACCOUNT
-  {
-    id: 'ovo',
-    name: 'OVO',
-    type: 'EWALLET',
-    description: 'Pembayaran instant dengan OVO',
-    channel_code: 'ID_OVO',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: 'Instant',
-    popular: false,
-    min_amount: 10000,
-    max_amount: 10000000,
-    icon: '🟡'
-  },
-  {
-    id: 'dana',
-    name: 'DANA',
-    type: 'EWALLET',
-    description: 'Pembayaran instant dengan DANA',
-    channel_code: 'ID_DANA',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: 'Instant',
-    popular: false,
-    min_amount: 10000,
-    max_amount: 10000000,
-    icon: '🔵'
-  },
-  {
-    id: 'shopeepay',
-    name: 'ShopeePay',
-    type: 'EWALLET',
-    description: 'Pembayaran instant dengan ShopeePay',
-    channel_code: 'ID_SHOPEEPAY',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: 'Instant',
-    popular: false,
-    min_amount: 10000,
-    max_amount: 10000000,
-    icon: '🟠'
-  },
-  {
-    id: 'linkaja',
-    name: 'LinkAja',
-    type: 'EWALLET',
-    description: 'Pembayaran instant dengan LinkAja',
-    channel_code: 'ID_LINKAJA',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: 'Instant',
-    min_amount: 10000,
-    max_amount: 10000000,
-    icon: '🔴'
-  },
-  {
-    id: 'gopay',
-    name: 'GoPay',
-    type: 'EWALLET',
-    description: 'Pembayaran instant dengan GoPay',
-    channel_code: 'GOPAY',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: 'Instant',
-    min_amount: 10000,
-    max_amount: 2000000,
-    icon: '🟢'
-  },
-
-  // QRIS - Usually activated by default
+  // QRIS - ACTIVATED ✅
   {
     id: 'qris',
     name: 'QRIS',
     type: 'QRIS',
     description: 'Scan QR Code untuk bayar',
     channel_code: 'QRIS',
-    available: true, // Usually activated by default
+    available: true, // ACTIVATED ✅
     processing_time: 'Instant',
     popular: true,
     min_amount: 1000,
     max_amount: 10000000,
-    icon: '📱'
+    icon: '�'
   },
 
-  // Virtual Accounts - ALL MAJOR INDONESIAN BANKS WITH ACTUAL LIMITS
+  // Virtual Accounts - ALL ACTIVATED CHANNELS FROM DASHBOARD ✅
+  {
+    id: 'bjb',
+    name: 'BJB Virtual Account',
+    type: 'VIRTUAL_ACCOUNT',
+    description: 'Transfer melalui Virtual Account BJB',
+    channel_code: 'BJB_VIRTUAL_ACCOUNT',
+    available: true, // ACTIVATED ✅
+    processing_time: 'Instant',
+    popular: false,
+    min_amount: 1000,
+    max_amount: 500000000,
+    icon: '🟢'
+  },
+
   {
     id: 'bni',
     name: 'BNI Virtual Account',
@@ -153,32 +102,6 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     icon: '🔵'
   },
   {
-    id: 'mandiri',
-    name: 'Mandiri Virtual Account',
-    type: 'VIRTUAL_ACCOUNT',
-    description: 'Transfer melalui Virtual Account Mandiri',
-    channel_code: 'MANDIRI_VIRTUAL_ACCOUNT',
-    available: true, // ACTIVATED ✅
-    processing_time: '1-15 menit',
-    popular: true,
-    min_amount: 1000,
-    max_amount: 500000000, // Mandiri VA limit: 500 million
-    icon: '🟠'
-  },
-  {
-    id: 'bca',
-    name: 'BCA Virtual Account',
-    type: 'VIRTUAL_ACCOUNT',
-    description: 'Transfer melalui Virtual Account BCA',
-    channel_code: 'BCA',
-    available: true, // ACTIVATED ✅
-    processing_time: '1-15 menit',
-    popular: true,
-    min_amount: 1000,
-    max_amount: 50000000, // BCA VA limit: 50 million
-    icon: '🔵'
-  },
-  {
     id: 'bsi',
     name: 'BSI Virtual Account',
     type: 'VIRTUAL_ACCOUNT',
@@ -190,19 +113,6 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     min_amount: 1000,
     max_amount: 100000000, // BSI VA limit: 100 million
     icon: '🟢'
-  },
-  {
-    id: 'permata',
-    name: 'Permata Virtual Account',
-    type: 'VIRTUAL_ACCOUNT',
-    description: 'Transfer melalui Virtual Account Permata',
-    channel_code: 'PERMATA_VIRTUAL_ACCOUNT',
-    available: true, // ACTIVATED ✅
-    processing_time: 'Instant',
-    popular: false,
-    min_amount: 1000,
-    max_amount: 100000000, // Permata VA limit: 100 million
-    icon: '🟣'
   },
   {
     id: 'cimb',
@@ -218,17 +128,17 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     icon: '🔴'
   },
   {
-    id: 'sahabat_sampoerna',
-    name: 'Sahabat Sampoerna Virtual Account',
+    id: 'mandiri',
+    name: 'Mandiri Virtual Account',
     type: 'VIRTUAL_ACCOUNT',
-    description: 'Transfer melalui Virtual Account Sahabat Sampoerna',
-    channel_code: 'SAHABAT_SAMPOERNA',
+    description: 'Transfer melalui Virtual Account Mandiri',
+    channel_code: 'MANDIRI_VIRTUAL_ACCOUNT',
     available: true, // ACTIVATED ✅
     processing_time: '1-15 menit',
-    popular: false,
+    popular: true,
     min_amount: 1000,
-    max_amount: 50000000, // Sahabat Sampoerna VA limit: 50 million
-    icon: '🏦'
+    max_amount: 500000000, // Mandiri VA limit: 500 million
+    icon: '🟠'
   },
   {
     id: 'permata',
@@ -237,35 +147,36 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     description: 'Transfer melalui Virtual Account Permata',
     channel_code: 'PERMATA_VIRTUAL_ACCOUNT',
     available: true, // ACTIVATED ✅
-    processing_time: '1-15 menit',
+    processing_time: 'Instant',
     popular: false,
-    min_amount: 10000,
-    max_amount: 1000000000, // Updated to match backend: 1 billion
+    min_amount: 1000,
+    max_amount: 100000000, // Permata VA limit: 100 million
     icon: '🟣'
   },
   // DISABLED VIRTUAL ACCOUNTS - NOT ACTIVATED ON YOUR ACCOUNT
-  {
-    id: 'bca',
-    name: 'BCA Virtual Account',
-    type: 'VIRTUAL_ACCOUNT',
-    description: 'Transfer melalui Virtual Account BCA',
-    channel_code: 'BCA_VIRTUAL_ACCOUNT',
-    available: false, // NOT ACTIVATED ❌
-    processing_time: '1-15 menit',
-    popular: false,
-    min_amount: 10000,
-    max_amount: 500000000, // BCA VA limit: 500 million
-    icon: '🔵'
-  },
+  // BCA Virtual Account - REMOVED (not activated)
+  // {
+  //   id: 'bca',
+  //   name: 'BCA Virtual Account',
+  //   type: 'VIRTUAL_ACCOUNT',
+  //   description: 'Transfer melalui Virtual Account BCA',
+  //   channel_code: 'BCA_VIRTUAL_ACCOUNT',
+  //   available: false, // NOT ACTIVATED ❌
+  //   processing_time: '1-15 menit',
+  //   popular: false,
+  //   min_amount: 10000,
+  //   max_amount: 500000000, // BCA VA limit: 500 million
+  //   icon: '🔵'
+  // },
 
-  // Over-The-Counter - ONLY ACTIVATED CHANNELS
+  // Over-The-Counter - NEEDS FULL XENDIT ACTIVATION
   {
     id: 'indomaret',
     name: 'Indomaret',
     type: 'OVER_THE_COUNTER',
     description: 'Bayar di Indomaret terdekat',
     channel_code: 'INDOMARET',
-    available: true, // ACTIVATED ✅
+    available: false, // NEEDS XENDIT SUPPORT ACTIVATION ⚠️
     processing_time: 'Instant setelah bayar',
     popular: true,
     min_amount: 10000,
@@ -273,19 +184,19 @@ export const ACTIVATED_PAYMENT_CHANNELS: ActivatedPaymentChannel[] = [
     icon: '🏪'
   },
 
-  // PayLater - ONLY ACTIVATED CHANNELS
+  // PayLater - NEEDS FULL XENDIT ACTIVATION
   {
     id: 'akulaku',
     name: 'Akulaku',
-    type: 'OVER_THE_COUNTER',
+    type: 'OVER_THE_COUNTER', // PayLater treated as OTC for API
     description: 'Bayar nanti dengan Akulaku',
     channel_code: 'AKULAKU',
-    available: true, // ACTIVATED ✅
+    available: false, // NEEDS XENDIT SUPPORT ACTIVATION ⚠️
     processing_time: 'Instant',
     popular: false,
     min_amount: 50000,
     max_amount: 10000000,
-    icon: '�'
+    icon: '💳'
   },
 
   // Credit Card - Usually activated by default

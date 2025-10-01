@@ -158,13 +158,20 @@ export const PaymentMethods = React.memo(({
           });
         });
 
-        // Create popular methods list (only QRIS and AstraPay for now)
+        // Create popular methods list - ensure QRIS is always included
         const popular = filteredMethods.filter(method => method.popular);
+        
+        // Ensure QRIS is always in popular methods if available (critical payment method)
+        const qrisMethod = filteredMethods.find(m => m.id === 'qris');
+        const hasQrisInPopular = popular.find(p => p.id === 'qris');
+        
+        const finalPopular = hasQrisInPopular ? popular : 
+          qrisMethod ? [...popular, qrisMethod] : popular;
 
         if (cancelled) return;
         setPaymentMethods(filteredMethods);
         setGroupedMethods(groups);
-        setPopularMethods(popular);
+        setPopularMethods(finalPopular);
         setSource('fallback'); // Default to local configuration; may flip to xendit_api after health check
 
         // Lightweight health check: detect if Xendit API is reachable on this deploy
@@ -300,33 +307,17 @@ export const PaymentMethods = React.memo(({
   };
 
   const getStaticPaymentMethods = (): PaymentMethod[] => [
+    // E-Wallets - Only activated ones
     {
-      id: 'ovo',
-      name: 'OVO',
-      description: 'Pembayaran instant dengan OVO',
-      icon: <Wallet className="text-orange-400" size={20} />,
-      badges: ['Instant'],
-      popular: false,
+      id: 'astrapay',
+      name: 'AstraPay',
+      description: 'Pembayaran instant dengan AstraPay',
+      icon: <Wallet className="text-blue-400" size={20} />,
+      badges: ['Instant', 'Populer'],
+      popular: true,
       available: true
     },
-    {
-      id: 'dana',
-      name: 'DANA',
-      description: 'Pembayaran instant dengan DANA',
-      icon: <Smartphone className="text-blue-400" size={20} />,
-      badges: ['Instant'],
-      popular: false,
-      available: true
-    },
-    {
-      id: 'gopay',
-      name: 'GoPay',
-      description: 'Pembayaran instant dengan GoPay',
-      icon: <Smartphone className="text-green-400" size={20} />,
-      badges: ['Instant'],
-      popular: false,
-      available: true
-    },
+    // QRIS - Activated
     {
       id: 'qris',
       name: 'QRIS',
@@ -336,27 +327,81 @@ export const PaymentMethods = React.memo(({
       popular: true,
       available: true
     },
+    // Virtual Accounts - All activated banks
     {
-      id: 'bca',
-      name: 'BCA Virtual Account',
-      description: 'Transfer melalui Virtual Account BCA',
-      icon: <Building2 className="text-blue-400" size={20} />,
-      badges: ['1-15 menit', 'Populer'],
+      id: 'bjb',
+      name: 'BJB Virtual Account',
+      description: 'Transfer melalui Virtual Account BJB',
+      icon: <Building2 className="text-green-400" size={20} />,
+      badges: ['Instant'],
+      available: true
+    },
+    {
+      id: 'bni',
+      name: 'BNI Virtual Account',
+      description: 'Transfer melalui Virtual Account BNI',
+      icon: <Building2 className="text-yellow-400" size={20} />,
+      badges: ['Instant', 'Populer'],
       popular: true,
+      available: true
+    },
+    {
+      id: 'bri',
+      name: 'BRI Virtual Account',
+      description: 'Transfer melalui Virtual Account BRI',
+      icon: <Building2 className="text-blue-400" size={20} />,
+      badges: ['Instant', 'Populer'],
+      popular: true,
+      available: true
+    },
+    {
+      id: 'bsi',
+      name: 'BSI Virtual Account',
+      description: 'Transfer melalui Virtual Account BSI',
+      icon: <Building2 className="text-green-400" size={20} />,
+      badges: ['Instant'],
+      available: true
+    },
+    {
+      id: 'cimb',
+      name: 'CIMB Niaga Virtual Account',
+      description: 'Transfer melalui Virtual Account CIMB Niaga',
+      icon: <Building2 className="text-red-400" size={20} />,
+      badges: ['Instant'],
       available: true
     },
     {
       id: 'mandiri',
       name: 'Mandiri Virtual Account',
       description: 'Transfer melalui Virtual Account Mandiri',
-      icon: <Building2 className="text-blue-400" size={20} />,
-      badges: ['1-15 menit'],
+      icon: <Building2 className="text-orange-400" size={20} />,
+      badges: ['1-15 menit', 'Populer'],
+      popular: true,
       available: true
     },
     {
-      id: 'credit_card',
-      name: 'Kartu Kredit/Debit',
-      description: 'Visa, Mastercard, JCB',
+      id: 'permata',
+      name: 'Permata Virtual Account',
+      description: 'Transfer melalui Virtual Account Permata',
+      icon: <Building2 className="text-purple-400" size={20} />,
+      badges: ['Instant'],
+      available: true
+    },
+    // Over-The-Counter
+    {
+      id: 'indomaret',
+      name: 'Indomaret',
+      description: 'Bayar di Indomaret terdekat',
+      icon: <Store className="text-blue-400" size={20} />,
+      badges: ['Instant setelah bayar', 'Populer'],
+      popular: true,
+      available: true
+    },
+    // PayLater
+    {
+      id: 'akulaku',
+      name: 'Akulaku',
+      description: 'Bayar nanti dengan Akulaku',
       icon: <CreditCard className="text-purple-400" size={20} />,
       badges: ['Instant'],
       available: true
