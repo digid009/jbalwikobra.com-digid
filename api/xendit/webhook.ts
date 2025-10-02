@@ -103,7 +103,8 @@ async function createAdminPaidNotification(sb: any, invoiceId?: string, external
         status,
         order_type,
         rental_duration,
-        products (
+        product_id,
+        products:product_id (
           id,
           name,
           price,
@@ -136,9 +137,28 @@ async function createAdminPaidNotification(sb: any, invoiceId?: string, external
       order_type: order.order_type
     });
 
-    // Get product name
+    // Get product name with enhanced fallback logic
     const product = order.products;
-    const productName = product?.name || 'Unknown Product';
+    let productName = product?.name;
+    
+    // If product name is still not found, try to fetch it directly
+    if (!productName && order.product_id) {
+      console.log('[Admin] Product name not found in relationship, fetching directly...');
+      try {
+        const { data: productData } = await sb
+          .from('products')
+          .select('name')
+          .eq('id', order.product_id)
+          .single();
+        productName = productData?.name;
+        console.log('[Admin] Direct product fetch result:', productName);
+      } catch (fetchError) {
+        console.error('[Admin] Failed to fetch product directly:', fetchError);
+      }
+    }
+    
+    productName = productName || 'Unknown Product';
+    console.log('[Admin] Final product name for notification:', productName);
 
     // Create the admin notification
     await createOrderNotification(
@@ -175,7 +195,8 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
         rental_duration,
         created_at,
         paid_at,
-        products (
+        product_id,
+        products:product_id (
           id,
           name,
           price,
@@ -204,7 +225,26 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
     });
 
     const product = order.products;
-    const productName = product?.name || 'Unknown Product';
+    let productName = product?.name;
+    
+    // If product name is still not found, try to fetch it directly
+    if (!productName && order.product_id) {
+      console.log('[WhatsApp] Product name not found in relationship, fetching directly...');
+      try {
+        const { data: productData } = await sb
+          .from('products')
+          .select('name')
+          .eq('id', order.product_id)
+          .single();
+        productName = productData?.name;
+        console.log('[WhatsApp] Direct product fetch result:', productName);
+      } catch (fetchError) {
+        console.error('[WhatsApp] Failed to fetch product directly:', fetchError);
+      }
+    }
+    
+    productName = productName || 'Unknown Product';
+    console.log('[WhatsApp] Final product name for notification:', productName);
     const isRental = order.order_type === 'rental';
     
     // Generate notification message (different for rental vs purchase)
