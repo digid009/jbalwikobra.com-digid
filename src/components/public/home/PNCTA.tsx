@@ -1,8 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
+import { SettingsService } from '../../../services/settingsService';
+import type { WebsiteSettings } from '../../../types';
 
 const PNCTA: React.FC = () => {
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await SettingsService.get();
+        if (mounted) setSettings(data);
+      } catch {
+        // silent fail – CTA can render without settings
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Default fallback URL if not set in admin
+  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://wa.me/6281234567890?text=Halo%20admin%20JB%20Alwikobra!%20%F0%9F%91%8B%0A%0ASaya%20tertarik%20untuk%20jual%20akun%20dan%20admin%20WA.%20Mohon%20info%20lebih%20lanjut.%20Terima%20kasih!';
   return (
     <PNSection padding="lg">
       <PNContainer>
@@ -18,9 +37,9 @@ const PNCTA: React.FC = () => {
               <Link to="/products">
                 <PNButton variant="secondary" size="lg" fullWidth>Mulai Belanja</PNButton>
               </Link>
-              <Link to="/sell">
-                <PNButton variant="ghost" size="lg" fullWidth>Jual Akun</PNButton>
-              </Link>
+              <a href={jualAkunWhatsappUrl} target="_blank" rel="noopener noreferrer">
+                <PNButton variant="ghost" size="lg" fullWidth>Jual dan Admin WA disini!</PNButton>
+              </a>
             </div>
           </div>
         </div>

@@ -353,6 +353,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Create order record if order data provided
     const createdOrder = await createOrderRecord(order, external_id, payment_method_id);
 
+    // CRITICAL FIX: Create admin notification for new order
+    if (createdOrder && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        // Get product name for notification
+        let productName = order?.product_name || 'Unknown Product';
+        if (order?.product_id && !productName) {
+          const { data: productData } = await supabase
+            .from('products')
+            .select('name')
+            .eq('id', order.product_id)
+            .single();
+          if (productData?.name) {
+            productName = productData.name;
+          }
+        }
+        
+        // Create admin database notification for new order (floating notification only)
+        await createNewOrderAdminNotification(
+          supabase,
+          createdOrder.id,
+          order?.customer_name || 'Customer',
+          productName,
+          Number(order?.amount || 0),
+          order?.customer_phone,
+          order?.order_type || 'purchase'
+        );
+        
+        // NOTE: No WhatsApp group notification for new orders - only for paid orders
+        
+        console.log('[New Order] Admin notifications sent successfully');
+      } catch (notificationError) {
+        console.error('[New Order] Failed to send admin notifications:', notificationError);
+        // Don't fail the payment creation if notifications fail
+      }
+    }
+
     console.log('[Xendit Payment] Making request to:', apiEndpoint);
     console.log('[Xendit Payment] Channel type:', paymentChannel.type);
     console.log('[Xendit Payment] Channel code:', xenditChannelCode);
@@ -939,6 +978,153 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
 
   } catch (error) {
     console.error('[Store Payment V3] Error:', error);
+  }
+}
+
+// Create admin database notification for new order
+async function createNewOrderAdminNotification(sb: any, orderId: string, customerName: string, productName: string, amount: number, customerPhone?: string, orderType?: string) {
+  try {
+    const isRental = orderType === 'rental';
+    const typeLabel = isRental ? 'RENTAL' : 'PURCHASE';
+    
+    const title = `Bang! ada yang ORDER ${typeLabel} nih!`;
+    
+    const formatAmount = (amount: number) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+
+    const message = `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'order RENTAL' : 'order PURCHASE'}, belum di bayar sih, tapi moga aja di bayar amin.`;
+
+    // Ensure orderId is a valid UUID or null
+    let validOrderId = null;
+    if (orderId && typeof orderId === 'string') {
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+      if (isValidUUID) {
+        validOrderId = orderId;
+      } else {
+        console.warn('[New Order Admin] Invalid UUID format for orderId:', orderId, 'Using null instead');
+      }
+    }
+
+    const notification = {
+      type: 'new_order',
+      title,
+      message,
+      order_id: validOrderId,
+      customer_name: customerName,
+      product_name: productName,
+      amount: Math.round(Number(amount)),
+      is_read: false,
+      metadata: {
+        priority: 'normal',
+        category: 'order',
+        order_type: orderType || 'purchase',
+        customer_phone: customerPhone,
+        original_order_id: orderId,
+        payment_status: 'pending'
+      },
+      created_at: new Date().toISOString()
+    };
+
+    console.log('[New Order Admin] Creating new order notification:', notification);
+
+    const { data, error } = await sb
+      .from('admin_notifications')
+      .insert(notification)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[New Order Admin] Notification insert error:', error);
+      throw error;
+    } else {
+      console.log('[New Order Admin] New order notification created successfully with ID:', data?.id);
+      return data;
+    }
+  } catch (error) {
+    console.error('[New Order Admin] Failed to create new order notification:', error);
+    throw error;
+  }
+}
+
+// Send WhatsApp group notification for new order
+async function sendNewOrderGroupNotification(customerName: string, productName: string, amount: number, orderType: string, orderId: string) {
+  try {
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+    const wa = new DynamicWhatsAppService();
+    
+    const isRental = orderType === 'rental';
+    const typeLabel = isRental ? 'RENTAL ORDER' : 'PURCHASE ORDER';
+    const contextId = `new-order:${orderId}`;
+    
+    // Check if already sent to prevent duplicates
+    const alreadySent = await wa.hasMessageLog('new-order-group', contextId);
+    if (alreadySent) {
+      console.log('[New Order Group] Already sent notification for order:', orderId);
+      return;
+    }
+
+    const formatAmount = (amount: number) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    };
+
+    const message = `🚨 *NEW ${typeLabel}* 🚨
+
+👤 **Customer:** ${customerName}
+🎯 **Product:** ${productName}
+💰 **Amount:** ${formatAmount(amount)}
+📋 **Order ID:** ${orderId}
+${isRental ? '⏰ **Type:** Rental' : '🛒 **Type:** Purchase'}
+
+⚠️ **STATUS:** PENDING PAYMENT
+Customer has been sent payment link.
+
+⏳ **Next Steps:**
+• Monitor payment completion
+• Prepare product delivery
+• Follow up if needed
+
+#NewOrder #${isRental ? 'Rental' : 'Purchase'}Pending`;
+
+    // Get appropriate group based on order type and settings
+    const settings = await wa.getActiveProviderSettings();
+    let groupId = settings?.default_group_id; // fallback
+    
+    if (settings?.group_configurations) {
+      const groupConfigs = settings.group_configurations;
+      
+      if (isRental && groupConfigs.rental_orders) {
+        groupId = groupConfigs.rental_orders;
+      } else if (!isRental && groupConfigs.purchase_orders) {
+        groupId = groupConfigs.purchase_orders;
+      }
+    }
+
+    const result = await wa.sendGroupMessage({
+      message,
+      groupId,
+      contextType: 'new-order-group',
+      contextId
+    });
+
+    if (result.success) {
+      console.log(`[New Order Group] Successfully sent notification for order ${orderId} to group ${groupId}`);
+    } else {
+      console.error('[New Order Group] Failed to send notification:', result.error);
+    }
+
+  } catch (error) {
+    console.error('[New Order Group] Error sending group notification:', error);
   }
 }
 

@@ -78,7 +78,6 @@ const Footer: React.FC = () => {
         { label: 'Profil Saya', href: '/profile' },
         { label: 'Wishlist', href: '/wishlist' },
         { label: 'Riwayat Pesanan', href: '/orders' },
-        { label: 'Jual Akun', href: '/sell' },
         { label: 'Pengaturan', href: '/settings' },
       ]
     },

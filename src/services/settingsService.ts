@@ -109,6 +109,7 @@ export class SettingsService {
                 topupGameUrl: data.topup_game_url ?? undefined,
                 whatsappChannelUrl: data.whatsapp_channel_url ?? undefined,
                 heroButtonUrl: data.hero_button_url ?? undefined,
+                jualAkunWhatsappUrl: data.jual_akun_whatsapp_url ?? undefined,
                 updatedAt: data.updated_at ?? undefined,
               };
               
@@ -171,6 +172,7 @@ export class SettingsService {
         topupGameUrl: data.topup_game_url ?? undefined,
         whatsappChannelUrl: data.whatsapp_channel_url ?? undefined,
         heroButtonUrl: data.hero_button_url ?? undefined,
+        jualAkunWhatsappUrl: data.jual_akun_whatsapp_url ?? undefined,
         updatedAt: data.updated_at ?? undefined,
       };
       
@@ -226,6 +228,7 @@ export class SettingsService {
           if ('topupGameUrl' in input) dbInput.topup_game_url = input.topupGameUrl;
           if ('whatsappChannelUrl' in input) dbInput.whatsapp_channel_url = input.whatsappChannelUrl;
           if ('heroButtonUrl' in input) dbInput.hero_button_url = input.heroButtonUrl;
+          if ('jualAkunWhatsappUrl' in input) dbInput.jual_akun_whatsapp_url = input.jualAkunWhatsappUrl;
           
           console.log('📤 Sending to admin API:', dbInput);
 
@@ -274,6 +277,7 @@ export class SettingsService {
         topup_game_url: input.topupGameUrl ?? current.topupGameUrl ?? null,
         whatsapp_channel_url: input.whatsappChannelUrl ?? current.whatsappChannelUrl ?? null,
         hero_button_url: input.heroButtonUrl ?? current.heroButtonUrl ?? null,
+        jual_akun_whatsapp_url: input.jualAkunWhatsappUrl ?? current.jualAkunWhatsappUrl ?? null,
       };
       if (input.logoFile instanceof File) {
         const result = await uploadFile(input.logoFile, 'settings');
@@ -319,6 +323,7 @@ export class SettingsService {
         topupGameUrl: row.topup_game_url ?? current.topupGameUrl,
         whatsappChannelUrl: row.whatsapp_channel_url ?? current.whatsappChannelUrl,
         heroButtonUrl: row.hero_button_url ?? current.heroButtonUrl,
+        jualAkunWhatsappUrl: row.jual_akun_whatsapp_url ?? current.jualAkunWhatsappUrl,
         updatedAt: row.updated_at ?? new Date().toISOString(),
       };
       

@@ -125,6 +125,7 @@ export interface WebsiteSettings {
   topupGameUrl?: string; // URL for Top Up Game feature
   whatsappChannelUrl?: string; // URL for WhatsApp channel
   heroButtonUrl?: string; // URL for new hero button
+  jualAkunWhatsappUrl?: string; // URL for jual akun WhatsApp button
   updatedAt?: string;
 }
 

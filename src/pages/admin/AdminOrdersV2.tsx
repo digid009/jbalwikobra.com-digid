@@ -7,7 +7,6 @@ import {
   Search, 
   MoreVertical, 
   Eye,
-  Settings,
   Package,
   CreditCard,
   Clock,
@@ -24,7 +23,6 @@ import { useToast } from '../../components/Toast';
 import { adminService, type Order as AdminOrder } from '../../services/adminService';
 
 type OrderStatus = 'pending' | 'paid' | 'completed' | 'cancelled';
-type PaymentMethod = 'xendit' | 'whatsapp';
 type OrderType = 'purchase' | 'rental';
 
 interface OrderStats {
@@ -83,46 +81,7 @@ const StatusBadge: React.FC<{ status: OrderStatus }> = ({ status }) => {
   );
 };
 
-// Modern Payment Badge Component  
-const PaymentBadge: React.FC<{ order: AdminOrder }> = ({ order }) => {
-  // Show actual payment method from payment_data if available
-  if (order.payment_data?.payment_method_type) {
-    const paymentMethod = order.payment_data.payment_method_type.toUpperCase();
-    
-    return (
-      <span className="text-sm font-medium text-white">
-        {paymentMethod}
-      </span>
-    );
-  }
-  
-  // Fallback to old payment badge
-  const method = (order.payment_method || 'whatsapp') as PaymentMethod;
-  const variants = {
-    xendit: {
-      bg: 'bg-gradient-to-r from-purple-500/20 to-violet-500/20',
-      border: 'border-purple-500/30',
-      text: 'text-purple-300',
-      label: 'Xendit'
-    },
-    whatsapp: {
-      bg: 'bg-gradient-to-r from-green-500/20 to-emerald-500/20',
-      border: 'border-green-500/30',
-      text: 'text-green-300',
-      label: 'WhatsApp'
-    }
-  };
 
-  const variant = variants[method];
-
-  return (
-    <div className={`inline-flex items-center px-3 py-1 rounded-lg border ${variant.bg} ${variant.border} backdrop-blur-sm`}>
-      <span className={`text-xs font-medium ${variant.text}`}>
-        {variant.label}
-      </span>
-    </div>
-  );
-};
 
 // Modern Stats Card Component
 const StatsCard: React.FC<{ 
@@ -172,8 +131,6 @@ const OrderFilters: React.FC<{
   setSearchTerm: (term: string) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
-  paymentFilter: string;
-  setPaymentFilter: (payment: string) => void;
   typeFilter: string;
   setTypeFilter: (type: string) => void;
   onRefresh: () => void;
@@ -183,8 +140,6 @@ const OrderFilters: React.FC<{
   setSearchTerm, 
   statusFilter, 
   setStatusFilter,
-  paymentFilter,
-  setPaymentFilter,
   typeFilter,
   setTypeFilter,
   onRefresh,
@@ -222,25 +177,7 @@ const OrderFilters: React.FC<{
           </select>
         </div>
 
-        {/* Payment Method Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Payment</label>
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="w-full px-4 py-3 bg-gray-900/80 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-200 hover:bg-gray-800/80"
-          >
-            <option value="" className="bg-gray-800 text-white">All Methods</option>
-            <option value="qris" className="bg-gray-800 text-white">QRIS</option>
-            <option value="bni" className="bg-gray-800 text-white">BNI Virtual Account</option>
-            <option value="bca" className="bg-gray-800 text-white">BCA Virtual Account</option>
-            <option value="mandiri" className="bg-gray-800 text-white">Mandiri Virtual Account</option>
-            <option value="bri" className="bg-gray-800 text-white">BRI Virtual Account</option>
-            <option value="permata" className="bg-gray-800 text-white">Permata Virtual Account</option>
-            <option value="xendit" className="bg-gray-800 text-white">Xendit (Legacy)</option>
-            <option value="whatsapp" className="bg-gray-800 text-white">WhatsApp</option>
-          </select>
-        </div>
+
 
         {/* Order Type Filter */}
         <div>
@@ -285,7 +222,6 @@ const AdminOrdersV2: React.FC = () => {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [paymentFilter, setPaymentFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
   // Pagination states
@@ -377,16 +313,11 @@ const AdminOrdersV2: React.FC = () => {
           ? (order.status === 'paid' || order.status === 'completed')
           : order.status === statusFilter);
       
-      // Updated payment filter to check both payment_data and legacy payment_method
-      const matchesPayment = !paymentFilter || 
-        (order.payment_data?.payment_method_type?.toLowerCase() === paymentFilter) ||
-        (order.payment_method === paymentFilter);
-      
       const matchesType = !typeFilter || order.order_type === typeFilter;
 
-      return matchesSearch && matchesStatus && matchesPayment && matchesType;
+      return matchesSearch && matchesStatus && matchesType;
     });
-  }, [orders, searchTerm, statusFilter, paymentFilter, typeFilter]);
+  }, [orders, searchTerm, statusFilter, typeFilter]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -397,7 +328,7 @@ const AdminOrdersV2: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, paymentFilter, typeFilter, itemsPerPage]);
+  }, [searchTerm, statusFilter, typeFilter, itemsPerPage]);
 
   // Calculate statistics
   const stats: OrderStats = useMemo(() => {
@@ -518,8 +449,6 @@ const AdminOrdersV2: React.FC = () => {
           setSearchTerm={setSearchTerm}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
-          paymentFilter={paymentFilter}
-          setPaymentFilter={setPaymentFilter}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
           onRefresh={loadOrders}
@@ -536,7 +465,6 @@ const AdminOrdersV2: React.FC = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Order Details</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Amount</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Payment</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Date</th>
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -578,7 +506,7 @@ const AdminOrdersV2: React.FC = () => {
                       <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                       <h3 className="text-xl font-semibold text-gray-400 mb-2">No Orders Found</h3>
                       <p className="text-gray-500">
-                        {searchTerm || statusFilter || paymentFilter || typeFilter
+                        {searchTerm || statusFilter || typeFilter
                           ? 'Try adjusting your filters to see more results.'
                           : 'No orders have been placed yet.'}
                       </p>
@@ -620,9 +548,6 @@ const AdminOrdersV2: React.FC = () => {
                         <StatusBadge status={order.status as OrderStatus} />
                       </td>
                       <td className="px-6 py-4">
-                        <PaymentBadge order={order} />
-                      </td>
-                      <td className="px-6 py-4">
                         <div className="text-sm text-gray-300">
                           {formatDate(order.created_at)}
                         </div>
@@ -651,13 +576,13 @@ const AdminOrdersV2: React.FC = () => {
                               updateOrderStatus(order.id, 'completed');
                             }}
                             disabled={order.status === 'completed'}
-                            className={`p-2 rounded-lg transition-all duration-200 ${
+                            className={`px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 ${
                               order.status === 'completed' 
-                                ? 'text-gray-600 cursor-not-allowed' 
-                                : 'text-gray-400 hover:text-green-400 hover:bg-green-500/10'
+                                ? 'text-gray-600 cursor-not-allowed bg-gray-800' 
+                                : 'text-white bg-green-600 hover:bg-green-700'
                             }`}
                           >
-                            <Settings className="w-4 h-4" />
+                            Tandai Selesai
                           </button>
                         </div>
                       </td>

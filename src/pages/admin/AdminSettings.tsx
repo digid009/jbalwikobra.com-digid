@@ -61,7 +61,8 @@ const AdminSettings: React.FC = () => {
         console.log('✅ AdminSettings: Settings loaded:', {
           heroButtonUrl: s.heroButtonUrl,
           topupGameUrl: s.topupGameUrl,
-          whatsappChannelUrl: s.whatsappChannelUrl
+          whatsappChannelUrl: s.whatsappChannelUrl,
+          jualAkunWhatsappUrl: s.jualAkunWhatsappUrl
         });
         setSettings(s);
         const formData = {
@@ -101,6 +102,7 @@ const AdminSettings: React.FC = () => {
           topupGameUrl: s.topupGameUrl || '',
           whatsappChannelUrl: s.whatsappChannelUrl || '',
           heroButtonUrl: s.heroButtonUrl || '',
+          jualAkunWhatsappUrl: s.jualAkunWhatsappUrl || '',
         };
         setForm(formData);
         setOriginalForm({ ...formData });
@@ -681,6 +683,24 @@ const AdminSettings: React.FC = () => {
                   />
                   <p className="text-xs text-gray-400 mt-2">
                     URL untuk tombol penawaran spesial di hero section homepage
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-200 mb-3">
+                    <MessageCircle className="w-4 h-4 inline mr-2" />
+                    Jual Akun WhatsApp URL
+                  </label>
+                  <input 
+                    type="url"
+                    value={form.jualAkunWhatsappUrl} 
+                    onChange={e => editMode ? setForm((p: any) => ({...p, jualAkunWhatsappUrl: e.target.value})) : undefined} 
+                    className={`${adminInputBase} ${!editMode ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                    placeholder="https://wa.me/6281234567890?text=..."
+                    disabled={!editMode}
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    URL WhatsApp untuk tombol "Jual dan Admin WA disini!" di homepage
                   </p>
                 </div>
               </div>

@@ -23,7 +23,6 @@ const columns = [
       { label: 'Profil', href: '/profile' },
       { label: 'Wishlist', href: '/wishlist' },
       { label: 'Riwayat Pesanan', href: '/orders' },
-      { label: 'Jual Akun', href: '/sell' },
     ],
   },
   {

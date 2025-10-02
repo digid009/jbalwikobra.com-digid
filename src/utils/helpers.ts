@@ -75,23 +75,7 @@ export const generateWhatsAppUrl = (
   return `https://wa.me/${phone}?text=${encodedMessage}`;
 };
 
-export const generateSellAccountMessage = (productName: string): string => {
-  const siteUrl = process.env.REACT_APP_SITE_URL || 'https://jbalwikobra.com';
-  
-  return `Halo Admin JB Alwikobra! 👋
 
-Saya ingin menjual akun game:
-📱 Game: ${productName}
-💰 Harga: [Isi harga yang diinginkan]
-📝 Detail Akun: [Isi detail akun seperti level, item, dll]
-
-Mohon info lebih lanjut untuk proses jual akun.
-
-Terima kasih! 🙏
-
----
-Dikirim dari: ${siteUrl}`;
-};
 
 export const generateRentalMessage = (
   productName: string,

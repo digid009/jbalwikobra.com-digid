@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
-import { RefreshCw, Plus, Package, CreditCard, Clock, CheckCircle, Eye, Settings } from 'lucide-react';
+import { RefreshCw, Plus, Package, CreditCard, Clock, CheckCircle, Eye } from 'lucide-react';
 import { 
   AdminPageHeaderV2, 
   AdminStatCard, 
@@ -321,8 +321,8 @@ const AdminOrders: React.FC = () => {
     },
     {
       key: 'process',
-      label: order.status === 'completed' ? 'Sudah Diproses' : 'Proses',
-      icon: Settings,
+      label: order.status === 'completed' ? 'Sudah Diproses' : 'Tandai Telah Selesai',
+      icon: undefined,
       onClick: () => updateOrderStatus(order.id, 'completed'),
       variant: 'primary',
       disabled: () => order.status === 'completed'
@@ -503,8 +503,8 @@ const AdminOrders: React.FC = () => {
           },
           {
             key: 'process',
-            label: 'Proses',
-            icon: Settings,
+            label: 'Tandai Telah Selesai',
+            icon: undefined,
             onClick: (order) => {
               if (order.status === 'completed') {
                 push('Pesanan sudah diproses', 'info');
