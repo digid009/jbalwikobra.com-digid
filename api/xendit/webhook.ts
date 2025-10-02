@@ -554,55 +554,87 @@ export default async function handler(req: any, res: any) {
       if (!e2) updated = (up2 || []).length;
     }
 
-    // CRITICAL FIX: Also update payments table status
-    // Update payments table by external_id to sync payment status
-    if (externalId) {
-      const paymentUpdateData: any = {
-        status: status.toUpperCase(), // Payments table uses uppercase status
-      };
+    // CRITICAL FIX: Enhanced payment status synchronization with better error handling
+    console.log(`[Webhook] Starting payment status sync: status=${status}, invoiceId=${invoiceId}, externalId=${externalId}`);
+    
+    let ordersUpdated = 0;
+    let paymentsUpdated = 0;
+    const updateErrors: string[] = [];
+
+    // Update payments table first to ensure payment status is recorded
+    try {
+      console.log('[Webhook] Updating payments table...');
       
-      // Add paid_at if payment is completed
-      if (status === 'paid' || status === 'completed') {
-        paymentUpdateData.paid_at = paidAt;
+      if (externalId) {
+        const paymentUpdateData: any = {
+          status: status.toUpperCase(), // Payments table uses uppercase status
+        };
+        
+        // Add paid_at if payment is completed
+        if (status === 'paid' || status === 'completed') {
+          paymentUpdateData.paid_at = paidAt;
+        }
+
+        const { data: paymentUpdate, error: paymentError } = await sb
+          .from('payments')
+          .update(paymentUpdateData)
+          .eq('external_id', externalId)
+          .select('id, status, external_id');
+
+        if (!paymentError && paymentUpdate && paymentUpdate.length > 0) {
+          paymentsUpdated += paymentUpdate.length;
+          console.log(`[Webhook] ✅ Successfully updated ${paymentUpdate.length} payment record(s) by external_id to status: ${status.toUpperCase()}`);
+          console.log(`[Webhook] Updated payment records:`, paymentUpdate.map(p => ({ id: p.id, status: p.status, external_id: p.external_id })));
+        } else if (paymentError) {
+          const error = `Error updating payments table by external_id: ${JSON.stringify(paymentError)}`;
+          console.error(`[Webhook] ❌ ${error}`);
+          updateErrors.push(error);
+        } else {
+          console.log(`[Webhook] ⚠️ No payment records found to update for external_id: ${externalId}`);
+        }
       }
 
-      const { data: paymentUpdate, error: paymentError } = await sb
-        .from('payments')
-        .update(paymentUpdateData)
-        .eq('external_id', externalId)
-        .select('id');
+      // Also try updating by xendit_id if available and we haven't updated any payments yet
+      if (paymentsUpdated === 0 && invoiceId) {
+        const paymentUpdateData: any = {
+          status: status.toUpperCase(), // Payments table uses uppercase status
+        };
+        
+        // Add paid_at if payment is completed
+        if (status === 'paid' || status === 'completed') {
+          paymentUpdateData.paid_at = paidAt;
+        }
 
-      if (!paymentError && paymentUpdate && paymentUpdate.length > 0) {
-        console.log(`[Webhook] Successfully updated ${paymentUpdate.length} payment record(s) to status: ${status.toUpperCase()}`);
-      } else if (paymentError) {
-        console.error('[Webhook] Error updating payments table:', paymentError);
-      } else {
-        console.log('[Webhook] No payment records found to update for external_id:', externalId);
+        const { data: paymentUpdateById, error: paymentErrorById } = await sb
+          .from('payments')
+          .update(paymentUpdateData)
+          .eq('xendit_id', invoiceId)
+          .select('id, status, xendit_id');
+
+        if (!paymentErrorById && paymentUpdateById && paymentUpdateById.length > 0) {
+          paymentsUpdated += paymentUpdateById.length;
+          console.log(`[Webhook] ✅ Successfully updated ${paymentUpdateById.length} payment record(s) by xendit_id to status: ${status.toUpperCase()}`);
+          console.log(`[Webhook] Updated payment records:`, paymentUpdateById.map(p => ({ id: p.id, status: p.status, xendit_id: p.xendit_id })));
+        } else if (paymentErrorById) {
+          const error = `Error updating payments table by xendit_id: ${JSON.stringify(paymentErrorById)}`;
+          console.error(`[Webhook] ❌ ${error}`);
+          updateErrors.push(error);
+        }
       }
+    } catch (paymentException) {
+      const error = `Exception updating payments table: ${paymentException.message || paymentException}`;
+      console.error(`[Webhook] ❌ ${error}`);
+      updateErrors.push(error);
     }
 
-    // Also try updating by xendit_id if available
-    if (invoiceId) {
-      const paymentUpdateData: any = {
-        status: status.toUpperCase(), // Payments table uses uppercase status
-      };
-      
-      // Add paid_at if payment is completed
-      if (status === 'paid' || status === 'completed') {
-        paymentUpdateData.paid_at = paidAt;
-      }
-
-      const { data: paymentUpdateById, error: paymentErrorById } = await sb
-        .from('payments')
-        .update(paymentUpdateData)
-        .eq('xendit_id', invoiceId)
-        .select('id');
-
-      if (!paymentErrorById && paymentUpdateById && paymentUpdateById.length > 0) {
-        console.log(`[Webhook] Successfully updated ${paymentUpdateById.length} payment record(s) by xendit_id to status: ${status.toUpperCase()}`);
-      } else if (paymentErrorById) {
-        console.error('[Webhook] Error updating payments table by xendit_id:', paymentErrorById);
-      }
+    // Log final payment update status
+    console.log(`[Webhook] Payment table update summary: ${paymentsUpdated} records updated`);
+    
+    if (updateErrors.length > 0) {
+      console.error(`[Webhook] ❌ ${updateErrors.length} errors occurred during payment status sync:`);
+      updateErrors.forEach((error, index) => {
+        console.error(`[Webhook] Error ${index + 1}: ${error}`);
+      });
     }
 
     // If nothing updated yet, try to create/upsert order from metadata for resilience
@@ -760,11 +792,64 @@ export default async function handler(req: any, res: any) {
       console.error('Failed to archive product after payment:', e);
     }
 
+    // Final verification: Check if both tables are in sync
+    let syncStatus = 'unknown';
+    try {
+      if ((status === 'paid' || status === 'completed') && (invoiceId || externalId)) {
+        console.log('[Webhook] Performing final sync verification...');
+        
+        // Query both tables to verify sync
+        let orderQuery = sb.from('orders').select('id, status, paid_at');
+        let paymentQuery = sb.from('payments').select('id, status, paid_at');
+        
+        if (invoiceId) {
+          orderQuery = orderQuery.eq('xendit_invoice_id', invoiceId);
+          paymentQuery = paymentQuery.eq('xendit_id', invoiceId);
+        } else if (externalId) {
+          orderQuery = orderQuery.eq('client_external_id', externalId);
+          paymentQuery = paymentQuery.eq('external_id', externalId);
+        }
+        
+        const [orderResult, paymentResult] = await Promise.all([
+          orderQuery.limit(1),
+          paymentQuery.limit(1)
+        ]);
+        
+        const order = orderResult.data?.[0];
+        const payment = paymentResult.data?.[0];
+        
+        if (order && payment) {
+          const orderStatus = order.status;
+          const paymentStatus = payment.status?.toLowerCase();
+          
+          if ((orderStatus === 'paid' || orderStatus === 'completed') && 
+              (paymentStatus === 'paid' || paymentStatus === 'completed')) {
+            syncStatus = 'synced';
+            console.log('[Webhook] ✅ Sync verification successful: Both tables updated');
+          } else {
+            syncStatus = 'out_of_sync';
+            console.error('[Webhook] ❌ Sync verification failed: Tables out of sync');
+            console.error(`[Webhook] Order status: ${orderStatus}, Payment status: ${paymentStatus}`);
+          }
+        } else {
+          syncStatus = 'missing_records';
+          console.error('[Webhook] ❌ Sync verification failed: Missing records');
+          console.error(`[Webhook] Order found: ${!!order}, Payment found: ${!!payment}`);
+        }
+      }
+    } catch (verificationError) {
+      syncStatus = 'verification_error';
+      console.error('[Webhook] ❌ Sync verification error:', verificationError);
+    }
+
     return res.status(200).json({ 
       ok: true, 
       updated, 
+      payments_updated: paymentsUpdated || 0,
+      sync_status: syncStatus,
       by: updated ? (invoiceId ? 'invoice_id' : 'external_id') : 'none',
-      notification_attempted: (status === 'paid' || status === 'completed') && (invoiceId || externalId)
+      notification_attempted: (status === 'paid' || status === 'completed') && (invoiceId || externalId),
+      errors: updateErrors.length > 0 ? updateErrors : undefined
     });
   } catch (e: any) {
     console.error('Webhook error:', e);

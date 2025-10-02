@@ -72,7 +72,7 @@ const PNHero: React.FC = () => {
                 <a href={jualAkunWhatsappUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="ghost" size="md" fullWidth className="flex items-center justify-center gap-2">
                     <TrendingUp size={16} />
-                    Jual dan Admin WA disini!
+                    Jual dan Admin WA!
                   </PNButton>
                 </a>
               </div>
