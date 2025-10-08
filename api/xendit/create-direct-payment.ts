@@ -359,18 +359,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         
-        // Get product name for notification
-        let productName = order?.product_name || 'Unknown Product';
-        if (order?.product_id && !productName) {
-          const { data: productData } = await supabase
-            .from('products')
-            .select('name')
-            .eq('id', order.product_id)
-            .single();
-          if (productData?.name) {
-            productName = productData.name;
+        // Get product name for notification - ENHANCED LOGIC
+        let productName = order?.product_name; // This usually doesn't exist in order object
+        
+        console.log('[New Order] Initial product name from order:', productName);
+        console.log('[New Order] Order product_id:', order?.product_id);
+        
+        // Always try to fetch product name directly from products table since order.product_name usually doesn't exist
+        if (order?.product_id) {
+          try {
+            const { data: productData, error: productError } = await supabase
+              .from('products')
+              .select('name')
+              .eq('id', order.product_id)
+              .single();
+              
+            if (productError) {
+              console.error('[New Order] Product fetch error:', productError);
+            } else if (productData?.name) {
+              productName = productData.name;
+              console.log('[New Order] Product name fetched successfully:', productName);
+            } else {
+              console.warn('[New Order] Product data exists but no name field:', productData);
+            }
+          } catch (fetchError) {
+            console.error('[New Order] Exception fetching product:', fetchError);
           }
+        } else {
+          console.warn('[New Order] No product_id available for fetching product name');
         }
+        
+        // Final fallback
+        productName = productName || 'Unknown Product';
+        console.log('[New Order] Final product name for notification:', productName);
         
         // Create admin database notification for new order (floating notification only)
         await createNewOrderAdminNotification(
