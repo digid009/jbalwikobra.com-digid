@@ -16,9 +16,9 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
     const typeLabel = isRental ? 'RENTAL' : 'PURCHASE';
     
     const titles = {
-      new_order: `Bang! ada yang ORDER ${typeLabel} nih!`,
-      paid_order: `Bang! ALHAMDULILLAH ${typeLabel} udah di bayar nih`,
-      order_cancelled: `Bang! ada yang CANCEL ${typeLabel} order nih!`
+      new_order: isRental ? 'Notifikasi Sewa Baru' : 'Notifikasi Pesanan Baru',
+      paid_order: isRental ? 'Notifikasi Sewa Dibayar' : 'Notifikasi Pesanan Dibayar',
+      order_cancelled: isRental ? 'Notifikasi Sewa Dibatalkan' : 'Notifikasi Pesanan Dibatalkan'
     };
 
     const formatAmount = (amount: number) => {
@@ -31,9 +31,15 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
     };
 
     const messages = {
-      new_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'order RENTAL' : 'order PURCHASE'}, belum di bayar sih, tapi moga aja di bayar amin.`,
-      paid_order: `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'RENTAL udah di bayar' : 'PURCHASE udah di bayar'} Alhamdulillah.`,
-      order_cancelled: `namanya ${customerName}, ${isRental ? 'RENTAL' : 'PURCHASE'} produktnya ${productName} di cancel nih.`
+      new_order: isRental 
+        ? `Sewa baru dari ${customerName}, produk ${productName} senilai ${formatAmount(amount)}, sewa belum dibayar, mohon tunggu pembayaran.`
+        : `Pesanan baru dari ${customerName}, produk ${productName} senilai ${formatAmount(amount)}, pesanan belum dibayar, mohon tunggu pembayaran.`,
+      paid_order: isRental
+        ? `Sewa telah dibayar oleh ${customerName}, produk ${productName} senilai ${formatAmount(amount)}, sewa sudah lunas.`
+        : `Pesanan telah dibayar oleh ${customerName}, produk ${productName} senilai ${formatAmount(amount)}, pesanan sudah lunas.`,
+      order_cancelled: isRental
+        ? `Sewa dibatalkan oleh ${customerName}, produk ${productName} senilai ${formatAmount(amount)}.`
+        : `Pesanan dibatalkan oleh ${customerName}, produk ${productName} senilai ${formatAmount(amount)}.`
     };
 
     // Ensure orderId is a valid UUID or null
@@ -157,7 +163,13 @@ async function createAdminPaidNotification(sb: any, invoiceId?: string, external
       }
     }
     
-    productName = productName || 'Unknown Product';
+    // Final fallback with better description
+    if (!productName) {
+      // Try to infer from order type
+      const isRental = order.order_type === 'rental';
+      productName = isRental ? 'Akun Game Rental' : 'Akun Game Premium';
+      console.log('[Admin] Using fallback product name based on order type:', productName);
+    }
     console.log('[Admin] Final product name for notification:', productName);
 
     // Create the admin notification
@@ -243,9 +255,14 @@ async function sendOrderPaidNotification(sb: any, invoiceId?: string, externalId
       }
     }
     
-    productName = productName || 'Unknown Product';
-    console.log('[WhatsApp] Final product name for notification:', productName);
     const isRental = order.order_type === 'rental';
+    
+    // Final fallback with better description
+    if (!productName) {
+      productName = isRental ? 'Akun Game Rental' : 'Akun Game Premium';
+      console.log('[WhatsApp] Using fallback product name based on order type:', productName);
+    }
+    console.log('[WhatsApp] Final product name for notification:', productName);
     
     // Generate notification message (different for rental vs purchase)
     const message = isRental 

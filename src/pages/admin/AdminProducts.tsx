@@ -18,7 +18,7 @@ import {
 } from './components/ui';
 import { AdminDSTable, type DSTableColumn, type DSTableAction } from './components/ui/AdminDSTable';
 import type { AdminFiltersConfig } from './components/ui';
-import { RefreshCw, Plus, Package, Archive, ShoppingCart, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
+import { RefreshCw, Plus, Package, Archive, ShoppingCart, DollarSign, Eye, Edit, Trash2, RotateCcw } from 'lucide-react';
 
 type FormState = {
   id?: string;
@@ -441,13 +441,14 @@ const AdminProducts: React.FC = () => {
       disabled: (product) => !!(product as any).archivedAt
     },
     {
-    key: 'delete',
-      label: 'Delete',
-    icon: Trash2,
+    key: 'restore',
+      label: 'Restore',
+    icon: RotateCcw,
       onClick: (product) => {
-        handleDelete(product);
+        handleRestore(product);
       },
-      variant: 'danger'
+      variant: 'primary',
+      disabled: (product) => !(product as any).archivedAt
     }
   ];
 

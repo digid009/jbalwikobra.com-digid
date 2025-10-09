@@ -130,7 +130,7 @@ export const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     <div className="flex items-center gap-2">
                       <Package className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-white font-medium">
-                        {review.product_name || 'Unknown Product'}
+                        {review.product_name || 'produk akun game'}
                       </span>
                     </div>
                   </td>
@@ -221,7 +221,7 @@ export const ReviewsTable: React.FC<ReviewsTableProps> = ({
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-white font-medium">
-                {review.product_name || 'Unknown Product'}
+                {review.product_name || 'produk akun game'}
               </span>
             </div>
 

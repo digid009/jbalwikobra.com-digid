@@ -223,41 +223,76 @@ const AdminFloatingNotifications: React.FC = () => {
   };
 
   const getNotificationTemplate = (notification: AdminNotification) => {
-    // If already has Indonesian template, use it
+    // Helper function to get proper product name
+    const getProductName = (productName?: string) => {
+      if (!productName || productName === 'Unknown Product') {
+        return 'produk akun game';
+      }
+      return productName;
+    };
+
+    // Helper function to get proper customer name
+    const getCustomerName = (customerName?: string) => {
+      if (!customerName || customerName === 'Customer' || customerName === 'Guest Customer') {
+        return 'customer';
+      }
+      return customerName;
+    };
+
+    // If already has Indonesian template, check if it needs improvement
     if (notification.title.toLowerCase().includes('bang!') || 
         notification.title.toLowerCase().includes('alhamdulillah')) {
+      // Fix existing Indonesian messages that might have "Unknown Product"
+      let improvedMessage = notification.message;
+      if (improvedMessage.includes('Unknown Product')) {
+        improvedMessage = improvedMessage.replace('Unknown Product', 'produk akun game');
+      }
+      if (improvedMessage.includes('produknya Unknown')) {
+        improvedMessage = improvedMessage.replace('produknya Unknown', 'produknya produk akun game');
+      }
+      
       return {
         title: notification.title,
-        message: notification.message
+        message: improvedMessage
       };
     }
 
-    // Convert English templates to Indonesian
+    // Convert English templates to Indonesian with better fallbacks
     switch (notification.type) {
       case 'new_order':
         return {
-          title: 'Bang! ada yang ORDER nih!',
-          message: `namanya ${notification.customer_name || 'Customer'}, produknya ${notification.product_name || 'Product'} harganya Rp${notification.amount?.toLocaleString('id-ID') || '0'}, belum di bayar sih, tapi moga aja di bayar amin.`
+          title: 'Notifikasi Pesanan Baru',
+          message: `Pesanan baru dari ${getCustomerName(notification.customer_name)}, produk ${getProductName(notification.product_name)} senilai Rp${notification.amount?.toLocaleString('id-ID') || '0'}, pesanan belum dibayar, mohon tunggu pembayaran.`
         };
       case 'paid_order':
         return {
-          title: 'Bang! ALHAMDULILLAH udah di bayar nih',
-          message: `namanya ${notification.customer_name || 'Customer'}, produknya ${notification.product_name || 'Product'} harganya Rp${notification.amount?.toLocaleString('id-ID') || '0'}, udah di bayar Alhamdulillah.`
+          title: 'Notifikasi Pesanan Dibayar',
+          message: `Pesanan telah dibayar oleh ${getCustomerName(notification.customer_name)}, produk ${getProductName(notification.product_name)} senilai Rp${notification.amount?.toLocaleString('id-ID') || '0'}, pesanan sudah lunas.`
         };
       case 'new_user':
         return {
-          title: 'Bang! ada yang DAFTAR akun nih!',
-          message: `namanya ${notification.customer_name || 'User baru'} nomor wanya ${notification.metadata?.phone || 'tidak ada'}`
+          title: 'Notifikasi Pengguna Baru',
+          message: `Pengguna baru ${getCustomerName(notification.customer_name) || 'user baru'} telah mendaftar dengan nomor ${notification.metadata?.phone || 'tidak ada'}`
         };
       case 'order_cancelled':
         return {
-          title: 'Bang! ada yang CANCEL order nih!',
-          message: `namanya ${notification.customer_name || 'Customer'}, produktnya ${notification.product_name || 'Product'} di cancel nih.`
+          title: 'Notifikasi Pesanan Dibatalkan',
+          message: `Pesanan dibatalkan oleh ${getCustomerName(notification.customer_name)}, produk ${getProductName(notification.product_name)}.`
         };
       case 'new_review':
         return {
-          title: 'Bang! ada yang REVIEW produk nih!',
-          message: `namanya ${notification.customer_name || 'Customer'} memberikan ulasan untuk produk ${notification.product_name || 'Product'}`
+          title: 'Notifikasi Review Baru',
+          message: `Review baru dari ${getCustomerName(notification.customer_name)} untuk produk ${getProductName(notification.product_name)}`
+        };
+      case 'new_rent':
+        return {
+          title: 'Notifikasi Sewa Baru',
+          message: `Sewa baru dari ${getCustomerName(notification.customer_name)}, produk ${getProductName(notification.product_name)} senilai Rp${notification.amount?.toLocaleString('id-ID') || '0'}, sewa belum dibayar, mohon tunggu pembayaran.`
+        };
+      case 'paid_rent':
+        return {
+          title: 'Notifikasi Sewa Dibayar',
+          message: `Sewa telah dibayar oleh ${getCustomerName(notification.customer_name)}, produk ${getProductName(notification.product_name)} senilai Rp${notification.amount?.toLocaleString('id-ID') || '0'}, sewa sudah lunas.`
         };
       default:
         return {

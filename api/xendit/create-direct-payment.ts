@@ -389,8 +389,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.warn('[New Order] No product_id available for fetching product name');
         }
         
-        // Final fallback
-        productName = productName || 'Unknown Product';
+        // Final fallback with better description
+        if (!productName) {
+          // Try to infer from order type
+          const isRental = order?.order_type === 'rental';
+          productName = isRental ? 'Akun Game Rental' : 'Akun Game Premium';
+          console.log('[New Order] Using fallback product name based on order type:', productName);
+        }
         console.log('[New Order] Final product name for notification:', productName);
         
         // Create admin database notification for new order (floating notification only)

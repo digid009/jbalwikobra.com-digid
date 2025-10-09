@@ -163,7 +163,7 @@ const AdminFlashSales: React.FC = () => {
         const product = products.find(p => p.id === (sale.product_id || sale.productId));
         return (
           <div>
-            <div className="font-medium text-ds-text">{product?.name || 'Unknown Product'}</div>
+            <div className="font-medium text-ds-text">{product?.name || 'produk akun game'}</div>
             <div className="text-sm text-ds-text-secondary">{product?.gameTitleId || 'N/A'}</div>
           </div>
         );
@@ -229,7 +229,7 @@ const AdminFlashSales: React.FC = () => {
       icon: <Eye size={16} />,
       onClick: (sale) => {
         const product = products.find(p => p.id === (sale.product_id || sale.productId));
-        push(`Viewing flash sale for: ${product?.name || 'Unknown Product'}`, 'info');
+        push(`Viewing flash sale for: ${product?.name || 'produk akun game'}`, 'info');
       }
     },
     {

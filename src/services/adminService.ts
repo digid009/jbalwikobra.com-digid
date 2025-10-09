@@ -393,13 +393,16 @@ class AdminService {
 
       // Finally, delete the product itself
       const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        console.error('[adminService.deleteProduct] Failed to delete product:', error);
+        throw new Error(`Failed to delete product: ${error.message || error.details || 'Unknown error'}`);
+      }
       
       console.log(`[adminService.deleteProduct] Successfully deleted product ${id} and related data`);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.error('[adminService.deleteProduct] error', e);
-      return false;
+      throw e; // Re-throw the error so the UI can handle it properly
     }
   }
 
@@ -668,7 +671,7 @@ class AdminService {
           id: `order-${order.id}`,
           type,
           title,
-          message: `Order #${order.id.slice(-8)} - ${order.products?.name || 'Unknown Product'}`,
+          message: `Order #${order.id.slice(-8)} - ${order.products?.name || 'produk akun game'}`,
           order_id: order.id,
           product_name: order.products?.name,
           amount: order.total_amount,
@@ -1623,7 +1626,7 @@ export const adminService = {
       const agg: Record<string, TopProductStat> = {};
       (data || []).forEach(order => {
         const pid = order.product_id || 'unknown';
-        const name = productNamesMap[pid] || 'Unknown Product';
+        const name = productNamesMap[pid] || 'produk akun game';
         if (!agg[pid]) {
           agg[pid] = { product_id: pid, product_name: name, count: 0, revenue: 0 };
         }

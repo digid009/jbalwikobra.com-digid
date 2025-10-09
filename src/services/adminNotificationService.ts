@@ -4,7 +4,7 @@ import { globalCache } from './globalCacheManager';
 
 export interface AdminNotification {
   id: string;
-  type: 'new_order' | 'paid_order' | 'new_user' | 'order_cancelled' | 'new_review' | 'system';
+  type: 'new_order' | 'paid_order' | 'new_user' | 'order_cancelled' | 'new_review' | 'system' | 'new_rent' | 'paid_rent';
   title: string;
   message: string;
   order_id?: string;

@@ -88,8 +88,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const now = new Date();
       const payload = {
         type: 'new_order',
-        title: 'Bang! ada yang ORDER nih!',
-        message: `namanya Demo User, produknya Paket Premium harganya Rp150.000, belum di bayar sih, tapi moga aja di bayar amin.`,
+        title: 'Notifikasi Pesanan Baru',
+        message: `Pesanan baru dari Demo User, produk Paket Premium senilai Rp150.000, pesanan belum dibayar, mohon tunggu pembayaran.`,
         order_id: null,
         customer_name: 'Demo User',
         product_name: 'Paket Premium',
