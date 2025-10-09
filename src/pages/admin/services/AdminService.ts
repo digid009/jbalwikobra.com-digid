@@ -64,6 +64,7 @@ export class AdminService {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .is('archived_at', null) // Filter out archived products
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -118,9 +119,14 @@ export class AdminService {
     const { supabase } = await import('../../../services/supabase');
     if (!supabase) throw new Error('Supabase not available');
 
+    // Archive the product instead of deleting it
     const { error } = await supabase
       .from('products')
-      .delete()
+      .update({ 
+        is_active: false, 
+        archived_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;

@@ -115,7 +115,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       variant: 'secondary',
       hidden: (p) => !(((p as any).isActive === false) || (p as any).archivedAt || p.is_active === false || !!p.archived_at),
     },
-    { key: 'delete', label: 'Hapus', icon: Trash2, onClick: onDelete, variant: 'danger' },
+    { key: 'delete', label: 'Arsipkan', icon: Trash2, onClick: onDelete, variant: 'danger' },
   ];
 
   return (

@@ -128,14 +128,14 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   };
 
   const handleDeleteProduct = async (product: Product) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
+    if (!window.confirm('Are you sure you want to archive this product? This will hide it from both admin panel and public pages.')) {
       return;
     }
 
     try {
-      // TODO: Implement delete product
-      console.log('Delete product:', product.id);
-      await loadProducts(); // Refresh after deletion
+      // TODO: Implement archive product
+      console.log('Archive product:', product.id);
+      await loadProducts(); // Refresh after archiving
     } catch (error) {
       console.error('Error deleting product:', error);
     }

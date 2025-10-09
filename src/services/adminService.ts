@@ -328,7 +328,7 @@ class AdminService {
     return !!res;
   }
 
-  /** Permanently delete a product by id */
+  /** Archive a product (hide from both admin and public) */
   async deleteProduct(id: string): Promise<boolean> {
     try {
       if (!supabase) {
@@ -336,69 +336,22 @@ class AdminService {
         return false;
       }
 
-      // First, get the product data to know what images to delete
-      const { data: product, error: fetchError } = await supabase
+      // Archive the product by setting archived_at and is_active to false
+      const { error } = await supabase
         .from('products')
-        .select('images')
-        .eq('id', id)
-        .single();
+        .update({ 
+          is_active: false, 
+          archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('[adminService.deleteProduct] Error fetching product:', fetchError);
-        // Continue with deletion even if we can't fetch images
-      }
-
-      // Delete related rental options first
-      const { error: rentalError } = await supabase
-        .from('rental_options')
-        .delete()
-        .eq('product_id', id);
-
-      if (rentalError) {
-        console.warn('[adminService.deleteProduct] Error deleting rental options:', rentalError);
-        // Continue with product deletion even if rental deletion fails
-      }
-
-      // Delete product images from storage if they exist
-      if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-        try {
-          const imagePaths: string[] = [];
-          for (const imageUrl of product.images) {
-            if (typeof imageUrl === 'string') {
-              // Extract path from URL like: https://...supabase.co/storage/v1/object/public/product-images/filename.jpg
-              const pathMatch = imageUrl.match(/\/storage\/v1\/object\/public\/product-images\/(.+)/);
-              if (pathMatch) {
-                imagePaths.push(pathMatch[1]);
-              }
-            }
-          }
-
-          if (imagePaths.length > 0) {
-            const { error: storageError } = await supabase.storage
-              .from('product-images')
-              .remove(imagePaths);
-
-            if (storageError) {
-              console.warn('[adminService.deleteProduct] Error deleting images from storage:', storageError);
-              // Continue with product deletion even if image cleanup fails
-            } else {
-              console.log(`[adminService.deleteProduct] Deleted ${imagePaths.length} images from storage`);
-            }
-          }
-        } catch (imageError) {
-          console.warn('[adminService.deleteProduct] Error processing images:', imageError);
-          // Continue with product deletion
-        }
-      }
-
-      // Finally, delete the product itself
-      const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) {
-        console.error('[adminService.deleteProduct] Failed to delete product:', error);
-        throw new Error(`Failed to delete product: ${error.message || error.details || 'Unknown error'}`);
+        console.error('[adminService.deleteProduct] Failed to archive product:', error);
+        throw new Error(`Failed to archive product: ${error.message || error.details || 'Unknown error'}`);
       }
       
-      console.log(`[adminService.deleteProduct] Successfully deleted product ${id} and related data`);
+      console.log(`[adminService.deleteProduct] Successfully archived product ${id}`);
       return true;
     } catch (e: any) {
       console.error('[adminService.deleteProduct] error', e);
@@ -720,6 +673,7 @@ class AdminService {
     // Reuse global instance method after class instantiation if available; fallback simple query
     try {
       let queryBuilder = supabase.from('products').select('*', { count: 'exact' })
+        .is('archived_at', null) // Filter out archived products
         .order(sort?.column || 'created_at', { ascending: sort ? sort.direction === 'asc' : false })
         .range((page - 1) * limit, page * limit - 1);
       if (search) {
@@ -1085,6 +1039,7 @@ export const adminService = {
     const sortKey = sort ? `${sort.column}:${sort.direction}` : 'created_at:desc';
     return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}:${sortKey}`, async () => {
       // Use LEFT JOIN with tiers and game_titles, get category data separately
+      // Filter out archived products by default for admin panel
       let query = supabase
         .from('products')
         .select(`
@@ -1100,7 +1055,8 @@ export const adminService = {
           rental_options (
             id, duration, price, description
           )
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .is('archived_at', null); // Only show non-archived products in admin panel
 
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);

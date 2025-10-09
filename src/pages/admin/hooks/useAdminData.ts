@@ -84,7 +84,7 @@ export const useProducts = () => {
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       // Error silently handled
-      setError('Failed to delete product');
+      setError('Failed to archive product');
       throw err;
     }
   };
