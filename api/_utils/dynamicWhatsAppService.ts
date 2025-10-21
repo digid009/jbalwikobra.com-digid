@@ -261,6 +261,57 @@ Ada pertanyaan? Balas pesan ini! 💬`;
   }
 
   /**
+   * Send order pending notification (payment link)
+   */
+  async sendOrderPendingNotification(
+    phone: string,
+    orderData: {
+      customerName: string;
+      productName: string;
+      amount: number;
+      orderId?: string;
+      paymentUrl: string;
+      validUntil?: string;
+    }
+  ): Promise<SendMessageResult> {
+    const message = `🎮 *PAYMENT LINK - PURCHASE*
+
+Halo ${orderData.customerName}! 👋
+
+Segera selesaikan pembayaran untuk pembelian akun *${orderData.productName}* senilai *Rp ${orderData.amount.toLocaleString('id-ID')}*.
+
+🔗 *Klik link berikut untuk melanjutkan pembayaran:*
+${orderData.paymentUrl}
+
+⏰ *Link pembayaran berlaku sampai:*
+${orderData.validUntil || 'Rabu, 22 Oktober 2025 pukul 07.59'}
+
+📋 *Detail Order:*
+• Produk: ${orderData.productName}
+• Total: Rp ${orderData.amount.toLocaleString('id-ID')}
+• Type: Full Purchase
+
+✅ *Yang Anda dapatkan:*
+• Akun game milik Anda
+• Email & Password bisa diganti
+• Support after sale
+• Garansi sampai email ter bind
+
+🌐 *Support:* wa.me/6289653510125
+🌐 *Website:* https://jbalwikobra.com
+
+Terima kasih! 🙏`;
+
+    return this.sendMessage({
+      phone,
+      message,
+      messageType: 'text',
+      contextType: 'order_pending',
+      contextId: orderData.orderId || `order-${Date.now()}`
+    });
+  }
+
+  /**
    * Check if response indicates success based on provider configuration
    */
   private isResponseSuccessful(responseData: any, provider: WhatsAppProvider): boolean {
