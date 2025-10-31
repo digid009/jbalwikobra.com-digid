@@ -58,7 +58,7 @@ const PNHero: React.FC = () => {
                 <a href={heroButtonUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="secondary" size="lg" fullWidth className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
                     <Star size={18} />
-                    RekBer Klik Disini!
+                    JUAL AKUN DAN NOMER ADMIN DI SINI
                   </PNButton>
                 </a>
               </div>
@@ -72,7 +72,7 @@ const PNHero: React.FC = () => {
                 <a href={jualAkunWhatsappUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="ghost" size="md" fullWidth className="flex items-center justify-center gap-2">
                     <TrendingUp size={16} />
-                    Jual dan Admin WA!
+                    REKBER KLIK DI SINI
                   </PNButton>
                 </a>
               </div>
