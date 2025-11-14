@@ -248,27 +248,6 @@ const AdminProductsV2: React.FC = () => {
     });
   };
 
-  const handleDeleteProduct = async (product: Product) => {
-    if (!confirm(`Are you sure you want to archive product: ${product.name}?\n\nThis will hide the product from both admin panel and public pages. You can restore it later if needed.`)) {
-      return;
-    }
-    // Optimistic UI: remove immediately from local state
-    const prev = products;
-    setProducts(prev.filter(p => p.id !== product.id));
-    try {
-      const ok = await adminService.deleteProduct(product.id);
-      if (!ok) throw new Error('Archive failed');
-      push(`Product "${product.name}" has been archived successfully`, 'success');
-      // Invalidate cache and hard refresh from server bypassing cache
-      setCachedResults(new Map());
-      await loadProducts(true);
-    } catch (error: any) {
-      // Rollback UI on failure
-      setProducts(prev);
-      push(`Failed to archive product: ${error.message || 'Unknown error'}`, 'error');
-    }
-  };
-
   const handleViewProduct = (product: Product) => {
     navigate(`/products/${product.id}`);
   };
@@ -285,6 +264,27 @@ const AdminProductsV2: React.FC = () => {
       loadProducts(true); // Force reload to see changes
     } catch (error: any) {
       push(`Failed to update product status: ${error.message}`, 'error');
+    }
+  };
+
+  const handleArchiveProduct = async (product: Product) => {
+    if (!confirm(`Are you sure you want to archive product: ${product.name}?\n\nThis will hide the product from both admin panel and public pages. You can restore it later if needed.`)) {
+      return;
+    }
+    // Optimistic UI: update immediately in local state
+    const prev = products;
+    setProducts(prev.map(p => p.id === product.id ? { ...p, archived_at: new Date().toISOString(), is_active: false } : p));
+    try {
+      const ok = await adminService.deleteProduct(product.id);
+      if (!ok) throw new Error('Archive failed');
+      push(`Product "${product.name}" has been archived successfully`, 'success');
+      // Invalidate cache and hard refresh from server bypassing cache
+      setCachedResults(new Map());
+      await loadProducts(true);
+    } catch (error: any) {
+      // Rollback UI on failure
+      setProducts(prev);
+      push(`Failed to archive product: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -730,11 +730,11 @@ const AdminProductsV2: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleDeleteProduct(product)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                            onClick={() => handleArchiveProduct(product)}
+                            className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-all duration-200"
                             title="Archive Product"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Archive className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
