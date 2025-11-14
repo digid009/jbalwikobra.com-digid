@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Optimize: Select only needed fields
           const { data: fixedVAData, error: vaError } = await supabase
             .from('fixed_virtual_accounts')
-            .select('id, external_id, account_number, bank_code, name, status, expiration_date')
+            .select('id, external_id, account_number, bank_code, name, status, expiration_date, expected_amount')
             .eq('external_id', paymentData.external_id)
             .single();
           
