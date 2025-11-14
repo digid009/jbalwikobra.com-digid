@@ -795,23 +795,13 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Archive product on successful payment
+    // Send notifications on successful payment
     try {
       console.log('[Webhook] Processing complete:', { updated, status, invoiceId, externalId });
       
       if (updated > 0 && (status === 'paid' || status === 'completed')) {
         console.log('[Webhook] Order updated successfully, proceeding with notifications');
         
-        // Find related product id(s) for the updated orders and archive them
-        let q = sb.from('orders').select('product_id').limit(50);
-        if (invoiceId) q = q.eq('xendit_invoice_id', invoiceId);
-        else if (externalId) q = q.eq('client_external_id', externalId);
-        const { data: ordersToArchive } = await q;
-        const productIds = (ordersToArchive || []).map((o: any) => o.product_id).filter(Boolean);
-        if (productIds.length) {
-          await sb.from('products').update({ is_active: false, archived_at: new Date().toISOString() }).in('id', productIds);
-        }
-
         // Send WhatsApp notifications for successful payments
         // Some channels report final state as 'completed' (e.g., SETTLED), not 'paid'
         if (status === 'paid' || status === 'completed') {
@@ -846,7 +836,7 @@ export default async function handler(req: any, res: any) {
         }
       }
     } catch (e) {
-      console.error('Failed to archive product after payment:', e);
+      console.error('Failed to send notifications after payment:', e);
     }
 
     // Final verification: Check if both tables are in sync
