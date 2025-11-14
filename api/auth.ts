@@ -24,6 +24,14 @@ function getSupabase(): SupabaseClient {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    global: {
+      headers: {
+        'x-client-info': 'jbalwikobra-auth-api'
+      }
+    },
+    db: {
+      schema: 'public'
     }
   });
   
@@ -72,6 +80,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Set cache headers - no caching for auth endpoints (sensitive data)
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
