@@ -4,6 +4,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set cache headers - short cache for payment status (data can change)
+  res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
+  
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -20,12 +23,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      global: {
+        headers: {
+          'x-client-info': 'jbalwikobra-xendit-api'
+        }
+      }
+    });
 
-    // Try to fetch from payments table first
+    // Optimize: Select only needed fields to reduce cache egress
     const { data: paymentData, error: paymentError } = await supabase
       .from('payments')
-      .select('*')
+      .select('xendit_id, external_id, payment_method, amount, currency, status, payment_data, created_at, expiry_date, description')
       .eq('xendit_id', id)
       .single();
 
@@ -57,9 +66,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('[Get Payment] 🔄 VA payment missing details - checking fixed_virtual_accounts table');
         
         try {
+          // Optimize: Select only needed fields
           const { data: fixedVAData, error: vaError } = await supabase
             .from('fixed_virtual_accounts')
-            .select('*')
+            .select('id, external_id, account_number, bank_code, name, status, expiration_date, expected_amount')
             .eq('external_id', paymentData.external_id)
             .single();
           

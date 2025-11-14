@@ -8,6 +8,14 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  global: {
+    headers: {
+      'x-client-info': 'jbalwikobra-api'
+    }
+  },
+  db: {
+    schema: 'public'
   }
 });
 

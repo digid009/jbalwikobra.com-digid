@@ -25,7 +25,20 @@ try {
   } else if (looksLikePlaceholder(supabaseUrl) || looksLikePlaceholder(supabaseAnonKey) || !isValidUrl(supabaseUrl)) {
     console.warn('[Supabase] Invalid configuration detected. Skipping client initialization.');
   } else {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true
+      },
+      global: {
+        headers: {
+          'x-client-info': 'jbalwikobra-web'
+        }
+      },
+      db: {
+        schema: 'public'
+      }
+    });
   }
 } catch (e) {
   console.error('[Supabase] Failed to initialize client:', e);

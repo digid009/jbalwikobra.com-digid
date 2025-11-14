@@ -468,9 +468,10 @@ class AdminService {
   // Users Management
   async getUsers(page = 1, limit = 20, search?: string): Promise<{ data: User[], count: number }> {
     try {
+      // Optimize: Select only needed fields to reduce cache egress
       let query = supabase
         .from('users')
-        .select('*', { count: 'exact' })
+        .select('id, email, name, avatar_url, phone, created_at, is_admin, last_login, is_active, phone_verified', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -494,9 +495,10 @@ class AdminService {
   // Reviews Management
   async getReviews(page = 1, limit = 20): Promise<{ data: Review[], count: number }> {
     try {
+      // Optimize: Select only needed fields to reduce cache egress
       const { data, error, count } = await supabase
         .from('reviews')
-        .select('*', { count: 'exact' })
+        .select('id, product_id, user_id, rating, comment, created_at, updated_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -672,7 +674,8 @@ class AdminService {
   async getProducts(page = 1, limit = 20, search?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<{ data: Product[], count: number }> {
     // Reuse global instance method after class instantiation if available; fallback simple query
     try {
-      let queryBuilder = supabase.from('products').select('*', { count: 'exact' })
+      // Optimize: Select only needed fields to reduce cache egress
+      let queryBuilder = supabase.from('products').select('id, name, description, price, original_price, image, images, is_active, stock, created_at, updated_at, category_id, game_title_id, tier_id, has_rental, archived_at', { count: 'exact' })
         .is('archived_at', null) // Filter out archived products
         .order(sort?.column || 'created_at', { ascending: sort ? sort.direction === 'asc' : false })
         .range((page - 1) * limit, page * limit - 1);
