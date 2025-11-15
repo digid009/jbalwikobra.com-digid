@@ -140,6 +140,7 @@ See [SECRET_MANAGEMENT_GUIDELINES.md](./SECRET_MANAGEMENT_GUIDELINES.md) for com
 
 ## 📖 Documentation
 
+- [Cloudflare Turnstile Setup](./CLOUDFLARE_TURNSTILE_SETUP.md) - Complete guide for bot protection setup
 - [Secret Management Guidelines](./SECRET_MANAGEMENT_GUIDELINES.md) - Comprehensive security documentation
 - [Security Performance Fixes](./SECURITY_PERFORMANCE_FIXES.md) - Recent security improvements
 - [Final App Review](./FINAL_APP_REVIEW.md) - Complete system status
