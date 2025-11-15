@@ -55,6 +55,48 @@ function getClientIP(req: VercelRequest): string {
          'unknown';
 }
 
+async function verifyTurnstileToken(token: string, clientIp: string): Promise<boolean> {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  
+  // If secret key is not configured, skip verification
+  // This allows the app to work without Turnstile if needed
+  if (!secretKey) {
+    console.warn('Turnstile secret key not configured. Skipping verification.');
+    return true;
+  }
+
+  if (!token) {
+    console.warn('No Turnstile token provided');
+    return false;
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        secret: secretKey,
+        response: token,
+        remoteip: clientIp,
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('Turnstile verification failed:', data['error-codes']);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Turnstile verification error:', error);
+    return false;
+  }
+}
+
 // In-memory rate limiter
 const rateLimit = new Map<string, { count: number; lastAttempt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -139,12 +181,23 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, turnstile_token } = req.body;
 
     console.log('Login attempt for identifier:', identifier ? 'provided' : 'missing');
 
     if (!identifier || !password) {
       return res.status(400).json({ error: 'Identifier and password are required' });
+    }
+
+    // Verify Turnstile token if configured
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    
+    if (turnstileSecretKey && turnstile_token) {
+      const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+      if (!isValidTurnstile) {
+        return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+      }
     }
 
     // Ensure Supabase is properly initialized
@@ -252,7 +305,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { phone, password, name } = req.body;
+    const { phone, password, name, turnstile_token } = req.body;
 
     if (!phone) {
       return res.status(400).json({ error: 'Phone number is required' });
@@ -268,6 +321,17 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Verify Turnstile token if configured
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    
+    if (turnstileSecretKey && turnstile_token) {
+      const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+      if (!isValidTurnstile) {
+        return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+      }
     }
 
     // Check if user already exists
