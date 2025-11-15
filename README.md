@@ -46,6 +46,7 @@ REACT_APP_SUPABASE_ANON_KEY=your_anon_key_here
 REACT_APP_XENDIT_PUBLIC_KEY=xnd_public_development_...
 REACT_APP_SITE_NAME=JB Alwikobra
 REACT_APP_SITE_URL=https://your-domain.com
+REACT_APP_TURNSTILE_SITE_KEY=your_turnstile_site_key_here
 ```
 
 **Backend (Private - server-side only):**
@@ -54,6 +55,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 XENDIT_SECRET_KEY=xnd_development_...
 XENDIT_CALLBACK_TOKEN=your_callback_token_here
 WHATSAPP_API_KEY=your_whatsapp_api_key_here
+TURNSTILE_SECRET_KEY=your_turnstile_secret_key_here
 ```
 
 #### Environment Files
@@ -102,9 +104,30 @@ This script checks for:
 - [ ] Run security validation: `node scripts/validate-env-security.js`
 - [ ] Monitor deployment for security alerts
 
+#### Cloudflare Turnstile Configuration
+
+This application includes Cloudflare Turnstile for bot protection on authentication forms. To configure:
+
+1. **Get Turnstile Keys:**
+   - Visit [Cloudflare Dashboard](https://dash.cloudflare.com/)
+   - Go to Turnstile section
+   - Create a new site
+   - Copy the Site Key and Secret Key
+
+2. **Configure Environment Variables:**
+   - **Frontend (Vercel):** Add `REACT_APP_TURNSTILE_SITE_KEY` with your site key
+   - **Backend (Vercel):** Add `TURNSTILE_SECRET_KEY` with your secret key
+
+3. **Optional Configuration:**
+   - Turnstile is optional and gracefully degrades if not configured
+   - The app will work without Turnstile keys but won't have captcha protection
+   - Recommended for production to prevent automated attacks
+
 #### Platform-Specific Setup
 **Vercel:**
 ```bash
+vercel env add REACT_APP_TURNSTILE_SITE_KEY production
+vercel env add TURNSTILE_SECRET_KEY production
 vercel env add XENDIT_SECRET_KEY production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
 ```
@@ -117,6 +140,7 @@ See [SECRET_MANAGEMENT_GUIDELINES.md](./SECRET_MANAGEMENT_GUIDELINES.md) for com
 
 ## 📖 Documentation
 
+- [Cloudflare Turnstile Setup](./CLOUDFLARE_TURNSTILE_SETUP.md) - Complete guide for bot protection setup
 - [Secret Management Guidelines](./SECRET_MANAGEMENT_GUIDELINES.md) - Comprehensive security documentation
 - [Security Performance Fixes](./SECURITY_PERFORMANCE_FIXES.md) - Recent security improvements
 - [Final App Review](./FINAL_APP_REVIEW.md) - Complete system status
