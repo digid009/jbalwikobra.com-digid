@@ -25,6 +25,7 @@ import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
 import { enhancedProductService } from './services/enhancedProductService';
 import UserFloatingNotifications from './components/UserFloatingNotifications';
+import FirstVisitVerification from './components/FirstVisitVerification';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -142,19 +143,20 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-      <AuthProvider>
-        <WishlistProvider>
-          <ToastProvider>
-            <ConfirmationProvider>
-              <Router
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true
-                }}
-              >
-                <ScrollToTop />
-                <Routes>
+      <FirstVisitVerification>
+        <ThemeProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <ToastProvider>
+              <ConfirmationProvider>
+                <Router
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true
+                  }}
+                >
+                  <ScrollToTop />
+                  <Routes>
                 {/* Admin routes - Direct access without sidebar layout */}
                 {process.env.NODE_ENV === 'development' ? (
                   // Development: Allow admin access without authentication
@@ -230,14 +232,15 @@ function App() {
                   </div>
                 } />
               </Routes>
-              <Analytics />
-              <SpeedInsights />
-            </Router>
-            </ConfirmationProvider>
-          </ToastProvider>
-        </WishlistProvider>
-  </AuthProvider>
-  </ThemeProvider>
+                <Analytics />
+                <SpeedInsights />
+              </Router>
+              </ConfirmationProvider>
+            </ToastProvider>
+          </WishlistProvider>
+        </AuthProvider>
+        </ThemeProvider>
+      </FirstVisitVerification>
     </ErrorBoundary>
   );
 }

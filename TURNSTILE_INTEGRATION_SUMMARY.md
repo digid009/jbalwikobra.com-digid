@@ -34,6 +34,12 @@ In your Vercel project dashboard:
   - Dark theme matching your app
   - Graceful degradation if not configured
 
+- **New Component**: `src/components/FirstVisitVerification.tsx`
+  - **First Visit Protection**: Shows Turnstile verification on every user's first visit
+  - Stores verification in localStorage (valid for 24 hours)
+  - Prevents bot traffic from scraping the site
+  - Seamless integration with entire app
+
 - **Updated Forms**: `src/pages/TraditionalAuthPage.tsx`
   - Login form now has captcha
   - Signup form now has captcha
@@ -44,6 +50,7 @@ In your Vercel project dashboard:
   - Server-side token verification
   - Login endpoint protected
   - Signup endpoint protected
+  - **New: First visit verification endpoint** (`verify-first-visit`)
   - Proper error handling
 
 ### ✅ Configuration
@@ -63,11 +70,13 @@ In your Vercel project dashboard:
 
 ## Key Features
 
-1. **Bot Protection**: Protects login and signup forms from automated attacks
-2. **Privacy-First**: Uses Cloudflare's privacy-focused captcha alternative
-3. **Optional**: App works without Turnstile (logs warning)
-4. **Dark Theme**: Matches your app's design
-5. **Error Handling**: Proper validation and user feedback
+1. **First Visit Protection**: Shows verification on every user's first visit (valid for 24 hours)
+2. **Bot Protection**: Protects login and signup forms from automated attacks
+3. **Privacy-First**: Uses Cloudflare's privacy-focused captcha alternative
+4. **Optional**: App works without Turnstile (logs warning)
+5. **Dark Theme**: Matches your app's design
+6. **Error Handling**: Proper validation and user feedback
+7. **Smart Caching**: Once verified, users don't need to verify again for 24 hours
 
 ## Environment Variables
 
@@ -87,6 +96,9 @@ This is your **Secret Key** from Cloudflare - keep it secret, server-side only.
 
 After deploying with your keys:
 
+- [ ] **First Visit**: Open site in new/incognito browser - Turnstile verification screen appears
+- [ ] Complete first visit verification - Redirected to homepage
+- [ ] Refresh page - No verification needed (cached for 24 hours)
 - [ ] Visit login page - Turnstile widget appears
 - [ ] Try logging in - Captcha verifies successfully
 - [ ] Visit signup page - Turnstile widget appears
@@ -96,7 +108,19 @@ After deploying with your keys:
 
 ## How It Works
 
-### User Flow
+### First Visit Flow (NEW!)
+1. User visits website for the first time
+2. FirstVisitVerification component checks localStorage
+3. If not verified, shows full-screen verification screen
+4. Turnstile widget appears with security message
+5. User completes verification (usually automatic)
+6. Token sent to backend `/api/auth?action=verify-first-visit`
+7. Backend verifies with Cloudflare
+8. If valid, verification stored in localStorage (24h expiry)
+9. User redirected to the app
+10. Next visit within 24h: No verification needed
+
+### Login/Signup Form Flow
 1. User opens login/signup form
 2. Turnstile widget loads automatically
 3. Cloudflare invisibly verifies user is human

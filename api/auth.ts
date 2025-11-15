@@ -166,6 +166,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleLogout(req, res);
       case 'whatsapp-confirm':
         return await handleWhatsAppConfirm(req, res);
+      case 'verify-first-visit':
+        return await handleVerifyFirstVisit(req, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -709,6 +711,49 @@ async function handleWhatsAppConfirm(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error) {
     console.error('WhatsApp confirm error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleVerifyFirstVisit(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { turnstile_token } = req.body;
+
+    if (!turnstile_token) {
+      return res.status(400).json({ error: 'Turnstile token is required' });
+    }
+
+    // Verify Turnstile token
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+
+    // If Turnstile is not configured, allow access (graceful degradation)
+    if (!turnstileSecretKey) {
+      console.warn('Turnstile not configured for first visit verification');
+      return res.status(200).json({
+        success: true,
+        message: 'Verification skipped (not configured)'
+      });
+    }
+
+    const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+    if (!isValidTurnstile) {
+      return res.status(400).json({ 
+        error: 'Verification failed. Please try again.',
+        success: false
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'First visit verified successfully'
+    });
+  } catch (error) {
+    console.error('First visit verification error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
