@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Clock, Star, ThumbsUp } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 import { formatCurrency } from '../../utils/helpers';
 import { Product } from '../../types';
 import { PNCard, PNHeading, PNPill, PNText, PNButton } from '../ui/PinkNeonDesignSystem';
@@ -36,7 +37,7 @@ export const ProductInfo = React.memo(({
   description
 }: ProductInfoProps) => {
   // Safely get user, fallback to null if auth context not available
-  let user = null;
+  let user: User | null = null;
   try {
     const authContext = useAuth();
     user = authContext.user;

@@ -89,7 +89,7 @@ const AdminPosts: React.FC = () => {
     if (filterValues.search) {
       const searchTerm = filterValues.search.toLowerCase();
       if (!post.title?.toLowerCase().includes(searchTerm) &&
-          !post.content.toLowerCase().includes(searchTerm)) {
+          !post.content?.toLowerCase().includes(searchTerm)) {
         return false;
       }
     }
@@ -265,6 +265,7 @@ const AdminPosts: React.FC = () => {
       
       const transformedPosts = (data || []).map(post => ({
         ...post,
+        type: 'admin',
         authorName: 'Admin',
         counts: {
           likes: post.likes_count || 0,

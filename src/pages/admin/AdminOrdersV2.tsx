@@ -304,8 +304,8 @@ const AdminOrdersV2: React.FC = () => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch = !searchLower || 
         order.customer_name.toLowerCase().includes(searchLower) ||
-        order.customer_email.toLowerCase().includes(searchLower) ||
-        order.customer_phone.includes(searchLower);
+        order.customer_email?.toLowerCase().includes(searchLower) ||
+        order.customer_phone?.includes(searchLower);
 
       // Handle "completed" status to include both 'paid' and 'completed' orders
       const matchesStatus = !statusFilter || 

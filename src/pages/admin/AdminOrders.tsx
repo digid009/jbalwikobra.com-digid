@@ -106,8 +106,8 @@ const AdminOrders: React.FC = () => {
     const searchLower = filterValues.searchTerm.toLowerCase();
     const matchesSearch = !searchLower || 
       order.customer_name.toLowerCase().includes(searchLower) ||
-      order.customer_email.toLowerCase().includes(searchLower) ||
-      order.customer_phone.includes(searchLower);
+      order.customer_email?.toLowerCase().includes(searchLower) ||
+      order.customer_phone?.includes(searchLower);
 
     // Handle "completed" status to include both 'paid' and 'completed' orders
     const matchesStatus = !filterValues.status || 
@@ -131,6 +131,11 @@ const AdminOrders: React.FC = () => {
       aVal = Number(aVal);
       bVal = Number(bVal);
     }
+    
+    // Handle null/undefined values
+    if (aVal == null && bVal == null) return 0;
+    if (aVal == null) return 1;
+    if (bVal == null) return -1;
     
     if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
