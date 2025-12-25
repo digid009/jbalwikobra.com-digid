@@ -1,18 +1,6 @@
 import React from 'react';
 import { Star, Eye, Edit, Trash2, Calendar, User, Package, MessageSquare } from 'lucide-react';
-
-interface Review {
-  id: string;
-  user_id?: string;
-  user_name?: string;
-  product_id?: string;
-  product_name?: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  is_verified?: boolean;
-  helpful_count?: number;
-}
+import { Review } from '../../../services/adminService';
 
 interface ReviewsTableProps {
   reviews: Review[];
@@ -30,12 +18,14 @@ export const ReviewsTable: React.FC<ReviewsTableProps> = ({
   onView
 }) => {
   const handleDelete = (review: Review) => {
+    if (!review.id) return;
     if (window.confirm(`Delete review from ${review.user_name || 'Unknown User'}?`)) {
       onDelete(review.id);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
