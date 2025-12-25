@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl';
 
 // Lazy supabase client (service role preferred for admin operations)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
@@ -26,15 +27,15 @@ function rateLimit(key: string): boolean {
 function respond(res: VercelResponse, status: number, body: any, cacheSeconds: number = 0) {
   res.setHeader('Content-Type', 'application/json');
   
-  // Add cache headers for successful responses
+  // Add cache headers for successful responses using new caching utility
   if (status === 200 && cacheSeconds > 0) {
-    res.setHeader('Cache-Control', `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 2}`);
+    setCacheHeaders(res, { maxAge: cacheSeconds, staleWhileRevalidate: cacheSeconds * 2 });
   } else if (status === 200) {
     // No cache for real-time data or mutations
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    setCacheHeaders(res, CacheStrategies.NoCache);
   } else {
     // Don't cache errors
-    res.setHeader('Cache-Control', 'no-store');
+    setCacheHeaders(res, CacheStrategies.NoCache);
   }
   
   res.status(status).send(JSON.stringify(body));
@@ -104,7 +105,7 @@ async function recentNotifications(limit: number) {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
+    .select('id, type, title, message, description, is_read, created_at, metadata')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) return [];
@@ -116,7 +117,7 @@ async function listOrders(page: number, limit: number, status?: string) {
   const from = (page - 1) * limit; const to = from + limit - 1;
   
   // First get orders
-  let query: any = supabase.from('orders').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  let query: any = supabase.from('orders').select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (status && status !== 'all') {
     // Handle "completed" status to include both 'paid' and 'completed' orders
     if (status === 'completed') {
@@ -136,7 +137,7 @@ async function listOrders(page: number, limit: number, status?: string) {
   if (externalIds.length > 0) {
     const { data: payments } = await supabase
       .from('payments')
-      .select('*')
+      .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
       .in('external_id', externalIds);
     
     if (payments) {
@@ -230,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Get current settings first
         const { data: current } = await supabase
           .from('website_settings')
-          .select('*')
+          .select('id, site_name, site_description, logo_url, primary_color, secondary_color, contact_email, contact_phone, whatsapp_number, created_at, updated_at')
           .single();
           
         if (current) {
@@ -311,7 +312,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           const { data, error } = await supabase
             .from('website_settings')
-            .select('*')
+            .select('id, site_name, site_description, logo_url, primary_color, secondary_color, contact_email, contact_phone, whatsapp_number, created_at, updated_at')
             .single();
             
           if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
