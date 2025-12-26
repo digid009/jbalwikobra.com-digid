@@ -1,23 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Star, User, Package, MessageSquare, Calendar, Shield } from 'lucide-react';
-
-interface Review {
-  id?: string;
-  user_id?: string;
-  user_name?: string;
-  product_id?: string;
-  product_name?: string;
-  rating: number;
-  comment: string;
-  created_at?: string;
-  is_verified?: boolean;
-  helpful_count?: number;
-}
+import { Review } from '../../../services/adminService';
 
 interface ReviewFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (review: Review) => void;
+  onSubmit: (review: Review) => void | Promise<void>;
   review?: Review | null;
   loading?: boolean;
 }
@@ -29,7 +17,7 @@ export const ReviewFormModal: React.FC<ReviewFormModalProps> = ({
   review,
   loading = false
 }) => {
-  const [formData, setFormData] = useState<Review>({
+  const [formData, setFormData] = useState<Partial<Review>>({
     rating: 5,
     comment: '',
     user_name: '',
@@ -78,7 +66,7 @@ export const ReviewFormModal: React.FC<ReviewFormModalProps> = ({
       newErrors.comment = 'Review comment must be at least 10 characters';
     }
 
-    if (formData.rating < 1 || formData.rating > 5) {
+    if (!formData.rating || formData.rating < 1 || formData.rating > 5) {
       newErrors.rating = 'Rating must be between 1 and 5 stars';
     }
 
@@ -93,7 +81,7 @@ export const ReviewFormModal: React.FC<ReviewFormModalProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    onSubmit(formData as Review);
   };
 
   const handleInputChange = (field: keyof Review, value: any) => {
@@ -224,7 +212,7 @@ export const ReviewFormModal: React.FC<ReviewFormModalProps> = ({
                     >
                       <Star
                         className={`w-8 h-8 ${
-                          i < formData.rating
+                          i < (formData.rating ?? 0)
                             ? 'text-yellow-400 fill-yellow-400'
                             : 'text-gray-600 hover:text-gray-500'
                         }`}
@@ -232,7 +220,7 @@ export const ReviewFormModal: React.FC<ReviewFormModalProps> = ({
                     </button>
                   ))}
                   <span className="ml-3 text-gray-300">
-                    {formData.rating} star{formData.rating !== 1 ? 's' : ''}
+                    {formData.rating ?? 0} star{(formData.rating ?? 0) !== 1 ? 's' : ''}
                   </span>
                 </div>
                 {errors.rating && (

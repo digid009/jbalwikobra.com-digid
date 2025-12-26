@@ -17,7 +17,7 @@ export interface DSTableColumn<T = any> {
 export interface DSTableAction<T = any> {
   key: string;
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   onClick: (item: T) => void;
   variant?: 'primary' | 'secondary' | 'danger';
   disabled?: (item: T) => boolean;
@@ -213,7 +213,7 @@ export function AdminDSTable<T extends Record<string, any>>({
                               }}
                               className={cn(actionBtnClass(action.variant), disabled && 'opacity-50 cursor-not-allowed')}
                             >
-                              <Icon className="w-4 h-4" />
+                              {Icon ? <Icon className="w-4 h-4" /> : action.label}
                             </button>
                           );
                         })}

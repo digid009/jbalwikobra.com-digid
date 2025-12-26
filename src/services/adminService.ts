@@ -107,14 +107,16 @@ export interface Product {
 }
 
 export interface Review {
-  id: string;
+  id?: string;
   product_id: string;
   user_id: string;
   rating: number;
   comment: string;
-  created_at: string;
+  created_at?: string;
   product_name?: string;
   user_name?: string;
+  is_verified?: boolean;
+  helpful_count?: number;
 }
 
 export interface Banner {
