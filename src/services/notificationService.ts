@@ -18,6 +18,9 @@ class NotificationService {
   async getLatest(limit = 10, userId?: string | null): Promise<AppNotification[]> {
     const key = `${this.cacheTag}:latest:${limit}:${userId || 'guest'}`;
     return globalCache.getOrSet(key, async () => {
+      if (!supabase) {
+        return [];
+      }
       let query = supabase
         .from('notifications')
         .select('id,user_id,type,title,body,link_url,is_read,created_at')
@@ -63,6 +66,9 @@ class NotificationService {
   async getUnreadCount(userId?: string | null): Promise<number> {
     const key = `${this.cacheTag}:unread-count:${userId || 'guest'}`;
     return globalCache.getOrSet(key, async () => {
+      if (!supabase) {
+        return 0;
+      }
       if (!userId) {
         // Guests: count all global as unread, but limit egress by fetching only count
         const { count, error } = await supabase
@@ -81,6 +87,7 @@ class NotificationService {
 
   async markAsRead(notificationId: string, userId?: string | null): Promise<void> {
     if (!userId) return; // guests: skip
+    if (!supabase) return;
     try {
       console.log('🔄 NotificationService: markAsRead called for notification:', notificationId, 'user:', userId);
       // Use RPC that handles both owned and global notifications
@@ -103,6 +110,7 @@ class NotificationService {
 
   async markAllAsRead(userId?: string | null): Promise<void> {
     if (!userId) return; // guests: skip
+    if (!supabase) return;
     try {
       console.log('🔄 NotificationService: markAllAsRead called for user:', userId);
       const { error } = await supabase.rpc('mark_all_notifications_read', { u_id: userId });

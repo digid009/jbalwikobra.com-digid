@@ -232,7 +232,17 @@ class OptimizedProductService {
 
       if (error) throw error;
 
-      const result = data || [];
+      const result = (data || []).map((item: any) => ({
+        ...item,
+        borderColor: item.border_color,
+        backgroundGradient: item.background_gradient,
+        priceRangeMin: item.price_range_min,
+        priceRangeMax: item.price_range_max,
+        isActive: item.is_active,
+        sortOrder: item.sort_order,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      }));
       this.setCache(cacheKey, result, 10 * 60 * 1000); // Cache for 10 minutes
       return result;
 

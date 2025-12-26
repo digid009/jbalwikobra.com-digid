@@ -137,7 +137,7 @@ export class EnhancedProductService {
   /**
    * Create product with cache invalidation
    */
-  async createProduct(product: Omit<Product, "id" | "createdAt" | "updatedAt"> & Record<string, any>): Promise<Product> {
+  async createProduct(product: Omit<Product, "id" | "createdAt" | "updatedAt"> & Record<string, any>): Promise<Product | null> {
     const result = await this.baseService.createProduct(product);
     
     // Invalidate related caches
@@ -149,7 +149,7 @@ export class EnhancedProductService {
   /**
    * Update product with cache invalidation
    */
-  async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+  async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
     const result = await this.baseService.updateProduct(id, updates);
     
     // Invalidate related caches
