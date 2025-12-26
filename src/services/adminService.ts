@@ -210,6 +210,9 @@ class AdminService {
   // Orders Management
   async getOrders(page = 1, limit = 20, status?: string): Promise<{ data: Order[], count: number }> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Build the query with optional status filter
       let query = supabase
         .from('orders')
@@ -279,7 +282,7 @@ class AdminService {
           customer_email: item.customer_email,
           customer_phone: item.customer_phone,
           payment_method: item.payment_method || null,
-          xendit_invoice_id: null, // Legacy field - keeping for compatibility
+          xendit_invoice_id: undefined, // Legacy field - keeping for compatibility
           // Enhanced payment data from payments table
           payment_data: paymentRecord ? {
             xendit_id: paymentRecord.xendit_id,
@@ -308,6 +311,9 @@ class AdminService {
   // Product quick updates (inline table actions)
   async updateProductFields(id: string, fields: Partial<Pick<Product,'price'|'stock'|'is_active'>>): Promise<Product | null> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const updatePayload: any = { ...fields, updated_at: new Date().toISOString() };
       const { data, error } = await supabase
         .from('products')
@@ -363,6 +369,9 @@ class AdminService {
 
   async completeOrder(orderId: string): Promise<boolean> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { error } = await supabase.from('orders').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', orderId);
       if (error) throw error;
       return true;
@@ -375,6 +384,9 @@ class AdminService {
   // Get detailed order information with payment data
   async getOrderById(orderId: string): Promise<Order | null> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .select(`
@@ -389,7 +401,7 @@ class AdminService {
       if (!orderData) return null;
 
       // Get payment data if available
-      let paymentRecord = null;
+      let paymentRecord: any = null;
       if (orderData.client_external_id) {
         const { data: paymentData } = await supabase
           .from('payments')
@@ -425,7 +437,7 @@ class AdminService {
         customer_email: orderData.customer_email,
         customer_phone: orderData.customer_phone,
         payment_method: orderData.payment_method || null,
-        xendit_invoice_id: null,
+        xendit_invoice_id: undefined,
         payment_data: paymentRecord ? {
           xendit_id: paymentRecord.xendit_id,
           payment_method_type: paymentRecord.payment_method,
@@ -450,6 +462,9 @@ class AdminService {
   // Update order status (useful for payment management)
   async updateOrderStatus(orderId: string, status: Order['status']): Promise<boolean> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { error } = await supabase
         .from('orders')
         .update({ 
@@ -696,6 +711,9 @@ class AdminService {
   // Create sample reviews for initial setup
   async createSampleReviews(): Promise<void> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Get some users and products to create reviews for
       const { data: users } = await supabase.from('users').select('id, name').limit(5);
       const { data: products } = await supabase.from('products').select('id, name').eq('is_active', true).limit(3);
@@ -735,6 +753,9 @@ class AdminService {
       }
 
       // Try to create via direct table access
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { error } = await supabase.from('reviews').insert(sampleReviews);
 
       if (error) {
@@ -1837,6 +1858,9 @@ export const adminService = {
     image_url?: string;
     is_pinned?: boolean;
   }): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data: user } = await supabase.auth.getUser();
     if (!user?.user?.id) throw new Error('Not authenticated');
 

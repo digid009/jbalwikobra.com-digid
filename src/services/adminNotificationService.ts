@@ -333,6 +333,10 @@ class AdminNotificationService {
   async getUnreadCount(): Promise<number> {
     const key = `${this.cacheTag}:unread_count`;
     return globalCache.getOrSet(key, async () => {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return 0;
+      }
       const { count, error } = await supabase
         .from('admin_notifications')
         .select('*', { count: 'exact', head: true })
@@ -346,6 +350,10 @@ class AdminNotificationService {
   // Delete notification
   async deleteNotification(notificationId: string): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .delete()
@@ -369,6 +377,10 @@ class AdminNotificationService {
         minute: '2-digit'
       });
 
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -410,10 +422,14 @@ class AdminNotificationService {
     console.log(`🔍 Notification ID: ${notificationId}`);
     
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       // First, check if notification exists and current state
       const { data: beforeData, error: beforeError } = await supabase
         .from('admin_notifications')
-        .select('id, type, title, message, is_read, created_at')
+        .select('id, type, title, message, is_read, created_at, updated_at')
         .eq('id', notificationId)
         .single();
       
