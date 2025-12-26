@@ -74,7 +74,7 @@ export class AdminService {
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data as unknown as Product[]) || [];
   }
 
   static async fetchFeedPosts(limit: number = 10): Promise<FeedPost[]> {
@@ -89,7 +89,7 @@ export class AdminService {
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data as unknown as FeedPost[]) || [];
   }
 
   static async saveProduct(product: Partial<Product>): Promise<Product> {

@@ -564,7 +564,7 @@ export const useProductDetail = () => {
     timeRemaining.seconds > 0
   );
   
-  const actuallyFlashSaleActive = isFlashSaleActive && isTimeValid;
+  const actuallyFlashSaleActive = Boolean(isFlashSaleActive && isTimeValid);
   
   const effectivePrice = (actuallyFlashSaleActive && state.product?.originalPrice && state.product.originalPrice > state.product.price) 
     ? state.product.price 
