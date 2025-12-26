@@ -313,8 +313,8 @@ class EnhancedAdminService {
       const todayRevenue = todayOrdersWithAmounts.data?.reduce((sum, order) => 
   sum + (Number(order.amount) || 0), 0) || 0;
 
-      const averageRating = reviewsData.data?.length > 0
-        ? reviewsData.data.reduce((sum, review) => sum + review.rating, 0) / reviewsData.data.length
+      const averageRating = (reviewsData.data?.length ?? 0) > 0
+        ? reviewsData.data!.reduce((sum, review) => sum + review.rating, 0) / reviewsData.data!.length
         : 0;
 
       // Reinterpret totalReviews as count of all orders that are paid or completed (business request)

@@ -485,6 +485,9 @@ class AdminService {
   // Users Management
   async getUsers(page = 1, limit = 20, search?: string): Promise<{ data: User[], count: number }> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Optimize: Select only needed fields to reduce cache egress
       let query = supabase
         .from('users')
@@ -512,6 +515,9 @@ class AdminService {
   // Reviews Management
   async getReviews(page = 1, limit = 20): Promise<{ data: Review[], count: number }> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Optimize: Select only needed fields to reduce cache egress
       const { data, error, count } = await supabase
         .from('reviews')
@@ -542,6 +548,9 @@ class AdminService {
   // Banners Management
   async getBanners(): Promise<Banner[]> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error } = await supabase
         .from('banners')
         .select('id, title, subtitle, image_url, link_url, cta_text, sort_order, is_active, created_at, updated_at')
@@ -559,6 +568,9 @@ class AdminService {
   // Flash Sales Management
   async getFlashSales(): Promise<FlashSale[]> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error } = await supabase
         .from('flash_sales')
         .select(`
@@ -582,6 +594,9 @@ class AdminService {
   // Feed Posts Management
   async getFeedPosts(limit = 50): Promise<any[]> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error } = await supabase
         .from('feed_posts')
         .select(`
@@ -616,6 +631,9 @@ class AdminService {
   // Notifications for real-time admin alerts
   async getRecentNotifications(limit = 10): Promise<AdminNotification[]> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Get recent orders for notifications
       const { data: recentOrders } = await supabase
         .from('orders')
@@ -691,6 +709,9 @@ class AdminService {
   async getProducts(page = 1, limit = 20, search?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<{ data: Product[], count: number }> {
     // Reuse global instance method after class instantiation if available; fallback simple query
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Optimize: Select only needed fields to reduce cache egress
       let queryBuilder = supabase.from('products').select('id, name, description, price, original_price, image, images, is_active, stock, created_at, updated_at, category_id, game_title_id, tier_id, has_rental, archived_at', { count: 'exact' })
         .is('archived_at', null) // Filter out archived products
@@ -722,7 +743,15 @@ class AdminService {
         throw new Error('Need users and products to create sample reviews');
       }
 
-      const sampleReviews = [];
+      const sampleReviews: Array<{
+        user_id: string;
+        product_id: string;
+        rating: number;
+        comment: string;
+        is_verified: boolean;
+        helpful_count: number;
+        created_at: string;
+      }> = [];
       const comments = [
         'Produk sangat bagus! Kualitas premium dan pelayanan memuaskan.',
         'Rekomendasi banget! Akun game nya legit dan proses cepat.',
@@ -866,8 +895,8 @@ export const adminService = {
             { count: reviewCount },
             reviewsWithRating
           ] = await Promise.all([
-            supabase.from('reviews').select('id', { count: 'exact', head: true }),
-            supabase.from('reviews').select('rating')
+            (supabase as any).from('reviews').select('id', { count: 'exact', head: true }),
+            (supabase as any).from('reviews').select('rating')
           ]);
           
           totalReviews = reviewCount || 0;
@@ -886,8 +915,8 @@ export const adminService = {
             { count: totalFlashSalesCount },
             { count: activeFlashSalesCount }
           ] = await Promise.all([
-            supabase.from('flash_sales').select('id', { count: 'exact', head: true }),
-            supabase.from('flash_sales').select('id', { count: 'exact', head: true }).eq('is_active', true)
+            (supabase as any).from('flash_sales').select('id', { count: 'exact', head: true }),
+            (supabase as any).from('flash_sales').select('id', { count: 'exact', head: true }).eq('is_active', true)
           ]);
           
           totalFlashSales = totalFlashSalesCount || 0;
@@ -941,6 +970,9 @@ export const adminService = {
 
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       let query = supabase
         .from('orders')
         .select('*', { count: 'exact' });
@@ -1038,6 +1070,9 @@ export const adminService = {
     return service.deleteProduct(id);
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       let query = supabase
         .from('users')
         .select('*', { count: 'exact' });
@@ -1064,6 +1099,9 @@ export const adminService = {
   async getProducts(page: number = 1, limit: number = 10, searchTerm?: string, sort?: { column: string; direction: 'asc'|'desc' }): Promise<PaginatedResponse<Product>> {
     const sortKey = sort ? `${sort.column}:${sort.direction}` : 'created_at:desc';
     return adminCache.getOrFetch(`admin:products:${page}:${limit}:${searchTerm || ''}:${sortKey}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       // Use LEFT JOIN with tiers and game_titles, get category data separately
       // Filter out archived products by default for admin panel
       let query = supabase
@@ -1144,6 +1182,9 @@ export const adminService = {
 
   async getProductStats(): Promise<{ total: number; active: number; archived: number; totalValue: number }> {
     return adminCache.getOrFetch('admin:product-stats', async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       try {
         // Get all products to calculate accurate statistics
         const { data: allProducts, error } = await supabase
@@ -1166,6 +1207,9 @@ export const adminService = {
     }, { ttl: 300000 }); // Cache for 5 minutes
   },  async getReviews(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Review>> {
     return adminCache.getOrFetch(`admin:reviews:${page}:${limit}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       try {
         const { data, error, count } = await supabase
           .from('reviews')
@@ -1206,6 +1250,9 @@ export const adminService = {
 
   async getFlashSales(page: number = 1, limit: number = 10): Promise<PaginatedResponse<FlashSale>> {
     return adminCache.getOrFetch(`admin:flash-sales:${page}:${limit}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error, count } = await supabase
         .from('flash_sales')
         .select(`
@@ -1235,6 +1282,9 @@ export const adminService = {
     is_active: boolean;
     stock?: number;
   }): Promise<FlashSale> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('flash_sales')
       .insert([{
@@ -1263,6 +1313,9 @@ export const adminService = {
 
   async getBanners(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Banner>> {
     return adminCache.getOrFetch(`admin:banners:${page}:${limit}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error, count } = await supabase
         .from('banners')
         .select('*', { count: 'exact' })
@@ -1281,6 +1334,9 @@ export const adminService = {
   },
 
   async createBanner(banner: Omit<Banner, 'id' | 'created_at' | 'updated_at'>): Promise<Banner> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('banners')
       .insert([banner])
@@ -1296,6 +1352,9 @@ export const adminService = {
   },
 
   async updateBanner(id: string, updates: Partial<Omit<Banner, 'id' | 'created_at' | 'updated_at'>>): Promise<Banner> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('banners')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -1312,6 +1371,9 @@ export const adminService = {
   },
 
   async deleteBanner(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { error } = await supabase
       .from('banners')
       .delete()
@@ -1324,6 +1386,9 @@ export const adminService = {
   },
 
   async toggleBannerStatus(id: string): Promise<Banner> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     // First get current status
     const { data: currentBanner, error: fetchError } = await supabase
       .from('banners')
@@ -1353,6 +1418,9 @@ export const adminService = {
   },
 
   async reorderBanners(bannerIds: string[]): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     // Update sort_order for each banner
     const updates = bannerIds.map((id, index) => ({
       id,
@@ -1375,6 +1443,9 @@ export const adminService = {
 
   async getFeedPosts(page: number = 1, limit: number = 10): Promise<PaginatedResponse<FeedPost>> {
     return adminCache.getOrFetch(`admin:feed-posts:${page}:${limit}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const { data, error, count } = await supabase
         .from('feed_posts')
         .select(`
@@ -1406,6 +1477,9 @@ export const adminService = {
   },
 
   async deleteFeedPost(postId: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { error } = await supabase
       .from('feed_posts')
       .delete()
@@ -1419,6 +1493,9 @@ export const adminService = {
 
   // ----- Dashboard Analytics -----
   async getOrdersTimeSeries(params?: { startDate?: string; endDate?: string; days?: number }): Promise<OrderDayStat[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const days = params?.days || 7;
       const end = params?.endDate ? new Date(params.endDate) : new Date();
@@ -1492,6 +1569,9 @@ export const adminService = {
 
   // Get order created vs completed analytics
   async getOrderStatusTimeSeries(params?: { startDate?: string; endDate?: string; days?: number }): Promise<OrderStatusDayStat[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const days = params?.days || 7;
       const end = params?.endDate ? new Date(params.endDate) : new Date();
@@ -1572,6 +1652,9 @@ export const adminService = {
   },
 
   async getTopProducts(params?: { startDate?: string; endDate?: string; limit?: number }): Promise<TopProductStat[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const limit = params?.limit || 5;
       const end = params?.endDate ? new Date(params.endDate) : new Date();
@@ -1631,6 +1714,9 @@ export const adminService = {
 
   async getNotifications(page: number = 1, limit: number = 20): Promise<AdminNotification[]> {
     return adminCache.getOrFetch(`admin:notifications:${page}:${limit}`, async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       try {
         const { data, error } = await supabase
           .from('admin_notifications')
@@ -1735,6 +1821,9 @@ export const adminService = {
   },
 
   async searchOrders(query: string): Promise<Order[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     // Remove relational selects; search only local columns
     const { data } = await supabase
       .from('orders')
@@ -1761,6 +1850,9 @@ export const adminService = {
   },
 
   async searchUsers(query: string): Promise<User[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data } = await supabase
       .from('users')
       .select('id, email, name, avatar_url, phone, created_at, is_admin, last_login')
@@ -1771,6 +1863,9 @@ export const adminService = {
   },
 
   async searchProducts(query: string): Promise<Product[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data } = await supabase
       .from('products')
       .select('id, name, description, price, original_price, category_id, game_title, account_level, account_details, stock, is_active, created_at, updated_at, image, images, tier, tier_id, game_title_id, is_flash_sale, flash_sale_end_time, has_rental, archived_at')
@@ -1781,6 +1876,9 @@ export const adminService = {
   },
 
   async searchReviews(query: string): Promise<Review[]> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     try {
       const { data } = await supabase
         .from('reviews')
@@ -1805,6 +1903,9 @@ export const adminService = {
 
   // Create sample reviews method
   async createSampleReviews(): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const sampleComments = [
       'Produk sangat bagus! Kualitas premium dan pelayanan memuaskan.',
       'Rekomendasi banget! Akun game nya legit dan proses cepat.',
@@ -1828,7 +1929,13 @@ export const adminService = {
       throw new Error('No users or products found for sample data');
     }
 
-    const reviews = [];
+    const reviews: Array<{
+      user_id: string;
+      product_id: string;
+      rating: number;
+      comment: string;
+      is_verified: boolean;
+    }> = [];
     for (let i = 0; i < 10; i++) {
       const randomUser = users[Math.floor(Math.random() * users.length)];
       const randomProduct = products[Math.floor(Math.random() * products.length)];
@@ -1889,6 +1996,9 @@ export const adminService = {
     image_url?: string;
     is_pinned?: boolean;
   }): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { error } = await supabase
       .from('feed_posts')
       .update({
@@ -1904,6 +2014,9 @@ export const adminService = {
   },
 
   async toggleFeedPostPin(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data: post, error: fetchError } = await supabase
       .from('feed_posts')
       .select('is_pinned')
@@ -1927,6 +2040,9 @@ export const adminService = {
   },
 
   async deleteFeedPostPermanent(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { error } = await supabase
       .from('feed_posts')
       .update({ 
@@ -1943,6 +2059,9 @@ export const adminService = {
 
   // Helper functions for dropdowns
   async getCategories(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('categories')
       .select('id, name, slug')
@@ -1954,6 +2073,9 @@ export const adminService = {
   },
 
   async getGameTitles(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('game_titles')
       .select('id, name, slug')
@@ -1965,6 +2087,9 @@ export const adminService = {
   },
 
   async getTiers(): Promise<Array<{ id: string; name: string; slug?: string }>> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data, error } = await supabase
       .from('tiers')
       .select('id, name, slug')
@@ -1990,6 +2115,9 @@ export const adminService = {
     is_active?: boolean;
     has_rental?: boolean;
   }): Promise<Product> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data: product, error } = await supabase
       .from('products')
       .insert({
@@ -2024,6 +2152,9 @@ export const adminService = {
     is_active?: boolean;
     has_rental?: boolean;
   }): Promise<Product> {
+    if (!supabase) {
+      throw new Error('Supabase client not available');
+    }
     const { data: product, error } = await supabase
       .from('products')
       .update({

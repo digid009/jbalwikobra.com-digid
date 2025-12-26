@@ -42,6 +42,9 @@ class LikeService {
   // Get like statistics for a product
   async getLikeStats(productId: string, userId?: string): Promise<LikeStats> {
     try {
+      if (!supabase) {
+        return { total_likes: 0, user_has_liked: false, ip_has_liked: false };
+      }
       const ip = await this.getUserIP();
 
       // Get total likes count
@@ -81,6 +84,9 @@ class LikeService {
   // Toggle like for a product
   async toggleLike(productId: string, userId?: string): Promise<LikeStats> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const ip = await this.getUserIP();
 
       // Check if already liked
@@ -134,6 +140,9 @@ class LikeService {
   // Get likes for multiple products (for product lists)
   async getBulkLikeStats(productIds: string[]): Promise<Record<string, number>> {
     try {
+      if (!supabase) {
+        return {};
+      }
       const { data, error } = await supabase
         .from('product_likes')
         .select('product_id')

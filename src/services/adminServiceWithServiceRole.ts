@@ -226,13 +226,13 @@ class AdminService {
     totalRevenue: number;
     totalCustomers: number;
     totalProducts: number;
-    recentOrders: Order[];
+    recentOrders: Partial<Order>[];
   }> {
     try {
       // Get all orders for calculations
       const { data: orders, error: ordersError } = await this.client
         .from('orders')
-        .select('id, amount, customer_email, created_at')
+        .select('id, amount, customer_email, customer_phone, created_at')
         .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;
