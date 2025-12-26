@@ -29,6 +29,9 @@ class ReviewService {
   // Get reviews for feed page with user and product details
   async getReviewsForFeed(page: number = 1, limit: number = 10): Promise<ReviewsResponse> {
     try {
+      if (!supabase) {
+        return { reviews: [], hasMore: false, total: 0 };
+      }
       const offset = (page - 1) * limit;
       
       // First attempt: verified reviews only (left joins to avoid dropping rows without related user/product)
@@ -121,6 +124,9 @@ class ReviewService {
   // Get user's own reviews with purchase history
   async getUserReviews(userId: string, page: number = 1, limit: number = 10): Promise<ReviewsResponse> {
     try {
+      if (!supabase) {
+        return { reviews: [], hasMore: false, total: 0 };
+      }
       const offset = (page - 1) * limit;
       
       const { data, error, count } = await supabase
@@ -175,6 +181,9 @@ class ReviewService {
   // Update a review (if within edit time limit)
   async updateReview(reviewId: string, comment: string): Promise<{ success: boolean; error?: string }> {
     try {
+      if (!supabase) {
+        return { success: false, error: 'Database not available' };
+      }
       // First check if the review can still be edited
       const { data: existingReview, error: fetchError } = await supabase
         .from('reviews')
@@ -218,6 +227,9 @@ class ReviewService {
     comment: string
   ): Promise<{ success: boolean; error?: string; review?: UserReview }> {
     try {
+      if (!supabase) {
+        return { success: false, error: 'Database not available' };
+      }
       const { data, error } = await supabase
         .from('reviews')
         .insert({
@@ -266,6 +278,9 @@ class ReviewService {
   // Mark review as helpful
   async markHelpful(reviewId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      if (!supabase) {
+        return { success: false, error: 'Database not available' };
+      }
       // First get current helpful_count
       const { data: currentReview, error: fetchError } = await supabase
         .from('reviews')
