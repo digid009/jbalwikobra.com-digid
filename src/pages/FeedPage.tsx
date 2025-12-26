@@ -10,7 +10,7 @@ import { FeedHeader } from '../components/feed/FeedHeader';
 import { FeedTabs } from '../components/feed/FeedTabs';
 import { FeedPagination } from '../components/feed/FeedPagination';
 import { FeedSkeleton, ErrorState, EmptyState, ImageLightbox } from '../components/feed/FeedStates';
-import { ReviewCard } from '../components/feed/ReviewCard';
+import { ReviewCard, ReviewData } from '../components/feed/ReviewCard';
 // Removed legacy standardClasses & cn helper – using a minimal local cls combiner
 const cls = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 import { scrollToPaginationContent } from '../utils/scrollUtils';
@@ -206,7 +206,7 @@ export default function FeedPage() {
     }
   };
 
-  const startEditReview = (review: UserReview) => {
+  const startEditReview = (review: ReviewData) => {
     if (!review.canEdit) {
       alert('Review tidak dapat diedit lagi (lebih dari 5 menit)');
       return;

@@ -90,6 +90,11 @@ class AdminNotificationService {
         order_cancelled: `namanya ${customerName}, produktnya ${productName} di cancel nih.`
       };
 
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
+
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -122,6 +127,10 @@ class AdminNotificationService {
     email?: string
   ): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -153,6 +162,10 @@ class AdminNotificationService {
     rating: number
   ): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
