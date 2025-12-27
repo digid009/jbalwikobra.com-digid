@@ -68,6 +68,16 @@ const PNFooter: React.FC = () => {
     };
   }, []);
 
+  // Build dynamic social links from settings
+  const dynamicSocials = [
+    settings?.instagramUrl && { icon: Instagram, href: settings.instagramUrl },
+    settings?.twitterUrl && { icon: Twitter, href: settings.twitterUrl },
+    settings?.youtubeUrl && { icon: Youtube, href: settings.youtubeUrl },
+  ].filter(Boolean) as Array<{ icon: React.ComponentType<any>; href: string }>;
+
+  // Fallback to default socials if no settings available
+  const socialsToDisplay = dynamicSocials.length > 0 ? dynamicSocials : socials;
+
   return (
     <footer className="mt-8 border-t border-white/10 bg-black/60">
       <PNContainer className="px-4 py-12">
@@ -98,7 +108,7 @@ const PNFooter: React.FC = () => {
               <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-blue-400" />{settings?.address || 'Jakarta, Indonesia'}</div>
             </div>
             <div className="flex items-center gap-2">
-              {socials.map(({ icon: Icon, href }) => (
+              {settings?.socialMediaEnabled !== false && socialsToDisplay.map(({ icon: Icon, href }) => (
                 <a key={href} href={href} target="_blank" rel="noreferrer" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white">
                   <Icon className="w-4 h-4" />
                 </a>
@@ -130,7 +140,9 @@ const PNFooter: React.FC = () => {
         </div>
 
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-white/60">© {year} {settings?.siteName || 'JBalwikobra'}. All rights reserved.</div>
+          <div className="text-xs text-white/60">
+            {settings?.footerCopyrightText || `© ${year} ${settings?.siteName || 'JBalwikobra'}. All rights reserved.`}
+          </div>
           <div className="text-xs text-white/60 flex items-center gap-3">
             <Link to="/terms" className="hover:text-white">Syarat</Link>
             <span>•</span>
