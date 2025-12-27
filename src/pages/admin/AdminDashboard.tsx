@@ -1,4 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AdminStats, adminService } from '../../services/adminService';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
@@ -23,16 +24,34 @@ const DataDiagnosticPage = lazy(() => import('../DataDiagnosticPage'));
 const CommandPalette = lazy(() => import('./components/CommandPalette'));
 
 const AdminDashboard: React.FC = () => {
-  // If Supabase isn't configured in development, default to Settings to avoid heavy stats calls
-  const hasSupabase = !!process.env.REACT_APP_SUPABASE_URL && !!process.env.REACT_APP_SUPABASE_ANON_KEY;
-  const initialTab: AdminTab = (!hasSupabase && process.env.NODE_ENV === 'development') ? 'settings' : 'dashboard';
-  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Extract current tab from URL path
+  const getTabFromPath = useCallback((): AdminTab => {
+    const path = location.pathname.split('/').pop() || 'dashboard';
+    const validTabs: AdminTab[] = ['dashboard', 'orders', 'users', 'products', 'feed', 'banners', 'flash-sales', 'reviews', 'notifications', 'settings'];
+    const isValidTab = validTabs.some(tab => tab === path);
+    return isValidTab ? (path as AdminTab) : 'dashboard';
+  }, [location.pathname]);
+  
+  const [activeTab, setActiveTab] = useState<AdminTab>(getTabFromPath());
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasStatsError, setHasStatsError] = useState(false);
   const [statsErrorMessage, setStatsErrorMessage] = useState('');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname, getTabFromPath]);
+
+  // Navigate to new tab using React Router
+  const handleTabChange = useCallback((tab: AdminTab) => {
+    navigate(`/admin/${tab}`, { replace: false });
+  }, [navigate]);
 
   // Listen for global open-command-palette events (triggered by header button or keyboard shortcut)
   useEffect(() => {
@@ -106,7 +125,7 @@ const AdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={setActiveTab} />;
+        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={handleTabChange} />;
       case 'orders':
         return <AdminOrdersV2 />;
       case 'users':
@@ -126,7 +145,7 @@ const AdminDashboard: React.FC = () => {
       case 'settings':
         return <AdminSettings />;
       default:
-        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={setActiveTab} />;
+        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={handleTabChange} />;
     }
   };
 
@@ -151,7 +170,7 @@ const AdminDashboard: React.FC = () => {
           <Suspense fallback={<div className="h-16 bg-black border-b border-gray-800"></div>}>
             <AdminHeaderV2
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={handleTabChange}
               stats={stats}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -167,7 +186,7 @@ const AdminDashboard: React.FC = () => {
           <CommandPalette
             open={isCommandOpen}
             onClose={() => setIsCommandOpen(false)}
-            onNavigate={(tab) => { setActiveTab(tab); setIsCommandOpen(false); }}
+            onNavigate={(tab) => { handleTabChange(tab); setIsCommandOpen(false); }}
             onRefreshStats={loadStats}
           />
         </Suspense>
