@@ -16,8 +16,6 @@ const navItems: NavItem[] = [
   { path: '/', label: 'Beranda' },
   { path: '/products', label: 'Produk' },
   { path: '/flash-sales', label: 'Flash Sale' },
-  { path: '/feed', label: 'Feed' },
-  { path: '/sell', label: 'Jual' },
   { path: '/help', label: 'Bantuan' },
 ];
 

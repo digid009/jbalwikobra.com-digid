@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get active provider
     const { data: provider, error: providerError } = await supabase
       .from('whatsapp_providers')
-      .select('id, name, api_url, is_active')
+      .select('id, name, api_url, is_active, settings, key_field_name')
       .eq('is_active', true)
       .single();
     
@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get API key
     const { data: apiKeyData, error: keyError } = await supabase
       .from('whatsapp_api_keys')
-      .select('id, key, provider_id, is_active')
+      .select('id, key, provider_id, is_active, api_key')
       .eq('provider_id', provider.id)
       .eq('is_active', true)
       .single();

@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('[Get Invoice Details] 🔍 FULL INVOICE DATA:', JSON.stringify(invoiceData, null, 2));
 
     // Extract Virtual Account details
-    let vaDetails = null;
+    let vaDetails: Record<string, any> = {};
     
     if (invoiceData.available_banks && invoiceData.available_banks.length > 0) {
       const bank = invoiceData.available_banks[0];

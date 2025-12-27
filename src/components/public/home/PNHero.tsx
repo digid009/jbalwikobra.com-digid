@@ -23,7 +23,6 @@ const PNHero: React.FC = () => {
 
   const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
   const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
-  const heroButtonUrl = settings?.heroButtonUrl || 'https://jbalwikobra.com/special-offer';
   const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://wa.me/6281234567890?text=Halo%20admin%20JB%20Alwikobra!%20%F0%9F%91%8B%0A%0ASaya%20tertarik%20untuk%20jual%20akun%20dan%20admin%20WA.%20Mohon%20info%20lebih%20lanjut.%20Terima%20kasih!';
   
   // Use hero settings from admin settings
@@ -53,9 +52,9 @@ const PNHero: React.FC = () => {
                   </PNButton>
                 </a>
               </div>
-              {/* New Hero Button */}
+              {/* Jual Akun Button - uses jual_akun_whatsapp_url from website_settings */}
               <div>
-                <a href={heroButtonUrl} target="_blank" rel="noopener noreferrer">
+                <a href={jualAkunWhatsappUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="secondary" size="lg" fullWidth className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
                     <Star size={18} />
                     JUAL AKUN DAN NOMER ADMIN DI SINI
