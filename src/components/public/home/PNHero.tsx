@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Zap, ShoppingBag, TrendingUp, Rocket, MessageCircle, Star } from 'lucide-react';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
 import { SettingsService } from '../../../services/settingsService';
+import { ensureUrlProtocol } from '../../../utils/helpers';
 import type { WebsiteSettings } from '../../../types';
 
 const PNHero: React.FC = () => {
@@ -21,9 +22,9 @@ const PNHero: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
-  const topupGameUrl = settings?.topupGameUrl || 'https://www.alwikobrastore.com';
-  const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E';
-  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com';
+  const topupGameUrl = ensureUrlProtocol(settings?.topupGameUrl || 'https://www.alwikobrastore.com');
+  const whatsappChannelUrl = ensureUrlProtocol(settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E');
+  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com');
   
   // Use hero settings from admin settings
   const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';

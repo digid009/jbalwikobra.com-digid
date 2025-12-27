@@ -124,3 +124,33 @@ Terima kasih! 🙏
 ---
 Dikirim dari: ${siteUrl}`;
 };
+
+/**
+ * Ensures a URL has a proper protocol (http:// or https://)
+ * If the URL is relative or doesn't have a protocol, adds https:// by default
+ * This prevents browsers from treating URLs as relative paths
+ * 
+ * @param url - The URL to normalize
+ * @returns URL with proper protocol prefix
+ * 
+ * @example
+ * ensureUrlProtocol('www.example.com') // 'https://www.example.com'
+ * ensureUrlProtocol('http://example.com') // 'http://example.com'
+ * ensureUrlProtocol('https://example.com') // 'https://example.com'
+ */
+export const ensureUrlProtocol = (url: string | undefined | null): string => {
+  // Return empty string if url is null, undefined, or empty
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return '';
+  }
+
+  const trimmedUrl = url.trim();
+  
+  // If URL already has a protocol, return it as-is
+  if (trimmedUrl.match(/^[a-zA-Z][a-zA-Z\d+\-.]*:/)) {
+    return trimmedUrl;
+  }
+  
+  // Add https:// if URL doesn't have a protocol
+  return `https://${trimmedUrl}`;
+};
