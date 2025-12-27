@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminService } from '../../../services/adminService';
 import type { Order, User, Product } from '../../../services/adminService';
+import { performanceMonitor } from '../utils/performanceMonitor';
 
 interface UsePaginatedDataOptions {
   page?: number;
@@ -35,6 +36,7 @@ export function useAdminOrders({
   const [totalCount, setTotalCount] = useState(0);
 
   const fetchData = useCallback(async () => {
+    performanceMonitor.startMeasure('fetch_admin_orders');
     try {
       setLoading(true);
       setError(null);
@@ -42,9 +44,11 @@ export function useAdminOrders({
       const result = await adminService.getOrders(page, limit, filters.status);
       setData(result.data);
       setTotalCount(result.count);
+      performanceMonitor.endMeasure('fetch_admin_orders', { success: true, count: result.count });
     } catch (err: any) {
       setError(err.message || 'Failed to fetch orders');
       console.error('Error fetching orders:', err);
+      performanceMonitor.endMeasure('fetch_admin_orders', { success: false, error: err.message });
     } finally {
       setLoading(false);
     }
@@ -71,6 +75,7 @@ export function useAdminUsers({
   const [totalCount, setTotalCount] = useState(0);
 
   const fetchData = useCallback(async () => {
+    performanceMonitor.startMeasure('fetch_admin_users');
     try {
       setLoading(true);
       setError(null);
@@ -78,9 +83,11 @@ export function useAdminUsers({
       const result = await adminService.getUsers(page, limit);
       setData(result.data);
       setTotalCount(result.count);
+      performanceMonitor.endMeasure('fetch_admin_users', { success: true, count: result.count });
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users');
       console.error('Error fetching users:', err);
+      performanceMonitor.endMeasure('fetch_admin_users', { success: false, error: err.message });
     } finally {
       setLoading(false);
     }
@@ -107,6 +114,7 @@ export function useAdminProducts({
   const [totalCount, setTotalCount] = useState(0);
 
   const fetchData = useCallback(async () => {
+    performanceMonitor.startMeasure('fetch_admin_products');
     try {
       setLoading(true);
       setError(null);
@@ -114,9 +122,11 @@ export function useAdminProducts({
       const result = await adminService.getProducts(page, limit);
       setData(result.data || []);
       setTotalCount(result.count || 0);
+      performanceMonitor.endMeasure('fetch_admin_products', { success: true, count: result.count });
     } catch (err: any) {
       setError(err.message || 'Failed to fetch products');
       console.error('Error fetching products:', err);
+      performanceMonitor.endMeasure('fetch_admin_products', { success: false, error: err.message });
     } finally {
       setLoading(false);
     }
@@ -138,14 +148,17 @@ export function useAdminStats() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
+    performanceMonitor.startMeasure('fetch_admin_stats');
     try {
       setLoading(true);
       setError(null);
       const data = await adminService.getDashboardStats();
       setStats(data);
+      performanceMonitor.endMeasure('fetch_admin_stats', { success: true });
     } catch (err: any) {
       setError(err.message || 'Failed to fetch stats');
       console.error('Error fetching stats:', err);
+      performanceMonitor.endMeasure('fetch_admin_stats', { success: false, error: err.message });
     } finally {
       setLoading(false);
     }

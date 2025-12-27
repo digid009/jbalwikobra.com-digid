@@ -6,6 +6,9 @@ import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
 import '../../styles/dashboard.css';
 import { ThemeProvider } from '../../contexts/ThemeContext';
+import { useLastVisitedTab } from './hooks/usePersistentState';
+import { performanceMonitor } from './utils/performanceMonitor';
+import { useAnnouncement } from './utils/accessibility';
 
 // Lazy load all tab components for code splitting
 const AdminDashboardContentV2 = lazy(() => import('./components/AdminDashboardContentV2'));
@@ -26,6 +29,10 @@ const CommandPalette = lazy(() => import('./components/CommandPalette'));
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const announce = useAnnouncement();
+  
+  // Persistent state for last visited tab
+  const [lastVisitedTab, setLastVisitedTab] = useLastVisitedTab('dashboard');
   
   // Extract current tab from URL path
   const getTabFromPath = useCallback((): AdminTab => {
@@ -43,14 +50,22 @@ const AdminDashboard: React.FC = () => {
   const [statsErrorMessage, setStatsErrorMessage] = useState('');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
 
-  // Update activeTab when URL changes
+  // Update activeTab when URL changes and announce to screen readers
   useEffect(() => {
-    setActiveTab(getTabFromPath());
-  }, [location.pathname, getTabFromPath]);
+    const newTab = getTabFromPath();
+    setActiveTab(newTab);
+    setLastVisitedTab(newTab);
+    
+    // Announce tab change to screen readers
+    const tabName = newTab.replace('-', ' ');
+    announce(`Navigated to ${tabName} section`, 'polite');
+  }, [location.pathname, getTabFromPath, setLastVisitedTab, announce]);
 
-  // Navigate to new tab using React Router
+  // Navigate to new tab using React Router with performance monitoring
   const handleTabChange = useCallback((tab: AdminTab) => {
+    performanceMonitor.startMeasure(`navigate_to_${tab}`);
     navigate(`/admin/${tab}`, { replace: false });
+    performanceMonitor.endMeasure(`navigate_to_${tab}`);
   }, [navigate]);
 
   // Listen for global open-command-palette events (triggered by header button or keyboard shortcut)
@@ -79,22 +94,27 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const loadStats = async () => {
+    performanceMonitor.startMeasure('load_dashboard_stats');
     try {
       setLoading(true);
       setHasStatsError(false);
       setStatsErrorMessage('');
       const statsData = await adminService.getDashboardStats();
       setStats(statsData);
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: true });
     } catch (error: any) {
       console.error('Failed to load admin stats:', error);
       setHasStatsError(true);
       setStatsErrorMessage(error.message || 'Failed to load dashboard statistics');
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to load dashboard statistics', 'assertive');
     } finally {
       setLoading(false);
     }
   };
 
   const refreshStats = async () => {
+    performanceMonitor.startMeasure('refresh_dashboard_stats');
     try {
       setLoading(true);
       setHasStatsError(false);
@@ -108,10 +128,14 @@ const AdminDashboard: React.FC = () => {
       setStats(statsData);
       
       console.log('✅ Stats refreshed successfully:', statsData);
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: true });
+      announce('Dashboard statistics refreshed', 'polite');
     } catch (error: any) {
       console.error('Failed to refresh admin stats:', error);
       setHasStatsError(true);
       setStatsErrorMessage(error.message || 'Failed to refresh dashboard statistics');
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to refresh dashboard statistics', 'assertive');
     } finally {
       setLoading(false);
     }
