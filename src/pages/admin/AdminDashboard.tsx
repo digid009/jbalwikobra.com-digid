@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AdminStats, adminService } from '../../services/adminService';
-import { AdminDashboardContent } from './components/AdminDashboardContent';
-import AdminDashboardContentV2 from './components/AdminDashboardContentV2';
-import AdminOrdersV2 from './AdminOrdersV2';
-import AdminUsersV2 from './AdminUsersV2';
-import AdminProductsV2 from './AdminProductsV2';
-import AdminFeedManagement from './components/AdminFeedManagement';
-import { AdminBannersManagement } from './components/AdminBannersManagement';
-import { AdminFlashSalesManagement } from '../../components/admin/flash-sales';
-import { AdminReviewsManagement } from './components/AdminReviewsManagement';
-import { AdminNotificationsPage } from './components/AdminNotificationsPage';
-import { AdminHeader } from './components/AdminHeader';
-import AdminHeaderV2 from './components/AdminHeaderV2';
-import AdminWhatsAppSettings from './AdminWhatsAppSettings';
-import AdminSettings from './AdminSettings';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
 import '../../styles/dashboard.css';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import DataDiagnosticPage from '../DataDiagnosticPage';
-// Floating notifications are already included by DashboardLayout
-import CommandPalette from './components/CommandPalette';
+
+// Lazy load all tab components for code splitting
+const AdminDashboardContentV2 = lazy(() => import('./components/AdminDashboardContentV2'));
+const AdminOrdersV2 = lazy(() => import('./AdminOrdersV2'));
+const AdminUsersV2 = lazy(() => import('./AdminUsersV2'));
+const AdminProductsV2 = lazy(() => import('./AdminProductsV2'));
+const AdminFeedManagement = lazy(() => import('./components/AdminFeedManagement'));
+const AdminBannersManagement = lazy(() => import('./components/AdminBannersManagement').then(m => ({ default: m.AdminBannersManagement })));
+const AdminFlashSalesManagement = lazy(() => import('../../components/admin/flash-sales').then(m => ({ default: m.AdminFlashSalesManagement })));
+const AdminReviewsManagement = lazy(() => import('./components/AdminReviewsManagement').then(m => ({ default: m.AdminReviewsManagement })));
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage').then(m => ({ default: m.AdminNotificationsPage })));
+const AdminHeaderV2 = lazy(() => import('./components/AdminHeaderV2'));
+const AdminWhatsAppSettings = lazy(() => import('./AdminWhatsAppSettings'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const DataDiagnosticPage = lazy(() => import('../DataDiagnosticPage'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
 
 const AdminDashboard: React.FC = () => {
   // If Supabase isn't configured in development, default to Settings to avoid heavy stats calls
@@ -131,6 +130,16 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Loading fallback component for Suspense
+  const LoadingFallback = () => (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-400 text-lg">Loading...</p>
+      </div>
+    </div>
+  );
+
   return (
     <ThemeProvider>
       <div className="admin-dark bg-black min-h-screen">
@@ -139,8 +148,7 @@ const AdminDashboard: React.FC = () => {
         showFooter={false}
         className="bg-black"
         header={
-          <>
-            {/* Using new modern header */}
+          <Suspense fallback={<div className="h-16 bg-black border-b border-gray-800"></div>}>
             <AdminHeaderV2
               activeTab={activeTab}
               setActiveTab={setActiveTab}
@@ -149,17 +157,20 @@ const AdminDashboard: React.FC = () => {
               setIsMobileMenuOpen={setIsMobileMenuOpen}
               onRefreshStats={refreshStats}
             />
-          </>
+          </Suspense>
         }
       >
-        {/* Remove DashboardSection wrapper since new design handles its own spacing */}
-        {renderContent()}
-        <CommandPalette
-          open={isCommandOpen}
-          onClose={() => setIsCommandOpen(false)}
-          onNavigate={(tab) => { setActiveTab(tab); setIsCommandOpen(false); }}
-          onRefreshStats={loadStats}
-        />
+        <Suspense fallback={<LoadingFallback />}>
+          {renderContent()}
+        </Suspense>
+        <Suspense fallback={null}>
+          <CommandPalette
+            open={isCommandOpen}
+            onClose={() => setIsCommandOpen(false)}
+            onNavigate={(tab) => { setActiveTab(tab); setIsCommandOpen(false); }}
+            onRefreshStats={loadStats}
+          />
+        </Suspense>
       </DashboardLayout>
       </div>
     </ThemeProvider>

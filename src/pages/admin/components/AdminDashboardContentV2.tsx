@@ -49,7 +49,7 @@ interface MetricCardProps {
   color?: 'pink' | 'blue' | 'green' | 'orange' | 'purple';
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ 
+const MetricCard: React.FC<MetricCardProps> = React.memo(({ 
   title, 
   value, 
   change, 
@@ -99,7 +99,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </div>
     </div>
   );
-};
+});
+MetricCard.displayName = 'MetricCard';
 
 interface QuickActionProps {
   title: string;
@@ -109,7 +110,7 @@ interface QuickActionProps {
   color?: 'pink' | 'blue' | 'green' | 'orange' | 'purple';
 }
 
-const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon: Icon, onClick, color = 'pink' }) => {
+const QuickAction: React.FC<QuickActionProps> = React.memo(({ title, description, icon: Icon, onClick, color = 'pink' }) => {
   const colorMap = {
     pink: 'hover:bg-pink-500/10 hover:border-pink-500/30 hover:text-pink-400',
     blue: 'hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400',
@@ -121,6 +122,7 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon: Ico
   return (
     <button
       onClick={onClick}
+      aria-label={`${title}: ${description}`}
       className={`group w-full text-left p-4 bg-black border border-gray-800 rounded-xl transition-all duration-300 ${colorMap[color]}`}
     >
       <div className="flex items-center space-x-3">
@@ -134,13 +136,14 @@ const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon: Ico
       </div>
     </button>
   );
-};
+});
+QuickAction.displayName = 'QuickAction';
 
 interface NotificationItemProps {
   notification: AdminNotification;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => {
+const NotificationItem: React.FC<NotificationItemProps> = React.memo(({ notification }) => {
   const getIcon = (type: AdminNotification['type']) => {
     switch (type) {
       case 'new_order': return '🛒';
@@ -166,9 +169,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
   };
 
   return (
-    <div className={`p-3 rounded-lg border ${getColor(notification.type)} transition-all duration-200 hover:scale-[1.01]`}>
+    <div 
+      className={`p-3 rounded-lg border ${getColor(notification.type)} transition-all duration-200 hover:scale-[1.01]`}
+      role="listitem"
+      aria-label={`${notification.type} notification: ${notification.title}`}
+    >
       <div className="flex items-center space-x-3">
-        <span className="text-lg">{getIcon(notification.type)}</span>
+        <span className="text-lg" role="img" aria-label={notification.type}>
+          {getIcon(notification.type)}
+        </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">{notification.title}</p>
           <p className="text-xs text-gray-400 truncate">{notification.message}</p>
@@ -179,7 +188,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
       </div>
     </div>
   );
-};
+});
+NotificationItem.displayName = 'NotificationItem';
 
 export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ onRefreshStats, onNavigate }) => {
   // Raw data from API
@@ -351,7 +361,7 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen bg-black text-white p-6" role="status" aria-live="polite">
         <div className="max-w-7xl mx-auto">
           {/* Loading skeleton */}
           <div className="space-y-6">
@@ -363,6 +373,7 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
             </div>
           </div>
         </div>
+        <span className="sr-only">Loading dashboard data...</span>
       </div>
     );
   }
@@ -381,15 +392,16 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200 disabled:opacity-50"
+            aria-label={refreshing ? "Refreshing dashboard data" : "Refresh dashboard data"}
+            className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
         </div>
 
         {/* Metrics Grid - Updated to show all 6 metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="region" aria-label="Dashboard metrics">
           <MetricCard
             title="Total Revenue"
             value={`Rp ${dashboardMetrics.totalRevenue.toLocaleString()}`}
