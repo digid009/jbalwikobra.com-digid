@@ -11,9 +11,9 @@ module.exports = function (app) {
       site_name: 'JB ALWIKOBRA',
       contact_email: 'jbalwikobra@gmail.com',
       whatsapp_number: '+6281234567890',
-      hero_button_url: 'https://example.com/rekber-test',
-      topup_game_url: null,
-      whatsapp_channel_url: null,
+      hero_button_url: 'https://www.alwikobra.com',
+      topup_game_url: 'https://www.alwikobrastore.com',
+      whatsapp_channel_url: 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E',
       updated_at: new Date().toISOString()
     };
 
