@@ -22,9 +22,9 @@ const PNHero: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
-  const topupGameUrl = ensureUrlProtocol(settings?.topupGameUrl) || 'https://www.alwikobrastore.com';
-  const whatsappChannelUrl = ensureUrlProtocol(settings?.whatsappChannelUrl) || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E';
-  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl) || 'https://www.alwikobra.com';
+  const topupGameUrl = ensureUrlProtocol(settings?.topupGameUrl || 'https://www.alwikobrastore.com');
+  const whatsappChannelUrl = ensureUrlProtocol(settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E');
+  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com');
   
   // Use hero settings from admin settings
   const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';

@@ -22,7 +22,7 @@ const PNCTA: React.FC = () => {
   }, []);
 
   // Default fallback URL if not set in admin
-  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl) || 'https://www.alwikobra.com';
+  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com');
   return (
     <PNSection padding="lg">
       <PNContainer>
