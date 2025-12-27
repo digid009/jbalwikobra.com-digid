@@ -1,10 +1,47 @@
 # Database Migration Required
 
-## Action Required
+## Check Your Current Schema First! 🔍
 
-A new database migration has been created to add missing columns to the `website_settings` table.
+Before applying any migration, you should check what columns your database actually has.
 
-**Migration File:** `supabase/migrations/20251227_add_missing_website_settings_columns.sql`
+### Quick Schema Check
+```bash
+# Install dependencies if needed
+npm install
+
+# Run the simple schema checker
+node scripts/simple-schema-check.js
+```
+
+This will show:
+- ✅ Which columns you already have
+- ❌ Which columns are missing
+- 📝 What you need to do next
+
+### Advanced: Generate Custom Migration
+```bash
+# Run the full diagnostic (generates custom migration)
+node scripts/check-website-settings-schema.js
+```
+
+This will:
+1. Check your actual database schema
+2. Compare with what the code expects
+3. Generate a custom migration with ONLY the columns you're missing
+4. Create: `supabase/migrations/YYYYMMDD_add_missing_columns_custom.sql`
+
+---
+
+## Option 1: Use Custom Generated Migration (Recommended)
+
+After running `node scripts/check-website-settings-schema.js`:
+
+1. Review the generated migration file
+2. Apply it using one of the methods below
+
+## Option 2: Use Pre-Made Migration
+
+If you prefer not to check first, you can use the pre-made migration.
 
 ## How to Apply the Migration
 
