@@ -231,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Get current settings first
         const { data: current } = await supabase
           .from('website_settings')
-          .select('id, site_name, site_description, logo_url, primary_color, secondary_color, contact_email, contact_phone, whatsapp_number, created_at, updated_at')
+          .select('*') // Select all columns for update operations
           .single();
           
         if (current) {
@@ -312,7 +312,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           const { data, error } = await supabase
             .from('website_settings')
-            .select('id, site_name, site_description, logo_url, primary_color, secondary_color, contact_email, contact_phone, whatsapp_number, created_at, updated_at')
+            .select('*') // Select all columns to ensure frontend gets everything it needs
             .single();
             
           if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned

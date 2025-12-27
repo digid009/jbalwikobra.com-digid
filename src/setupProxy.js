@@ -14,6 +14,9 @@ module.exports = function (app) {
       hero_button_url: 'https://www.alwikobra.com',
       topup_game_url: 'https://www.alwikobrastore.com',
       whatsapp_channel_url: 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E',
+      jual_akun_whatsapp_url: 'https://www.alwikobra.com',
+      logo_url: null,
+      favicon_url: null,
       updated_at: new Date().toISOString()
     };
 
