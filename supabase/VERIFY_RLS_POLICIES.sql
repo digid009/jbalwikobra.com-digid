@@ -20,9 +20,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -36,9 +36,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -52,9 +52,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -68,9 +68,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -84,9 +84,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -100,9 +100,9 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'public' 
@@ -116,10 +116,10 @@ SELECT
   roles,
   cmd,
   CASE 
-    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '✅ CORRECT'
-    WHEN policyname LIKE '%admin%' THEN '✅ CORRECT'
-    WHEN policyname LIKE '%auth%' THEN '✅ CORRECT'
-    ELSE '❌ CHECK'
+    WHEN policyname LIKE '%public%' AND 'anon' = ANY(roles) THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%admin%' THEN '[OK] CORRECT'
+    WHEN policyname LIKE '%auth%' THEN '[OK] CORRECT'
+    ELSE '[!!] CHECK'
   END as status
 FROM pg_policies 
 WHERE schemaname = 'storage' 
@@ -154,10 +154,10 @@ WHERE grantee = 'anon'
 -- ===========================================================================
 --
 -- Each table should have:
--- 1. A *_public_select policy with 'anon' in roles array → ✅ CORRECT
--- 2. A *_admin_all policy for admin operations → ✅ CORRECT
+-- 1. A *_public_select policy with 'anon' in roles array → [OK] CORRECT
+-- 2. A *_admin_all policy for admin operations → [OK] CORRECT
 --
--- If you see ❌ CHECK, review the policy definition
+-- If you see [!!] CHECK, review the policy definition
 --
 -- ANON ROLE GRANT CHECK should list all public tables
 -- ===========================================================================
@@ -167,8 +167,8 @@ WHERE grantee = 'anon'
 SELECT 
   'TEST: website_settings SELECT' as test_name,
   CASE 
-    WHEN COUNT(*) > 0 THEN '✅ ACCESSIBLE'
-    ELSE '❌ NOT ACCESSIBLE'
+    WHEN COUNT(*) > 0 THEN '[OK] ACCESSIBLE'
+    ELSE '[!!] NOT ACCESSIBLE'
   END as status
 FROM website_settings;
 
@@ -194,7 +194,7 @@ ORDER BY tablename;
 -- TROUBLESHOOTING
 -- ===========================================================================
 -- 
--- If policies show ❌ CHECK or NOT ACCESSIBLE:
+-- If policies show [!!] CHECK or NOT ACCESSIBLE:
 -- 1. Re-run the COMPLETE_RLS_FIX.sql script
 -- 2. Check for syntax errors in the SQL output
 -- 3. Verify you're connected to the correct database
