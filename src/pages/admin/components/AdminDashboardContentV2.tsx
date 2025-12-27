@@ -435,7 +435,7 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
           />
           <MetricCard
             title="Reviews & Rating"
-            value={dashboardStats.reviews.count > 0 ? `${dashboardStats.reviews.count} (${dashboardStats.reviews.averageRating.toFixed(1)}★)` : 'No reviews'}
+            value={dashboardStats.reviews.count > 0 ? `${dashboardStats.reviews.count} (${(dashboardStats.reviews.averageRating || 0).toFixed(1)}★)` : 'No reviews'}
             icon={Star}
             trend="stable"
             color="orange"
