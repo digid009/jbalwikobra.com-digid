@@ -4,7 +4,7 @@
  * Enables state restoration on page reload
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
 
 interface PersistentState<T> {
   value: T;
@@ -22,7 +22,7 @@ export function usePersistentState<T>(
   key: string,
   defaultValue: T,
   cacheDuration: number = CACHE_DURATION
-): [T, (value: T) => void, () => void] {
+): [T, Dispatch<SetStateAction<T>>, () => void] {
   const storageKey = `admin_state_${key}`;
 
   // Initialize state from localStorage or default
