@@ -21,9 +21,9 @@ const PNHero: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
-  const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
-  const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
-  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://wa.me/6281234567890?text=Halo%20admin%20JB%20Alwikobra!%20%F0%9F%91%8B%0A%0ASaya%20tertarik%20untuk%20jual%20akun%20dan%20admin%20WA.%20Mohon%20info%20lebih%20lanjut.%20Terima%20kasih!';
+  const topupGameUrl = settings?.topupGameUrl || 'https://www.alwikobrastore.com';
+  const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E';
+  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com';
   
   // Use hero settings from admin settings
   const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';
