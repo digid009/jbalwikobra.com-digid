@@ -71,6 +71,23 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);
   
+  // Keyboard shortcuts for tab navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Alt+1 through Alt+9 for quick tab switching
+      if (e.altKey && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const index = parseInt(e.key) - 1;
+        if (index < navigationItems.length) {
+          setActiveTab(navigationItems[index].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setActiveTab]);
+  
   // Update time every minute
   useEffect(() => {
     const interval = setInterval(() => {
@@ -442,23 +459,35 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
         {/* Desktop Navigation */}
         <div className="hidden lg:block border-t border-gray-800/50 bg-gray-900/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex space-x-1 py-3">
-              {navigationItems.map((item) => {
+            <nav className="flex space-x-1 py-3" role="navigation" aria-label="Main navigation">
+              {navigationItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
+                const shortcut = index < 9 ? `${index + 1}` : null;
 
                 return (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    aria-label={`${item.label}${shortcut ? ` (Alt+${shortcut})` : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
                       isActive
                         ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                     }`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveTab(item.id);
+                      }
+                    }}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{item.label}</span>
+                    {shortcut && (
+                      <span className="ml-auto text-xs text-gray-500">Alt+{shortcut}</span>
+                    )}
                   </button>
                 );
               })}
@@ -474,7 +503,7 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
           <div className="fixed top-0 right-0 bottom-0 w-80 bg-gray-900 border-l border-gray-800 shadow-xl">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-white mb-6">Navigation</h2>
-              <nav className="space-y-2">
+              <nav className="space-y-2" role="navigation" aria-label="Mobile navigation">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
@@ -486,11 +515,20 @@ export const AdminHeaderV2: React.FC<AdminHeaderV2Props> = ({
                         setActiveTab(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                      aria-label={item.label}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
                         isActive
                           ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
                           : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
                       }`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setActiveTab(item.id);
+                          setIsMobileMenuOpen(false);
+                        }
+                      }}
                     >
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.label}</span>
