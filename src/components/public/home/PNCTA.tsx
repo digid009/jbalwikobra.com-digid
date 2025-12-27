@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
 import { SettingsService } from '../../../services/settingsService';
+import { ensureUrlProtocol } from '../../../utils/helpers';
 import type { WebsiteSettings } from '../../../types';
 
 const PNCTA: React.FC = () => {
@@ -21,7 +22,7 @@ const PNCTA: React.FC = () => {
   }, []);
 
   // Default fallback URL if not set in admin
-  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com';
+  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com');
   return (
     <PNSection padding="lg">
       <PNContainer>
