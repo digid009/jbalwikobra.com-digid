@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { PNContainer, PNHeading, PNText } from '../../ui/PinkNeonDesignSystem';
@@ -68,15 +68,17 @@ const PNFooter: React.FC = () => {
     };
   }, []);
 
-  // Build dynamic social links from settings
-  const dynamicSocials = [
-    settings?.instagramUrl && { icon: Instagram, href: settings.instagramUrl },
-    settings?.twitterUrl && { icon: Twitter, href: settings.twitterUrl },
-    settings?.youtubeUrl && { icon: Youtube, href: settings.youtubeUrl },
-  ].filter(Boolean) as Array<{ icon: React.ComponentType<any>; href: string }>;
+  // Build dynamic social links from settings - memoized to avoid recreating on every render
+  const socialsToDisplay = useMemo(() => {
+    const dynamicSocials = [
+      settings?.instagramUrl && { icon: Instagram, href: settings.instagramUrl },
+      settings?.twitterUrl && { icon: Twitter, href: settings.twitterUrl },
+      settings?.youtubeUrl && { icon: Youtube, href: settings.youtubeUrl },
+    ].filter(Boolean) as Array<{ icon: React.ComponentType<any>; href: string }>;
 
-  // Fallback to default socials if no settings available
-  const socialsToDisplay = dynamicSocials.length > 0 ? dynamicSocials : socials;
+    // Fallback to default socials if no settings available
+    return dynamicSocials.length > 0 ? dynamicSocials : socials;
+  }, [settings?.instagramUrl, settings?.twitterUrl, settings?.youtubeUrl]);
 
   return (
     <footer className="mt-8 border-t border-white/10 bg-black/60">
@@ -108,7 +110,7 @@ const PNFooter: React.FC = () => {
               <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-blue-400" />{settings?.address || 'Jakarta, Indonesia'}</div>
             </div>
             <div className="flex items-center gap-2">
-              {settings?.socialMediaEnabled !== false && socialsToDisplay.map(({ icon: Icon, href }) => (
+              {(settings?.socialMediaEnabled ?? true) && socialsToDisplay.map(({ icon: Icon, href }) => (
                 <a key={href} href={href} target="_blank" rel="noreferrer" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white">
                   <Icon className="w-4 h-4" />
                 </a>
