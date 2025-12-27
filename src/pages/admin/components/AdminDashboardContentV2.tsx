@@ -202,6 +202,11 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
     customerRating: 0
   });
   
+  // Add state for users count and reviews
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  
   const [recentNotifications, setRecentNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -272,6 +277,11 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       setDashboardStats(convertedStats);
       setDashboardMetrics(calculateMetrics(convertedStats));
       
+      // Set users and reviews data
+      setTotalUsers(convertedStats.users.count);
+      setTotalReviews(convertedStats.reviews.count);
+      setAverageRating(convertedStats.reviews.averageRating);
+      
       // For notifications, use empty array for now
       setRecentNotifications([]);
       
@@ -287,6 +297,9 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       };
       setDashboardStats(defaultStats);
       setDashboardMetrics(calculateMetrics(defaultStats));
+      setTotalUsers(0);
+      setTotalReviews(0);
+      setAverageRating(0);
     } finally {
       setLoading(false);
     }
@@ -388,8 +401,8 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
           </button>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Metrics Grid - Updated to show all 6 metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <MetricCard
             title="Total Revenue"
             value={`Rp ${dashboardMetrics.totalRevenue.toLocaleString()}`}
@@ -400,13 +413,20 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
             color="green"
           />
           <MetricCard
-            title="Orders Today"
+            title="Total Orders"
             value={dashboardMetrics.todayOrders}
             change={8.2}
             changeType="increase"
             icon={ShoppingCart}
             trend="up"
             color="blue"
+          />
+          <MetricCard
+            title="Total Users"
+            value={totalUsers}
+            icon={Users}
+            trend="stable"
+            color="purple"
           />
           <MetricCard
             title="Total Products"
@@ -424,6 +444,13 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
             changeType="increase"
             icon={Zap}
             trend="up"
+            color="pink"
+          />
+          <MetricCard
+            title="Reviews & Rating"
+            value={totalReviews > 0 ? `${totalReviews} (${averageRating.toFixed(1)}★)` : 'No reviews'}
+            icon={Star}
+            trend="stable"
             color="purple"
           />
         </div>
