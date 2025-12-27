@@ -1,7 +1,7 @@
 // Optimized ProductService with pagination and caching
 import { supabase } from './supabase';
 import { deletePublicUrls } from './storageService';
-import { Product, FlashSale, Tier, GameTitle, ProductTier } from '../types';
+import { Product, FlashSale, Tier, GameTitle } from '../types';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -76,14 +76,17 @@ class OptimizedProductService {
       let query = supabase
         .from('products')
         .select(`
-          id, name, description, price, original_price, account_level,
-          account_details, images, is_active, archived_at, created_at,
-          game_title_id, tier_id, has_rental,
-          tiers!inner (
+          id, name, description, price, original_price,
+          images, is_active, archived_at, created_at,
+          game_title_id, tier_id, has_rental, category_id,
+          tiers (
             id, name, slug, color, background_gradient, icon
           ),
-          game_titles!inner (
+          game_titles (
             id, name, slug, icon, logo_url
+          ),
+          categories:categories!fk_products_category (
+            id, name, slug, icon, color, is_active, sort_order
           )
         `, { count: 'exact' });
 
@@ -223,13 +226,23 @@ class OptimizedProductService {
 
       const { data, error } = await supabase
         .from('tiers')
-        .select('*')
+        .select('id, name, slug, description, color, border_color, background_gradient, icon, price_range_min, price_range_max, is_active, sort_order, created_at, updated_at')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
 
-      const result = data || [];
+      const result = (data || []).map((item: any) => ({
+        ...item,
+        borderColor: item.border_color,
+        backgroundGradient: item.background_gradient,
+        priceRangeMin: item.price_range_min,
+        priceRangeMax: item.price_range_max,
+        isActive: item.is_active,
+        sortOrder: item.sort_order,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      }));
       this.setCache(cacheKey, result, 10 * 60 * 1000); // Cache for 10 minutes
       return result;
 
@@ -245,12 +258,20 @@ class OptimizedProductService {
       isActive: product.is_active ?? product.isActive,
       archivedAt: product.archived_at ?? product.archivedAt,
       originalPrice: product.original_price ?? product.originalPrice,
-      accountLevel: product.account_level ?? product.accountLevel,
-      accountDetails: product.account_details ?? product.accountDetails,
+  // accountLevel removed
+  // accountDetails removed (column dropped)
       tierData: product.tiers,
       gameTitleData: product.game_titles,
-      tier: product.tiers?.slug as ProductTier,
-      gameTitle: product.game_titles?.name,
+      categoryData: product.categories ? {
+        id: product.categories.id,
+        name: product.categories.name,
+        slug: product.categories.slug,
+        icon: product.categories.icon,
+        color: product.categories.color,
+        isActive: product.categories.is_active ?? true,
+        sortOrder: product.categories.sort_order ?? 0,
+      } : undefined,
+      categoryId: product.category_id ?? product.categoryId ?? product.categories?.id,
       hasRental: product.has_rental ?? false,
       rentalOptions: [] // Load separately if needed
     };

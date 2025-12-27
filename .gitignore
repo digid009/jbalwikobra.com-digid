@@ -34,3 +34,5 @@ coverage
 
 # Supabase
 .supabase
+.vercel
+.env*.local

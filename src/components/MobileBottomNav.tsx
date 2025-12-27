@@ -1,62 +1,53 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Home, User, Newspaper } from 'lucide-react';
-import { bindHoverPrefetch, warmImport, shouldPrefetch } from '../utils/prefetch';
+import { Home, Search, User } from 'lucide-react';
+import MobileNavItem from './mobile/MobileNavItem';
+import { useAuth } from '../contexts/TraditionalAuthContext';
 
 const MobileBottomNav: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
-  const navItems = [
-    { path: '/', label: 'Beranda', icon: Home },
-  { path: '/feed', label: 'Feed', icon: Newspaper },
-    { path: '/products', label: 'Katalog', icon: ShoppingBag },
-    { path: '/sell', label: 'Jual Akun', icon: ShoppingBag },
-    { path: '/profile', label: 'Profile', icon: User },
+  const navigationItems = [
+    { path: '/', label: 'Beranda', icon: Home, activeIcon: Home },
+    { path: '/products', label: 'Produk', icon: Search, activeIcon: Search },
+    { path: user ? '/profile' : '/auth', label: user ? 'Profil' : 'Masuk', icon: User, activeIcon: User },
   ];
 
-  React.useEffect(() => {
-    if (!shouldPrefetch()) return;
-    const disposers: Array<() => void> = [];
-    const runPrefetch = (path: string) => {
-      if (path === '/products') warmImport(() => import('../pages/ProductsPage'));
-      else if (path === '/sell') warmImport(() => import('../pages/SellPage'));
-      else if (path === '/feed') warmImport(() => import('../pages/HomePage'));
-      else if (path === '/profile') warmImport(() => import('../pages/ProfilePage'));
-      else if (path === '/') warmImport(() => import('../pages/HomePage'));
-    };
-    const root = document.querySelector('nav');
-    if (root) {
-      root.querySelectorAll('a[href]')?.forEach((el) => {
-        const href = (el as HTMLAnchorElement).getAttribute('href') || '';
-        if (!href.startsWith('/')) return;
-        disposers.push(bindHoverPrefetch(el, () => runPrefetch(href)));
-      });
+  // Hide on admin pages
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  const isActiveTab = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
     }
-    return () => { disposers.forEach(d => d()); };
-  }, []);
+    return location.pathname.startsWith(path);
+  };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 backdrop-blur z-[1000] pb-safe-bottom" style={{ backgroundColor: 'rgba(0,0,0,0.9)', borderTop: '1px solid var(--border)' }}>
-      <nav className="flex justify-around py-2 h-[62px] items-end">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center py-2 px-4 rounded-lg text-[11px] font-medium transition-colors ${
-                isActive ? 'text-pink-400' : 'text-gray-300'
-              }`}
-            >
-              <Icon size={22} />
-              <span className="mt-1 leading-none">{item.label}</span>
-            </Link>
-          );
-        })}
+    <>
+      {/* Mobile Bottom Navigation */}
+      <nav data-fixed="bottom-nav" className="nav-bottom lg:hidden fixed bottom-0 left-0 right-0 z-50">
+  <div className="mobile-nav-surface mobile-nav-appear mx-3 mb-0 px-4 pt-3 rounded-3xl" style={{ paddingBottom: '16px' }}>
+          <div className="relative flex items-center justify-around">
+            {navigationItems.map(item => (
+              <MobileNavItem
+                key={item.path}
+                item={item}
+                isActive={isActiveTab(item.path)}
+                touchSize={44}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="h-safe-area-inset-bottom" />
       </nav>
-    </div>
+
+      {/* Spacer for content */}
+  <div className="h-20 lg:hidden" />
+    </>
   );
 };
 

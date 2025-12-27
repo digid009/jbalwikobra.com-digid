@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, ShoppingCart, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import Footer from '../components/Footer';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthRequired } from '../components/ProtectedRoute';
 import { useWishlist } from '../contexts/WishlistContext';
+import PublicPageHeader from '../components/shared/PublicPageHeader';
+import { PNSection, PNContainer } from '../components/ui/PinkNeonDesignSystem';
 import { formatCurrency } from '../utils/helpers';
+// standardClasses helper removed – using direct utility classes per new design system
 
 const WishlistPage: React.FC = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
+  const navigate = useNavigate();
 
   const handleClearWishlist = () => {
     if (confirm('Yakin ingin mengosongkan wishlist?')) {
@@ -15,43 +18,51 @@ const WishlistPage: React.FC = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   return (
     <AuthRequired>
-      <div className="min-h-screen" style={{
-        background: '#000000',
-        backgroundImage: 'linear-gradient(135deg, #000000 0%, #0a0a0a 25%, #1a1a1a 50%, #0a0a0a 75%, #000000 100%)'
-      }}>
-      
-      <div className="pt-20 pb-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
-                <Heart size={24} className="text-white" />
+      <div className="min-h-screen bg-black text-white">
+        <PNContainer>
+          <PNSection padding="lg">
+            {/* Shared Header */}
+            <PublicPageHeader
+              backLabel="Beranda"
+              onBack={handleBackToHome}
+              showWishlist={false}
+              showShare={false}
+            />
+
+            {/* Wishlist Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
+                  <Heart size={24} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-white">Wishlist Saya</h1>
+                  <p className="text-gray-400">Produk yang Anda sukai</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Wishlist Saya</h1>
-                <p className="text-gray-400">Produk yang Anda sukai</p>
-              </div>
+              {wishlistItems.length > 0 && (
+                <button
+                  onClick={handleClearWishlist}
+                  className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
+                >
+                  Kosongkan Semua
+                </button>
+              )}
             </div>
-            {wishlistItems.length > 0 && (
-              <button
-                onClick={handleClearWishlist}
-                className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
-              >
-                Kosongkan Semua
-              </button>
-            )}
-          </div>
 
           {wishlistItems.length === 0 ? (
-            <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-12 text-center border border-gray-700/50">
+            <div className="bg-surface-alt backdrop-blur rounded-2xl p-12 text-center border-subtle">
               <div className="w-20 h-20 bg-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Heart size={40} className="text-pink-400" />
               </div>
               <h2 className="text-2xl font-semibold text-white mb-4">Wishlist Kosong</h2>
-              <p className="text-gray-400 mb-8 max-w-md mx-auto">
+              <p className="text-secondary mb-8 max-w-md mx-auto">
                 Belum ada produk yang ditambahkan ke wishlist. 
                 Jelajahi katalog dan tambahkan produk favorit Anda!
               </p>
@@ -78,7 +89,7 @@ const WishlistPage: React.FC = () => {
                   
                   <div className="flex-1">
                     <h3 className="font-semibold text-white mb-1">{item.name}</h3>
-                    <p className="text-gray-400 text-sm mb-2">{item.category}</p>
+                    <p className="text-tertiary text-sm mb-2">{item.category}</p>
                     
                     <div className="flex items-center space-x-4">
                       <div className="text-pink-400 font-bold text-lg">
@@ -87,7 +98,7 @@ const WishlistPage: React.FC = () => {
                       
                       <div className="flex items-center space-x-1">
                         <Star size={16} className="text-yellow-400 fill-current" />
-                        <span className="text-gray-300 text-sm">{item.rating}</span>
+                        <span className="text-secondary text-sm">{item.rating}</span>
                       </div>
                       
                       <div className={`text-xs px-2 py-1 rounded ${
@@ -123,17 +134,17 @@ const WishlistPage: React.FC = () => {
 
           {/* Stats */}
           {wishlistItems.length > 0 && (
-            <div className="mt-6 bg-black/40 backdrop-blur rounded-xl p-4 border border-pink-500/30">
+            <div className="mt-6 bg-surface-alt backdrop-blur rounded-xl p-4 border border-pink-500/30">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-bold text-pink-400">{wishlistItems.length}</div>
-                  <div className="text-gray-400 text-sm">Total Item</div>
+                  <div className="text-tertiary text-sm">Total Item</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-green-400">
                     {wishlistItems.filter(item => item.available).length}
                   </div>
-                  <div className="text-gray-400 text-sm">Tersedia</div>
+                  <div className="text-tertiary text-sm">Tersedia</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-yellow-400">
@@ -144,11 +155,9 @@ const WishlistPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+          </PNSection>
+        </PNContainer>
       </div>
-
-      <Footer />
-    </div>
     </AuthRequired>
   );
 };

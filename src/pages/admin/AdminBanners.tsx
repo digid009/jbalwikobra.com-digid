@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Banner } from '../../types';
 import { BannerService } from '../../services/bannerService';
-import { Plus, Trash2, Save, Edit3, Image as ImageIcon, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, Edit3, Image as ImageIcon, Link as LinkIcon, Loader2, Eye, Edit, Globe } from 'lucide-react';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  AdminDataTable, 
+  StatusBadge 
+} from './components/ui';
+import type { AdminFiltersConfig, TableColumn, TableAction } from './components/ui';
 
 const AdminBanners: React.FC = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -12,6 +20,183 @@ const AdminBanners: React.FC = () => {
   );
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
+  // Filter state for our AdminFilters component
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    search: '',
+    status: 'all',
+    sortBy: 'sort_order',
+    sortOrder: 'asc'
+  });
+
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search banners by title...',
+    filters: [
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'sort_order', label: 'Sort Order' },
+      { value: 'title', label: 'Title' },
+      { value: 'created_at', label: 'Created Date' }
+    ]
+  };
+
+  // Filter handling
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues(filters);
+  };
+
+  // Apply filters to banners
+  const filteredBanners = banners.filter(banner => {
+    // Search filter
+    if (filterValues.search) {
+      const searchTerm = filterValues.search.toLowerCase();
+      if (!banner.title.toLowerCase().includes(searchTerm) &&
+          !banner.subtitle?.toLowerCase().includes(searchTerm)) {
+        return false;
+      }
+    }
+
+    // Status filter
+    if (filterValues.status !== 'all') {
+      if (filterValues.status === 'active' && !banner.is_active) return false;
+      if (filterValues.status === 'inactive' && banner.is_active) return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    const sortBy = filterValues.sortBy;
+    const order = filterValues.sortOrder === 'desc' ? -1 : 1;
+    
+    if (sortBy === 'sort_order') {
+      return (a.sort_order - b.sort_order) * order;
+    }
+    
+    if (sortBy === 'title') {
+      return a.title.localeCompare(b.title) * order;
+    }
+    
+    if (sortBy === 'created_at') {
+      const aDate = new Date(a.created_at || 0).getTime();
+      const bDate = new Date(b.created_at || 0).getTime();
+      return (aDate - bDate) * order;
+    }
+    
+    return 0;
+  });
+
+  // Statistics calculation
+  const stats = {
+    total: banners.length,
+    active: banners.filter(banner => banner.is_active).length,
+    inactive: banners.filter(banner => !banner.is_active).length,
+    withLinks: banners.filter(banner => banner.link_url).length
+  };
+
+  // Table columns configuration
+  const columns: TableColumn<Banner>[] = [
+    {
+      key: 'image',
+      label: 'Image',
+      render: (banner) => (
+        <div className="w-16 h-10 bg-ds-surface-secondary rounded overflow-hidden">
+          {banner.image_url ? (
+            <img 
+              src={banner.image_url} 
+              alt={banner.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ImageIcon size={16} className="text-ds-text-secondary" />
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'title',
+      label: 'Banner Details',
+      render: (banner) => (
+        <div>
+          <div className="font-medium text-ds-text">{banner.title}</div>
+          {banner.subtitle && (
+            <div className="text-sm text-ds-text-secondary">{banner.subtitle}</div>
+          )}
+          {banner.cta_text && (
+            <div className="text-xs text-ds-primary mt-1">{banner.cta_text}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'link',
+      label: 'Link',
+      render: (banner) => banner.link_url ? (
+        <div className="flex items-center gap-2">
+          <Globe size={14} className="text-ds-text-secondary" />
+          <span className="text-sm text-ds-text truncate max-w-[200px]">
+            {banner.link_url}
+          </span>
+        </div>
+      ) : (
+        <span className="text-ds-text-secondary">-</span>
+      )
+    },
+    {
+      key: 'sort_order',
+      label: 'Sort Order',
+      render: (banner) => (
+        <span className="text-ds-text">{banner.sort_order}</span>
+      )
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (banner) => (
+        <StatusBadge
+          status={banner.is_active ? 'active' : 'inactive'}
+        />
+      )
+    }
+  ];
+
+  // Table actions configuration
+  const actions: TableAction<Banner>[] = [
+    {
+      label: 'View',
+      icon: <Eye size={16} />,
+      onClick: (banner) => {
+        if (banner.link_url) {
+          window.open(banner.link_url, '_blank');
+        }
+      }
+    },
+    {
+      label: 'Edit',
+      icon: <Edit size={16} />,
+      onClick: (banner) => {
+        startEdit(banner);
+      }
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 size={16} />,
+      onClick: (banner) => {
+        remove(banner);
+      },
+      variant: 'danger'
+    }
+  ];
+
   useEffect(() => { (async () => { setLoading(true); setBanners(await BannerService.list()); setLoading(false); })(); }, []);
 
   const resetForm = () => { setForm({ title: '', subtitle: '', linkUrl: '', ctaText: '', sortOrder: 1, isActive: true, file: null }); setPreviewUrl(''); };
@@ -20,8 +205,16 @@ const AdminBanners: React.FC = () => {
 
   const startEdit = (b: Banner) => {
     setEditing(b);
-  setForm({ title: b.title, subtitle: b.subtitle, linkUrl: b.linkUrl, ctaText: b.ctaText, sortOrder: b.sortOrder, isActive: b.isActive, file: null });
-    setPreviewUrl(b.imageUrl || '');
+    setForm({ 
+      title: b.title, 
+      subtitle: b.subtitle || '', 
+      linkUrl: b.link_url || '', 
+      ctaText: b.cta_text || '', 
+      sortOrder: b.sort_order, 
+      isActive: b.is_active, 
+      file: null 
+    });
+    setPreviewUrl(b.image_url || '');
   };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,15 +238,14 @@ const AdminBanners: React.FC = () => {
       const created = await BannerService.create({
         title: form.title,
         subtitle: form.subtitle,
-        imageUrl: '',
-        linkUrl: form.linkUrl,
-        ctaText: form.ctaText,
-        sortOrder: form.sortOrder,
-        isActive: form.isActive,
-        file: form.file,
+        image_url: '',
+        link_url: form.linkUrl,
+        cta_text: form.ctaText,
+        sort_order: form.sortOrder,
+        is_active: form.isActive,
       });
       if (created) {
-        setBanners(prev => [...prev, created].sort((a,b)=>a.sortOrder-b.sortOrder));
+        setBanners(prev => [...prev, created].sort((a,b)=>a.sort_order-b.sort_order));
         resetForm();
       }
     }
@@ -61,105 +253,197 @@ const AdminBanners: React.FC = () => {
 
   const remove = async (b: Banner) => {
     if (!confirm('Hapus banner ini?')) return;
-    const ok = await BannerService.remove(b.id, b.imageUrl);
+    const ok = await BannerService.remove(b.id, b.image_url);
     if (ok) setBanners(prev => prev.filter(x => x.id !== b.id));
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Kelola Banner</h1>
-        <button onClick={startCreate} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-600 hover:bg-pink-700">
-          <Plus size={16} /> Banner Baru
-        </button>
+      <AdminPageHeaderV2
+        title="Banners"
+        subtitle="Manage website banners and promotional content"
+        icon={ImageIcon}
+        actions={[
+          {
+            key: 'add',
+            label: 'Create Banner',
+            onClick: startCreate,
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <AdminStatCard
+          title="Total Banners"
+          value={stats.total}
+          icon={ImageIcon}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+        />
+        <AdminStatCard
+          title="Active"
+          value={stats.active}
+          icon={Eye}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+        />
+        <AdminStatCard
+          title="Inactive"
+          value={stats.inactive}
+          icon={Edit3}
+          iconColor="text-gray-400"
+          iconBgColor="bg-gray-500/20"
+        />
+        <AdminStatCard
+          title="With Links"
+          value={stats.withLinks}
+          icon={Globe}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+        />
       </div>
 
-      {/* Form */}
-  <div className="bg-black/40 border border-pink-500/20 rounded-xl p-4 space-y-3">
-        <div className="grid md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm text-gray-400">Judul</label>
-            <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Subjudul</label>
-            <input value={form.subtitle||''} onChange={e=>setForm(p=>({...p,subtitle:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">CTA Text (opsional)</label>
-            <input value={form.ctaText||''} onChange={e=>setForm(p=>({...p,ctaText:e.target.value}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" placeholder="Contoh: Lihat, Beli Sekarang, Pelajari" />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Link</label>
-            <div className="flex items-center gap-2 mt-1">
-              <LinkIcon size={16} className="text-gray-400" />
-              <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2" placeholder="/flash-sales atau https://..." />
-            </div>
-          </div>
-          <div className="grid grid-cols-[1fr_auto] items-end gap-2">
-            <div>
-              <label className="text-sm text-gray-400">Urutan</label>
-              <input type="number" value={form.sortOrder} onChange={e=>setForm(p=>({...p,sortOrder:parseInt(e.target.value||'1',10)}))} className="w-full mt-1 bg-black/60 border border-white/10 rounded-lg px-3 py-2" />
-            </div>
-            <div className="flex items-center gap-2">
-              <input id="isActive" type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))} />
-              <label htmlFor="isActive" className="text-sm text-gray-300">Aktif</label>
-            </div>
-          </div>
-          <div className="md:col-span-2">
-            <label className="text-sm text-gray-400">Gambar</label>
-            <div className="mt-1 flex items-center gap-3">
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/5 cursor-pointer">
-                <ImageIcon size={16} /> Pilih File
-                <input type="file" className="hidden" accept="image/*" onChange={onFile} />
-              </label>
-              <span className="text-xs text-gray-400">{form.file?.name || (editing ? 'Biarkan kosong jika tidak diubah' : 'Belum ada file')}</span>
-              {previewUrl && (
-                <img src={previewUrl} alt="preview" className="h-14 rounded border border-white/10" />
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={save} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700">
-            <Save size={16} /> Simpan
-          </button>
-          {editing && (
-            <button onClick={()=>{setEditing(null); resetForm();}} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-700">
-              Batal
-            </button>
-          )}
-        </div>
-      </div>
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={banners.length}
+        filteredItems={filteredBanners.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
 
-      {/* List */}
-      <div className="bg-black/40 border border-pink-500/20 rounded-xl p-4">
-        {loading ? (
-          <div className="flex items-center gap-2 text-gray-400"><Loader2 className="animate-spin" size={18} /> Memuat...</div>
-        ) : banners.length === 0 ? (
-          <div className="text-gray-400">Belum ada banner</div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {banners.map(b => (
-              <div key={b.id} className="rounded-xl overflow-hidden border border-white/10 bg-white/5">
-                <img src={b.imageUrl} alt={b.title} className="w-full h-36 object-cover" />
-                <div className="p-3">
-                  <div className="font-semibold">{b.title}</div>
-                  {b.subtitle && <div className="text-sm text-gray-400">{b.subtitle}</div>}
-                  <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-                    <span>Urutan: {b.sortOrder}</span>
-                    <span>{b.isActive ? 'Aktif' : 'Nonaktif'}</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button onClick={()=>startEdit(b)} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs"><Edit3 size={14}/> Edit</button>
-                    <button onClick={()=>remove(b)} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-rose-600/80 hover:bg-rose-700 text-xs text-white"><Trash2 size={14}/> Hapus</button>
-                  </div>
+      <AdminDataTable
+        data={filteredBanners}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="No banners found"
+      />
+
+      {(editing || !banners.length) && (
+        <div className="bg-ds-surface border border-ds-border rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-ds-text mb-4">
+            {editing ? 'Edit Banner' : 'Create Banner'}
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Title
+                </label>
+                <input 
+                  value={form.title} 
+                  onChange={e => setForm(p => ({...p, title: e.target.value}))} 
+                  className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  placeholder="Enter banner title"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Subtitle
+                </label>
+                <input 
+                  value={form.subtitle || ''} 
+                  onChange={e => setForm(p => ({...p, subtitle: e.target.value}))} 
+                  className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  placeholder="Enter banner subtitle"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  CTA Text (Optional)
+                </label>
+                <input 
+                  value={form.ctaText || ''} 
+                  onChange={e => setForm(p => ({...p, ctaText: e.target.value}))} 
+                  className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  placeholder="e.g., Learn More, Shop Now, Get Started"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Link URL
+                </label>
+                <div className="flex items-center gap-2">
+                  <LinkIcon size={16} className="text-ds-text-secondary" />
+                  <input 
+                    value={form.linkUrl || ''} 
+                    onChange={e => setForm(p => ({...p, linkUrl: e.target.value}))} 
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                    placeholder="/flash-sales or https://..."
+                  />
                 </div>
               </div>
-            ))}
+              <div className="grid grid-cols-[1fr_auto] items-end gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    Sort Order
+                  </label>
+                  <input 
+                    type="number" 
+                    value={form.sortOrder} 
+                    onChange={e => setForm(p => ({...p, sortOrder: parseInt(e.target.value || '1', 10)}))} 
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <input 
+                    id="isActive" 
+                    type="checkbox" 
+                    checked={form.isActive} 
+                    onChange={e => setForm(p => ({...p, isActive: e.target.checked}))}
+                    className="rounded border-ds-border"
+                  />
+                  <label htmlFor="isActive" className="text-ds-text">
+                    Active
+                  </label>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Banner Image
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-ds-border hover:bg-ds-surface-secondary cursor-pointer transition-colors">
+                    <ImageIcon size={16} /> Choose File
+                    <input type="file" className="hidden" accept="image/*" onChange={onFile} />
+                  </label>
+                  <span className="text-sm text-ds-text-secondary">
+                    {form.file?.name || (editing ? 'Keep empty to not change image' : 'No file selected')}
+                  </span>
+                  {previewUrl && (
+                    <img 
+                      src={previewUrl} 
+                      alt="preview" 
+                      className="h-16 w-24 object-cover rounded border border-ds-border"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              {editing && (
+                <button 
+                  onClick={() => {setEditing(null); resetForm();}} 
+                  className="px-4 py-2 rounded-lg border border-ds-border text-ds-text hover:bg-ds-surface-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+              <button 
+                onClick={save} 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ds-primary text-white hover:bg-ds-primary-hover transition-colors"
+              >
+                <Save size={16} /> Save
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

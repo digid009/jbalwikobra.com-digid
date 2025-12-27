@@ -2,6 +2,22 @@
 
 A modern e-commerce platform for gaming account sales and rentals, built with React, TypeScript, and Supabase.
 
+## 📊 System Health Status
+
+**Last Updated:** December 14, 2024  
+**Overall Health:** 7.2/10
+
+| Category | Status | Score | Priority Actions |
+|----------|--------|-------|-----------------|
+| Security | ⚠️ Needs Attention | 6.5/10 | Fix 25 vulnerabilities |
+| Performance | ⚠️ Needs Attention | 5.8/10 | Optimize 56+ queries |
+| Code Quality | ✅ Good | 7.8/10 | Enable strict mode |
+| Architecture | ✅ Good | 8.2/10 | Reduce service duplication |
+
+📖 **[View Full Analysis Report](./SYSTEM_ANALYSIS_REPORT.md)** | 🎯 **[See Action Plan](./RECOMMENDATIONS_AND_ACTION_PLAN.md)** | ⚡ **[Quick Start](./QUICK_START_IMMEDIATE_ACTIONS.md)**
+
+---
+
 ## Features
 
 - 🎮 Gaming account marketplace
@@ -46,6 +62,7 @@ REACT_APP_SUPABASE_ANON_KEY=your_anon_key_here
 REACT_APP_XENDIT_PUBLIC_KEY=xnd_public_development_...
 REACT_APP_SITE_NAME=JB Alwikobra
 REACT_APP_SITE_URL=https://your-domain.com
+REACT_APP_TURNSTILE_SITE_KEY=your_turnstile_site_key_here
 ```
 
 **Backend (Private - server-side only):**
@@ -54,6 +71,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 XENDIT_SECRET_KEY=xnd_development_...
 XENDIT_CALLBACK_TOKEN=your_callback_token_here
 WHATSAPP_API_KEY=your_whatsapp_api_key_here
+TURNSTILE_SECRET_KEY=your_turnstile_secret_key_here
 ```
 
 #### Environment Files
@@ -102,9 +120,30 @@ This script checks for:
 - [ ] Run security validation: `node scripts/validate-env-security.js`
 - [ ] Monitor deployment for security alerts
 
+#### Cloudflare Turnstile Configuration
+
+This application includes Cloudflare Turnstile for bot protection on authentication forms. To configure:
+
+1. **Get Turnstile Keys:**
+   - Visit [Cloudflare Dashboard](https://dash.cloudflare.com/)
+   - Go to Turnstile section
+   - Create a new site
+   - Copy the Site Key and Secret Key
+
+2. **Configure Environment Variables:**
+   - **Frontend (Vercel):** Add `REACT_APP_TURNSTILE_SITE_KEY` with your site key
+   - **Backend (Vercel):** Add `TURNSTILE_SECRET_KEY` with your secret key
+
+3. **Optional Configuration:**
+   - Turnstile is optional and gracefully degrades if not configured
+   - The app will work without Turnstile keys but won't have captcha protection
+   - Recommended for production to prevent automated attacks
+
 #### Platform-Specific Setup
 **Vercel:**
 ```bash
+vercel env add REACT_APP_TURNSTILE_SITE_KEY production
+vercel env add TURNSTILE_SECRET_KEY production
 vercel env add XENDIT_SECRET_KEY production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
 ```
@@ -117,9 +156,25 @@ See [SECRET_MANAGEMENT_GUIDELINES.md](./SECRET_MANAGEMENT_GUIDELINES.md) for com
 
 ## 📖 Documentation
 
+### 🎯 Getting Started (Start Here!)
+- **[Quick Start Guide](./QUICK_START_IMMEDIATE_ACTIONS.md)** - ⚡ Execute these steps first (30 min)
+- **[System Analysis Report](./SYSTEM_ANALYSIS_REPORT.md)** - 📊 Complete health check and current status
+- **[Recommendations & Action Plan](./RECOMMENDATIONS_AND_ACTION_PLAN.md)** - 🎯 Prioritized improvement roadmap
+
+### 🔐 Security & Configuration
+- [Cloudflare Turnstile Setup](./CLOUDFLARE_TURNSTILE_SETUP.md) - Complete guide for bot protection setup
 - [Secret Management Guidelines](./SECRET_MANAGEMENT_GUIDELINES.md) - Comprehensive security documentation
-- [Security Performance Fixes](./SECURITY_PERFORMANCE_FIXES.md) - Recent security improvements
-- [Final App Review](./FINAL_APP_REVIEW.md) - Complete system status
+- [Critical Missing Environment Variables](./CRITICAL_MISSING_ENV_VARS.md) - Required configuration
+
+### ⚡ Performance & Optimization
+- [Supabase Cache Egress Optimization](./SUPABASE_CACHE_EGRESS_OPTIMIZATION.md) - Database query optimization guide
+- [Cache Optimization Implementation](./CACHE_OPTIMIZATION_IMPLEMENTATION_SUMMARY.md) - Performance improvements
+
+### 📋 Feature Documentation
+- [GTM Implementation Plan](./GTM_IMPLEMENTATION_PLAN.md) - Google Tag Manager setup
+- [Enhanced WhatsApp Rental Messaging](./ENHANCED_WHATSAPP_RENTAL_MESSAGING.md) - Notification system
+- [Product Archive Visibility Fix](./PRODUCT_ARCHIVE_VISIBILITY_FIX.md) - Product management
+- [See all documentation files](.) - 30+ specialized guides available
 
 ## 🛠️ Development
 

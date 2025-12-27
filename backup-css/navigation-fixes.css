@@ -1,0 +1,90 @@
+/* Navigation Positioning Fixes - CRITICAL */
+
+/* Reset any conflicting styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Force header to stick at top */
+.header-fixed {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  z-index: 999999 !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
+/* Force bottom nav to stick at bottom */
+.nav-bottom {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  z-index: 999998 !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
+/* Ensure proper viewport behavior */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh; /* modern viewport units */
+}
+
+/* Fix main content spacing */
+main {
+  padding-top: 80px !important;
+  padding-bottom: 100px !important;
+  min-height: calc(100vh - 180px) !important;
+  min-height: calc(100dvh - 180px) !important;
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .header-fixed {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .nav-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Flash Sales Page - No padding override */
+.flash-sales-page main {
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Additional mobile fixes */
+@media (max-width: 1024px) {
+  .App {
+    position: relative !important;
+    min-height: 100vh !important;
+  }
+  
+  /* Ensure no interference from other elements */
+  .fixed {
+    will-change: transform;
+  }
+}

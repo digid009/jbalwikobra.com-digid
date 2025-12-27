@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/TraditionalAuthContext';
-import Footer from '../components/Footer';
 import { AuthRequired } from '../components/ProtectedRoute';
+// Removed legacy standardClasses helper – using direct utilities
 
 type Order = {
   id: string;
@@ -52,10 +52,10 @@ const OrderHistoryPage: React.FC = () => {
     <AuthRequired>
       <div className="min-h-screen bg-app-dark">
         <div className="pt-20 pb-20 px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="w-full max-w-7xl mx-auto">
             <h1 className="text-2xl font-bold text-white mb-6">Riwayat Order Saya</h1>
             {loading ? (
-              <div className="bg-ios-surface border border-ios-border rounded-lg p-6">
+              <div className="bg-black border border-gray-700 rounded-lg p-6">
                 <div className="ios-skeleton h-5 w-48 mb-4"></div>
                 <div className="divide-y divide-ios-border/60">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -114,7 +114,6 @@ const OrderHistoryPage: React.FC = () => {
             )}
           </div>
         </div>
-        <Footer />
       </div>
     </AuthRequired>
   );

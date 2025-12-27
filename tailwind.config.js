@@ -7,6 +7,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        ds: {
+          pink: 'var(--primary-pink)',
+          'pink-light': 'var(--primary-pink-light)',
+            'pink-dark': 'var(--primary-pink-dark)',
+          'pink-secondary': 'var(--secondary-pink)',
+          'pink-accent': 'var(--accent-pink)',
+          text: 'var(--text-primary)',
+          'text-secondary': 'var(--text-secondary)',
+          'text-tertiary': 'var(--text-tertiary)',
+          bg: 'var(--bg-primary)',
+          'bg-secondary': 'var(--bg-secondary)',
+          'bg-tertiary': 'var(--bg-tertiary)'
+        },
         app: {
           bg: 'var(--bg)',
           surface: 'var(--surface)',

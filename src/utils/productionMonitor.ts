@@ -60,10 +60,10 @@ export class ProductionMonitor {
   }
 
   private async validateApiEndpoints(): Promise<void> {
-    const endpoints = [
-      '/api/analytics/vitals',
-      // Note: Auth endpoints require authentication and should not be tested with OPTIONS
-      // '/api/auth/validate-session'
+    // Note: Analytics endpoints were consolidated into admin dashboard
+    // Auth endpoints require authentication and should not be tested with OPTIONS
+    const endpoints: string[] = [
+      // No public endpoints to validate currently
     ];
 
     for (const endpoint of endpoints) {

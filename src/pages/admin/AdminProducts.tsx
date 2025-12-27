@@ -1,14 +1,24 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Product, Tier, GameTitle, ProductTier } from '../../types';
+import { Product, Tier, GameTitle } from '../../types';
 import { ProductService } from '../../services/productService';
 import { OptimizedProductService } from '../../services/optimizedProductService';
 import { supabase } from '../../services/supabase';
-import ImageUploader from '../../components/ImageUploader';
 import { uploadFiles } from '../../services/storageService';
 import { formatNumberID, parseNumberID } from '../../utils/helpers';
 import { useToast } from '../../components/Toast';
-// Admin page cleaned: diagnostics imports removed
+import { t } from '../../i18n/strings';
+import { scrollToPaginationContent } from '../../utils/scrollUtils';
+// Removed AdminLayout import as we now use reusable components directly
+import { ProductForm } from './components/products';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  StatusBadge 
+} from './components/ui';
+import { AdminDSTable, type DSTableColumn, type DSTableAction } from './components/ui/AdminDSTable';
+import type { AdminFiltersConfig } from './components/ui';
+import { RefreshCw, Plus, Package, Archive, ShoppingCart, DollarSign, Eye, Edit, Trash2, RotateCcw } from 'lucide-react';
 
 type FormState = {
   id?: string;
@@ -19,8 +29,6 @@ type FormState = {
   category?: string;
   gameTitleId?: string;
   tierId?: string;
-  accountLevel?: string;
-  accountDetails?: string;
   images: string[];
   rentals: { id?: string; duration: string; price: number; description?: string }[];
 };
@@ -33,8 +41,6 @@ const emptyForm: FormState = {
   category: 'general',
   gameTitleId: '',
   tierId: '',
-  accountLevel: '',
-  accountDetails: '',
   images: [],
   rentals: [],
 };
@@ -48,46 +54,111 @@ const AdminProducts: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [games, setGames] = useState<GameTitle[]>([]);
+  const [hasErrors, setHasErrors] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
-  // Filter and pagination states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGame, setSelectedGame] = useState('');
-  const [selectedTier, setSelectedTier] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // all, active, archived
+  // Filter state using our reusable pattern
+  const [filterValues, setFilterValues] = useState({
+    searchTerm: '',
+    gameTitle: '',
+    tier: '',
+    status: 'all',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
+  
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20); // Increased default to 20
-  const [totalProducts, setTotalProducts] = useState(0); // Track total for pagination
-  const [debouncedSearch, setDebouncedSearch] = useState(''); // Debounced search
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalProducts, setTotalProducts] = useState(0);
+  
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // UI state for toggles
+  // Removed showFilters and showStats as we now always show them in the new design
+
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search products by name or description...',
+    filters: [
+      {
+        key: 'gameTitle',
+        label: 'Game Title',
+        options: [
+          { value: '', label: 'All Games' },
+          ...games.map(game => ({ value: game.id, label: game.name }))
+        ]
+      },
+      {
+        key: 'tier',
+        label: 'Tier',
+        options: [
+          { value: '', label: 'All Tiers' },
+          ...tiers.map(tier => ({ value: tier.id, label: tier.name }))
+        ]
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'archived', label: 'Archived' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'created_at', label: 'Date Created' },
+      { value: 'name', label: 'Product Name' },
+      { value: 'price', label: 'Price' }
+    ],
+    showSortOrder: true
+  };
+
+  // Handle page change with scroll
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    scrollToPaginationContent();
+  };
 
   // Debounced search effect
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    const timer = setTimeout(() => setDebouncedSearch(filterValues.searchTerm), 500);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [filterValues.searchTerm]);
 
-  // Products are now filtered at database level, so this is simplified
-  const filteredProducts = products; // Already filtered by database
+  // Products are already filtered/paginated by database
+  const filteredProducts = products;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
-  const paginatedProducts = filteredProducts; // Already paginated by database
 
   // Reset pagination when filters change
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, itemsPerPage]);
+  }, [debouncedSearch, filterValues.gameTitle, filterValues.tier, filterValues.status, itemsPerPage]);
 
   // Optimized data loading with database-level filtering and pagination
   const loadProducts = useCallback(async () => {
     try {
+      console.log('🔄 Loading products with filters:', { 
+        status: filterValues.status, 
+        gameTitle: filterValues.gameTitle, 
+        tier: filterValues.tier, 
+        currentPage, 
+        debouncedSearch 
+      });
       setLoading(true);
+      setHasErrors(false);
+      setErrorMessage('');
       
       if (!supabase) {
-        // Fallback: Use OptimizedProductService for better performance
+        // Fallback: Use OptimizedProductService
         const [paginatedResponse, tList, gList] = await Promise.all([
           OptimizedProductService.getProductsPaginated(
-            { includeArchived: true }, // filters
-            { limit: 1000 } // pagination - large limit for admin view
+            { includeArchived: true },
+            { limit: 1000 }
           ),
           ProductService.getTiers(),
           ProductService.getGameTitles()
@@ -100,20 +171,21 @@ const AdminProducts: React.FC = () => {
         return;
       }
 
-      // OPTIMIZED: Build query with database-level filtering
-      let query = supabase
+      // Build query with database-level filtering
+    let query = supabase
         .from('products')
         .select(`
-          id, name, description, price, original_price, account_level,
-          is_active, archived_at, created_at, images, game_title_id, tier_id,
-          tiers (id, name, slug, color, background_gradient),
-          game_titles (id, name, slug, icon)
+          id, name, description, price, original_price,
+      is_active, archived_at, created_at, images, game_title_id, tier_id, category_id,
+      tiers (id, name, slug, color, background_gradient),
+      game_titles (id, name, slug, icon),
+      categories (id, name, slug)
         `, { count: 'exact' });
 
-      // Apply filters at DATABASE level (not client-side)
-      if (statusFilter === 'active') {
+      // Apply filters at DATABASE level
+      if (filterValues.status === 'active') {
         query = query.eq('is_active', true).is('archived_at', null);
-      } else if (statusFilter === 'archived') {
+      } else if (filterValues.status === 'archived') {
         query = query.or('is_active.eq.false,archived_at.not.is.null');
       }
 
@@ -121,15 +193,15 @@ const AdminProducts: React.FC = () => {
         query = query.or(`name.ilike.%${debouncedSearch.trim()}%,description.ilike.%${debouncedSearch.trim()}%`);
       }
 
-      if (selectedGame !== 'all' && selectedGame) {
-        query = query.eq('game_title_id', selectedGame);
+      if (filterValues.gameTitle !== 'all' && filterValues.gameTitle) {
+        query = query.eq('game_title_id', filterValues.gameTitle);
       }
 
-      if (selectedTier !== 'all' && selectedTier) {
-        query = query.eq('tier_id', selectedTier);
+      if (filterValues.tier !== 'all' && filterValues.tier) {
+        query = query.eq('tier_id', filterValues.tier);
       }
 
-      // CRITICAL: Database-level pagination (not client-side)
+      // Database-level pagination
       const offset = (currentPage - 1) * itemsPerPage;
       query = query
         .order('created_at', { ascending: false })
@@ -139,7 +211,7 @@ const AdminProducts: React.FC = () => {
 
       if (productError) throw productError;
 
-      // Load filter options separately (these can be cached)
+      // Load filter options separately
       const [tList, gList] = await Promise.all([
         ProductService.getTiers(),
         ProductService.getGameTitles()
@@ -154,22 +226,22 @@ const AdminProducts: React.FC = () => {
         originalPrice: product.original_price,
         image: product.images?.[0] || '',
         images: product.images || [],
-        category: '', // Legacy field
-        gameTitle: product.game_titles?.[0]?.name || '',
-        tier: product.tiers?.[0]?.slug as ProductTier || 'reguler',
+        categoryId: (product as any).category_id || (product as any).categoryId || undefined,
         tierId: product.tier_id,
         gameTitleId: product.game_title_id,
         tierData: product.tiers?.[0] as any,
         gameTitleData: product.game_titles?.[0] as any,
-        accountLevel: product.account_level,
-        isFlashSale: false, // Set default
-        hasRental: false, // Set default
-        stock: 1, // Set default
+        // Enrich category for rendering
+        // Note: Supabase relational select may return object or array depending on FK; handle both
+        ...(product as any).categories ? { categoryData: Array.isArray((product as any).categories) ? (product as any).categories[0] : (product as any).categories } : {},
+        isFlashSale: false,
+        hasRental: false,
+        stock: 1,
         isActive: product.is_active !== false,
         archivedAt: product.archived_at,
         createdAt: product.created_at,
-        updatedAt: product.created_at, // Use created_at as fallback
-        rentalOptions: [] // Load separately if needed for performance
+        updatedAt: product.created_at,
+        rentalOptions: []
       }));
 
       setProducts(mappedProducts);
@@ -177,39 +249,221 @@ const AdminProducts: React.FC = () => {
       setGames(gList);
       setTotalProducts(count || 0);
       
-      console.log(`✅ Loaded ${mappedProducts.length} products (page ${currentPage}/${Math.ceil((count || 0) / itemsPerPage)}) - Total: ${count}`);
-      
-    } catch (error) {
-      console.error('Error loading products:', error);
-      push('Gagal memuat data', 'error');
+      console.log('✅ Products loaded successfully:', { 
+        count: mappedProducts.length, 
+        total: count, 
+        firstProduct: mappedProducts[0]?.name,
+      });
+    } catch (error: any) {
+      console.error('❌ Error loading products:', error);
+      setHasErrors(true);
+      setErrorMessage(error.message || 'Unknown error occurred');
+      push(`Error loading products: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedGame, selectedTier, statusFilter, currentPage, itemsPerPage, push]);
+  }, [currentPage, itemsPerPage, debouncedSearch, filterValues.gameTitle, filterValues.tier, filterValues.status, push]);
 
+  // Load data on mount and filter changes
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  const startCreate = () => {
-    setForm(emptyForm);
-    setShowForm(true);
+  // Handle filter changes
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues({
+      searchTerm: filters.searchTerm || '',
+      gameTitle: filters.gameTitle || '',
+      tier: filters.tier || '',
+      status: filters.status || 'all',
+      sortBy: filters.sortBy || 'created_at',
+      sortOrder: filters.sortOrder || 'desc'
+    });
   };
 
-  const startEdit = (p: Product) => {
+  // Calculate statistics for AdminStatCard
+  const stats = {
+    total: products.length,
+    active: products.filter(p => (p as any).isActive !== false && !(p as any).archivedAt).length,
+    archived: products.filter(p => (p as any).isActive === false || (p as any).archivedAt).length,
+    totalValue: products.reduce((sum, p) => sum + (p.price || 0), 0),
+    averagePrice: products.length > 0 ? products.reduce((sum, p) => sum + (p.price || 0), 0) / products.length : 0
+  };
+
+  // Table columns configuration
+  const columns: DSTableColumn<Product>[] = [
+    {
+      key: 'name',
+      header: 'Produk',
+      sortable: true,
+      render: (value, product) => (
+        <div className="flex items-center space-x-3">
+          {product.image && (
+            <img 
+              src={product.image} 
+              alt={product.name}
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+          )}
+          <div>
+            <div className="font-medium text-ds-text">{product.name}</div>
+            <div className="text-sm text-ds-text-secondary truncate max-w-[200px]">
+              {product.description}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'price',
+  header: 'Harga',
+      sortable: true,
+      render: (value, product) => (
+        <div className="text-right">
+          <div className="font-semibold text-ds-text">
+            Rp {product.price?.toLocaleString('id-ID') || '0'}
+          </div>
+          {product.originalPrice && product.originalPrice > (product.price || 0) && (
+            <div className="text-sm text-ds-text-secondary line-through">
+              Rp {product.originalPrice.toLocaleString('id-ID')}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'gameTitleData',
+      header: 'Game',
+      sortable: false,
+      render: (value, product) => (
+        product.gameTitleData?.name ? (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            {product.gameTitleData.name}
+          </span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">No game</span>
+        )
+      )
+    },
+    {
+      key: 'categoryData',
+      header: 'Kategori',
+      sortable: false,
+      render: (value, product) => (
+        (product as any).categoryData?.name ? (
+          <span className="text-sm text-ds-text-secondary">{(product as any).categoryData.name}</span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">Tidak ada</span>
+        )
+      )
+    },
+    {
+      key: 'tierData',
+    header: 'Tier',
+      sortable: false,
+      render: (value, product) => (
+        product.tierData?.name ? (
+          <span 
+            className="px-2 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: product.tierData.color + '20',
+              color: product.tierData.color
+            }}
+          >
+            {product.tierData.name}
+          </span>
+        ) : (
+          <span className="text-ds-text-tertiary text-sm">No tier</span>
+        )
+      )
+    },
+    {
+      key: 'isActive',
+  header: 'Status',
+      sortable: true,
+      render: (value, product) => {
+        const isArchived = !!(product as any).archivedAt;
+        const isActive = (product as any).isActive !== false;
+        
+        if (isArchived) {
+          return <StatusBadge status="archived" customLabel="Archived" />;
+        } else if (isActive) {
+          return <StatusBadge status="active" customLabel="Active" />;
+        } else {
+          return <StatusBadge status="inactive" customLabel="Inactive" />;
+        }
+      }
+    },
+    {
+      key: 'createdAt',
+  header: 'Tanggal Posting',
+      sortable: true,
+      render: (value, product) => (
+        <div className="text-sm text-ds-text-secondary">
+          {new Date(product.createdAt || '').toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })}
+        </div>
+      )
+    }
+  ];
+
+  // Table actions
+  const actions: DSTableAction<Product>[] = [
+    {
+    key: 'view',
+      label: 'View Details',
+      icon: Eye,
+      onClick: (product) => {
+        push(`Viewing product: ${product.name}`, 'info');
+      },
+      variant: 'primary'
+    },
+    {
+    key: 'edit',
+      label: 'Edit Product',
+      icon: Edit,
+      onClick: (product) => {
+        startEdit(product);
+      },
+      variant: 'primary'
+    },
+    {
+    key: 'archive',
+      label: 'Archive',
+    icon: Archive,
+      onClick: (product) => {
+        handleArchive(product);
+      },
+      variant: 'danger',
+      disabled: (product) => !!(product as any).archivedAt
+    },
+    {
+    key: 'restore',
+      label: 'Restore',
+    icon: RotateCcw,
+      onClick: (product) => {
+        handleRestore(product);
+      },
+      variant: 'primary',
+      disabled: (product) => !(product as any).archivedAt
+    }
+  ];
+
+  const startEdit = (product: Product) => {
     setForm({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price,
-      originalPrice: p.originalPrice,
-      category: (p as any).category || 'general', // Add category field
-      gameTitleId: p.gameTitleData?.id || p.gameTitleId || '',
-      tierId: p.tierData?.id || p.tierId || '',
-      accountLevel: p.accountLevel,
-      accountDetails: p.accountDetails,
-      images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []),
-      rentals: (p.rentalOptions || []).map(r=>({ id: r.id, duration: r.duration, price: r.price, description: r.description }))
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price || 0,
+      originalPrice: product.originalPrice,
+      category: product.categoryId,
+      gameTitleId: product.gameTitleId,
+      tierId: product.tierId,
+      images: product.images || [],
+      rentals: product.rentalOptions || [],
     });
     setShowForm(true);
   };
@@ -220,64 +474,24 @@ const AdminProducts: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!form.name.trim() || form.price <= 0) {
+      push('Nama produk dan harga harus diisi', 'error');
+      return;
+    }
+
     setSaving(true);
     try {
-      // Validate required fields
-      if (!form.name?.trim()) {
-        push('Nama produk wajib diisi', 'error');
-        return;
-      }
-      if (!form.description?.trim()) {
-        push('Deskripsi produk wajib diisi', 'error');
-        return;
-      }
-      if (!form.price || form.price <= 0) {
-        push('Harga produk harus lebih dari 0', 'error');
-        return;
-      }
-
-      // Validate game title and tier selection - ensure they exist in our reference data
-      if (form.gameTitleId && !games.find(g => g.id === form.gameTitleId)) {
-        console.warn('⚠️ Selected game title not found in loaded games, clearing selection');
-        setForm(prev => ({ ...prev, gameTitleId: '' }));
-      }
-
-      if (form.tierId && !tiers.find(t => t.id === form.tierId)) {
-        console.warn('⚠️ Selected tier not found in loaded tiers, clearing selection');
-        setForm(prev => ({ ...prev, tierId: '' }));
-      }
-
-      // Basic payload mapping; in real DB schema, tier/gameTitle should use FKs
-      const primaryImage = form.images[0] || '';
-      const payload: any = {
+      const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        price: Number(form.price) || 0,
-        original_price: Number(form.originalPrice) || null,
-        image: primaryImage,
-        images: form.images || [],
-        category: form.category || 'general', // Add category field
-        game_title_id: form.gameTitleId || null,
-        tier_id: form.tierId || null,
-        account_level: form.accountLevel?.trim() || null,
-        account_details: form.accountDetails?.trim() || null,
-        is_flash_sale: false,
-        has_rental: (form.rentals?.length || 0) > 0,
-        stock: 1,
+        price: form.price,
+        originalPrice: form.originalPrice,
+        categoryId: form.category || 'general',
+        gameTitleId: form.gameTitleId || null,
+        tierId: form.tierId || null,
+        images: form.images,
+        rentalOptions: form.rentals || [],
       };
-
-      // Include legacy text column game_title whenever a game is selected
-      if (form.gameTitleId) {
-        const selectedGame = games.find(g => g.id === form.gameTitleId);
-        if (selectedGame) payload.game_title = selectedGame.name;
-      }
-
-      // Clean up undefined values that might cause issues
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === undefined) {
-          payload[key] = null;
-        }
-      });
 
       let saved: Product | null = null;
       const isUuid = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
@@ -293,18 +507,17 @@ const AdminProducts: React.FC = () => {
       }
 
       if (saved) {
-        // Save rentals if provided (simple implementation: delete and recreate)
+        // Save rentals if provided
         if (form.rentals?.length && supabase) {
           try {
             const productId = saved.id;
             if (canUpdate) {
               const { error: deleteError } = await supabase.from('rental_options').delete().eq('product_id', productId);
               if (deleteError) {
-                // Non-fatal
+                console.warn('Failed to delete existing rentals:', deleteError);
               }
             }
             
-            // Validate rental options before inserting
             const validRentals = form.rentals.filter(r => r.duration?.trim() && r.price > 0);
             if (validRentals.length > 0) {
               const inserts = validRentals.map(r => ({
@@ -323,9 +536,10 @@ const AdminProducts: React.FC = () => {
             push('Produk disimpan, tetapi gagal memproses opsi rental', 'info');
           }
         }
-        await loadProducts(); // Use optimized reload
+        await loadProducts();
         setShowForm(false);
         setForm(emptyForm);
+        console.log('✅ Product saved, data reloaded');
         push('Produk disimpan', 'success');
       } else {
         push('Gagal menyimpan produk', 'error');
@@ -337,368 +551,177 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (product: Product) => {
     if (!confirm('Hapus produk ini?')) return;
-    const target = products.find(p => p.id === id);
-    const allImages = target ? (target.images && target.images.length ? target.images : (target.image ? [target.image] : [])) : [];
-    const ok = await ProductService.deleteProduct(id, { images: allImages });
+    const allImages = product.images && product.images.length ? product.images : (product.image ? [product.image] : []);
+    const ok = await ProductService.deleteProduct(product.id, { images: allImages });
     if (ok) {
-      await loadProducts(); // Use optimized reload
+      await loadProducts();
       push('Produk dihapus', 'success');
     } else {
       push('Gagal menghapus produk', 'error');
     }
   };
 
-  // Diagnostics helpers removed from cleaned admin page
+  const handleArchive = async (product: Product) => {
+    if (!confirm('Arsipkan produk ini?')) return;
+    if (!supabase) return;
+    
+    try {
+      await supabase.from('products').update({ 
+        is_active: false, 
+        archived_at: new Date().toISOString() 
+      }).eq('id', product.id);
+      await loadProducts();
+      push('Produk diarsipkan', 'success');
+    } catch (e: any) {
+      push(`Gagal mengarsipkan produk: ${e.message}`, 'error');
+    }
+  };
+
+  const handleRestore = async (product: Product) => {
+    if (!supabase) return;
+    
+    try {
+      await supabase.from('products').update({ 
+        is_active: true, 
+        archived_at: null 
+      }).eq('id', product.id);
+      await loadProducts();
+      push('Produk dipulihkan dari arsip', 'success');
+    } catch (e: any) {
+      push(`Gagal memulihkan produk: ${e.message}`, 'error');
+    }
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 Force reloading products...');
+    loadProducts();
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Produk</h1>
-          <p className="text-gray-400">Kelola daftar produk</p>
-        </div>
-        <button onClick={startCreate} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700">
-          Tambah Produk
-        </button>
+  {/* Diagnostics banner removed as part of DS migration */}
+
+      {/* Page Header */}
+      <AdminPageHeaderV2
+        title={t('common.productsManagement')}
+        subtitle={t('common.manageCatalog')}
+        icon={Package}
+        actions={[
+          {
+            key: 'refresh',
+            label: 'Refresh',
+            onClick: handleRefresh,
+            variant: 'secondary',
+            icon: RefreshCw,
+            loading: loading
+          },
+          {
+            key: 'add',
+            label: 'Add Product',
+            onClick: () => setShowForm(true),
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard
+          title="Total Products"
+          value={stats.total}
+          icon={Package}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Active Products"
+          value={stats.active}
+          icon={ShoppingCart}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Archived Products"
+          value={stats.archived}
+          icon={Archive}
+          iconColor="text-yellow-400"
+          iconBgColor="bg-yellow-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Average Price"
+          value={`Rp ${stats.averagePrice.toLocaleString('id-ID')}`}
+          icon={DollarSign}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+          subtitle={`Total Value: Rp ${stats.totalValue.toLocaleString('id-ID')}`}
+          loading={loading}
+        />
       </div>
 
-      {!showForm && (
-        <>
-          {/* Filters and Search */}
-          <div className="bg-black/60 border border-pink-500/30 rounded-xl p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Search */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Cari Produk</label>
-                <input
-                  type="text"
-                  placeholder="Nama, deskripsi, level..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-              </div>
-              
-              {/* Game Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Filter Game</label>
-                <select
-                  value={selectedGame}
-                  onChange={(e) => setSelectedGame(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                >
-                  <option value="">Semua Game</option>
-                  {games.map(game => (
-                    <option key={game.id} value={game.id}>{game.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Tier Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Filter Tier</label>
-                <select
-                  value={selectedTier}
-                  onChange={(e) => setSelectedTier(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                >
-                  <option value="">Semua Tier</option>
-                  {tiers.map(tier => (
-                    <option key={tier.id} value={tier.id}>{tier.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                >
-                  <option value="all">Semua</option>
-                  <option value="active">Aktif</option>
-                  <option value="archived">Diarsipkan</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Results Info and Items Per Page */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-pink-500/20">
-              <div className="text-sm text-gray-400">
-                Menampilkan {paginatedProducts.length} dari {filteredProducts.length} produk
-                {filteredProducts.length !== products.length && ` (difilter dari ${products.length} total)`}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-400">Tampilkan:</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-2 py-1 bg-black border border-pink-500/40 rounded text-white text-sm"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-                <span className="text-sm text-gray-400">per halaman</span>
-              </div>
-            </div>
-          </div>
+      {/* Filters */}
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={totalProducts}
+        filteredItems={filteredProducts.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
 
-          {/* Product List */}
-          <div className="bg-black/60 border border-pink-500/30 rounded-xl overflow-hidden">
-            <div className="grid grid-cols-12 text-xs uppercase text-gray-400 px-4 py-2 border-b border-pink-500/20">
-              <div className="col-span-5">Nama</div>
-              <div className="col-span-2">Game</div>
-              <div className="col-span-2">Harga</div>
-              <div className="col-span-3 text-right">Aksi</div>
-            </div>
-            {loading ? (
-              <div className="p-4 text-gray-400">Memuat...</div>
-            ) : paginatedProducts.length === 0 ? (
-              <div className="p-4 text-gray-400">
-                {filteredProducts.length === 0 && products.length > 0 
-                  ? 'Tidak ada produk yang sesuai dengan filter.'
-                  : 'Belum ada produk.'
-                }
-              </div>
-            ) : (
-              paginatedProducts.map(p => (
-              <div key={p.id} className="grid grid-cols-12 items-center px-4 py-3 border-b border-pink-500/10">
-                <div className="col-span-5 flex items-center gap-3">
-                  <img src={p.image} alt={p.name} className="w-10 h-10 rounded object-cover" />
-                  <div>
-                    <div className="text-white font-medium line-clamp-1">{p.name}</div>
-                    <div className="text-xs text-gray-500 line-clamp-1 flex items-center gap-2">
-                      <span>{p.accountLevel || '-'}</span>
-                      {((p as any).isActive === false || (p as any).archivedAt) && (
-                        <span className="px-2 py-0.5 rounded bg-yellow-900/50 text-amber-300 border border-amber-600/40">Diarsipkan</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="col-span-2 text-gray-300">{p.gameTitleData?.name || p.gameTitle}</div>
-                <div className="col-span-2 text-gray-300">Rp {Number(p.price||0).toLocaleString('id-ID')}</div>
-                <div className="col-span-3 text-right">
-                  <button onClick={() => startEdit(p)} className="px-3 py-1.5 rounded border border-white/20 text-white hover:bg-white/10 mr-2">Edit</button>
-                  {(p as any).isActive === false || (p as any).archivedAt ? (
-                    <button onClick={async()=>{
-                      if (!supabase) return; 
-                      await (supabase as any).from('products').update({ is_active: true, archived_at: null }).eq('id', p.id);
-                      await loadProducts(); // Use optimized reload
-                      push('Produk dipulihkan dari arsip', 'success');
-                    }} className="px-3 py-1.5 rounded border border-green-500/40 text-green-300 hover:bg-green-500/10 mr-2">Pulihkan</button>
-                  ) : (
-                    <button onClick={async()=>{
-                      if (!confirm('Arsipkan produk ini?')) return;
-                      if (!supabase) return; 
-                      await (supabase as any).from('products').update({ is_active: false, archived_at: new Date().toISOString() }).eq('id', p.id);
-                      await loadProducts(); // Use optimized reload
-                      push('Produk diarsipkan', 'success');
-                    }} className="px-3 py-1.5 rounded border border-yellow-500/40 text-amber-300 hover:bg-yellow-500/10 mr-2">Arsipkan</button>
-                  )}
-                  <button onClick={() => handleDelete(p.id)} className="px-3 py-1.5 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10">Hapus</button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-        
-        {/* Enhanced Pagination with Items Per Page */}
-        {!loading && totalPages > 1 && (
-          <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Items per halaman</label>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="bg-black border border-pink-500/40 rounded px-3 py-1 text-white text-sm"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-                <div className="text-sm text-gray-400">
-                  Menampilkan {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalProducts)} dari {totalProducts.toLocaleString()} produk
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 rounded border border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ← Sebelumnya
-                </button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                    let page;
-                    if (totalPages <= 7) {
-                      page = i + 1;
-                    } else if (currentPage <= 4) {
-                      page = i + 1;
-                    } else if (currentPage >= totalPages - 3) {
-                      page = totalPages - 6 + i;
-                    } else {
-                      page = currentPage - 3 + i;
-                    }
-                    
-                    if (page < 1 || page > totalPages) return null;
-                    
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 rounded text-sm ${
-                          page === currentPage
-                            ? 'bg-pink-600 text-white'
-                            : 'border border-white/20 text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded border border-white/20 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Selanjutnya →
-                </button>
-              </div>
-            </div>
+      {/* Products Table */}
+      <AdminDSTable
+        data={filteredProducts}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="No products found"
+        currentPage={currentPage}
+        pageSize={itemsPerPage}
+        totalItems={totalProducts}
+        onPageChange={handlePageChange}
+        footerStart={(
+          <div className="flex items-center gap-2">
+            <select
+              className="input input-sm"
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            >
+              {[20, 50, 100].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
           </div>
         )}
-        </>
-      )}
+        statusTextRenderer={({ total, pageSize }) => (
+          <>Melihat {Math.min(pageSize, total)} / {total}</>
+        )}
+        previousLabel="Sebelumnya"
+        nextLabel="Sesudah"
+        pageLabel={({ currentPage, totalPages }) => (
+          <>Halaman {currentPage} dari {totalPages}</>
+        )}
+      />
 
+      {/* Product Form Modal */}
       {showForm && (
-        <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Nama Produk</label>
-                <input value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Deskripsi</label>
-                <textarea value={form.description} onChange={(e)=>setForm({...form, description:e.target.value})} rows={6} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.price ? formatNumberID(form.price) : ''}
-                    onChange={(e)=>setForm({...form, price: parseNumberID(e.target.value)})}
-                    placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga Asli (opsional)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={form.originalPrice ? formatNumberID(form.originalPrice) : ''}
-                    onChange={(e)=>setForm({...form, originalPrice: parseNumberID(e.target.value)})}
-                    placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Game</label>
-                  <select value={form.gameTitleId} onChange={(e)=>setForm({...form, gameTitleId:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white">
-                    <option value="">-- pilih game --</option>
-                    {games.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Tier</label>
-                  <select value={form.tierId} onChange={(e)=>setForm({...form, tierId:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white">
-                    <option value="">-- pilih tier --</option>
-                    {tiers.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Level Akun (opsional)</label>
-                  <input value={form.accountLevel} onChange={(e)=>setForm({...form, accountLevel:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Detail Akun (opsional)</label>
-                  <input value={form.accountDetails} onChange={(e)=>setForm({...form, accountDetails:e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm text-gray-400">Gambar Produk</label>
-              <ImageUploader
-                images={form.images}
-                onChange={(imgs)=>setForm({...form, images: imgs})}
-                onUpload={(files, onProgress)=>uploadFiles(files, 'products', onProgress)}
-                max={15}
-              />
-              <p className="text-xs text-gray-500">Urutkan dengan drag & drop. Gambar pertama menjadi cover.</p>
-
-              {/* Rental options moved below */}
-            </div>
-          </div>
-
-          {/* Rental section now below the entire form */}
-          <div className="mt-8 border-t border-white/10 pt-6">
-            <div className="text-sm text-gray-400 mb-2">Rental Options</div>
-            <div className="space-y-3">
-              {(form.rentals || []).map((r, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-2 items-center">
-                  <input className="col-span-2 bg-black border border-white/20 rounded px-2 py-1 text-white" placeholder="Durasi (mis. 1 Hari)" value={r.duration} onChange={(e)=>{
-                    const next = [...form.rentals]; next[idx] = { ...r, duration: e.target.value }; setForm({...form, rentals: next});
-                  }} />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="col-span-2 bg-black border border-white/20 rounded px-2 py-1 text-white"
-                    placeholder="Harga"
-                    value={r.price ? formatNumberID(r.price) : ''}
-                    onChange={(e)=>{
-                      const next = [...form.rentals]; next[idx] = { ...r, price: parseNumberID(e.target.value) }; setForm({...form, rentals: next});
-                    }}
-                  />
-                  <button className="text-red-300 border border-red-500/40 rounded px-2 py-1 hover:bg-red-500/10" onClick={()=>{
-                    const next = [...form.rentals]; next.splice(idx,1); setForm({...form, rentals: next});
-                  }}>Hapus</button>
-                  <input className="col-span-5 bg-black border border-white/20 rounded px-2 py-1 text-white" placeholder="Deskripsi (opsional)" value={r.description || ''} onChange={(e)=>{
-                    const next = [...form.rentals]; next[idx] = { ...r, description: e.target.value }; setForm({...form, rentals: next});
-                  }} />
-                </div>
-              ))}
-              <button className="text-white border border-white/20 rounded px-2 py-1 hover:bg-white/10" onClick={()=>setForm({...form, rentals:[...(form.rentals||[]), { duration:'', price:0 }]})}>Tambah Rental</button>
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10">Batal</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60">{saving ? 'Menyimpan...' : 'Simpan'}</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <ProductForm
+              form={form}
+              games={games}
+              tiers={tiers}
+              saving={saving}
+              onFormChange={setForm}
+              onSave={handleSave}
+              onCancel={cancelForm}
+            />
           </div>
         </div>
       )}

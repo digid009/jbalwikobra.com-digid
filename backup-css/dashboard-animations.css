@@ -1,0 +1,15 @@
+/* Centralized dashboard animation keyframes & utility classes */
+
+@keyframes dash-fade-in-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dash-scale-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes dash-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes dash-draw-line { to { stroke-dashoffset: 0; } }
+@keyframes dash-grow-bar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Legacy mapping helpers */
+.chart-line { stroke-dasharray:1000; stroke-dashoffset:1000; animation: dash-draw-line 2s ease-out forwards; }
+.chart-bar { transform-origin:bottom; animation: dash-grow-bar 1.5s ease-out forwards; }
+
+.dash-animate-fade-in-up { animation: dash-fade-in-up .5s cubic-bezier(.22,.61,.36,1) both; }
+.dash-animate-scale-in { animation: dash-scale-in .45s cubic-bezier(.22,.61,.36,1) both; }
+.dash-animate-shimmer { background-size:200% 100%; animation: dash-shimmer 1.2s linear infinite; }

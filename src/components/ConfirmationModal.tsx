@@ -84,7 +84,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       case 'success':
         return <CheckCircle className="text-green-400" size={24} />;
       default:
-        return <Info className="text-blue-400" size={24} />;
+        return <Info className="text-pink-400" size={24} />;
     }
   };
 

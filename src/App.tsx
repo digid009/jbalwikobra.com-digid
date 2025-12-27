@@ -2,11 +2,18 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import Header from './components/Header';
-import MobileBottomNav from './components/MobileBottomNav';
+import PNHeader from './components/public/layout/PNHeader';
+import MobileNavigation from './components/MobileNavigation';
 import ScrollToTop from './components/ScrollToTop';
 import Footer from './components/Footer';
+import PNFooter from './components/public/layout/PNFooter';
 import './App.css';
+import './styles/global-design-system.css';
+import './styles/admin-design-system.css';
+import './styles/admin-readability-enhancement.css';
+import './styles/public-pages.css';
+import './styles/bottom-navigation.css';
+import { forceFixedPositioning } from './utils/forceFixedPositioning';
 import RequireAdmin from './components/RequireAdmin';
 import { ToastProvider } from './components/Toast';
 import { ConfirmationProvider } from './components/ConfirmationModal';
@@ -16,6 +23,9 @@ import { FaviconService } from './services/faviconService';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
+import { enhancedProductService } from './services/enhancedProductService';
+import UserFloatingNotifications from './components/UserFloatingNotifications';
+import FirstVisitVerification from './components/FirstVisitVerification';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -28,8 +38,9 @@ const TraditionalAuthPage = React.lazy(() => import('./pages/TraditionalAuthPage
 const ProductsPage = React.lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'));
 const FlashSalesPage = React.lazy(() => import('./pages/FlashSalesPage'));
-const SellPage = React.lazy(() => import('./pages/SellPage'));
-const PaymentStatusPage = React.lazy(() => import('./pages/PaymentStatusPage'));
+const FlashSaleProductDetailPage = React.lazy(() => import('./pages/FlashSaleProductDetailPage'));
+const PaymentStatus = React.lazy(() => import('./pages/PaymentStatus'));
+const PaymentInterface = React.lazy(() => import('./pages/PaymentInterface'));
 const HelpPage = React.lazy(() => import('./pages/HelpPage'));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const WishlistPage = React.lazy(() => import('./pages/WishlistPage'));
@@ -37,23 +48,16 @@ const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const OrderHistoryPage = React.lazy(() => import('./pages/OrderHistoryPage'));
 const TermsPage = React.lazy(() => import('./pages/TermsPage'));
 const FeedPage = React.lazy(() => import('./pages/FeedPage'));
+const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
 
 // Lazy load admin pages (biggest performance impact)
-const AdminLayout = React.lazy(() => import('./layouts/AdminLayout'));
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminProducts = React.lazy(() => import('./pages/admin/AdminProducts'));
-const AdminFlashSales = React.lazy(() => import('./pages/admin/AdminFlashSales'));
-const AdminUsers = React.lazy(() => import('./pages/admin/AdminUsers'));
-const AdminBanners = React.lazy(() => import('./pages/admin/AdminBanners'));
-const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
-const AdminOrders = React.lazy(() => import('./pages/admin/AdminOrders'));
-const AdminGameTitles = React.lazy(() => import('./pages/admin/AdminGameTitles'));
-const WhatsAppTestPage = React.lazy(() => import('./pages/admin/WhatsAppTestPage'));
-const AdminPosts = React.lazy(() => import('./pages/admin/AdminPosts'));
 
 // Optimized loading component for better perceived performance (iOS skeleton)
 const PageLoader = () => (
-  <div className="min-h-screen bg-ios-background text-ios-text flex items-center justify-center px-6">
+  <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
     <div className="w-full max-w-md">
       <div className="ios-skeleton h-6 w-40 mb-4"></div>
       <div className="ios-skeleton h-4 w-full mb-2"></div>
@@ -122,91 +126,64 @@ function App() {
     onIdle(() => {
       warmImport(() => import('./pages/ProductsPage'));
       warmImport(() => import('./pages/FlashSalesPage'));
-      warmImport(() => import('./pages/SellPage'));
       warmImport(() => import('./pages/ProfilePage'));
+      // Warm product data to minimize egress on navigation
+      enhancedProductService.getAllProducts().catch(() => {});
     }, 1000);
+  }, []);
+
+  // Enforce fixed positioning behavior on mobile (iOS Safari quirks)
+  useEffect(() => {
+    try {
+      forceFixedPositioning();
+    } catch (e) {
+      console.warn('forceFixedPositioning failed:', e);
+    }
   }, []);
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-      <AuthProvider>
-        <WishlistProvider>
-          <ToastProvider>
-            <ConfirmationProvider>
-              <Router
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true
-                }}
-              >
-                <ScrollToTop />
-                <Routes>
-                {/* Admin branch without global header/footer */}
-                <Route element={<RequireAdmin />}>
-                  <Route path="/admin" element={
+      <FirstVisitVerification>
+        <ThemeProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <ToastProvider>
+              <ConfirmationProvider>
+                <Router
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true
+                  }}
+                >
+                  <ScrollToTop />
+                  <Routes>
+                {/* Admin routes - Direct access without sidebar layout */}
+                {process.env.NODE_ENV === 'development' ? (
+                  // Development: Allow admin access without authentication
+                  <Route path="/admin/*" element={
                     <Suspense fallback={<PageLoader />}>
-                      <AdminLayout />
+                      <AdminDashboard />
                     </Suspense>
-                  }>
-                    <Route index element={
+                  } />
+                ) : (
+                  // Production: Require admin authentication
+                  <Route element={<RequireAdmin />}>
+                    <Route path="/admin/*" element={
                       <Suspense fallback={<PageLoader />}>
                         <AdminDashboard />
                       </Suspense>
                     } />
-                    <Route path="products" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminProducts />
-                      </Suspense>
-                    } />
-                    <Route path="flash-sales" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminFlashSales />
-                      </Suspense>
-                    } />
-                    <Route path="game-titles" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminGameTitles />
-                      </Suspense>
-                    } />
-                    <Route path="users" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminUsers />
-                      </Suspense>
-                    } />
-                    <Route path="orders" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminOrders />
-                      </Suspense>
-                    } />
-                    <Route path="banners" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminBanners />
-                      </Suspense>
-                    } />
-                    <Route path="posts" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminPosts />
-                      </Suspense>
-                    } />
-                    <Route path="whatsapp-test" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <WhatsAppTestPage />
-                      </Suspense>
-                    } />
-                    <Route path="settings" element={
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminSettings />
-                      </Suspense>
-                    } />
                   </Route>
-                </Route>
+                )}
                 
-                {/* Public routes with global layout */}
+        {/* Public routes with global layout */}
                 <Route path="*" element={
-                  <div className="App min-h-screen flex flex-col bg-app-dark text-gray-200">
-                    <Header />
-                    <main className="flex-1 with-bottom-nav pt-16 md:pt-20">
+                  <div className="App min-h-screen flex flex-col bg-black text-white relative">
+          {/* New PN public header; keep legacy header import for compatibility in other routes */}
+          <PNHeader />
+                    {/* Floating notifications for public app */}
+                    <UserFloatingNotifications />
+                    <main className="flex-1 pb-4 lg:pt-20 lg:pb-4 overflow-x-hidden min-h-screen">
                       {!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY ? (
                         <div className="max-w-3xl mx-auto p-4">
                           <div className="bg-black/60 border border-yellow-500/40 rounded-lg p-4 mb-4">
@@ -231,36 +208,39 @@ function App() {
                           <Route path="/products" element={<ProductsPage />} />
                           <Route path="/products/:id" element={<ProductDetailPage />} />
                           <Route path="/flash-sales" element={<FlashSalesPage />} />
-                          <Route path="/sell" element={<SellPage />} />
+                          <Route path="/flash-sales/:id" element={<FlashSaleProductDetailPage />} />
                           <Route path="/help" element={<HelpPage />} />
                           <Route path="/feed" element={<FeedPage />} />
                           <Route path="/profile" element={<ProfilePage />} />
                           <Route path="/wishlist" element={<WishlistPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route path="/terms" element={<TermsPage />} />
-                          <Route path="/payment-status" element={<PaymentStatusPage />} />
+                          <Route path="/payment-status" element={<PaymentStatus />} />
+                          <Route path="/payment" element={<PaymentInterface />} />
                           <Route path="/orders" element={<OrderHistoryPage />} />
-                          <Route path="*" element={
-                            <div className="min-h-screen flex items-center justify-center">
-                              <p className="text-gray-600">Halaman tidak ditemukan</p>
-                            </div>
-                          } />
+                          <Route path="/notifications" element={<NotificationsPage />} />
+                          {/* Hidden design system showcase - not linked in navigation */}
+                          <Route path="/internal/design-system" element={<DesignSystemShowcase />} />
+                          {/* 404 Not Found - Catch all routes */}
+                          <Route path="*" element={<NotFoundPage />} />
                         </Routes>
                       </Suspense>
                     </main>
-                    <Footer />
-                    <MobileBottomNav />
+                    {/* New PN public footer */}
+                    <PNFooter />
+                    <MobileNavigation />
                   </div>
                 } />
               </Routes>
-              <Analytics />
-              <SpeedInsights />
-            </Router>
-            </ConfirmationProvider>
-          </ToastProvider>
-        </WishlistProvider>
-  </AuthProvider>
-  </ThemeProvider>
+                <Analytics />
+                <SpeedInsights />
+              </Router>
+              </ConfirmationProvider>
+            </ToastProvider>
+          </WishlistProvider>
+        </AuthProvider>
+        </ThemeProvider>
+      </FirstVisitVerification>
     </ErrorBoundary>
   );
 }

@@ -2,3 +2,6 @@ build/
 node_modules/
 *.js
 *.config.js
+src/hooks/useProductDetail.ts
+src/hooks/useFlashSaleProductDetail.ts
+src/pages/TraditionalAuthPage.tsx

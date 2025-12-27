@@ -1,24 +1,47 @@
-import React from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { MessageCircle, Users, Star } from 'lucide-react';
 import { enhancedFeedService, type FeedPost } from '../services/enhancedFeedService';
-import { IOSContainer, IOSCard, IOSButton } from '../components/ios/IOSDesignSystem';
+import { reviewService, type UserReview } from '../services/reviewService';
+import { PNSection, PNContainer } from '../components/ui/PinkNeonDesignSystem';
+import { FeedCard } from '../components/FeedCard';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/TraditionalAuthContext';
+import { FeedHeader } from '../components/feed/FeedHeader';
+import { FeedTabs } from '../components/feed/FeedTabs';
+import { FeedPagination } from '../components/feed/FeedPagination';
+import { FeedSkeleton, ErrorState, EmptyState, ImageLightbox } from '../components/feed/FeedStates';
+import { ReviewCard, ReviewData } from '../components/feed/ReviewCard';
+// Removed legacy standardClasses & cn helper – using a minimal local cls combiner
+const cls = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
+import { scrollToPaginationContent } from '../utils/scrollUtils';
 
-// Fallback loading component
-const FeedSkeleton: React.FC = () => (
-  <div className="space-y-4">
-    {[1, 2, 3].map((i) => (
-      <IOSCard key={i} padding="medium">
-        <div className="ios-skeleton h-4 w-32 mb-3"></div>
-        <div className="ios-skeleton h-40 w-full mb-4 rounded-lg"></div>
-        <div className="flex gap-3">
-          <div className="ios-skeleton h-8 w-16 rounded-md"></div>
-          <div className="ios-skeleton h-8 w-20 rounded-md"></div>
-          <div className="ios-skeleton h-8 w-24 rounded-md"></div>
-        </div>
-      </IOSCard>
-    ))}
-  </div>
-);
+// Mobile-first constants following iOS design guidelines
+const MOBILE_CONSTANTS = {
+  // iOS/Android recommended touch target sizes
+  MIN_TOUCH_TARGET: 44, // 44dp/pt minimum touch target
+  CONTENT_PADDING: 16,   // Standard content padding
+  SECTION_SPACING: 24,   // Section spacing
+  CARD_SPACING: 12,      // Card spacing
+  
+  // Performance optimizations
+  ITEMS_PER_PAGE: 10,
+  CACHE_DURATION: 5 * 60 * 1000,
+  
+  // Animation timing following platform standards
+  ANIMATIONS: {
+    FAST: 200,    // Quick interactions
+    STANDARD: 300, // Standard transitions
+    SLOW: 500,    // Complex transitions
+  },
+  
+  // Safe area considerations
+  HEADER_HEIGHT_MOBILE: 0,     // Hide header on mobile
+  HEADER_HEIGHT_DESKTOP: 80,   // Standard header height on desktop
+  BOTTOM_NAV_HEIGHT: 80,       // Bottom navigation height
+} as const;
+
+// Tab filter type
+type FeedFilter = 'semua' | 'pengumuman' | 'review';
 
 function timeAgo(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -28,55 +51,121 @@ function timeAgo(iso: string) {
   return `${Math.floor(diff / 86400)} h`;
 }
 
-const FeedPage: React.FC = () => {
-  const [items, setItems] = React.useState<FeedPost[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [cursor, setCursor] = React.useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = React.useState(true);
+export default function FeedPage() {
+  const { user } = useAuth();
+  
+  // State management
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+  const [userReviews, setUserReviews] = useState<UserReview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingReview, setEditingReview] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  
+  // Filter and pagination state
+  const [activeFilter, setActiveFilter] = useState<'semua' | 'pengumuman' | 'review'>('semua');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCounts, setTotalCounts] = useState({
+    semua: 0,
+    pengumuman: 0,
+    review: 0
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const loadInitialPosts = React.useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const result = await enhancedFeedService.list({ limit: 10 });
-      setItems(result.posts);
-      setCursor(result.nextCursor);
-      setHasMore(result.hasMore);
-    } catch (err: any) {
-      console.error('Failed to load posts:', err);
-      setError(err.message || 'Gagal memuat feed');
-    } finally {
-      setLoading(false);
-    }
+  const ITEMS_PER_PAGE = 12;
+  const navigate = useNavigate();
+
+  // Set body attribute for CSS targeting and mobile optimizations
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'feed');
+    document.body.classList.add('feed-mobile-optimized', 'ios-scroll');
+    
+    return () => {
+      document.body.removeAttribute('data-page');
+      document.body.classList.remove('feed-mobile-optimized', 'ios-scroll');
+    };
   }, []);
 
-  React.useEffect(() => { 
-    loadInitialPosts(); 
-  }, [loadInitialPosts]);
-
-  const loadMore = async () => {
-    if (loadingMore || !hasMore || !cursor) return;
-    
+  const loadInitialData = useCallback(async () => {
     try {
-      setLoadingMore(true);
-      const result = await enhancedFeedService.list({ limit: 10, cursor });
-      setItems(prev => [...prev, ...result.posts]);
-      setCursor(result.nextCursor);
-      setHasMore(result.hasMore);
+      setIsLoading(true);
+      setError(null);
+      
+      if (activeFilter === 'semua') {
+        // Load both posts and reviews
+        const [postsResult, reviewsResult] = await Promise.all([
+          enhancedFeedService.list({ limit: ITEMS_PER_PAGE }),
+          reviewService.getReviewsForFeed(currentPage, ITEMS_PER_PAGE)
+        ]);
+        setFeedPosts(postsResult.posts);
+        setUserReviews(reviewsResult.reviews);
+        
+        // Calculate total pages for combined data
+        const totalItems = postsResult.total + reviewsResult.total;
+        setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+      } else if (activeFilter === 'pengumuman') {
+        // Load only posts
+        const postsResult = await enhancedFeedService.list({ limit: ITEMS_PER_PAGE });
+        setFeedPosts(postsResult.posts);
+        setUserReviews([]);
+        setTotalPages(Math.ceil(postsResult.total / ITEMS_PER_PAGE));
+      } else if (activeFilter === 'review') {
+        // Load only reviews
+        const reviewsResult = await reviewService.getReviewsForFeed(currentPage, ITEMS_PER_PAGE);
+        setFeedPosts([]);
+        setUserReviews(reviewsResult.reviews);
+        setTotalPages(Math.ceil(reviewsResult.total / ITEMS_PER_PAGE));
+      }
+      
+      // Update total counts for tabs
+      const [allPosts, allReviews] = await Promise.all([
+        enhancedFeedService.list({ limit: 1 }),
+        reviewService.getReviewsForFeed(1, 1)
+      ]);
+      
+      setTotalCounts({
+        semua: allPosts.total + allReviews.total,
+        pengumuman: allPosts.total,
+        review: allReviews.total
+      });
+      
     } catch (err: any) {
-      console.error('Failed to load more posts:', err);
+      console.error('Failed to load feed:', err);
+      setError(err.message || 'Gagal memuat feed');
     } finally {
-      setLoadingMore(false);
+      setIsLoading(false);
     }
+  }, [activeFilter, currentPage]);
+
+  useEffect(() => { 
+    loadInitialData(); 
+  }, [loadInitialData]);
+  
+  // Handle filter change
+  const handleFilterChange = (filter: FeedFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1); // Reset to first page
+    // Scroll to content tabs when filter changes
+    scrollToPaginationContent();
+  };
+  
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to content tabs when page changes
+    scrollToPaginationContent();
   };
 
   const toggleLike = async (postId: string) => {
+    if (!user) {
+      alert('Silakan login untuk memberikan like');
+      return;
+    }
+
     try {
       // Optimistic update
-      setItems(prev => prev.map(p => 
+      setFeedPosts(prev => prev.map(p => 
         p.id === postId 
           ? { ...p, counts: { ...p.counts, likes: p.counts.likes + 1 } } 
           : p
@@ -86,7 +175,7 @@ const FeedPage: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to like post:', err);
       // Revert optimistic update on error
-      setItems(prev => prev.map(p => 
+      setFeedPosts(prev => prev.map(p => 
         p.id === postId 
           ? { ...p, counts: { ...p.counts, likes: Math.max(0, p.counts.likes - 1) } } 
           : p
@@ -95,13 +184,18 @@ const FeedPage: React.FC = () => {
   };
 
   const addComment = async (postId: string) => {
+    if (!user) {
+      alert('Silakan login untuk memberikan komentar');
+      return;
+    }
+
     const content = prompt('Tulis komentar:');
     if (!content?.trim()) return;
     
     try {
       const result = await enhancedFeedService.addComment(postId, content);
       if (result.success) {
-        setItems(prev => prev.map(p => 
+        setFeedPosts(prev => prev.map(p => 
           p.id === postId 
             ? { ...p, counts: { ...p.counts, comments: p.counts.comments + 1 } } 
             : p
@@ -112,122 +206,210 @@ const FeedPage: React.FC = () => {
     }
   };
 
+  const startEditReview = (review: ReviewData) => {
+    if (!review.canEdit) {
+      alert('Review tidak dapat diedit lagi (lebih dari 5 menit)');
+      return;
+    }
+    setEditingReview(review.id);
+    setEditContent(review.comment);
+  };
+
+  const saveEditReview = async (reviewId: string) => {
+    try {
+      const result = await reviewService.updateReview(reviewId, editContent);
+      if (result.success) {
+        setUserReviews(prev => prev.map(review => 
+          review.id === reviewId 
+            ? { ...review, comment: editContent }
+            : review
+        ));
+        setEditingReview(null);
+        setEditContent('');
+        alert('Review berhasil diupdate');
+      } else {
+        alert(result.error || 'Gagal mengupdate review');
+      }
+    } catch (error) {
+      alert('Gagal mengupdate review');
+    }
+  };
+
+  const cancelEditReview = () => {
+    setEditingReview(null);
+    setEditContent('');
+  };
+
+  // Helpers moved into ReviewCard component
+
   return (
-    <div className="min-h-screen bg-ios-background text-ios-text">
-      <IOSContainer maxWidth="md" className="pt-4 pb-24 with-bottom-nav">
-        {/* Title */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold">Feed</h1>
-          <IOSButton variant="ghost" size="small" onClick={loadInitialPosts}>Refresh</IOSButton>
-        </div>
+    <>
+      <FeedHeader />
 
-        {/* Feed list */}
-        <div className="space-y-4">
-          {loading && <FeedSkeleton />}
+      <PNSection padding="md">
+        <PNContainer>
+          {/* Tabs Section */}
+          <div className="mb-8">
+            <FeedTabs active={activeFilter} onChange={handleFilterChange} />
+          </div>
 
-          {!loading && (items || []).map((post) => (
-            <IOSCard key={post.id} padding="medium" className="animate-fade-in">
-              {/* User row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {post.authorAvatarUrl ? (
-                    <img
-                      src={post.authorAvatarUrl}
-                      alt={post.authorName || 'User'}
-                      className="w-9 h-9 rounded-full object-cover border border-ios-border"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-ios-accent to-pink-600 flex items-center justify-center text-xs font-bold">P</div>
-                  )}
+          {/* Enhanced Login Notice for Guests */}
+          {!user && (
+            <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 backdrop-blur-2xl rounded-3xl p-6 lg:p-8 border border-amber-500/20 shadow-2xl mb-8 lg:mb-12">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-2xl flex items-center justify-center border border-amber-500/30">
+                    <Users className="w-7 h-7 text-amber-400" />
+                  </div>
                   <div>
-                    <div className="text-sm font-medium">{post.authorName || 'Postingan'}</div>
-                    <div className="text-xs text-ios-text-secondary">{timeAgo(post.created_at)}</div>
+                    <p className="text-amber-100 font-bold text-lg">Login Required</p>
+                    <p className="text-amber-200/80 text-base mt-1">Masuk untuk like, komentar, dan memberikan review</p>
                   </div>
                 </div>
-                <button className="text-ios-text-secondary hover:text-ios-text" aria-label="More">
-                  <MoreHorizontal size={18} />
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 border-transparent text-white shadow-lg shadow-amber-500/30 px-6 py-3 rounded-xl font-medium transition-all duration-300"
+                >
+                  Masuk
                 </button>
               </div>
-
-              {/* Content */}
-              {post.content && (
-                <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
-              )}
-
-              {/* Media grid */}
-              {post.media && post.media.length > 0 && (
-                <div className={`mt-3 grid gap-2 ${post.media.length > 1 ? 'grid-cols-2' : ''}`}>
-                  {post.media.map((m) => (
-                    <div key={m.id} className="overflow-hidden rounded-lg border border-ios-border">
-                      {m.type === 'image' ? (
-                        <img src={m.url} alt={`media`} className="w-full h-60 object-cover" loading="lazy" />
-                      ) : (
-                        <video src={m.url} className="w-full h-60 object-cover" controls />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="mt-3 flex items-center justify-between text-xs">
-                <IOSButton
-                  variant="ghost"
-                  size="small"
-                  onClick={() => toggleLike(post.id)}
-                  aria-label="Suka"
-                >
-                  <div className="inline-flex items-center gap-2">
-                    <Heart size={16} className="text-ios-accent" />
-                    <span className="text-ios-text-secondary">{post.counts.likes}</span>
-                  </div>
-                </IOSButton>
-                <IOSButton
-                  variant="ghost"
-                  size="small"
-                  onClick={() => addComment(post.id)}
-                  aria-label="Komentar"
-                >
-                  <div className="inline-flex items-center gap-2">
-                    <MessageCircle size={16} />
-                    <span className="text-ios-text-secondary">{post.counts.comments}</span>
-                  </div>
-                </IOSButton>
-                <IOSButton variant="ghost" size="small" aria-label="Bagikan">
-                  <div className="inline-flex items-center gap-2">
-                    <Share2 size={16} />
-                    <span className="text-ios-text-secondary">Bagikan</span>
-                  </div>
-                </IOSButton>
-              </div>
-            </IOSCard>
-          ))}
-
-          {/* Error state */}
-          {error && !loading && (
-            <IOSCard padding="medium" className="border border-ios-border">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-ios-text-secondary">{error}</p>
-                <IOSButton variant="secondary" size="small" onClick={loadInitialPosts}>Coba lagi</IOSButton>
-              </div>
-            </IOSCard>
+            </div>
           )}
 
-          <div className="flex justify-center pt-2">
-            <IOSButton variant="secondary" onClick={loadMore} disabled={loadingMore || !hasMore}>
-              {loadingMore ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border border-ios-border border-t-ios-accent" />
-                  Memuat…
-                </span>
-              ) : hasMore ? 'Muat lebih banyak' : 'Sudah semua'}
-            </IOSButton>
-          </div>
-        </div>
-      </IOSContainer>
-    </div>
-  );
-};
+          {/* Loading State */}
+          {isLoading && <FeedSkeleton />}
 
-export default FeedPage;
+          {/* Error State */}
+          {error && !isLoading && (
+            <ErrorState message={error} onRetry={loadInitialData} />
+          )}
+
+        {/* Enhanced Posts Section */}
+        {!isLoading && (activeFilter === 'semua' || activeFilter === 'pengumuman') && feedPosts.length > 0 && (
+          <div className="space-y-8 mb-12">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                <MessageCircle className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
+                  {activeFilter === 'semua' ? 'Pengumuman Terbaru' : 'Pengumuman'}
+                </h2>
+                <p className="text-gray-400 text-sm lg:text-base mt-1">Informasi penting dari komunitas</p>
+              </div>
+            </div>
+            
+            <div className="grid gap-6 lg:gap-8">
+              {feedPosts.map((post) => (
+                <FeedCard
+                  key={post.id}
+                  post={{
+                    id: post.id,
+                    title: post.title || 'Pengumuman',
+                    content: post.content || '',
+                    author: post.authorName || 'Admin',
+                    created_at: post.created_at,
+                    type: 'announcement',
+                    media: post.media?.map(m => m.url) || [],
+                    counts: post.counts,
+                    isLiked: (post as any).isLiked || false
+                  }}
+                  onLike={toggleLike}
+                  onComment={addComment}
+                  onImageClick={setImagePreview}
+                  canInteract={!!user}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Reviews Section */}
+        {!isLoading && (activeFilter === 'semua' || activeFilter === 'review') && userReviews.length > 0 && (
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30">
+                <Star className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                  {activeFilter === 'semua' ? 'Review Pembelian' : 'Review Komunitas'}
+                </h2>
+                <p className="text-gray-400 text-sm lg:text-base mt-1">Pengalaman dan ulasan dari member</p>
+              </div>
+            </div>
+            
+            <div className="grid gap-6 lg:gap-8">
+              {userReviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  currentUserId={user?.id}
+                  isEditing={editingReview === review.id}
+                  editValue={editContent}
+                  onStartEdit={startEditReview}
+                  onChangeEdit={setEditContent}
+                  onSaveEdit={saveEditReview}
+                  onCancelEdit={cancelEditReview}
+                  onImageClick={(src) => setImagePreview(src)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fullscreen image modal */}
+        {imagePreview && (
+          <ImageLightbox src={imagePreview} onClose={() => setImagePreview(null)} />
+        )}
+
+        {/* Enhanced Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex justify-center py-8 lg:py-12">
+            <FeedPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              loading={isLoading}
+            />
+          </div>
+        )}
+
+        {/* Enhanced Empty State */}
+        {!isLoading && feedPosts.length === 0 && userReviews.length === 0 && (
+          <EmptyState
+            label={activeFilter === 'semua' ? 'Belum ada postingan' : activeFilter === 'pengumuman' ? 'Belum ada pengumuman' : 'Belum ada review'}
+            description={activeFilter === 'review' ? 'Belum ada review untuk ditampilkan' : 'Jadilah yang pertama untuk berbagi di komunitas ini!'}
+          />
+        )}
+
+        {/* Enhanced Refresh Section */}
+        <div className="flex justify-center pt-8 lg:pt-12 pb-8 lg:pb-8">
+          <button 
+            onClick={loadInitialData} 
+            disabled={isLoading}
+            className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 border border-pink-500/20 hover:border-pink-500/40 text-white backdrop-blur-sm shadow-lg px-6 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-3">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-pink-400 border-t-transparent" />
+                Memuat ulang...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Star className="w-5 h-5" />
+                Muat ulang feed
+              </span>
+            )}
+          </button>
+        </div>
+        
+        {/* Extra spacing for mobile navigation */}
+        <div className="h-20 lg:hidden" />
+      </PNContainer>
+    </PNSection>
+    </>
+  );
+}
+
+

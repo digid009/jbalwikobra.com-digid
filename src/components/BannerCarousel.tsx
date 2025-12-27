@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { enhancedBannerService } from '../services/enhancedBannerService';
+import { enhancedBannerService, type Banner } from '../services/enhancedBannerService';
 
 interface Slide {
   id: string;
@@ -9,6 +9,16 @@ interface Slide {
   ctaText?: string;
   ctaLink?: string;
 }
+
+// Convert Banner to Slide
+const bannerToSlide = (banner: Banner): Slide => ({
+  id: banner.id,
+  image: banner.image_url,
+  title: banner.title,
+  subtitle: banner.subtitle || undefined,
+  ctaLink: banner.link_url || undefined,
+  ctaText: banner.link_url ? 'Lihat Detail' : undefined,
+});
 
 // Default fallback slides
 const defaultSlides: Slide[] = [
@@ -55,20 +65,11 @@ const BannerCarousel: React.FC<Props> = ({ slides }) => {
         setLoading(true);
         setError(null);
         
-        const banners = await enhancedBannerService.list();
+        const banners = await enhancedBannerService.getActiveBanners();
         
         if (mounted) {
-          // Convert banners to slides
-          const convertedSlides: Slide[] = banners
-            .filter(banner => banner.isActive)
-            .map(banner => ({
-              id: banner.id,
-              image: banner.imageUrl,
-              title: banner.title,
-              subtitle: banner.subtitle,
-              ctaText: banner.linkUrl ? 'Lihat Detail' : undefined,
-              ctaLink: banner.linkUrl
-            }));
+          // Convert banners to slides using the converter function
+          const convertedSlides = banners.map(bannerToSlide);
           
           setDbSlides(convertedSlides.length > 0 ? convertedSlides : []);
         }
@@ -92,10 +93,12 @@ const BannerCarousel: React.FC<Props> = ({ slides }) => {
     };
   }, []);
 
-  // Determine which slides to show
-  const resolvedSlides = (dbSlides && dbSlides.length > 0)
-    ? dbSlides
+  // Determine which slides to show - prioritize DB slides always
+  const resolvedSlides = dbSlides !== null
+    ? dbSlides // Always use DB slides even if empty
     : (slides && slides.length > 0 ? slides : defaultSlides);
+
+  // Production: removed verbose slide logging
 
   const count = Math.min(resolvedSlides.length, 3);
 
@@ -194,8 +197,8 @@ const BannerCarousel: React.FC<Props> = ({ slides }) => {
               onClick={() => setIndex(i)}
               className={`h-2 sm:h-2.5 rounded-full transition-all duration-200 ios-touch-target ${
                 i === index 
-                  ? 'w-4 sm:w-6 bg-white shadow-lg' 
-                  : 'w-2 sm:w-2.5 bg-white/70 hover:bg-white/90'
+                  ? 'w-4 sm:w-6 bg-black shadow-lg' 
+                  : 'w-2 sm:w-2.5 bg-gray-900/70 hover:bg-gray-900/90'
               }`}
             />
           ))}

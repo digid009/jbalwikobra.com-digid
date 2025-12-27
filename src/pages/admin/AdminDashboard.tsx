@@ -1,57 +1,222 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AdminStats, adminService } from '../../services/adminService';
+import { AdminTab } from './components/structure/adminTypes';
+import DashboardLayout from './layout/DashboardLayout';
+import { DashboardSection } from './layout/DashboardPrimitives';
+import '../../styles/dashboard.css';
+import { ThemeProvider } from '../../contexts/ThemeContext';
+import { useLastVisitedTab } from './hooks/usePersistentState';
+import { performanceMonitor } from './utils/performanceMonitor';
+import { useAnnouncement } from './utils/accessibility';
 
-const StatCard: React.FC<{ label: string; value: string; hint?: string }> = ({ label, value, hint }) => (
-  <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-    <div className="text-sm text-gray-400">{label}</div>
-    <div className="text-2xl font-bold text-white mt-1">{value}</div>
-    {hint && <div className="text-xs text-gray-500 mt-1">{hint}</div>}
-  </div>
-);
+// Lazy load all tab components for code splitting
+const AdminDashboardContentV2 = lazy(() => import('./components/AdminDashboardContentV2'));
+const AdminOrdersV2 = lazy(() => import('./AdminOrdersV2'));
+const AdminUsersV2 = lazy(() => import('./AdminUsersV2'));
+const AdminProductsV2 = lazy(() => import('./AdminProductsV2'));
+const AdminFeedManagement = lazy(() => import('./components/AdminFeedManagement'));
+const AdminBannersManagement = lazy(() => import('./components/AdminBannersManagement').then(m => ({ default: m.AdminBannersManagement })));
+const AdminFlashSalesManagement = lazy(() => import('../../components/admin/flash-sales').then(m => ({ default: m.AdminFlashSalesManagement })));
+const AdminReviewsManagement = lazy(() => import('./components/AdminReviewsManagement').then(m => ({ default: m.AdminReviewsManagement })));
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage').then(m => ({ default: m.AdminNotificationsPage })));
+const AdminHeaderV2 = lazy(() => import('./components/AdminHeaderV2'));
+const AdminWhatsAppSettings = lazy(() => import('./AdminWhatsAppSettings'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const DataDiagnosticPage = lazy(() => import('../DataDiagnosticPage'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
 
 const AdminDashboard: React.FC = () => {
-  const [counts, setCounts] = useState({ products: 0, flash: 0, orders7: 0, revenue7: 0 });
-  useEffect(()=>{
-    (async()=>{
-      try {
-        // Fetch dashboard data from consolidated admin API endpoint
-        const response = await fetch('/api/admin?action=dashboard');
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch dashboard data');
-        }
-        
-        const data = result.data;
-        setCounts({ 
-          products: data.products, 
-          flash: data.flashSales, 
-          orders7: data.orders7days, 
-          revenue7: data.revenue7days 
-        });
-      } catch (error) {
-        console.error('Dashboard fetch error:', error);
-        // Set default values on error
-        setCounts({ products: 0, flash: 0, orders7: 0, revenue7: 0 });
-      }
-    })();
-  }, []);
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-400">Ringkasan performa toko Anda</p>
-      </div>
+  const location = useLocation();
+  const navigate = useNavigate();
+  const announce = useAnnouncement();
+  
+  // Persistent state for last visited tab
+  const [lastVisitedTab, setLastVisitedTab] = useLastVisitedTab('dashboard');
+  
+  // Extract current tab from URL path
+  const getTabFromPath = useCallback((): AdminTab => {
+    const path = location.pathname.split('/').pop() || 'dashboard';
+    const validTabs: AdminTab[] = ['dashboard', 'orders', 'users', 'products', 'feed', 'banners', 'flash-sales', 'reviews', 'notifications', 'settings'];
+    const isValidTab = validTabs.some(tab => tab === path);
+    return isValidTab ? (path as AdminTab) : 'dashboard';
+  }, [location.pathname]);
+  
+  const [activeTab, setActiveTab] = useState<AdminTab>(getTabFromPath());
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasStatsError, setHasStatsError] = useState(false);
+  const [statsErrorMessage, setStatsErrorMessage] = useState('');
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  <StatCard label="Produk Aktif" value={String(counts.products)} hint="Termasuk flash sale" />
-  <StatCard label="Flash Sale Aktif" value={String(counts.flash)} hint="Berakhir >= sekarang" />
-  <StatCard label="Pesanan 7 Hari" value={String(counts.orders7)} />
-  <StatCard label="Pendapatan 7 Hari" value={`Rp ${counts.revenue7.toLocaleString('id-ID')}`} />
+  // Update activeTab when URL changes and announce to screen readers
+  useEffect(() => {
+    const newTab = getTabFromPath();
+    setActiveTab(newTab);
+    setLastVisitedTab(newTab);
+    
+    // Announce tab change to screen readers
+    const tabName = newTab.replace('-', ' ');
+    announce(`Navigated to ${tabName} section`, 'polite');
+  }, [location.pathname, getTabFromPath, setLastVisitedTab, announce]);
+
+  // Navigate to new tab using React Router with performance monitoring
+  const handleTabChange = useCallback((tab: AdminTab) => {
+    performanceMonitor.startMeasure(`navigate_to_${tab}`);
+    navigate(`/admin/${tab}`, { replace: false });
+    performanceMonitor.endMeasure(`navigate_to_${tab}`);
+  }, [navigate]);
+
+  // Listen for global open-command-palette events (triggered by header button or keyboard shortcut)
+  useEffect(() => {
+    const handler = () => setIsCommandOpen(true);
+    window.addEventListener('open-command-palette', handler as EventListener);
+    return () => window.removeEventListener('open-command-palette', handler as EventListener);
+  }, []);
+
+  // Theme toggle event from command palette
+  useEffect(() => {
+    const themeHandler = () => {
+      try {
+        // Dispatch click on existing ThemeToggle button if present
+        const btn = document.querySelector('[aria-label^="Switch to "]') as HTMLButtonElement | null;
+        btn?.click();
+      } catch {}
+    };
+    window.addEventListener('toggle-theme', themeHandler as EventListener);
+    return () => window.removeEventListener('toggle-theme', themeHandler as EventListener);
+  }, []);
+
+  useEffect(() => {
+    // Still try to load stats; adminService has safe fallbacks when Supabase is missing
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    performanceMonitor.startMeasure('load_dashboard_stats');
+    try {
+      setLoading(true);
+      setHasStatsError(false);
+      setStatsErrorMessage('');
+      const statsData = await adminService.getDashboardStats();
+      setStats(statsData);
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: true });
+    } catch (error: any) {
+      console.error('Failed to load admin stats:', error);
+      setHasStatsError(true);
+      setStatsErrorMessage(error.message || 'Failed to load dashboard statistics');
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to load dashboard statistics', 'assertive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshStats = async () => {
+    performanceMonitor.startMeasure('refresh_dashboard_stats');
+    try {
+      setLoading(true);
+      setHasStatsError(false);
+      setStatsErrorMessage('');
+      
+      // Clear cache and reload
+      adminService.clearStatsCache();
+      localStorage.removeItem('adminCache'); // Clear any localStorage cache
+      
+      const statsData = await adminService.getDashboardStats();
+      setStats(statsData);
+      
+      console.log('✅ Stats refreshed successfully:', statsData);
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: true });
+      announce('Dashboard statistics refreshed', 'polite');
+    } catch (error: any) {
+      console.error('Failed to refresh admin stats:', error);
+      setHasStatsError(true);
+      setStatsErrorMessage(error.message || 'Failed to refresh dashboard statistics');
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to refresh dashboard statistics', 'assertive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderContent = () => {
+    // Add diagnostic page for development
+    if (window.location.search.includes('diagnostic')) {
+      return <DataDiagnosticPage />;
+    }
+
+    switch (activeTab) {
+      case 'dashboard':
+        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={handleTabChange} />;
+      case 'orders':
+        return <AdminOrdersV2 />;
+      case 'users':
+        return <AdminUsersV2 />;
+      case 'products':
+        return <AdminProductsV2 />;
+      case 'feed':
+        return <AdminFeedManagement />;
+      case 'banners':
+        return <AdminBannersManagement />;
+      case 'flash-sales':
+        return <AdminFlashSalesManagement onRefresh={loadStats} />;
+      case 'reviews':
+        return <AdminReviewsManagement />;
+      case 'notifications':
+        return <AdminNotificationsPage />;
+      case 'settings':
+        return <AdminSettings />;
+      default:
+        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={handleTabChange} />;
+    }
+  };
+
+  // Loading fallback component for Suspense
+  const LoadingFallback = () => (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-400 text-lg">Loading...</p>
       </div>
     </div>
+  );
+
+  return (
+    <ThemeProvider>
+      <div className="admin-dark bg-black min-h-screen">
+      <DashboardLayout
+        fullWidth
+        showFooter={false}
+        className="bg-black"
+        header={
+          <Suspense fallback={<div className="h-16 bg-black border-b border-gray-800"></div>}>
+            <AdminHeaderV2
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              stats={stats}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              onRefreshStats={refreshStats}
+            />
+          </Suspense>
+        }
+      >
+        <Suspense fallback={<LoadingFallback />}>
+          {renderContent()}
+        </Suspense>
+        <Suspense fallback={null}>
+          <CommandPalette
+            open={isCommandOpen}
+            onClose={() => setIsCommandOpen(false)}
+            onNavigate={(tab) => { handleTabChange(tab); setIsCommandOpen(false); }}
+            onRefreshStats={loadStats}
+          />
+        </Suspense>
+      </DashboardLayout>
+      </div>
+    </ThemeProvider>
   );
 };
 

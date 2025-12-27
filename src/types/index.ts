@@ -51,15 +51,12 @@ export interface Product {
   originalPrice?: number;
   image: string;
   images?: string[];
-  category?: string; // Keep for backward compatibility (optional now)
-  gameTitle: string; // Keep for backward compatibility
-  tier?: ProductTier; // Keep for backward compatibility
+  categoryId: string; // Foreign key (required after migration)
   tierId?: string; // New foreign key
   gameTitleId?: string; // New foreign key
   tierData?: Tier; // Populated tier data
   gameTitleData?: GameTitle; // Populated game title data
-  accountLevel?: string;
-  accountDetails?: string;
+  categoryData?: Category; // Populated category data
   isFlashSale: boolean;
   flashSaleEndTime?: string;
   hasRental: boolean;
@@ -94,13 +91,13 @@ export interface Banner {
   id: string;
   title: string;
   subtitle?: string;
-  imageUrl: string;
-  linkUrl?: string;
-  ctaText?: string; // optional CTA label
-  sortOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  image_url: string;
+  link_url?: string;
+  cta_text?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WebsiteSettings {
@@ -115,8 +112,20 @@ export interface WebsiteSettings {
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
+  youtubeUrl?: string;
+  twitterUrl?: string;
   heroTitle?: string;
   heroSubtitle?: string;
+  companyDescription?: string;
+  supportEmail?: string;
+  businessHours?: string;
+  footerCopyrightText?: string;
+  newsletterEnabled?: boolean;
+  socialMediaEnabled?: boolean;
+  topupGameUrl?: string; // URL for Top Up Game feature
+  whatsappChannelUrl?: string; // URL for WhatsApp channel
+  heroButtonUrl?: string; // URL for new hero button
+  jualAkunWhatsappUrl?: string; // URL for jual akun WhatsApp button
   updatedAt?: string;
 }
 
@@ -124,6 +133,7 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
+  whatsapp?: string; // Optional WhatsApp number for direct consultation
 }
 
 export interface Order {

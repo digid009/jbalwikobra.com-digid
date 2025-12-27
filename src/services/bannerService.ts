@@ -1,183 +1,44 @@
-import { supabase } from './supabase';
+import { adminService } from './adminService';
 import { Banner } from '../types';
-import { uploadFile, deletePublicUrls } from './storageService';
 
-const sampleBanners: Banner[] = [
-  {
-    id: '1',
-    title: 'Promo Spesial Akhir Pekan',
-    subtitle: 'Diskon s.d. 50% untuk akun pilihan',
-    imageUrl: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=1200',
-    linkUrl: '/flash-sales',
-    sortOrder: 1,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+// BannerService as wrapper around adminService for backward compatibility
+export const BannerService = {
+  async list(): Promise<Banner[]> {
+    try {
+      const result = await adminService.getBanners(1, 100); // Get first 100 banners
+      return result.data || [];
+    } catch (error) {
+      console.error('BannerService.list error:', error);
+      return [];
+    }
   },
-];
 
-let hasBannerCtaText: boolean | null = null;
-
-async function ensureBannerCapabilities(): Promise<{ ctaText: boolean }> {
-  if (!supabase) return { ctaText: false };
-  if (hasBannerCtaText === null) {
+  async create(input: Omit<Banner, 'id' | 'created_at' | 'updated_at'>): Promise<Banner | null> {
     try {
-      const { error } = await (supabase as any)
-        .from('banners')
-        .select('cta_text')
-        .limit(1);
-      hasBannerCtaText = !error;
-    } catch {
-      hasBannerCtaText = false;
-    }
-  }
-  return { ctaText: !!hasBannerCtaText };
-}
-
-export class BannerService {
-  // Simple in-memory cache for banners to reduce egress
-  private static cache: { v: Banner[]; t: number } | null = null;
-  private static TTL = 5 * 60 * 1000; // 5 minutes
-
-  static async list(): Promise<Banner[]> {
-    try {
-      if (this.cache && Date.now() - this.cache.t < this.TTL) {
-        return this.cache.v;
-      }
-      if (!supabase) return sampleBanners;
-      const { data, error } = await supabase
-        .from('banners')
-        .select('*')
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-      const result = (data || []).map((b: any) => ({
-        id: b.id,
-        title: b.title,
-        subtitle: b.subtitle,
-        imageUrl: b.image_url ?? b.imageUrl,
-        linkUrl: b.link_url ?? b.linkUrl,
-  ctaText: b.cta_text ?? b.ctaText,
-        sortOrder: b.sort_order ?? b.sortOrder ?? 0,
-        isActive: b.is_active ?? b.isActive ?? true,
-        createdAt: b.created_at ?? new Date().toISOString(),
-        updatedAt: b.updated_at ?? new Date().toISOString(),
-      }));
-      this.cache = { v: result, t: Date.now() };
-      return result;
-    } catch (e) {
-      console.error('BannerService.list error:', e);
-      return sampleBanners;
-    }
-  }
-
-  static async create(input: Omit<Banner, 'id'|'createdAt'|'updatedAt'> & { file?: File | null }): Promise<Banner | null> {
-    try {
-      if (!supabase) return null;
-      const caps = await ensureBannerCapabilities();
-      let image_url = input.imageUrl;
-      if (input.file instanceof File) {
-        const url = await uploadFile(input.file, 'banners');
-        if (url) image_url = url;
-      }
-      const payload: any = {
-        title: input.title,
-        subtitle: input.subtitle ?? null,
-        image_url,
-        link_url: input.linkUrl ?? null,
-        ...(caps.ctaText ? { cta_text: (input as any).ctaText ?? null } : {}),
-        sort_order: input.sortOrder ?? 0,
-        is_active: input.isActive ?? true,
-      };
-      const { data, error } = await (supabase as any)
-        .from('banners')
-        .insert([payload])
-        .select()
-        .single();
-      if (error) throw error;
-  const result = {
-        id: data.id,
-        title: data.title,
-        subtitle: data.subtitle ?? undefined,
-        imageUrl: data.image_url ?? image_url,
-        linkUrl: data.link_url ?? undefined,
-  ctaText: data.cta_text ?? undefined,
-        sortOrder: data.sort_order ?? 0,
-        isActive: data.is_active ?? true,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-      };
-  // Invalidate cache on mutation
-  this.cache = null;
-  return result;
-    } catch (e) {
-      console.error('BannerService.create error:', e);
+      return await adminService.createBanner(input);
+    } catch (error) {
+      console.error('BannerService.create error:', error);
       return null;
     }
-  }
+  },
 
-  static async update(id: string, updates: Partial<Banner> & { file?: File | null }): Promise<Banner | null> {
+  async update(id: string, updates: Partial<Banner>): Promise<Banner | null> {
     try {
-      if (!supabase) return null;
-      const caps = await ensureBannerCapabilities();
-      const payload: any = {
-        title: updates.title,
-        subtitle: updates.subtitle,
-        image_url: updates.imageUrl,
-        link_url: updates.linkUrl,
-        ...(caps.ctaText ? { cta_text: (updates as any).ctaText } : {}),
-        sort_order: (updates as any).sortOrder,
-        is_active: (updates as any).isActive,
-      };
-      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-      if (updates.file instanceof File) {
-        const url = await uploadFile(updates.file, 'banners');
-        if (url) payload.image_url = url;
-      }
-      const { data, error } = await (supabase as any)
-        .from('banners')
-        .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-  const result = {
-        id: data.id,
-        title: data.title,
-        subtitle: data.subtitle ?? undefined,
-        imageUrl: data.image_url ?? payload.image_url,
-        linkUrl: data.link_url ?? undefined,
-  ctaText: data.cta_text ?? undefined,
-        sortOrder: data.sort_order ?? 0,
-        isActive: data.is_active ?? true,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-      };
-  // Invalidate cache on mutation
-  this.cache = null;
-  return result;
-    } catch (e) {
-      console.error('BannerService.update error:', e);
+      const { id: bannerId, created_at, updated_at, ...updateData } = updates;
+      return await adminService.updateBanner(id, updateData);
+    } catch (error) {
+      console.error('BannerService.update error:', error);
       return null;
     }
-  }
+  },
 
-  static async remove(id: string, existingImageUrl?: string): Promise<boolean> {
+  async remove(id: string, imageUrl?: string): Promise<boolean> {
     try {
-      if (!supabase) return false;
-      const { error } = await (supabase as any)
-        .from('banners')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      if (existingImageUrl) {
-        try { await deletePublicUrls([existingImageUrl]); } catch {}
-      }
-  // Invalidate cache on mutation
-  this.cache = null;
-  return true;
-    } catch (e) {
-      console.error('BannerService.remove error:', e);
+      await adminService.deleteBanner(id);
+      return true;
+    } catch (error) {
+      console.error('BannerService.remove error:', error);
       return false;
     }
   }
-}
+};

@@ -1,11 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { formatCurrency, calculateTimeRemaining } from '../utils/helpers';
 import { Zap, ArrowUpRight, Users, Trophy, Crown, Sparkles } from 'lucide-react';
 import FlashSaleTimer from './FlashSaleTimer';
 import ResponsiveImage from './ResponsiveImage';
-import { IOSCard } from './ios/IOSDesignSystem';
+import { IOSCard } from './ios/IOSDesignSystemV2';
 
 interface ProductCardProps {
   product: Product;
@@ -20,13 +20,35 @@ const ProductCard: React.FC<ProductCardProps> = ({
   fromCatalogPage = false,
   className = ''
 }) => {
+  const navigate = useNavigate();
+  
+  // Validate product data - prevent navigation if ID is missing
+  if (!product || !product.id || product.id.trim() === '') {
+    console.error('[ProductCard] Invalid product data:', product);
+    return null; // Don't render card with invalid data
+  }
+  
   const timeRemaining = product.flashSaleEndTime
     ? calculateTimeRemaining(product.flashSaleEndTime)
     : null;
 
   const isFlashSaleActive = showFlashSaleTimer && timeRemaining && !timeRemaining.isExpired;
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
-  const showBest = showFlashSaleTimer || product.tier === 'premium';
+  const showBest = showFlashSaleTimer || product.tierData?.slug === 'premium';
+
+  // Debug logging for flash sales
+  if (showFlashSaleTimer) {
+    console.log(`ProductCard Debug for ${product.name}:`, {
+      showFlashSaleTimer,
+      isFlashSale: product.isFlashSale,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      flashSaleEndTime: product.flashSaleEndTime,
+      timeRemaining,
+      isFlashSaleActive,
+      hasValidDiscount: product.originalPrice && product.originalPrice > product.price
+    });
+  }
 
   // Determine which price to show on the card
   // - On flash sale cards with an active sale: show sale price (product.price)
@@ -39,8 +61,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   // Robust monogram: derive from game title name or slug, producing tokens initials (e.g., Free Fire -> FF, Mobile Legends -> ML)
   const getMonogram = (): string => {
-    const name = product.gameTitleData?.name || product.gameTitle || '';
-    const slug = product.gameTitleData?.slug || (product.gameTitle ? product.gameTitle.toLowerCase().replace(/\s+/g, '-') : '');
+  const name = product.gameTitleData?.name || '';
+  const slug = product.gameTitleData?.slug || '';
     const source = name || slug;
     if (!source) return 'JB';
     const normalized = source.replace(/[-_]+/g, ' ').trim();
@@ -55,59 +77,52 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return 'JB';
   };
 
-  // Tier styling with dynamic data
-  const getTierStyles = (tierData?: any, tier?: string) => {
-    // Use dynamic tier data if available
-    if (tierData?.backgroundGradient) {
-      return {
-        bg: `bg-gradient-to-br ${tierData.backgroundGradient}`,
-        ring: `ring-${tierData.color?.replace('#', '')}/40`,
-        textColor: 'text-white',
-        badge: `bg-opacity-20 border border-opacity-60`,
-        badgeColor: tierData.color,
-        borderColor: tierData.borderColor
-      };
-    }
+  // Tier styling with specific colors: blue for pelajar, gray for reguler, gold for premium
+  const getTierStyles = (tierData?: any) => {
+    // Use tier slug to determine specific colors
+    const tierSlug = tierData?.slug;
     
-    // Fallback to static styling
-    switch (tier) {
-      case 'premium':
-        // Gold
+    switch (tierSlug) {
+      case 'pelajar': // Student - Blue
         return {
-          bg: 'bg-gradient-to-br from-amber-500 to-yellow-500',
-          ring: 'ring-amber-400/50',
-          textColor: 'text-amber-50',
-          badge: 'bg-amber-400/20 text-amber-100 border-amber-300/60',
-          badgeColor: '#FFD700',
-          borderColor: '#FFD700'
+          bg: 'bg-gradient-to-br from-blue-700/40 via-blue-700/30 to-blue-600/40',
+          ring: 'ring-blue-400/40',
+          textColor: 'text-white',
+          badge: 'bg-blue-500/25 text-blue-100 border-blue-400/60',
+          badgeColor: '#3B82F6',
+          borderColor: '#60A5FA',
+          cardBorder: 'border-blue-500/30'
         };
-      case 'pelajar':
-        // Blue
+      
+      case 'premium': // Premium - Gold
         return {
-          bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-          ring: 'ring-blue-500/40',
-          textColor: 'text-blue-50',
-          badge: 'bg-blue-400/20 text-blue-100 border-blue-300/60',
-          badgeColor: '#3b82f6',
-          borderColor: '#60a5fa'
+          bg: 'bg-gradient-to-br from-yellow-600/40 via-yellow-600/30 to-amber-600/40',
+          ring: 'ring-yellow-400/40',
+          textColor: 'text-white',
+          badge: 'bg-yellow-500/25 text-yellow-100 border-yellow-400/60',
+          badgeColor: '#EAB308',
+          borderColor: '#FBBF24',
+          cardBorder: 'border-yellow-500/30'
         };
+      
+      case 'reguler': // General - Gray
       default:
-        // Reguler -> Silver
         return {
-          bg: 'bg-gradient-to-br from-zinc-400 to-neutral-500',
-          ring: 'ring-gray-300/40',
-          textColor: 'text-gray-50',
-          badge: 'bg-gray-300/20 text-gray-100 border-gray-200/60',
-          badgeColor: '#C0C0C0',
-          borderColor: '#D1D5DB'
+          bg: 'bg-gradient-to-br from-gray-700/40 via-gray-700/30 to-gray-600/40',
+          ring: 'ring-gray-400/40',
+          textColor: 'text-white',
+          badge: 'bg-gray-500/25 text-gray-100 border-gray-400/60',
+          badgeColor: '#6B7280',
+          borderColor: '#9CA3AF',
+          cardBorder: 'border-gray-500/30'
         };
     }
   };
 
-  const tierStyle = getTierStyles(product.tierData, product.tier);
+  const tierStyle = getTierStyles(product.tierData);
 
   // Get tier icon with dynamic data
-  const getTierIcon = (tierData?: any, tier?: string) => {
+  const getTierIcon = (tierData?: any) => {
     if (tierData?.icon) {
       switch (tierData.icon) {
         case 'Crown': return Crown;
@@ -117,185 +132,152 @@ const ProductCard: React.FC<ProductCardProps> = ({
       }
     }
     
-    // Fallback
-    switch (tier) {
-      case 'premium': return Crown;
-      case 'pelajar': return Users;
-      default: return Trophy;
-    }
+    // Fallback default trophy when slug unknown
+    if (tierData?.slug === 'premium') return Crown;
+    if (tierData?.slug === 'pelajar') return Users;
+    return Trophy;
   };
 
-  const TierIcon = getTierIcon(product.tierData, product.tier);
+  const TierIcon = getTierIcon(product.tierData);
 
   // Get game title for display
-  const gameTitle = product.gameTitleData?.name || product.gameTitle;
-  const gameTitleSlug = product.gameTitleData?.slug || product.gameTitle?.toLowerCase().replace(/\s+/g, '-');
+  const gameTitle = product.gameTitleData?.name;
+  const gameTitleSlug = product.gameTitleData?.slug;
 
   // Get tier name for display
   const tierName = product.tierData?.name || (
-    product.tier === 'premium' ? 'PREMIUM' : 
-    product.tier === 'pelajar' ? 'PELAJAR' : 'REGULER'
+  product.tierData?.slug?.toUpperCase() || 'REGULER'
   );
 
+  const handleCardClick = () => {
+    // Double-check product ID before navigation
+    if (!product.id || product.id.trim() === '' || product.id === 'undefined') {
+      console.error('[ProductCard] Cannot navigate: invalid product ID:', product.id);
+      return;
+    }
+    
+    navigate(`/products/${product.id}`, { 
+      state: { 
+        fromFlashSaleCard: showFlashSaleTimer,
+        fromCatalogPage 
+      } 
+    });
+  };
+
   return (
-    <Link
-      to={`/products/${product.id}`}
-      state={{ 
-        fromFlashSaleCard: !!showFlashSaleTimer,
-        fromCatalogPage: fromCatalogPage
-      }}
-      className={`group block rounded-2xl sm:rounded-3xl ${showFlashSaleTimer ? 'bg-gradient-to-br from-red-500 via-pink-500 to-rose-500 ring-2 ring-red-400/50 shadow-lg shadow-red-500/25' : tierStyle.bg} text-white shadow-lg ring-1 ${tierStyle.ring} transform-gpu transition-transform duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${className}`}
+    <IOSCard
+      variant="elevated"
+      padding="none"
+      hoverable
+      className={`relative flex flex-col overflow-hidden ${showFlashSaleTimer ? 'bg-gradient-to-br from-pink-700/40 via-pink-700/30 to-fuchsia-700/40 border border-pink-500/30' : `${tierStyle.bg} border ${tierStyle.cardBorder}`} group ${className}`}
+      onClick={handleCardClick}
     >
-      <div className="p-3 sm:p-4">
-        {/* Image */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-xl sm:rounded-2xl bg-black/20 ring-1 ring-white/10">
+      {/* Image */}
+      <div className="aspect-[4/5] w-full bg-[linear-gradient(45deg,#1e1e1e,#2a2a2a)] flex items-center justify-center border-b border-gray-500/20">
+        {images[0] ? (
           <ResponsiveImage
             src={images[0]}
             alt={product.name}
-            className="w-full h-full"
-            priority={showFlashSaleTimer} // Prioritize flash sale images
+            className="w-full h-full object-cover"
+            priority={showFlashSaleTimer}
             quality={85}
             aspectRatio={4/5}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
-          
-          {/* Flash Sale or Best Badge */}
-          {showBest && (
-            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-red-500/90 text-white text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur border border-red-400/50 shadow-lg animate-pulse">
-              <Zap size={10} className="sm:w-3 sm:h-3" />
-              <span className="text-xs">{isFlashSaleActive ? 'FLASH SALE' : 'TERLARIS'}</span>
-            </div>
-          )}
+        ) : (
+          <div className="text-[10px] text-gray-200 tracking-wider">NO IMAGE</div>
+        )}
 
-          {/* Game Monogram */}
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-7 sm:w-9 h-7 sm:h-9 rounded-lg sm:rounded-xl bg-white/95 text-gray-900 text-xs font-bold flex items-center justify-center ring-2 ring-white/20 backdrop-blur">
-            {getMonogram()}
+        {/* Flash Sale or Best Badge */}
+        {showBest && (
+          <div className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-red-500/90 text-white text-xs font-bold px-2 py-1 backdrop-blur border border-red-400/50 shadow-lg animate-pulse">
+            <Zap size={10} />
+            <span className="text-xs">{isFlashSaleActive ? 'FLASH SALE' : 'TERBARU'}</span>
           </div>
+        )}
 
-          {/* Stock Status */}
-          {product.stock === 0 && (
-            <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-xl sm:rounded-2xl">
-              <span className="bg-red-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold">STOK HABIS</span>
-            </div>
-          )}
-
-          {/* Image Indicator */}
-          {images.length > 1 && (
-            <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 flex items-center gap-1">
-              {images.slice(0,3).map((_, i) => (
-                <span key={i} className={`h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/60'}`}></span>
-              ))}
-              {images.length > 3 && (
-                <span className="text-white/80 text-xs ml-1">+{images.length - 3}</span>
-              )}
-            </div>
-          )}
+        {/* Game Monogram */}
+        <div className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/70 text-pink-400 text-xs font-bold flex items-center justify-center ring-2 ring-pink-500/30 backdrop-blur">
+          {getMonogram()}
         </div>
 
-        {/* Content */}
-        <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
-          {/* Title */}
-          <h3 className="text-sm sm:text-lg font-bold leading-tight text-white line-clamp-2" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-            {product.name}
-          </h3>
+        {/* Stock Status */}
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+            <span className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">STOK HABIS</span>
+          </div>
+        )}
+      </div>
 
+      {/* Content */}
+      <div className="flex-1 p-4 flex flex-col gap-3">
+        <h3 className="text-white font-semibold text-sm leading-snug uppercase tracking-wide line-clamp-2 group-hover:text-white/90">
+          {product.name}
+        </h3>
 
-          {/* Tags Row - Mobile optimized, hidden for flash sale cards */}
-          {!showFlashSaleTimer && (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              {/* Game Title */}
-              <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold bg-white/15 text-white border border-white/30 backdrop-blur-sm">
-                {gameTitle}
-              </span>
+        {/* Tags Row */}
+        {!showFlashSaleTimer && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Game Title */}
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-white/10 text-white/90 border border-white/20 backdrop-blur-sm">
+              {gameTitle}
+            </span>
 
-              {/* Tier Badge */}
-              {(product.tierData || product.tier) && (
-                <span 
-                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold border backdrop-blur-sm"
-                  style={{
-                    backgroundColor: tierStyle.badgeColor ? `${tierStyle.badgeColor}25` : 'rgba(255,255,255,0.15)',
-                    borderColor: tierStyle.borderColor ? `${tierStyle.borderColor}80` : 'rgba(255,255,255,0.3)',
-                    color: '#ffffff',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  <TierIcon size={10} className="sm:w-3 sm:h-3" />
-                  <span className="text-xs">{tierName}</span>
-                </span>
-              )}
-
-              {/* Account Level - Hide on small mobile */}
-              {product.accountLevel && (
-                <span className="hidden sm:inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold bg-purple-500/25 text-white border border-purple-400/60 backdrop-blur-sm">
-                  {product.accountLevel}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Rental Tag - Mobile optimized, only on normal product cards */}
-          {!showFlashSaleTimer && (product.hasRental || (product as any).rentalOptions?.length > 0) && (
-            <div className="mt-1.5 sm:mt-2">
-              <span
-                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-semibold border backdrop-blur-sm"
+            {/* Tier Badge */}
+            {product.tierData && (
+              <span 
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border backdrop-blur-sm"
                 style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  borderColor: 'rgba(52, 211, 153, 0.6)',
-                  color: '#ffffff',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                  backgroundColor: tierStyle.badgeColor ? `${tierStyle.badgeColor}25` : 'rgba(255,255,255,0.15)',
+                  borderColor: tierStyle.borderColor ? `${tierStyle.borderColor}80` : 'rgba(255,255,255,0.3)',
+                  color: '#ffffff'
                 }}
               >
-                <Sparkles size={10} className="sm:w-3 sm:h-3" />
-                <span className="text-xs">Tersedia untuk Rental</span>
+                <TierIcon size={10} />
+                <span className="text-xs">{tierName}</span>
               </span>
-            </div>
-          )}
-
-          {/* Flash Sale Timer moved under price */}
-
-          {/* Price Section - Mobile optimized */}
-          <div className="flex items-end justify-between pt-2">
-            <div className="flex flex-col min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center rounded-lg sm:rounded-xl bg-white/95 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-bold text-gray-900 shadow-lg border border-white/20">
-                  {formatCurrency(displayPrice)}
-                </span>
-                {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
-                  <span className="inline-flex items-center text-xs font-semibold px-1.5 sm:px-2 py-1 rounded-md sm:rounded-lg bg-red-500/30 text-white border border-red-400/60 backdrop-blur-sm shadow-sm whitespace-nowrap leading-none">
-                    -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                  </span>
-                )}
-              </div>
-              
-              {/* Original Price */}
-              {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-xs line-through text-white/80 mt-1 font-medium" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                  {formatCurrency(product.originalPrice)}
-                </span>
-              )}
-
-              {/* Flash Sale Timer (under price) */}
-              {showFlashSaleTimer && product.flashSaleEndTime && (
-                <div className="pt-2 sm:pt-3">
-                  <FlashSaleTimer 
-                    endTime={product.flashSaleEndTime} 
-                    compact={false}
-                    className="bg-white/95 text-red-600 font-bold"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Action Button - Mobile optimized */}
-            <div className="flex-shrink-0 ml-2">
-              <div className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 transition-all duration-200 group-hover:bg-white group-hover:text-gray-900 group-hover:shadow-lg">
-                <ArrowUpRight size={14} className="sm:w-[18px] sm:h-[18px]" />
-              </div>
-            </div>
+            )}
           </div>
+        )}
+
+        {/* Rental Tag */}
+        {!showFlashSaleTimer && (product.hasRental || (product as any).rentalOptions?.length > 0) && (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-emerald-500/25 text-white border border-emerald-400/60 backdrop-blur-sm">
+            <Sparkles size={10} />
+            <span className="text-xs">Tersedia Rental</span>
+          </span>
+        )}
+
+        {/* Price Section */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="px-3 py-1 rounded-lg border border-gray-300/30 bg-black/40 text-white text-xs font-medium shadow-inner">
+            {formatCurrency(displayPrice)}
+          </div>
+          {isFlashSaleActive && product.originalPrice && product.originalPrice > product.price && (
+            <>
+              <div className="px-2 py-1 rounded-lg bg-white text-red-600 text-[11px] font-bold shadow-sm tracking-wide">
+                -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+              </div>
+              <div className="text-[11px] text-white/60 line-through">
+                {formatCurrency(product.originalPrice)}
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </Link>
+
+      {/* Flash Sale Timer */}
+      {showFlashSaleTimer && product.flashSaleEndTime && (
+        <div className="px-3 pb-4">
+          <FlashSaleTimer 
+            endTime={product.flashSaleEndTime} 
+            compact={false}
+            variant="card"
+            className=""
+          />
+        </div>
+      )}
+    </IOSCard>
   );
 };
 

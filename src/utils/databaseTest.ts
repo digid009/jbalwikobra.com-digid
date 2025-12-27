@@ -97,11 +97,7 @@ export const testProductCreation = async () => {
       original_price: null,
       image: '',
       images: [],
-      category: 'test', // Add category field to satisfy NOT NULL constraint
-  // Fallback for legacy schema where products.game_title is NOT NULL
-  game_title: 'Test Game',
-      account_level: null,
-      account_details: null,
+      category_id: 'test-cat-id', // requires existing category id in real DB; adjust if needed
       is_flash_sale: false,
       has_rental: false,
       stock: 1,

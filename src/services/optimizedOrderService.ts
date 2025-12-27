@@ -62,11 +62,9 @@ class OptimizedOrderService {
       let query = supabase
         .from('orders')
         .select(`
-          id, customer_name, customer_email, customer_phone, 
-          total_amount, status, payment_method, order_type,
-          created_at, updated_at, notes,
-          product_id,
-          products (id, name)
+          id, customer_name, customer_email, customer_phone,
+          amount, status, payment_method, order_type,
+          created_at, updated_at, notes, product_id
         `, { count: 'exact' });
 
       // Apply filters at database level
@@ -96,11 +94,11 @@ class OptimizedOrderService {
       }
 
       if (filters.amountMin !== undefined) {
-        query = query.gte('total_amount', filters.amountMin);
+  query = query.gte('amount', filters.amountMin);
       }
 
       if (filters.amountMax !== undefined) {
-        query = query.lte('total_amount', filters.amountMax);
+  query = query.lte('amount', filters.amountMax);
       }
 
       // Apply pagination

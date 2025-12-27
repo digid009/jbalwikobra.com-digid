@@ -47,8 +47,6 @@ const testProductCreationWithDetails = async (): Promise<{ success: boolean; err
       original_price: null,
       image: '',
       images: [],
-      account_level: null,
-      account_details: null,
       is_flash_sale: false,
       has_rental: false,
       stock: 1,

@@ -1,35 +1,229 @@
-import React, { useEffect, useState } from 'react';
-import { getAuthUserId } from '../../services/authService';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useToast } from '../../components/Toast';
-import { RefreshCw, Search, User, Shield, Clock } from 'lucide-react';
+import { RefreshCw, Plus, Users, Shield, UserCheck, Clock, Edit, Trash2, Eye } from 'lucide-react';
+// Removed AdminLayout import as we now use reusable components directly
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  StatusBadge 
+} from './components/ui';
+import type { AdminFiltersConfig } from './components/ui';
+import { AdminDSTable, type DSTableColumn, type DSTableAction } from './components/ui/AdminDSTable';
 
-type ProfileRow = { 
-  id: string; 
-  name: string | null; 
-  is_admin: boolean;
-  email?: string | null;
-  phone?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  last_login_at?: string;
-  phone_verified?: boolean;
-  is_active?: boolean;
-  // Computed field for compatibility
-  role?: string;
+type UserRow = {
+  id: string;
+  email: string;
+  phone: string;
+  full_name: string;
+  avatar_url?: string;
+  role: 'user' | 'admin';
+  is_active: boolean;
+  created_at: string;
+  last_sign_in_at?: string;
 };
 
 const AdminUsers: React.FC = () => {
-  const [rows, setRows] = useState<ProfileRow[]>([]);
-  const [authUsers, setAuthUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uid, setUid] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [error, setError] = useState<string>('');
   const { push } = useToast();
 
-  const load = async () => {
+  // Filter state for our AdminFilters component
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    search: '',
+    role: 'all',
+    status: 'all',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
+
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Cari pengguna berdasarkan nama, email, atau telepon...',
+    filters: [
+      {
+        key: 'role',
+        label: 'Peran',
+        options: [
+          { value: 'all', label: 'Semua Peran' },
+          { value: 'user', label: 'User' },
+          { value: 'admin', label: 'Admin' }
+        ]
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'Semua Status' },
+          { value: 'active', label: 'Aktif' },
+          { value: 'inactive', label: 'Tidak Aktif' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'created_at', label: 'Tanggal Dibuat' },
+      { value: 'full_name', label: 'Nama' },
+      { value: 'email', label: 'Email' },
+      { value: 'last_sign_in_at', label: 'Terakhir Masuk' }
+    ]
+  };
+
+  // Filter handling
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues(filters);
+  };
+
+  // Apply filters to users
+  const filteredUsers = users.filter(user => {
+    // Search filter
+    if (filterValues.search) {
+      const searchTerm = filterValues.search.toLowerCase();
+      if (
+        !user.full_name?.toLowerCase().includes(searchTerm) &&
+        !user.email?.toLowerCase().includes(searchTerm) &&
+        !user.phone?.toLowerCase().includes(searchTerm)
+      ) {
+        return false;
+      }
+    }
+
+    // Role filter
+    if (filterValues.role !== 'all') {
+      if (filterValues.role === 'admin' && user.role !== 'admin') return false;
+      if (filterValues.role === 'user' && user.role !== 'user') return false;
+    }
+
+    // Status filter
+    if (filterValues.status !== 'all') {
+      if (filterValues.status === 'active' && !user.is_active) return false;
+      if (filterValues.status === 'inactive' && user.is_active) return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    const sortBy = filterValues.sortBy;
+    const order = filterValues.sortOrder === 'desc' ? -1 : 1;
+    
+    if (sortBy === 'created_at' || sortBy === 'last_sign_in_at') {
+      const aDate = new Date(a[sortBy] || 0).getTime();
+      const bDate = new Date(b[sortBy] || 0).getTime();
+      return (aDate - bDate) * order;
+    }
+    
+    const aValue = a[sortBy] || '';
+    const bValue = b[sortBy] || '';
+    return aValue.localeCompare(bValue) * order;
+  });
+
+  // Statistics calculation
+  const stats = {
+    total: users.length,
+    active: users.filter(u => u.is_active).length,
+    admin: users.filter(u => u.role === 'admin').length,
+    recent: users.filter(u => {
+      if (!u.created_at) return false;
+      const createdDate = new Date(u.created_at);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return createdDate >= thirtyDaysAgo;
+    }).length
+  };
+
+  // Table columns configuration
+  const columns: DSTableColumn<UserRow>[] = [
+    {
+      key: 'avatar',
+      header: 'Avatar',
+      render: (_value, user) => (
+        <div className="flex items-center justify-center w-8 h-8 bg-blue-500/20 rounded-full">
+          <Users size={16} className="text-blue-400" />
+        </div>
+      )
+    },
+    {
+      key: 'full_name',
+      header: 'Nama',
+      render: (_value, user) => (
+        <div>
+          <div className="font-medium text-ds-text">{user.full_name || 'N/A'}</div>
+          <div className="text-sm text-ds-text-secondary">{user.email}</div>
+        </div>
+      )
+    },
+    {
+      key: 'phone',
+      header: 'Telepon',
+      render: (_value, user) => user.phone || 'N/A'
+    },
+    {
+      key: 'role',
+      header: 'Peran',
+      render: (_value, user) => (
+        <StatusBadge
+          status={user.role === 'admin' ? 'active' : 'pending'}
+          customLabel={user.role === 'admin' ? 'Admin' : 'User'}
+        />
+      )
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      render: (_value, user) => (
+        <StatusBadge
+          status={user.is_active ? 'active' : 'inactive'}
+        />
+      )
+    },
+    {
+      key: 'created_at',
+      header: 'Dibuat',
+      render: (_value, user) => user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID') : 'N/A'
+    },
+    {
+      key: 'last_sign_in_at',
+      header: 'Terakhir Masuk',
+      render: (_value, user) => user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString('id-ID') : 'Tidak Pernah'
+    }
+  ];
+
+  // Table actions configuration
+  const actions: DSTableAction<UserRow>[] = [
+    {
+      key: 'view',
+      label: 'Lihat',
+      icon: Eye,
+      onClick: (user) => {
+        push(`Viewing user: ${user.full_name}`, 'info');
+      },
+      variant: 'secondary'
+    },
+    {
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: (user) => {
+        push(`Edit user functionality coming soon for: ${user.full_name}`, 'info');
+      },
+      variant: 'primary'
+    },
+    {
+      key: 'delete',
+      label: 'Hapus',
+      icon: Trash2,
+      onClick: (user) => {
+        if (confirm(`Yakin ingin menghapus pengguna: ${user.full_name}?`)) {
+          push(`Delete user functionality coming soon for: ${user.full_name}`, 'error');
+        }
+      },
+      variant: 'danger'
+    }
+  ];
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      // Fetch users from consolidated admin API endpoint
       const response = await fetch('/api/admin?action=users');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -40,309 +234,117 @@ const AdminUsers: React.FC = () => {
         throw new Error(result.error || 'Failed to fetch users');
       }
       
-      const usersData = result.data || [];
-      
-      // Transform the data to match the ProfileRow interface
-      const transformedRows: ProfileRow[] = usersData.map((user: any) => ({
-        id: user.id,
-        name: user.name,
-        is_admin: user.is_admin || false,
-        email: user.email || '',
-        phone: user.phone || '',
-        is_active: user.is_active || true,
-        phone_verified: user.phone_verified || false,
-        created_at: user.created_at || new Date().toISOString(),
-        updated_at: user.updated_at || new Date().toISOString(),
-        last_login_at: user.last_login_at || null
-      }));
-      
-      setRows(transformedRows);
+      setUsers(result.data || []);
     } catch (e: any) {
-      const msg = e?.message || String(e);
-      console.error('Load users error:', e);
-      push(`Gagal memuat users: ${msg}`, 'error');
+      const message = e?.message || String(e);
+      setError(message);
+      push(`Gagal memuat users: ${message}`, 'error');
     } finally {
       setLoading(false);
     }
-  };  useEffect(() => { 
-    (async()=>{ 
-      setUid(await getAuthUserId()); 
-      await load(); 
-    })(); 
-  }, []);
+  }, [push]);
 
-  const filteredRows = rows.filter(row => {
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = 
-        (row.name && row.name.toLowerCase().includes(searchLower)) ||
-        (row.email && row.email.toLowerCase().includes(searchLower)) ||
-        (row.phone && row.phone.includes(searchTerm)) ||
-        row.id.toLowerCase().includes(searchLower);
-      
-      if (!matchesSearch) return false;
-    }
-    
-    // Role filter
-    if (roleFilter !== 'all') {
-      if (row.role !== roleFilter) return false;
-    }
-    
-    return true;
-  });
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
-  const updateRole = async (id: string, role: string) => {
-    try {
-      // Prevent demoting the last admin (including 'super admin'/'owner')
-      const normalized = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
-      const adminSet = new Set(['admin','superadmin','super-admin','super admin','owner']);
-      const isAdminRole = (r: string) => adminSet.has(normalized(r));
-      const current = rows.find(r=>r.id===id);
-      if (current && current.role && isAdminRole(current.role) && !isAdminRole(role)) {
-        const adminCount = rows.filter(r=> r.role && isAdminRole(r.role)).length;
-        if (adminCount <= 1 && uid === id) {
-          alert('Tidak bisa menurunkan peran: ini adalah admin terakhir. Tambahkan admin lain terlebih dahulu.');
-          return;
-        }
-      }
-      
-      // Update user role via consolidated admin API
-      const isAdmin = isAdminRole(role);
-      const response = await fetch('/api/admin?action=users', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id, isAdmin }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update user role');
-      }
-
-      push('Peran diperbarui', 'success');
-      await load();
-    } catch (e: any) {
-      push(`Gagal memperbarui peran: ${e.message}`, 'error');
-    }
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    const normalized = role.toLowerCase();
-    if (normalized.includes('owner') || normalized.includes('super')) return 'bg-purple-900/50 text-purple-300 border-purple-600/40';
-    if (normalized.includes('admin')) return 'bg-red-900/50 text-red-300 border-red-600/40';
-    return 'bg-gray-900/50 text-gray-300 border-gray-600/40';
-  };
-
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleRefresh = () => {
+    loadUsers();
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Users & Roles</h1>
-          <p className="text-gray-400">Kelola pengguna dan peran dalam sistem</p>
+      {/* Page Header */}
+      <AdminPageHeaderV2
+        title="Manajemen Pengguna"
+        subtitle="Kelola akun pengguna dan perizinan"
+        icon={Users}
+        actions={[
+          {
+            key: 'refresh',
+            label: 'Muat ulang',
+            onClick: handleRefresh,
+            variant: 'secondary',
+            icon: RefreshCw,
+            loading: loading
+          },
+          {
+            key: 'add',
+            label: 'Tambah Pengguna',
+            onClick: () => push('Fitur tambah pengguna segera hadir!', 'info'),
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      {/* Error Display */}
+      {error && (
+        <div className="p-stack-md text-sm text-yellow-400 bg-yellow-400/20 border border-yellow-400/30 rounded-md">
+          {error.includes('permission') || error.includes('RLS') ? (
+            <span>Akses dibatasi oleh RLS. Pastikan kebijakan RLS untuk tabel users mengizinkan admin melihat semua data.</span>
+          ) : (
+            <span>{error}</span>
+          )}
         </div>
-        <button
-          onClick={load}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700"
-        >
-          <RefreshCw size={16} />
-          Refresh
-        </button>
+      )}
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard
+          title="Total Users"
+          value={stats.total}
+          icon={Users}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Active Users"
+          value={stats.active}
+          icon={UserCheck}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="Admin Users"
+          value={stats.admin}
+          icon={Shield}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+          loading={loading}
+        />
+        <AdminStatCard
+          title="New This Month"
+          value={stats.recent}
+          icon={Clock}
+          iconColor="text-orange-400"
+          iconBgColor="bg-orange-500/20"
+          subtitle="Last 30 days"
+          loading={loading}
+        />
       </div>
 
       {/* Filters */}
-      <div className="bg-black/60 border border-pink-500/30 rounded-xl p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Search size={20} className="text-pink-400" />
-          <h3 className="text-lg font-semibold text-white">Filter Pengguna</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Cari Pengguna</label>
-            <input
-              type="text"
-              placeholder="Nama, email, ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Filter Peran</label>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-black border border-pink-500/40 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="all">Semua Peran</option>
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-              <option value="super admin">Super Admin</option>
-              <option value="owner">Owner</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="text-sm text-gray-400 pt-4 border-t border-pink-500/20">
-          Menampilkan {filteredRows.length} dari {rows.length} pengguna
-        </div>
-      </div>
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={users.length}
+        filteredItems={filteredUsers.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
 
       {/* Users Table */}
-      <div className="bg-black/60 border border-pink-500/30 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-12 text-xs uppercase text-gray-400 px-4 py-3 border-b border-pink-500/20">
-          <div className="col-span-3">Pengguna</div>
-          <div className="col-span-2">Kontak</div>
-          <div className="col-span-2">Peran</div>
-          <div className="col-span-2">Bergabung</div>
-          <div className="col-span-2">Last Login</div>
-          <div className="col-span-1 text-right">Aksi</div>
-        </div>
-        
-        {loading ? (
-          <div className="p-6 text-center text-gray-400">
-            <RefreshCw className="animate-spin mx-auto mb-2" size={24} />
-            Memuat data pengguna...
-          </div>
-        ) : filteredRows.length === 0 ? (
-          <div className="p-6 text-center text-gray-400">
-            {rows.length === 0 ? (
-              <>
-                <User className="mx-auto mb-2" size={24} />
-                Belum ada data pengguna.
-              </>
-            ) : (
-              <>
-                <Search className="mx-auto mb-2" size={24} />
-                Tidak ada pengguna yang sesuai dengan filter.
-              </>
-            )}
-          </div>
-        ) : (
-          filteredRows.map((r) => (
-            <div key={r.id} className="grid grid-cols-12 items-center px-4 py-4 border-b border-pink-500/10 hover:bg-white/5">
-              {/* User Info */}
-              <div className="col-span-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User size={16} className="text-white" />
-                  </div>
-                  <div>
-                    <div className="text-white font-medium">{r.name || 'Unnamed User'}</div>
-                    <div className="text-xs text-gray-500 font-mono">{r.id.substring(0, 8)}...</div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Contact */}
-              <div className="col-span-2">
-                <div className="text-sm">
-                  {r.email && (
-                    <div className="text-gray-300 flex items-center gap-1">
-                      <span>{r.email}</span>
-                      {r.phone_verified && (
-                        <Shield size={12} className="text-green-400" />
-                      )}
-                    </div>
-                  )}
-                  {r.phone && (
-                    <div className="text-gray-400 text-xs">{r.phone}</div>
-                  )}
-                  {!r.email && !r.phone && (
-                    <div className="text-gray-500 text-xs">No contact info</div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Role */}
-              <div className="col-span-2">
-                <span className={`px-2 py-1 rounded text-xs border ${getRoleBadgeColor(r.role || 'user')}`}>
-                  {r.role || 'user'}
-                </span>
-              </div>
-              
-              {/* Created At */}
-              <div className="col-span-2 text-sm text-gray-300">
-                <div className="flex items-center gap-1">
-                  <Clock size={12} />
-                  {formatDate(r.created_at)}
-                </div>
-              </div>
-              
-              {/* Last Login */}
-              <div className="col-span-2 text-sm text-gray-300">
-                {r.last_login_at ? (
-                  <div className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {formatDate(r.last_login_at)}
-                  </div>
-                ) : (
-                  <span className="text-gray-500">Never</span>
-                )}
-              </div>
-              
-              {/* Actions */}
-              <div className="col-span-1 text-right">
-                <select
-                  value={r.role}
-                  onChange={(e)=>updateRole(r.id, e.target.value)}
-                  className="bg-black border border-white/20 rounded px-2 py-1 text-white text-sm hover:bg-white/5"
-                  title="Change user role"
-                >
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                  <option value="super admin">super admin</option>
-                  <option value="owner">owner</option>
-                </select>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-      
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Users', value: rows.length, icon: User },
-          { label: 'Admins', value: rows.filter(r => r.role && r.role.toLowerCase().includes('admin')).length, icon: Shield },
-          { label: 'Active Today', value: rows.filter(r => r.last_login_at && new Date(r.last_login_at) > new Date(Date.now() - 24*60*60*1000)).length, icon: Clock },
-          { label: 'Verified', value: rows.filter(r => r.phone_verified).length, icon: Shield }
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-pink-600/20 rounded-lg flex items-center justify-center">
-                  <Icon size={20} className="text-pink-400" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">{stat.value}</div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <AdminDSTable<UserRow>
+        data={filteredUsers}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="Tidak ada pengguna."
+      />
     </div>
   );
 };

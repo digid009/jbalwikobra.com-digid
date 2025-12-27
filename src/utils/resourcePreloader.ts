@@ -123,7 +123,8 @@ export class ResourcePreloader {
 
 // Auto preload critical resources
 if (typeof window !== 'undefined') {
-  // Preload critical fonts
-  ResourcePreloader.preloadFont('Inter', '400');
-  ResourcePreloader.preloadFont('Inter', '600');
+  // Font preloading disabled to prevent "resource was preloaded but not used" warnings
+  // Fonts will load naturally through CSS in index.html
+  // ResourcePreloader.preloadFont('Inter', '400');
+  // ResourcePreloader.preloadFont('Inter', '600');
 }

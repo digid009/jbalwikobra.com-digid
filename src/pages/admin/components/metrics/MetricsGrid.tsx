@@ -1,0 +1,88 @@
+import React from 'react';
+import { TrendingUp, Users, Package, Star, Clock, Zap } from 'lucide-react';
+import { AdminStats } from '../../../../services/adminService';
+// NOTE: MetricCard deprecated in favor of AdminStatCard
+import { AdminStatCard } from './AdminStatCard';
+import { formatMetrics, getMetricAccentColor } from './metricsUtils';
+import { cn } from '../../../../utils/cn';
+
+interface MetricsGridProps {
+  stats: AdminStats;
+  loading?: boolean;
+  className?: string;
+}
+
+export const MetricsGrid: React.FC<MetricsGridProps> = ({ stats, loading, className }) => {
+  const metrics = formatMetrics(stats);
+
+  if (loading) {
+    return (
+      <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse', className)}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div 
+            key={i} 
+            className={cn(
+              'rounded-2xl h-40 bg-gradient-to-br from-pink-500/10 to-fuchsia-600/5 border border-pink-500/20',
+              i === 0 && 'lg:col-span-2 h-48'
+            )} 
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6', className)}>
+      <AdminStatCard
+        size="large"
+        variant="success"
+        label="Total Revenue"
+        value={metrics.revenue.formatted}
+        sub={metrics.revenue.subtitle}
+        icon={<TrendingUp className="w-7 h-7" />}
+      />
+      
+      <AdminStatCard
+        label="Total Orders"
+        variant="info"
+        value={metrics.orders.formatted}
+        sub={metrics.orders.subtitle}
+        icon={<Clock className="w-6 h-6" />}
+      />
+      
+      <AdminStatCard
+        label="Users"
+        variant="neutral"
+        value={metrics.users.formatted}
+        sub={metrics.users.subtitle}
+        icon={<Users className="w-6 h-6" />}
+      />
+      
+      <AdminStatCard
+        label="Products"
+        variant="default"
+        value={metrics.products.formatted}
+        sub={metrics.products.subtitle}
+        icon={<Package className="w-6 h-6" />}
+      />
+      
+      <AdminStatCard
+        label="Flash Sales"
+        variant="warning"
+        value={metrics.flashSales?.formatted || "0"}
+        sub={metrics.flashSales?.subtitle || "active sales"}
+        icon={<Zap className="w-6 h-6" />}
+      />
+      
+      <AdminStatCard
+        label="Reviews & Ratings"
+        variant="danger"
+        value={metrics.reviews.formatted}
+        sub={metrics.reviews.subtitle}
+        icon={<Star className="w-6 h-6" />}
+      />
+    </div>
+  );
+};
+
+export default MetricsGrid;

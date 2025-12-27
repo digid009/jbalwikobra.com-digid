@@ -1,170 +1,432 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { 
+  Heart, 
+  Shield, 
+  HelpCircle, 
+  Mail, 
+  Phone, 
+  MapPin,
+  Package,
+  Zap,
+  User,
+  BookOpen,
+  ExternalLink,
+  Instagram,
+  Twitter,
+  Youtube,
+  Globe,
+  Send,
+  CheckCircle
+} from 'lucide-react';
 import { SettingsService } from '../services/settingsService';
-import { IOSContainer, IOSCard, IOSGrid } from './ios/IOSDesignSystem';
+import { IOSButton } from './ios/IOSDesignSystem';
+import type { WebsiteSettings } from '../types';
+
+interface FooterSection {
+  title: string;
+  links: Array<{
+    label: string;
+    href: string;
+    external?: boolean;
+    badge?: string;
+  }>;
+}
+
+interface SocialLink {
+  name: string;
+  href: string;
+  icon: React.ComponentType<any>;
+  color: string;
+}
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  const [siteName, setSiteName] = React.useState<string>('JB Alwikobra');
-  const [logoUrl, setLogoUrl] = React.useState<string>('');
-  const [whatsappNumber, setWhatsappNumber] = React.useState<string>(process.env.REACT_APP_WHATSAPP_NUMBER || '6281234567890');
-  const [contactEmail, setContactEmail] = React.useState<string>('admin@jbalwikobra.com');
-  const [contactPhone, setContactPhone] = React.useState<string>('');
-  const [address, setAddress] = React.useState<string>('Jakarta, Indonesia');
-  const [facebookUrl, setFacebookUrl] = React.useState<string>('https://facebook.com/');
-  const [instagramUrl, setInstagramUrl] = React.useState<string>('https://instagram.com/');
-  const [tiktokUrl, setTiktokUrl] = React.useState<string>('https://tiktok.com/');
+  const [settings, setSettings] = useState<WebsiteSettings | null>(null);
+  const [email, setEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
-        const s = await SettingsService.get();
-        if (s?.siteName) setSiteName(s.siteName);
-        if (s?.logoUrl) setLogoUrl(s.logoUrl);
-        if (s?.whatsappNumber) setWhatsappNumber(s.whatsappNumber);
-        if (s?.contactEmail) setContactEmail(s.contactEmail);
-        if (s?.contactPhone) setContactPhone(s.contactPhone);
-        if (s?.address) setAddress(s.address);
-        if (s?.facebookUrl) setFacebookUrl(s.facebookUrl);
-        if (s?.instagramUrl) setInstagramUrl(s.instagramUrl);
-        if (s?.tiktokUrl) setTiktokUrl(s.tiktokUrl);
-      } catch (error) {
-        console.error('Failed to load settings:', error);
+        const data = await SettingsService.get();
+        if (mounted) setSettings(data);
+      } catch (e) {
+        console.warn('Failed to load settings for footer:', e);
       }
     })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  const footerSections: FooterSection[] = [
+    {
+      title: 'Produk',
+      links: [
+        { label: 'Semua Produk', href: '/products' },
+        { label: 'Flash Sale', href: '/flash-sales', badge: 'Hot' },
+        { label: 'Kategori', href: '/products?category=all' },
+        { label: 'Produk Terlaris', href: '/products?sort=popular' },
+      ]
+    },
+    {
+      title: 'Akun & Layanan',
+      links: [
+        { label: 'Profil Saya', href: '/profile' },
+        { label: 'Wishlist', href: '/wishlist' },
+        { label: 'Riwayat Pesanan', href: '/orders' },
+        { label: 'Pengaturan', href: '/settings' },
+      ]
+    },
+    {
+      title: 'Bantuan & Info',
+      links: [
+        { label: 'Pusat Bantuan', href: '/help' },
+        { label: 'Cara Berbelanja', href: '/help#shopping' },
+        { label: 'Metode Pembayaran', href: '/help#payment' },
+        { label: 'Kebijakan Privasi', href: '/terms#privacy' },
+        { label: 'Syarat & Ketentuan', href: '/terms' },
+      ]
+    },
+    {
+      title: 'Komunitas',
+      links: [
+        { label: 'Feed Komunitas', href: '/feed' },
+        { label: 'Forum Diskusi', href: '/community', external: true },
+        { label: 'Discord Server', href: '#discord', external: true },
+        { label: 'Telegram Group', href: '#telegram', external: true },
+      ]
+    },
+  ];
+
+  const socialLinks: SocialLink[] = [
+    { name: 'Instagram', href: settings?.instagramUrl || '#', icon: Instagram, color: 'from-pink-500 to-rose-500' },
+    { name: 'Twitter', href: settings?.twitterUrl || '#', icon: Twitter, color: 'from-blue-400 to-blue-600' },
+    { name: 'YouTube', href: settings?.youtubeUrl || '#', icon: Youtube, color: 'from-red-500 to-red-600' },
+    { name: 'Facebook', href: settings?.facebookUrl || '#', icon: Globe, color: 'from-green-500 to-emerald-600' },
+  ];
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsSubscribing(true);
+    
+    // Simulate newsletter subscription
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIsSubscribed(true);
+    setIsSubscribing(false);
+    setEmail('');
+
+    // Reset after showing success message
+    setTimeout(() => setIsSubscribed(false), 3000);
+  };
+
   return (
-    <footer className="bg-black border-t border-gray-800 text-gray-300">
-      <IOSContainer className="pt-8 pb-28 md:pt-12 md:pb-12">
-        <IOSGrid columns={4} gap="large" className="mb-8">
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
-            <IOSCard variant="default" padding="medium" className="bg-transparent border-none shadow-none">
-              <div className="flex items-center space-x-2 mb-4">
-                {logoUrl ? (
-                  <img 
-                    src={logoUrl} 
-                    alt={siteName} 
-                    className="w-8 h-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-pink-500 to-pink-600">
-                    <span className="text-white font-bold text-sm">JB</span>
+  <footer className="relative bg-black/40 backdrop-blur-xl border-t border-white/10 typography-body surface-glass-lg">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-pink-500/10 to-fuchsia-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative">
+        {/* Main Footer Content */}
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 p-md stack-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Brand Section */}
+            <div className="lg:col-span-4">
+              <FooterBrand settings={settings} />
+              <FooterContact settings={settings} />
+            </div>
+
+            {/* Links Sections */}
+            <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+              {footerSections.map((section) => (
+                <FooterSection key={section.title} section={section} />
+              ))}
+            </div>
+          </div>
+
+          {/* Newsletter Section */}
+          {settings?.newsletterEnabled !== false && (
+            <div className="mt-16 pt-12 border-t border-white/10">
+              <NewsletterSection
+                email={email}
+                setEmail={setEmail}
+                onSubmit={handleNewsletterSubmit}
+                isSubscribing={isSubscribing}
+                isSubscribed={isSubscribed}
+              />
+            </div>
+          )}
+
+          {/* Social & Bottom Section */}
+          <div className="mt-16 pt-12 border-t border-white/10">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              
+              {/* Social Links */}
+              {settings?.socialMediaEnabled !== false && (
+                <div className="flex items-center gap-4">
+                  <span className="text-white/60 text-sm mr-2">Ikuti kami:</span>
+                  {socialLinks
+                    .filter(social => social.href && social.href !== '#')
+                    .map((social) => {
+                      const Icon = social.icon;
+                      return (
+                        <a
+                          key={social.name}
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative p-3 rounded-xl bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 hover:border-pink-500/50 transition-all duration-300"
+                          title={social.name}
+                        >
+                          <div className={`absolute inset-0 bg-gradient-to-br ${social.color} opacity-0 group-hover:opacity-20 rounded-xl transition-opacity duration-300`} />
+                          <Icon className="w-5 h-5 text-white/70 group-hover:text-white transition-colors duration-300" />
+                        </a>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Copyright & Trust Badges */}
+              <div className="flex flex-col lg:flex-row items-center gap-6">
+                <div className="flex items-center gap-6 text-sm text-white/60">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-green-400" />
+                    <span>100% Aman</span>
                   </div>
-                )}
-                <div>
-                  <span className="text-xl font-bold text-white">{siteName}</span>
-                  <p className="text-sm text-gray-400 -mt-1">Gaming Marketplace</p>
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-400" />
+                    <span>Terpercaya</span>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-white/60 text-center lg:text-right">
+                  <p>&copy; {currentYear} {settings?.siteName || 'JBalwikobra'}. {settings?.footerCopyrightText || 'All rights reserved.'}</p>
+                  <p className="mt-1">
+                    Made with <Heart className="w-3 h-3 text-pink-400 inline mx-1" /> in Indonesia
+                  </p>
                 </div>
               </div>
-              <p className="text-gray-300 mb-4 max-w-md text-sm md:text-base">
-                Platform terpercaya untuk jual beli dan rental akun game di Indonesia. 
-                Dapatkan akun game impian Anda dengan harga terbaik dan layanan terpercaya.
-              </p>
-              <div className="flex space-x-4">
-                {/* Social Media Icons */}
-                <a href={instagramUrl} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-gray-800" aria-label="Instagram">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h10zm-5 3a5 5 0 1 0 .001 10.001A5 5 0 0 0 12 7zm0 2a3 3 0 1 1-.001 6.001A3 3 0 0 1 12 9zm5.5-.75a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5z"/></svg>
-                </a>
-                <a href={facebookUrl} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-gray-800" aria-label="Facebook">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.5 9.95v-7.04H7.9V12h2.6V9.8c0-2.57 1.53-4 3.87-4 1.12 0 2.3.2 2.3.2v2.53h-1.3c-1.28 0-1.68.8-1.68 1.62V12h2.85l-.46 2.91h-2.39v7.04A10 10 0 0 0 22 12z"/></svg>
-                </a>
-                <a href={tiktokUrl} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-gray-800" aria-label="TikTok">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21 8.5a7.5 7.5 0 0 1-5-2v8.2a5.7 5.7 0 1 1-4.9-5.65v2.7a3 3 0 1 0 2 2.83V2h3a4.5 4.5 0 0 0 4 3.9v2.6z"/></svg>
-                </a>
-                <a href="https://youtube.com/" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-gray-800" aria-label="YouTube">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .6 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.3.6 9.3.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
-                </a>
-              </div>
-            </IOSCard>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <IOSCard variant="default" padding="medium" className="bg-transparent border-none shadow-none">
-              <h3 className="text-lg font-semibold mb-4 text-white">Menu Utama</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link to="/" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Beranda
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/flash-sales" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Flash Sale
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/products" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Katalog Produk
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/sell" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Jual Akun
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/help" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Bantuan
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/terms" className="text-gray-300 hover:text-pink-400 transition-colors text-sm md:text-base block py-1 px-2 rounded hover:bg-gray-800">
-                    Syarat & Ketentuan
-                  </Link>
-                </li>
-              </ul>
-            </IOSCard>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <IOSCard variant="default" padding="medium" className="bg-transparent border-none shadow-none">
-              <h3 className="text-lg font-semibold mb-4 text-white">Kontak</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-2 text-gray-300 text-sm md:text-base">
-                  <Phone size={16} className="text-pink-400" />
-                  <span>+{whatsappNumber}</span>
-                </li>
-                {contactPhone && (
-                  <li className="flex items-center space-x-2 text-gray-300 text-sm md:text-base">
-                    <Phone size={16} className="text-pink-400" />
-                    <span>{contactPhone}</span>
-                  </li>
-                )}
-                <li className="flex items-center space-x-2 text-gray-300 text-sm md:text-base">
-                  <Mail size={16} className="text-pink-400" />
-                  <span>{contactEmail}</span>
-                </li>
-                <li className="flex items-center space-x-2 text-gray-300 text-sm md:text-base">
-                  <MapPin size={16} className="text-pink-400" />
-                  <span>{address}</span>
-                </li>
-              </ul>
-            </IOSCard>
-          </div>
-        </IOSGrid>
-
-        <div className="mt-8 pt-8 flex flex-col md:flex-row justify-between items-center border-t border-gray-800">
-          <p className="text-gray-400 text-xs md:text-sm text-center md:text-left mb-4 md:mb-0">
-            © {currentYear} {siteName}. All rights reserved.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 text-gray-400 text-xs md:text-sm">
-            <Link to="/terms" className="hover:text-pink-400 transition-colors py-1 px-2 rounded hover:bg-gray-800">Syarat & Ketentuan</Link>
-            <span className="opacity-50 hidden sm:inline">|</span>
-            <div className="flex items-center space-x-2">
-              <span>Made with</span>
-              <Heart size={14} className="text-pink-500" />
-              <span>for Indonesian Gamers</span>
             </div>
           </div>
         </div>
-      </IOSContainer>
+      </div>
     </footer>
   );
 };
+
+// Footer Brand Component
+const FooterBrand: React.FC<{ settings: WebsiteSettings | null }> = ({ settings }) => (
+  <div className="mb-8">
+    <Link to="/" className="flex items-center gap-3 mb-6 group">
+      {settings?.logoUrl ? (
+        <div className="relative">
+          <img
+            src={settings.logoUrl}
+            alt={settings.siteName || 'Logo'}
+            className="w-12 h-12 rounded-2xl object-cover ring-1 ring-white/20 group-hover:ring-pink-500/50 transition-all duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+      ) : (
+        <div className="relative">
+          <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-pink-500/25 transition-all duration-300">
+            <span className="text-white font-bold text-lg">JB</span>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-fuchsia-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+        </div>
+      )}
+      
+      <div>
+  <h2 className="text-xl font-bold text-white group-hover:text-pink-300 transition-colors duration-300 typography-title-3">
+          {settings?.siteName || 'JBalwikobra'}
+        </h2>
+        <p className="text-sm text-white/60">Digital Gaming Store</p>
+      </div>
+    </Link>
+    
+  <p className="text-white/70 text-sm leading-relaxed mb-6 typography-body">
+      {settings?.companyDescription || 
+      'Platform terpercaya untuk jual beli akun game dengan harga terbaik. Aman, cepat, dan mudah untuk semua gamers Indonesia.'}
+    </p>
+
+    {/* Trust Indicators */}
+    <div className="grid grid-cols-3 gap-3">
+      <div className="text-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/20">
+        <div className="text-lg font-bold text-white">1000+</div>
+        <div className="text-xs text-white/60">Pengguna</div>
+      </div>
+      <div className="text-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/20">
+        <div className="text-lg font-bold text-white">500+</div>
+        <div className="text-xs text-white/60">Produk</div>
+      </div>
+      <div className="text-center p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/20">
+        <div className="text-lg font-bold text-white">24/7</div>
+        <div className="text-xs text-white/60">Support</div>
+      </div>
+    </div>
+  </div>
+);
+
+// Footer Contact Component
+const FooterContact: React.FC<{ settings: WebsiteSettings | null }> = ({ settings }) => (
+  <div className="space-y-4">
+  <h3 className="font-semibold text-white text-lg mb-4 typography-title-3">Kontak Kami</h3>
+    
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/20 hover:border-pink-500/30 transition-all duration-300 group">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-red-500/20">
+          <Mail className="w-4 h-4 text-pink-400" />
+        </div>
+        <span className="text-white/70 text-sm group-hover:text-white transition-colors">
+          {settings?.supportEmail || settings?.contactEmail || 'support@jbalwikobra.com'}
+        </span>
+      </div>
+      
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/20 hover:border-pink-500/30 transition-all duration-300 group">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-green-500/20">
+          <Phone className="w-4 h-4 text-emerald-400" />
+        </div>
+        <span className="text-white/70 text-sm group-hover:text-white transition-colors">
+          {settings?.contactPhone || '+62 812-3456-7890'}
+        </span>
+      </div>
+      
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/20 hover:border-pink-500/30 transition-all duration-300 group">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20">
+          <MapPin className="w-4 h-4 text-blue-400" />
+        </div>
+        <span className="text-white/70 text-sm group-hover:text-white transition-colors">
+          {settings?.address || 'Jakarta, Indonesia'}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+// Footer Section Component
+const FooterSection: React.FC<{ section: FooterSection }> = ({ section }) => (
+  <div>
+  <h3 className="font-semibold text-white mb-6 text-base typography-subheadline">{section.title}</h3>
+    <ul className="space-y-3">
+      {section.links.map((link, index) => (
+        <li key={`${link.href}-${link.label}-${index}`}>
+          {link.external ? (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-2 text-white/70 hover:text-pink-400 transition-all duration-200 text-sm hover:translate-x-1"
+            >
+              <span className="w-1 h-1 rounded-full bg-pink-500/50 group-hover:bg-pink-400 transition-colors" />
+              {link.label}
+              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              {link.badge && (
+                <span className="px-2 py-0.5 text-xs bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-full">
+                  {link.badge}
+                </span>
+              )}
+            </a>
+          ) : (
+            <Link
+              to={link.href}
+              className="group flex items-center gap-2 text-white/70 hover:text-pink-400 transition-all duration-200 text-sm hover:translate-x-1"
+            >
+              <span className="w-1 h-1 rounded-full bg-pink-500/50 group-hover:bg-pink-400 transition-colors" />
+              {link.label}
+              {link.badge && (
+                <span className="px-2 py-0.5 text-xs bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-full">
+                  {link.badge}
+                </span>
+              )}
+            </Link>
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+// Newsletter Section Component
+interface NewsletterSectionProps {
+  email: string;
+  setEmail: (email: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isSubscribing: boolean;
+  isSubscribed: boolean;
+}
+
+const NewsletterSection: React.FC<NewsletterSectionProps> = ({
+  email,
+  setEmail,
+  onSubmit,
+  isSubscribing,
+  isSubscribed
+}) => (
+  <div className="max-w-2xl mx-auto text-center">
+    <div className="inline-flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-pink-500/10 to-fuchsia-500/10 backdrop-blur-sm border border-pink-500/20 mb-6">
+      <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500 to-fuchsia-600">
+        {isSubscribed ? (
+          <CheckCircle className="w-6 h-6 text-white" />
+        ) : (
+          <Mail className="w-6 h-6 text-white" />
+        )}
+      </div>
+      <div className="text-left">
+  <h3 className="font-bold text-white text-lg typography-title-3">
+          {isSubscribed ? 'Berhasil Berlangganan!' : 'Newsletter JBalwikobra'}
+        </h3>
+  <p className="text-pink-200 text-sm typography-footnote">
+          {isSubscribed ? 'Terima kasih sudah bergabung!' : 'Dapatkan penawaran eksklusif dan update terbaru'}
+        </p>
+      </div>
+    </div>
+
+    {!isSubscribed && (
+      <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <div className="flex-1">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Masukkan email Anda..."
+            className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-300"
+            required
+          />
+        </div>
+        <IOSButton
+          type="submit"
+          variant="primary"
+          disabled={isSubscribing || !email.trim()}
+          className="bg-gradient-to-r from-pink-500 to-fuchsia-600 hover:from-pink-600 hover:to-fuchsia-700 disabled:opacity-50"
+        >
+          {isSubscribing ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Mengirim...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              <span>Berlangganan</span>
+            </div>
+          )}
+        </IOSButton>
+      </form>
+    )}
+
+    <p className="text-xs text-white/50 mt-4">
+      Dengan berlangganan, Anda menyetujui <Link to="/terms" className="text-pink-400 hover:underline">syarat dan ketentuan</Link> kami.
+    </p>
+  </div>
+);
 
 export default Footer;

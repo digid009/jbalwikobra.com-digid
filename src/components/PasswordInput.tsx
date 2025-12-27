@@ -19,12 +19,12 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
-  const defaultClassName = "w-full px-4 py-3 pr-12 bg-ios-surface border border-ios-border rounded-xl text-ios-text placeholder:text-ios-text-secondary focus:ring-2 focus:ring-ios-accent focus:border-ios-accent";
+  const defaultClassName = "w-full px-4 py-3 pr-12 bg-black border border-gray-700 rounded-xl text-white placeholder:text-white-secondary focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
   return (
     <div>
       {label && (
-  <label className="block text-sm font-medium text-ios-text-secondary mb-2">
+  <label className="block text-sm font-medium text-white-secondary mb-2">
           {label}
         </label>
       )}
@@ -40,7 +40,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ios-text-secondary hover:text-ios-text transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white-secondary hover:text-white transition-colors"
           tabIndex={-1}
         >
           {showPassword ? (

@@ -2,7 +2,7 @@
 <html lang="id" class="dark">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <!-- iOS / PWA meta -->
@@ -16,6 +16,8 @@
     <meta name="keywords" content="jual beli akun game, rental akun game, mobile legends, pubg mobile, free fire, genshin impact, akun game murah, indonesia" />
     <meta name="author" content="JB Alwikobra" />
     <meta name="robots" content="index, follow" />
+  <!-- Google AdSense Account Meta -->
+  <meta name="google-adsense-account" content="ca-pub-7162656941867715" />
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="JB Alwikobra - Jual Beli Rental Akun Game Terpercaya" />
@@ -38,9 +40,18 @@
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
   <meta name="apple-mobile-web-app-title" content="JB Alwikobra" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','%REACT_APP_GTM_CONTAINER_ID%');</script>
+    <!-- End Google Tag Manager -->
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -61,6 +72,10 @@
     <title>JB Alwikobra - Jual Beli Rental Akun Game Terpercaya</title>
   </head>
   <body>
+    <!-- Google tag (gtag.js) - load only in production environments -->
+    <script>
+      // GTM is already handled by the script in head section - no additional setup needed
+    </script>
     <script>
       // Ensure dark mode by default and prevent iOS white flash during load
       try {
@@ -69,6 +84,12 @@
         document.body && (document.body.style.backgroundColor = '#000');
       } catch (e) {}
     </script>
+    
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%REACT_APP_GTM_CONTAINER_ID%"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>

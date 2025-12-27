@@ -1,0 +1,474 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Users, UserCheck, Shield, Clock, Search, Filter, RefreshCw, Plus, Edit, Trash2, Mail, Phone, Calendar, RotateCcw, TrendingUp, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
+import { adminService, User } from '../../services/adminService';
+import { useToast } from '../../components/Toast';
+
+interface UserStats {
+  total: number;
+  active: number;
+  admin: number;
+  recent: number;
+}
+
+interface UserFilters {
+  role: 'all' | 'admin' | 'user';
+  status: 'all' | 'active' | 'inactive';
+  search: string;
+}
+
+// Dashboard-style MetricCard component
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  change?: number;
+  changeType?: 'increase' | 'decrease' | 'neutral';
+  icon: React.ComponentType<any>;
+  trend?: 'up' | 'down' | 'neutral';
+  color?: 'pink' | 'blue' | 'green' | 'orange' | 'purple';
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ 
+  title, 
+  value, 
+  change, 
+  changeType = 'neutral', 
+  icon: Icon, 
+  trend = 'neutral', 
+  color = 'blue' 
+}) => {
+  const colorMap = {
+    pink: 'from-pink-500 to-fuchsia-600',
+    blue: 'from-blue-500 to-cyan-600',
+    green: 'from-emerald-500 to-green-600',
+    orange: 'from-orange-500 to-red-600',
+    purple: 'from-purple-500 to-violet-600'
+  };
+
+  const trendIcon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : Activity;
+  const TrendIcon = trendIcon;
+
+  return (
+    <div className="group relative overflow-hidden bg-black border border-gray-800 rounded-2xl p-6 hover:border-pink-500/30 transition-all duration-300 hover:transform hover:scale-[1.02]">
+      {/* Background gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${colorMap[color]} opacity-5 group-hover:opacity-10 transition-opacity duration-300`} />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${colorMap[color]} shadow-lg`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          {change !== undefined && (
+            <div className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium ${
+              changeType === 'increase' ? 'bg-emerald-500/10 text-emerald-400' :
+              changeType === 'decrease' ? 'bg-red-500/10 text-red-400' :
+              'bg-gray-500/10 text-gray-400'
+            }`}>
+              <TrendIcon className="w-3 h-3" />
+              <span>{Math.abs(change)}%</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-1">
+          <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+          <p className="text-sm text-gray-400 font-medium">{title}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminUsersV2: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState<UserFilters>({
+    role: 'all',
+    status: 'all',
+    search: ''
+  });
+  const { push } = useToast();
+
+  // Calculate statistics
+  const stats = useMemo<UserStats>(() => {
+    const total = users.length;
+    const admin = users.filter(user => user.is_admin).length;
+    const active = users.filter(user => user.last_login).length;
+    
+    // Users created in the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recent = users.filter(user => new Date(user.created_at) > thirtyDaysAgo).length;
+
+    return { total, active, admin, recent };
+  }, [users]);
+
+  // Filter users based on current filters
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      // Role filter
+      if (filters.role === 'admin' && !user.is_admin) return false;
+      if (filters.role === 'user' && user.is_admin) return false;
+
+      // Status filter
+      if (filters.status === 'active' && !user.last_login) return false;
+      if (filters.status === 'inactive' && user.last_login) return false;
+
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        return (
+          user.name?.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower) ||
+          user.phone?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return true;
+    });
+  }, [users, filters]);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await adminService.getUsers(1, 1000); // Get all users for now
+      setUsers(result.data);
+    } catch (err: any) {
+      const message = err?.message || 'Failed to load users';
+      setError(message);
+      push(`Failed to load users: ${message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadUsers();
+    setRefreshing(false);
+  };
+
+  const handleEditUser = (user: User) => {
+    push(`Edit functionality coming soon for: ${user.name}`, 'info');
+  };
+
+  const handleDeleteUser = (user: User) => {
+    if (confirm(`Are you sure you want to delete user: ${user.name}?`)) {
+      push(`Delete functionality coming soon for: ${user.name}`, 'error');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const formatLastLogin = (lastLogin?: string) => {
+    if (!lastLogin) return 'Never';
+    return new Date(lastLogin).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Dashboard-Style Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-pink-100 to-white bg-clip-text text-transparent">
+              User Management
+            </h1>
+            <p className="text-gray-400 mt-1">Manage user accounts, permissions and analytics</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center space-x-2 px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500/20 transition-all duration-200 disabled:opacity-50"
+          >
+            <RotateCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 text-red-300 text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Modern Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            title="Total Users"
+            value={loading ? "..." : stats.total}
+            change={12.5}
+            changeType="increase"
+            icon={Users}
+            trend="up"
+            color="blue"
+          />
+          <MetricCard
+            title="Active Users"
+            value={loading ? "..." : stats.active}
+            change={8.2}
+            changeType="increase"
+            icon={UserCheck}
+            trend="up"
+            color="green"
+          />
+          <MetricCard
+            title="Admin Users"
+            value={loading ? "..." : stats.admin}
+            change={-2.1}
+            changeType="decrease"
+            icon={Shield}
+            trend="down"
+            color="purple"
+          />
+          <MetricCard
+            title="New This Month"
+            value={loading ? "..." : stats.recent}
+            change={15.3}
+            changeType="increase"
+            icon={Clock}
+            trend="up"
+            color="orange"
+          />
+        </div>
+
+        {/* Quick Actions Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Quick Actions */}
+          <div className="lg:col-span-1">
+            <div className="bg-black border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <div className="p-2 bg-pink-500/10 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-pink-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => push('Add user functionality coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-pink-500/10 hover:border-pink-500/30 border border-gray-700 text-gray-300 hover:text-pink-400 transition-all duration-200"
+                >
+                  <Plus className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Add New User</p>
+                    <p className="text-xs text-gray-500">Create a new user account</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => push('Export functionality coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-blue-500/10 hover:border-blue-500/30 border border-gray-700 text-gray-300 hover:text-blue-400 transition-all duration-200"
+                >
+                  <Mail className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Export Users</p>
+                    <p className="text-xs text-gray-500">Download user data</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => push('Bulk actions coming soon!', 'info')}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-green-500/10 hover:border-green-500/30 border border-gray-700 text-gray-300 hover:text-green-400 transition-all duration-200"
+                >
+                  <Shield className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Manage Permissions</p>
+                    <p className="text-xs text-gray-500">Bulk permission updates</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* User Analytics Preview */}
+          <div className="lg:col-span-2">
+            <div className="bg-black border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Users className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">User Analytics</h3>
+                </div>
+                <button className="flex items-center space-x-2 text-sm text-pink-400 hover:text-pink-300 transition-colors">
+                  <span>View Details</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.active / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Activity Rate</p>
+                </div>
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.admin / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Admin Ratio</p>
+                </div>
+                <div className="text-center p-4 bg-black border border-gray-800 rounded-xl">
+                  <p className="text-2xl font-bold text-white mb-1">{Math.round((stats.recent / stats.total) * 100) || 0}%</p>
+                  <p className="text-sm text-gray-400">Growth Rate</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-black border border-gray-800 rounded-xl p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+
+            {/* Role Filter */}
+            <select
+              value={filters.role}
+              onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value as any }))}
+              className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admin Only</option>
+              <option value="user">Users Only</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))}
+              className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+
+            {/* Results Count */}
+            <div className="flex items-center text-gray-400 text-sm">
+              Showing {filteredUsers.length} of {users.length} users
+            </div>
+          </div>
+        </div>
+
+        {/* Users Grid */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+            <p className="text-gray-400 mt-4">Loading users...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400">No users found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="bg-black border border-gray-800 rounded-xl p-6 hover:border-pink-500/50 transition-colors">
+                {/* User Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                        <Users className="h-6 w-6 text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-white font-semibold">{user.name}</h3>
+                      <div className="flex items-center gap-2">
+                        {user.is_admin && (
+                          <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full">
+                            Admin
+                          </span>
+                        )}
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          user.last_login
+                            ? 'bg-green-500/20 text-green-300'
+                            : 'bg-gray-500/20 text-gray-300'
+                        }`}>
+                          {user.last_login ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditUser(user)}
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg transition-colors"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user)}
+                      className="p-2 bg-gray-800 hover:bg-red-600 text-gray-300 hover:text-white rounded-lg transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* User Details */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Mail className="h-4 w-4" />
+                    <span>{user.email}</span>
+                  </div>
+                  
+                  {user.phone && (
+                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                      <Phone className="h-4 w-4" />
+                      <span>{user.phone}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span>Joined {formatDate(user.created_at)}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Clock className="h-4 w-4" />
+                    <span>Last login: {formatLastLogin(user.last_login)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminUsersV2;

@@ -4,6 +4,15 @@ import { ProductService } from '../../services/productService';
 import { OptimizedProductService } from '../../services/optimizedProductService';
 import { formatNumberID, parseNumberID } from '../../utils/helpers';
 import { useToast } from '../../components/Toast';
+import { Plus, RefreshCw, Edit, Trash2, Eye, Clock, Zap, Package, TrendingUp, CheckCircle, Calendar } from 'lucide-react';
+import { 
+  AdminPageHeaderV2, 
+  AdminStatCard, 
+  AdminFilters, 
+  AdminDataTable, 
+  StatusBadge 
+} from './components/ui';
+import type { AdminFiltersConfig, TableColumn, TableAction } from './components/ui';
 
 type FSForm = {
   id?: string;
@@ -35,6 +44,212 @@ const AdminFlashSales: React.FC = () => {
   const [form, setForm] = useState<FSForm>(emptyFS);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+
+  // Filter state for our AdminFilters component
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    search: '',
+    status: 'all',
+    timeStatus: 'all',
+    sortBy: 'end_time',
+    sortOrder: 'desc'
+  });
+
+  // Filter configuration for our AdminFilters component
+  const filtersConfig: AdminFiltersConfig = {
+    searchPlaceholder: 'Search flash sales by product name...',
+    filters: [
+      {
+        key: 'status',
+        label: 'Status',
+        options: [
+          { value: 'all', label: 'All Status' },
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' }
+        ]
+      },
+      {
+        key: 'timeStatus',
+        label: 'Time Status',
+        options: [
+          { value: 'all', label: 'All Time' },
+          { value: 'upcoming', label: 'Upcoming' },
+          { value: 'ongoing', label: 'Ongoing' },
+          { value: 'expired', label: 'Expired' }
+        ]
+      }
+    ],
+    sortOptions: [
+      { value: 'end_time', label: 'End Time' },
+      { value: 'start_time', label: 'Start Time' },
+      { value: 'sale_price', label: 'Sale Price' },
+      { value: 'original_price', label: 'Original Price' }
+    ]
+  };
+
+  // Filter handling
+  const handleFilterChange = (filters: Record<string, any>) => {
+    setFilterValues(filters);
+  };
+
+  // Helper function to get time status
+  const getTimeStatus = (flashSale: any) => {
+    const now = new Date();
+    const start = new Date(flashSale.start_time || flashSale.startTime);
+    const end = new Date(flashSale.end_time || flashSale.endTime);
+    
+    if (now < start) return 'upcoming';
+    if (now > end) return 'expired';
+    return 'ongoing';
+  };
+
+  // Apply filters to flash sales
+  const filteredFlashSales = flashSales.filter(sale => {
+    // Search filter
+    if (filterValues.search) {
+      const searchTerm = filterValues.search.toLowerCase();
+      const product = products.find(p => p.id === (sale.product_id || sale.productId));
+      if (!product?.name?.toLowerCase().includes(searchTerm)) {
+        return false;
+      }
+    }
+
+    // Status filter
+    if (filterValues.status !== 'all') {
+      const isActive = sale.is_active ?? sale.isActive;
+      if (filterValues.status === 'active' && !isActive) return false;
+      if (filterValues.status === 'inactive' && isActive) return false;
+    }
+
+    // Time status filter
+    if (filterValues.timeStatus !== 'all') {
+      const timeStatus = getTimeStatus(sale);
+      if (filterValues.timeStatus !== timeStatus) return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    const sortBy = filterValues.sortBy;
+    const order = filterValues.sortOrder === 'desc' ? -1 : 1;
+    
+    if (sortBy === 'start_time' || sortBy === 'end_time') {
+      const aDate = new Date(a[sortBy] || a[sortBy.replace('_', '')]).getTime();
+      const bDate = new Date(b[sortBy] || b[sortBy.replace('_', '')]).getTime();
+      return (aDate - bDate) * order;
+    }
+    
+    if (sortBy === 'sale_price' || sortBy === 'original_price') {
+      const aValue = Number(a[sortBy] || a[sortBy.replace('_', '')]) || 0;
+      const bValue = Number(b[sortBy] || b[sortBy.replace('_', '')]) || 0;
+      return (aValue - bValue) * order;
+    }
+    
+    return 0;
+  });
+
+  // Statistics calculation
+  const stats = {
+    total: flashSales.length,
+    active: flashSales.filter(sale => sale.is_active ?? sale.isActive).length,
+    ongoing: flashSales.filter(sale => getTimeStatus(sale) === 'ongoing').length,
+    upcoming: flashSales.filter(sale => getTimeStatus(sale) === 'upcoming').length
+  };
+
+  // Table columns configuration
+  const columns: TableColumn<any>[] = [
+    {
+      key: 'product',
+      label: 'Product',
+      render: (sale) => {
+        const product = products.find(p => p.id === (sale.product_id || sale.productId));
+        return (
+          <div>
+            <div className="font-medium text-ds-text">{product?.name || 'produk akun game'}</div>
+            <div className="text-sm text-ds-text-secondary">{product?.gameTitleId || 'N/A'}</div>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'prices',
+      label: 'Prices',
+      render: (sale) => (
+        <div>
+          <div className="font-medium text-green-400">
+            Rp {(sale.sale_price || sale.salePrice || 0).toLocaleString('id-ID')}
+          </div>
+          {(sale.original_price || sale.originalPrice) && (
+            <div className="text-sm text-ds-text-secondary line-through">
+              Rp {(sale.original_price || sale.originalPrice).toLocaleString('id-ID')}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'time',
+      label: 'Duration',
+      render: (sale) => {
+        const start = new Date(sale.start_time || sale.startTime);
+        const end = new Date(sale.end_time || sale.endTime);
+        const timeStatus = getTimeStatus(sale);
+        
+        return (
+          <div>
+            <div className="text-sm text-ds-text">
+              {start.toLocaleDateString('id-ID')} - {end.toLocaleDateString('id-ID')}
+            </div>
+            <StatusBadge
+              status={timeStatus === 'ongoing' ? 'active' : timeStatus === 'upcoming' ? 'pending' : 'inactive'}
+              customLabel={timeStatus.charAt(0).toUpperCase() + timeStatus.slice(1)}
+            />
+          </div>
+        );
+      }
+    },
+    {
+      key: 'stock',
+      label: 'Stock',
+      render: (sale) => sale.stock || 'N/A'
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (sale) => (
+        <StatusBadge
+          status={(sale.is_active ?? sale.isActive) ? 'active' : 'inactive'}
+        />
+      )
+    }
+  ];
+
+  // Table actions configuration
+  const actions: TableAction<any>[] = [
+    {
+      label: 'View',
+      icon: <Eye size={16} />,
+      onClick: (sale) => {
+        const product = products.find(p => p.id === (sale.product_id || sale.productId));
+        push(`Viewing flash sale for: ${product?.name || 'produk akun game'}`, 'info');
+      }
+    },
+    {
+      label: 'Edit',
+      icon: <Edit size={16} />,
+      onClick: (sale) => {
+        startEdit(sale);
+      }
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 size={16} />,
+      onClick: (sale) => {
+        if (confirm(`Are you sure you want to delete this flash sale?`)) {
+          remove(sale.id);
+        }
+      },
+      variant: 'danger'
+    }
+  ];
 
   useEffect(() => {
     (async () => {
@@ -82,6 +297,17 @@ const AdminFlashSales: React.FC = () => {
     setShowForm(true);
   };
   const cancelForm = () => { setForm(emptyFS); setShowForm(false); };
+
+  const remove = async (id: string) => {
+    try {
+      await ProductService.deleteFlashSale(id);
+      push('Flash sale deleted successfully', 'success');
+      refresh();
+    } catch (error) {
+      console.error('Error deleting flash sale:', error);
+      push('Failed to delete flash sale', 'error');
+    }
+  };
 
   const refresh = async () => {
     const fs = await ProductService.getFlashSales();
@@ -157,132 +383,230 @@ const AdminFlashSales: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Flash Sale</h1>
-          <p className="text-gray-400">Kelola event flash sale</p>
-        </div>
-        <button onClick={startCreate} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700">Buat Flash Sale</button>
+      <AdminPageHeaderV2
+        title="Flash Sales"
+        subtitle="Manage flash sale events and time-limited product discounts"
+        icon={Zap}
+        actions={[
+          {
+            key: 'add',
+            label: 'Create Flash Sale',
+            onClick: startCreate,
+            variant: 'primary',
+            icon: Plus
+          }
+        ]}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <AdminStatCard
+          title="Total Flash Sales"
+          value={stats.total}
+          icon={Zap}
+          iconColor="text-blue-400"
+          iconBgColor="bg-blue-500/20"
+        />
+        <AdminStatCard
+          title="Active"
+          value={stats.active}
+          icon={CheckCircle}
+          iconColor="text-green-400"
+          iconBgColor="bg-green-500/20"
+        />
+        <AdminStatCard
+          title="Ongoing"
+          value={stats.ongoing}
+          icon={Clock}
+          iconColor="text-yellow-400"
+          iconBgColor="bg-yellow-500/20"
+        />
+        <AdminStatCard
+          title="Upcoming"
+          value={stats.upcoming}
+          icon={Calendar}
+          iconColor="text-purple-400"
+          iconBgColor="bg-purple-500/20"
+        />
       </div>
 
-      {!showForm && (
-        <div className="bg-black/60 border border-pink-500/30 rounded-xl overflow-hidden">
-          <div className="grid grid-cols-12 text-xs uppercase text-gray-400 px-4 py-2 border-b border-pink-500/20">
-            <div className="col-span-4">Produk</div>
-            <div className="col-span-2">Harga</div>
-            <div className="col-span-2">Berakhir</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-2 text-right">Aksi</div>
-          </div>
-          {loading ? (
-            <div className="p-4 text-gray-400">Memuat…</div>
-          ) : flashSales.length === 0 ? (
-            <div className="p-4 text-gray-400">Belum ada flash sale.</div>
-          ) : (
-            flashSales.map((row: any) => (
-              <div key={row.id} className="grid grid-cols-12 items-center px-4 py-3 border-b border-pink-500/10">
-                <div className="col-span-4 text-white line-clamp-1">{row.product?.name || row.productId}</div>
-                <div className="col-span-2 text-gray-300">Rp {Number((row.salePrice ?? row.sale_price) || 0).toLocaleString('id-ID')}</div>
-                <div className="col-span-2 text-gray-300">{(row.endTime || row.end_time)?.replace('T',' ').slice(0,16)}</div>
-                <div className="col-span-2">{(row.isActive ?? row.is_active) ? <span className="text-green-400">Aktif</span> : <span className="text-gray-400">Nonaktif</span>}</div>
-                <div className="col-span-2 text-right">
-                  <button onClick={()=>startEdit(row)} className="px-3 py-1.5 rounded border border-white/20 text-white hover:bg-white/10 mr-2">Edit</button>
-                  <button onClick={()=>handleDelete(row.id)} className="px-3 py-1.5 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10">Hapus</button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      <AdminFilters
+        config={filtersConfig}
+        values={filterValues}
+        onFiltersChange={handleFilterChange}
+        totalItems={flashSales.length}
+        filteredItems={filteredFlashSales.length}
+  loading={loading}
+  defaultCollapsed={true}
+      />
+
+      <AdminDataTable
+        data={filteredFlashSales}
+        columns={columns}
+        actions={actions}
+        loading={loading}
+        emptyMessage="No flash sales found"
+      />
 
       {showForm && (
-        <div className="bg-black/60 border border-pink-500/30 rounded-xl p-4">
+        <div className="bg-ds-surface border border-ds-border rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-ds-text mb-4">
+            {form.id ? 'Edit Flash Sale' : 'Create Flash Sale'}
+          </h3>
+          
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded p-3 mb-4">
+              <ul className="list-disc list-inside space-y-1">
+                {errors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
-              {errors.length ? (
-                <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded p-2">
-                  <ul className="list-disc list-inside">
-                    {errors.map((e,i)=>(<li key={i}>{e}</li>))}
-                  </ul>
-                </div>
-              ) : null}
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Produk</label>
+                <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                  Product
+                </label>
                 <select
                   value={form.product_id}
-                  onChange={(e)=>{
+                  onChange={(e) => {
                     const id = e.target.value;
-                    const p = products.find(x=>x.id===id);
-                    const newOriginal = p ? (p.originalPrice && Number(p.originalPrice) > 0 ? Number(p.originalPrice) : Number(p.price)) : 0;
+                    const product = products.find(p => p.id === id);
+                    const newOriginal = product ? (product.originalPrice && Number(product.originalPrice) > 0 ? Number(product.originalPrice) : Number(product.price)) : 0;
                     setForm({...form, product_id: id, original_price: newOriginal});
                   }}
-                  className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                  className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
                 >
-                  <option value="">-- pilih produk --</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                  <option value="">-- Select Product --</option>
+                  {products.map(product => (
+                    <option key={product.id} value={product.id}>{product.name}</option>
                   ))}
                 </select>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga Sale</label>
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    Sale Price
+                  </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={form.sale_price ? formatNumberID(form.sale_price) : ''}
-                    onChange={(e)=>setForm({...form, sale_price: parseNumberID(e.target.value)})}
+                    onChange={(e) => setForm({...form, sale_price: parseNumberID(e.target.value)})}
                     placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Harga Asli (opsional)</label>
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    Original Price (Optional)
+                  </label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={form.original_price ? formatNumberID(form.original_price) : ''}
-                    onChange={(e)=>setForm({...form, original_price: parseNumberID(e.target.value)})}
+                    onChange={(e) => setForm({...form, original_price: parseNumberID(e.target.value)})}
                     placeholder="0"
-                    className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white"
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Mulai (opsional)</label>
-                  <input type="datetime-local" value={form.start_time || ''} max={form.end_time || undefined} onChange={(e)=>setForm({...form, start_time: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    Start Time (Optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.start_time || ''}
+                    max={form.end_time || undefined}
+                    onChange={(e) => setForm({...form, start_time: e.target.value})}
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Berakhir</label>
-                  <input type="datetime-local" min={form.start_time || undefined} value={form.end_time} onChange={(e)=>setForm({...form, end_time: e.target.value})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    End Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    min={form.start_time || undefined}
+                    value={form.end_time}
+                    onChange={(e) => setForm({...form, end_time: e.target.value})}
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  />
                 </div>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Stok (opsional)</label>
-                  <input type="number" value={form.stock} onChange={(e)=>setForm({...form, stock: Number(e.target.value)})} className="w-full bg-black border border-white/20 rounded px-3 py-2 text-white" />
+                  <label className="block text-sm font-medium text-ds-text-secondary mb-2">
+                    Stock (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.stock}
+                    onChange={(e) => setForm({...form, stock: Number(e.target.value)})}
+                    className="w-full bg-ds-surface border border-ds-border rounded-lg px-3 py-2 text-ds-text"
+                  />
                 </div>
-                <div className="flex items-center gap-2 mt-6">
-                  <input id="is_active" type="checkbox" checked={!!form.is_active} onChange={(e)=>setForm({...form, is_active: e.target.checked})} />
-                  <label htmlFor="is_active" className="text-gray-300">Aktif</label>
+                <div className="flex items-center gap-2 mt-8">
+                  <input
+                    id="is_active"
+                    type="checkbox"
+                    checked={!!form.is_active}
+                    onChange={(e) => setForm({...form, is_active: e.target.checked})}
+                    className="rounded border-ds-border"
+                  />
+                  <label htmlFor="is_active" className="text-ds-text">
+                    Active
+                  </label>
                 </div>
               </div>
             </div>
+
             <div>
-              <div className="bg-black border border-white/20 rounded-xl p-3 text-sm text-gray-300">
-                <div className="mb-2 font-semibold text-white">Preview</div>
-                <div>Produk: {products.find(p=>p.id===form.product_id)?.name || '-'}</div>
-                <div>Harga Sale: Rp {Number(form.sale_price||0).toLocaleString('id-ID')}</div>
-                <div>Harga Asli: Rp {Number(form.original_price||0).toLocaleString('id-ID')}</div>
-                <div>Berakhir: {form.end_time || '-'}</div>
-                <div>Status: {form.is_active ? 'Aktif' : 'Nonaktif'}</div>
+              <div className="bg-ds-surface-secondary border border-ds-border rounded-lg p-4">
+                <h4 className="font-semibold text-ds-text mb-3">Preview</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="text-ds-text-secondary">
+                    Product: <span className="text-ds-text">{products.find(p => p.id === form.product_id)?.name || '-'}</span>
+                  </div>
+                  <div className="text-ds-text-secondary">
+                    Sale Price: <span className="text-green-400">Rp {Number(form.sale_price || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="text-ds-text-secondary">
+                    Original Price: <span className="text-ds-text">Rp {Number(form.original_price || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="text-ds-text-secondary">
+                    End Time: <span className="text-ds-text">{form.end_time || '-'}</span>
+                  </div>
+                  <div className="text-ds-text-secondary">
+                    Status: <span className={form.is_active ? 'text-green-400' : 'text-gray-400'}>{form.is_active ? 'Active' : 'Inactive'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="mt-6 flex items-center justify-end gap-2">
-            <button onClick={cancelForm} className="px-4 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10">Batal</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-60">{saving ? 'Menyimpan…' : 'Simpan'}</button>
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              onClick={cancelForm}
+              className="px-4 py-2 rounded-lg border border-ds-border text-ds-text hover:bg-ds-surface-secondary transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-ds-primary text-white hover:bg-ds-primary-hover disabled:opacity-50 transition-colors"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       )}

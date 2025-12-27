@@ -4,6 +4,9 @@ Allow: /
 # Disallow admin pages
 Disallow: /admin
 
+# Disallow internal pages
+Disallow: /internal
+
 # Disallow API endpoints
 Disallow: /api
 

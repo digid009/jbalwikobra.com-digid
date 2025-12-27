@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { injectCriticalCSS, preloadCriticalResources } from './utils/criticalCSS';
+import { NotificationProvider } from './components/ios/NotificationSystem';
+import { injectCriticalCSS } from './utils/criticalCSS';
 import { initWebVitalsMonitoring } from './utils/webVitalsMonitor';
 import { FontOptimizer } from './utils/fontOptimizer';
+import { silenceConsoleInProduction } from './utils/consoleSilencer';
 
 // Suppress React DevTools warning in development
+silenceConsoleInProduction();
 if (process.env.NODE_ENV === 'development') {
   // Silence React DevTools download suggestion
   if (typeof window !== 'undefined') {
@@ -37,13 +40,15 @@ initWebVitalsMonitoring();
 
 // Inject critical CSS before any rendering
 injectCriticalCSS();
-preloadCriticalResources();
+// preloadCriticalResources(); // Disabled to prevent unused preload warnings
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <NotificationProvider>
+      <App />
+    </NotificationProvider>
   </React.StrictMode>
 );

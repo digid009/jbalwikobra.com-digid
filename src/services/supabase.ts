@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+// Clean environment variables to remove any CRLF characters
+const supabaseUrl = (process.env.REACT_APP_SUPABASE_URL || '').replace(/[\r\n]/g, '');
+const supabaseAnonKey = (process.env.REACT_APP_SUPABASE_ANON_KEY || '').replace(/[\r\n]/g, '');
 
 let supabase: SupabaseClient | null = null;
 
@@ -24,7 +25,20 @@ try {
   } else if (looksLikePlaceholder(supabaseUrl) || looksLikePlaceholder(supabaseAnonKey) || !isValidUrl(supabaseUrl)) {
     console.warn('[Supabase] Invalid configuration detected. Skipping client initialization.');
   } else {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true
+      },
+      global: {
+        headers: {
+          'x-client-info': 'jbalwikobra-web'
+        }
+      },
+      db: {
+        schema: 'public'
+      }
+    });
   }
 } catch (e) {
   console.error('[Supabase] Failed to initialize client:', e);

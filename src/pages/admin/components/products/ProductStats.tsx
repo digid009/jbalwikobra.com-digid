@@ -1,0 +1,79 @@
+import React from 'react';
+import { IOSCard } from '../../../../components/ios/IOSDesignSystemV2';
+import { Product } from '../../../../types';
+
+interface ProductStatsProps {
+  products: Product[];
+  loading: boolean;
+}
+
+export const ProductStats: React.FC<ProductStatsProps> = ({ products, loading }) => {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-cluster-md">
+        {[...Array(4)].map((_, i) => (
+          <IOSCard key={i} className="p-stack-md bg-surface-glass-light border border-surface-tint-light">
+            <div className="animate-pulse">
+              <div className="h-4 bg-surface-tint-light rounded mb-2"></div>
+              <div className="h-8 bg-surface-tint-light rounded"></div>
+            </div>
+          </IOSCard>
+        ))}
+      </div>
+    );
+  }
+
+  const activeProducts = products.filter(p => (p as any).isActive !== false && !(p as any).archivedAt);
+  const archivedProducts = products.filter(p => (p as any).isActive === false || (p as any).archivedAt);
+  const totalValue = products.reduce((sum, p) => sum + (p.price || 0), 0);
+  const averagePrice = products.length > 0 ? totalValue / products.length : 0;
+
+  const stats = [
+    {
+      label: 'Total Produk',
+      value: products.length.toString(),
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-400/20',
+    },
+    {
+      label: 'Produk Aktif',
+      value: activeProducts.length.toString(),
+      color: 'text-green-400',
+      bgColor: 'bg-green-400/20',
+    },
+    {
+      label: 'Produk Diarsipkan',
+      value: archivedProducts.length.toString(),
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-400/20',
+    },
+    {
+      label: 'Rata-rata Harga',
+      value: `Rp ${Math.round(averagePrice).toLocaleString('id-ID')}`,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-400/20',
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-cluster-md">
+      {stats.map((stat, index) => (
+        <IOSCard key={index} className="p-stack-md bg-surface-glass-light border border-surface-tint-light">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-ds-text-secondary mb-1">
+                {stat.label}
+              </p>
+              <p className={`text-2xl font-bold ${stat.color}`}>
+                {stat.value}
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center`}>
+              <div className={`w-6 h-6 rounded-full ${stat.color.replace('text-', 'bg-')}`}></div>
+            </div>
+          </div>
+        </IOSCard>
+      ))}
+    </div>
+  );
+};
