@@ -1,39 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AdminStats, adminService } from '../../services/adminService';
-import { AdminDashboardContent } from './components/AdminDashboardContent';
-import AdminDashboardContentV2 from './components/AdminDashboardContentV2';
-import AdminOrdersV2 from './AdminOrdersV2';
-import AdminUsersV2 from './AdminUsersV2';
-import AdminProductsV2 from './AdminProductsV2';
-import AdminFeedManagement from './components/AdminFeedManagement';
-import { AdminBannersManagement } from './components/AdminBannersManagement';
-import { AdminFlashSalesManagement } from '../../components/admin/flash-sales';
-import { AdminReviewsManagement } from './components/AdminReviewsManagement';
-import { AdminNotificationsPage } from './components/AdminNotificationsPage';
-import { AdminHeader } from './components/AdminHeader';
-import AdminHeaderV2 from './components/AdminHeaderV2';
-import AdminWhatsAppSettings from './AdminWhatsAppSettings';
-import AdminSettings from './AdminSettings';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
 import '../../styles/dashboard.css';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import DataDiagnosticPage from '../DataDiagnosticPage';
-// Floating notifications are already included by DashboardLayout
-import CommandPalette from './components/CommandPalette';
+import { useLastVisitedTab } from './hooks/usePersistentState';
+import { performanceMonitor } from './utils/performanceMonitor';
+import { useAnnouncement } from './utils/accessibility';
+
+// Lazy load all tab components for code splitting
+const AdminDashboardContentV2 = lazy(() => import('./components/AdminDashboardContentV2'));
+const AdminOrdersV2 = lazy(() => import('./AdminOrdersV2'));
+const AdminUsersV2 = lazy(() => import('./AdminUsersV2'));
+const AdminProductsV2 = lazy(() => import('./AdminProductsV2'));
+const AdminFeedManagement = lazy(() => import('./components/AdminFeedManagement'));
+const AdminBannersManagement = lazy(() => import('./components/AdminBannersManagement').then(m => ({ default: m.AdminBannersManagement })));
+const AdminFlashSalesManagement = lazy(() => import('../../components/admin/flash-sales').then(m => ({ default: m.AdminFlashSalesManagement })));
+const AdminReviewsManagement = lazy(() => import('./components/AdminReviewsManagement').then(m => ({ default: m.AdminReviewsManagement })));
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage').then(m => ({ default: m.AdminNotificationsPage })));
+const AdminHeaderV2 = lazy(() => import('./components/AdminHeaderV2'));
+const AdminWhatsAppSettings = lazy(() => import('./AdminWhatsAppSettings'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
+const DataDiagnosticPage = lazy(() => import('../DataDiagnosticPage'));
+const CommandPalette = lazy(() => import('./components/CommandPalette'));
 
 const AdminDashboard: React.FC = () => {
-  // If Supabase isn't configured in development, default to Settings to avoid heavy stats calls
-  const hasSupabase = !!process.env.REACT_APP_SUPABASE_URL && !!process.env.REACT_APP_SUPABASE_ANON_KEY;
-  const initialTab: AdminTab = (!hasSupabase && process.env.NODE_ENV === 'development') ? 'settings' : 'dashboard';
-  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const announce = useAnnouncement();
+  
+  // Persistent state for last visited tab
+  const [lastVisitedTab, setLastVisitedTab] = useLastVisitedTab('dashboard');
+  
+  // Extract current tab from URL path
+  const getTabFromPath = useCallback((): AdminTab => {
+    const path = location.pathname.split('/').pop() || 'dashboard';
+    const validTabs: AdminTab[] = ['dashboard', 'orders', 'users', 'products', 'feed', 'banners', 'flash-sales', 'reviews', 'notifications', 'settings'];
+    const isValidTab = validTabs.some(tab => tab === path);
+    return isValidTab ? (path as AdminTab) : 'dashboard';
+  }, [location.pathname]);
+  
+  const [activeTab, setActiveTab] = useState<AdminTab>(getTabFromPath());
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasStatsError, setHasStatsError] = useState(false);
   const [statsErrorMessage, setStatsErrorMessage] = useState('');
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+
+  // Update activeTab when URL changes and announce to screen readers
+  useEffect(() => {
+    const newTab = getTabFromPath();
+    setActiveTab(newTab);
+    setLastVisitedTab(newTab);
+    
+    // Announce tab change to screen readers
+    const tabName = newTab.replace('-', ' ');
+    announce(`Navigated to ${tabName} section`, 'polite');
+  }, [location.pathname, getTabFromPath, setLastVisitedTab, announce]);
+
+  // Navigate to new tab using React Router with performance monitoring
+  const handleTabChange = useCallback((tab: AdminTab) => {
+    performanceMonitor.startMeasure(`navigate_to_${tab}`);
+    navigate(`/admin/${tab}`, { replace: false });
+    performanceMonitor.endMeasure(`navigate_to_${tab}`);
+  }, [navigate]);
 
   // Listen for global open-command-palette events (triggered by header button or keyboard shortcut)
   useEffect(() => {
@@ -61,22 +94,27 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const loadStats = async () => {
+    performanceMonitor.startMeasure('load_dashboard_stats');
     try {
       setLoading(true);
       setHasStatsError(false);
       setStatsErrorMessage('');
       const statsData = await adminService.getDashboardStats();
       setStats(statsData);
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: true });
     } catch (error: any) {
       console.error('Failed to load admin stats:', error);
       setHasStatsError(true);
       setStatsErrorMessage(error.message || 'Failed to load dashboard statistics');
+      performanceMonitor.endMeasure('load_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to load dashboard statistics', 'assertive');
     } finally {
       setLoading(false);
     }
   };
 
   const refreshStats = async () => {
+    performanceMonitor.startMeasure('refresh_dashboard_stats');
     try {
       setLoading(true);
       setHasStatsError(false);
@@ -90,10 +128,14 @@ const AdminDashboard: React.FC = () => {
       setStats(statsData);
       
       console.log('✅ Stats refreshed successfully:', statsData);
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: true });
+      announce('Dashboard statistics refreshed', 'polite');
     } catch (error: any) {
       console.error('Failed to refresh admin stats:', error);
       setHasStatsError(true);
       setStatsErrorMessage(error.message || 'Failed to refresh dashboard statistics');
+      performanceMonitor.endMeasure('refresh_dashboard_stats', { success: false, error: error.message });
+      announce('Failed to refresh dashboard statistics', 'assertive');
     } finally {
       setLoading(false);
     }
@@ -107,7 +149,7 @@ const AdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={setActiveTab} />;
+        return <AdminDashboardContentV2 onRefreshStats={loadStats} onNavigate={handleTabChange} />;
       case 'orders':
         return <AdminOrdersV2 />;
       case 'users':
@@ -127,9 +169,19 @@ const AdminDashboard: React.FC = () => {
       case 'settings':
         return <AdminSettings />;
       default:
-        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={setActiveTab} />;
+        return <AdminDashboardContentV2 onRefreshStats={refreshStats} onNavigate={handleTabChange} />;
     }
   };
+
+  // Loading fallback component for Suspense
+  const LoadingFallback = () => (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-400 text-lg">Loading...</p>
+      </div>
+    </div>
+  );
 
   return (
     <ThemeProvider>
@@ -139,27 +191,29 @@ const AdminDashboard: React.FC = () => {
         showFooter={false}
         className="bg-black"
         header={
-          <>
-            {/* Using new modern header */}
+          <Suspense fallback={<div className="h-16 bg-black border-b border-gray-800"></div>}>
             <AdminHeaderV2
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={handleTabChange}
               stats={stats}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
               onRefreshStats={refreshStats}
             />
-          </>
+          </Suspense>
         }
       >
-        {/* Remove DashboardSection wrapper since new design handles its own spacing */}
-        {renderContent()}
-        <CommandPalette
-          open={isCommandOpen}
-          onClose={() => setIsCommandOpen(false)}
-          onNavigate={(tab) => { setActiveTab(tab); setIsCommandOpen(false); }}
-          onRefreshStats={loadStats}
-        />
+        <Suspense fallback={<LoadingFallback />}>
+          {renderContent()}
+        </Suspense>
+        <Suspense fallback={null}>
+          <CommandPalette
+            open={isCommandOpen}
+            onClose={() => setIsCommandOpen(false)}
+            onNavigate={(tab) => { handleTabChange(tab); setIsCommandOpen(false); }}
+            onRefreshStats={loadStats}
+          />
+        </Suspense>
       </DashboardLayout>
       </div>
     </ThemeProvider>

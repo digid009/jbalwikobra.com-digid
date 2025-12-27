@@ -226,13 +226,23 @@ class OptimizedProductService {
 
       const { data, error } = await supabase
         .from('tiers')
-        .select('*')
+        .select('id, name, slug, description, color, border_color, background_gradient, icon, price_range_min, price_range_max, is_active, sort_order, created_at, updated_at')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
 
-      const result = data || [];
+      const result = (data || []).map((item: any) => ({
+        ...item,
+        borderColor: item.border_color,
+        backgroundGradient: item.background_gradient,
+        priceRangeMin: item.price_range_min,
+        priceRangeMax: item.price_range_max,
+        isActive: item.is_active,
+        sortOrder: item.sort_order,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      }));
       this.setCache(cacheKey, result, 10 * 60 * 1000); // Cache for 10 minutes
       return result;
 

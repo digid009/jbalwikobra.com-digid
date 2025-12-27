@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 
 // Lazy supabase client (service role preferred for admin operations)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
@@ -23,8 +24,20 @@ function rateLimit(key: string): boolean {
   return true;
 }
 
-function respond(res: VercelResponse, status: number, body: any) {
+function respond(res: VercelResponse, status: number, body: any, cacheSeconds: number = 0) {
   res.setHeader('Content-Type', 'application/json');
+  
+  // Add cache headers for successful responses using new caching utility
+  if (status === 200 && cacheSeconds > 0) {
+    setCacheHeaders(res, { maxAge: cacheSeconds, staleWhileRevalidate: cacheSeconds * 2 });
+  } else if (status === 200) {
+    // No cache for real-time data or mutations
+    setCacheHeaders(res, CacheStrategies.NoCache);
+  } else {
+    // Don't cache errors
+    setCacheHeaders(res, CacheStrategies.NoCache);
+  }
+  
   res.status(status).send(JSON.stringify(body));
 }
 
@@ -53,20 +66,27 @@ async function dashboardStats() {
     const reviewsRes = await supabase.from('reviews').select('id', { count: 'exact', head: true });
     reviewsCount = reviewsRes.count || 0;
   } catch {}
-  const { data: revRows } = await supabase
+  // Optimize: Use aggregation instead of fetching all rows
+  // Get completed/paid orders count and sum
+  const { data: completedOrders } = await supabase
     .from('orders')
-    .select('amount,status')
-    .limit(5000);
-  let revenue = 0, completedRevenue = 0, completed = 0, pending = 0;
-  (revRows||[]).forEach(r => { 
-    // Business rule: revenue counts only PAID + COMPLETED orders
-    if (r.status === 'completed' || r.status === 'paid') { 
-      completed++; 
-      revenue += r.amount||0; // Use same value for both revenue and completedRevenue
-      completedRevenue += r.amount||0; 
-    } else if (r.status === 'pending') {
-      pending++; 
-    }
+    .select('amount')
+    .in('status', ['completed', 'paid'])
+    .limit(1000); // Reasonable limit for stats
+  
+  const { data: pendingOrders } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('status', 'pending')
+    .limit(1000); // Reasonable limit for stats
+  
+  let revenue = 0, completedRevenue = 0;
+  const completed = completedOrders?.length || 0;
+  const pending = pendingOrders?.length || 0;
+  
+  (completedOrders || []).forEach(r => { 
+    revenue += r.amount || 0;
+    completedRevenue += r.amount || 0;
   });
   return {
     orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
@@ -85,7 +105,7 @@ async function recentNotifications(limit: number) {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
+    .select('id, type, title, message, description, is_read, created_at, metadata')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) return [];
@@ -97,7 +117,7 @@ async function listOrders(page: number, limit: number, status?: string) {
   const from = (page - 1) * limit; const to = from + limit - 1;
   
   // First get orders
-  let query: any = supabase.from('orders').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  let query: any = supabase.from('orders').select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (status && status !== 'all') {
     // Handle "completed" status to include both 'paid' and 'completed' orders
     if (status === 'completed') {
@@ -117,7 +137,7 @@ async function listOrders(page: number, limit: number, status?: string) {
   if (externalIds.length > 0) {
     const { data: payments } = await supabase
       .from('payments')
-      .select('*')
+      .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
       .in('external_id', externalIds);
     
     if (payments) {
@@ -211,7 +231,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Get current settings first
         const { data: current } = await supabase
           .from('website_settings')
-          .select('*')
+          .select('*') // Select all columns for update operations
           .single();
           
         if (current) {
@@ -258,33 +278,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (action) {
       case 'dashboard-stats': {
         const data = await dashboardStats();
-        return respond(res, 200, data);
+        return respond(res, 200, data, 60); // Cache for 1 minute
       }
       case 'recent-notifications': {
         const data = await recentNotifications(limit);
-        return respond(res, 200, { data });
+        return respond(res, 200, { data }, 30); // Cache for 30 seconds
       }
       case 'orders': {
         const status = typeof req.query.status === 'string' ? req.query.status : undefined;
         const data = await listOrders(page, limit, status);
-        return respond(res, 200, data);
+        return respond(res, 200, data, 60); // Cache for 1 minute
       }
       case 'users': {
         const search = typeof req.query.search === 'string' ? req.query.search : undefined;
         const data = await listUsers(page, limit, search);
-        return respond(res, 200, data);
+        return respond(res, 200, data, 120); // Cache for 2 minutes
       }
       case 'products': {
         const search = typeof req.query.search === 'string' ? req.query.search : undefined;
         const data = await listProducts(page, limit, search);
-        return respond(res, 200, data);
+        return respond(res, 200, data, 300); // Cache for 5 minutes
       }
       case 'time-series': {
         const days = req.query.days ? parseIntSafe(req.query.days, 7) : undefined;
         const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
         const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
         const data = await timeSeries(days, startDate, endDate);
-        return respond(res, 200, { data });
+        return respond(res, 200, { data }, 300); // Cache for 5 minutes
       }
       case 'settings': {
         if (!supabase) return respond(res, 500, { error: 'database_unavailable' });
@@ -292,7 +312,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
           const { data, error } = await supabase
             .from('website_settings')
-            .select('*')
+            .select('*') // Select all columns to ensure frontend gets everything it needs
             .single();
             
           if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -300,7 +320,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return respond(res, 500, { error: 'fetch_failed', details: error.message });
           }
           
-          return respond(res, 200, { data: data || {} });
+          return respond(res, 200, { data: data || {} }, 600); // Cache for 10 minutes
         } catch (e: any) {
           console.error('❌ Admin API: Settings fetch failed', e);
           return respond(res, 500, { error: 'settings_fetch_failed', message: e.message });

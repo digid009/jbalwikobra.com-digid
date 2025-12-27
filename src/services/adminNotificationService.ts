@@ -30,7 +30,7 @@ class AdminNotificationService {
         if (supabase) {
           const { data, error } = await supabase
             .from('admin_notifications')
-            .select('*')
+            .select('id, type, title, message, order_id, user_id, product_name, amount, customer_name, created_at, is_read, metadata')
             .order('created_at', { ascending: false })
             .limit(limit);
 
@@ -90,6 +90,11 @@ class AdminNotificationService {
         order_cancelled: `namanya ${customerName}, produktnya ${productName} di cancel nih.`
       };
 
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
+
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -122,6 +127,10 @@ class AdminNotificationService {
     email?: string
   ): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -153,6 +162,10 @@ class AdminNotificationService {
     rating: number
   ): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -320,6 +333,10 @@ class AdminNotificationService {
   async getUnreadCount(): Promise<number> {
     const key = `${this.cacheTag}:unread_count`;
     return globalCache.getOrSet(key, async () => {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return 0;
+      }
       const { count, error } = await supabase
         .from('admin_notifications')
         .select('*', { count: 'exact', head: true })
@@ -333,6 +350,10 @@ class AdminNotificationService {
   // Delete notification
   async deleteNotification(notificationId: string): Promise<void> {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .delete()
@@ -356,6 +377,10 @@ class AdminNotificationService {
         minute: '2-digit'
       });
 
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       const { error } = await supabase
         .from('admin_notifications')
         .insert({
@@ -397,10 +422,14 @@ class AdminNotificationService {
     console.log(`🔍 Notification ID: ${notificationId}`);
     
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
       // First, check if notification exists and current state
       const { data: beforeData, error: beforeError } = await supabase
         .from('admin_notifications')
-        .select('*')
+        .select('id, type, title, message, is_read, created_at, updated_at')
         .eq('id', notificationId)
         .single();
       
@@ -435,7 +464,7 @@ class AdminNotificationService {
       // Verify the update
       const { data: afterData, error: afterError } = await supabase
         .from('admin_notifications')
-        .select('*')
+        .select('id, type, title, message, is_read, created_at, updated_at')
         .eq('id', notificationId)
         .single();
       

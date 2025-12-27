@@ -39,6 +39,7 @@ export const AdminReviewsManagement: React.FC = () => {
     highRatedReviews: reviews.filter(review => review.rating >= 4).length,
     lowRatedReviews: reviews.filter(review => review.rating <= 2).length,
     recentReviews: reviews.filter(review => {
+      if (!review.created_at) return false;
       const reviewDate = new Date(review.created_at);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -125,7 +126,7 @@ export const AdminReviewsManagement: React.FC = () => {
           break;
       }
 
-      filtered = filtered.filter(review => new Date(review.created_at) >= cutoffDate);
+      filtered = filtered.filter(review => review.created_at && new Date(review.created_at) >= cutoffDate);
     }
 
     // Sort
@@ -134,8 +135,8 @@ export const AdminReviewsManagement: React.FC = () => {
       let bValue: any = b[filterState.sortBy as keyof Review];
 
       if (filterState.sortBy === 'created_at') {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
+        aValue = aValue ? new Date(aValue).getTime() : 0;
+        bValue = bValue ? new Date(bValue).getTime() : 0;
       }
 
       if (filterState.sortOrder === 'asc') {

@@ -63,13 +63,18 @@ export class AdminService {
     
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(
+        'id, name, description, price, original_price, category_id, ' +
+        'game_title, account_level, account_details, stock, is_active, ' +
+        'created_at, updated_at, image, images, tier, tier_id, ' +
+        'game_title_id, is_flash_sale, flash_sale_end_time, has_rental, archived_at'
+      )
       .is('archived_at', null) // Filter out archived products
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data as unknown as Product[]) || [];
   }
 
   static async fetchFeedPosts(limit: number = 10): Promise<FeedPost[]> {
@@ -78,13 +83,13 @@ export class AdminService {
     
     const { data, error } = await supabase
       .from('feed_posts')
-      .select('*')
+      .select('id, content, image_url, user_id, created_at, updated_at, is_deleted, likes_count')
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data as unknown as FeedPost[]) || [];
   }
 
   static async saveProduct(product: Partial<Product>): Promise<Product> {

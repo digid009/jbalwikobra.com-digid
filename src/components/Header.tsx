@@ -15,8 +15,6 @@ import {
   Home,
   Package,
   Zap,
-  Rss,
-  DollarSign,
   HelpCircle
 } from 'lucide-react';
 import { notificationService } from '../services/notificationService';
@@ -50,8 +48,6 @@ const Header = () => {
     { path: '/', label: 'Beranda', icon: Home },
     { path: '/products', label: 'Produk', icon: Package },
     { path: '/flash-sales', label: 'Flash Sale', icon: Zap, isNew: true },
-    { path: '/feed', label: 'Feed', icon: Rss },
-    { path: '/sell', label: 'Jual', icon: DollarSign },
     { path: '/help', label: 'Bantuan', icon: HelpCircle },
   ];
 

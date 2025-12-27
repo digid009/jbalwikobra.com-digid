@@ -62,7 +62,7 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     const { data, error } = await supabase
       .from('orders')
       .insert(orderPayload)
-      .select('*')
+      .select('id, customer_name, customer_email, customer_phone, amount, status, order_type, rental_duration, product_id, created_at, client_external_id')
       .single();
 
     if (error) {
@@ -469,7 +469,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // Handle specific Xendit error cases
       let userFriendlyMessage = responseData.message || 'Payment creation failed';
-      let suggestions = [];
+      let suggestions: string[] = [];
       
       if (responseData.error_code === 'NOT_FOUND' || responseData.message?.includes('not found')) {
         userFriendlyMessage = `Payment method ${paymentChannel.name} is currently not available`;
@@ -556,7 +556,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Handle expiry date - different API versions use different field names
-    let expiryDate = null;
+    let expiryDate: string | null = null;
     
     if (paymentChannel.type === 'VIRTUAL_ACCOUNT') {
       // Invoice API uses expiry_date field
@@ -872,7 +872,7 @@ async function storePaymentData(paymentData: any, paymentMethodId: string, order
     if (paymentData.transfer_amount !== undefined) paymentSpecificData.transfer_amount = paymentData.transfer_amount;
 
     // Ensure we always have an expiry date with comprehensive field checking
-    let expiryDate = null;
+    let expiryDate: string | null = null;
     
     console.log('[Store Payment V3] Storing payment data with fields:', Object.keys(paymentData));
     
@@ -1027,7 +1027,7 @@ async function createNewOrderAdminNotification(sb: any, orderId: string, custome
     const message = `namanya ${customerName}, produknya ${productName} harganya ${formatAmount(amount)}, ${isRental ? 'order RENTAL' : 'order PURCHASE'}, belum di bayar sih, tapi moga aja di bayar amin.`;
 
     // Ensure orderId is a valid UUID or null
-    let validOrderId = null;
+    let validOrderId: string | null = null;
     if (orderId && typeof orderId === 'string') {
       const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
       if (isValidUUID) {
@@ -1062,7 +1062,7 @@ async function createNewOrderAdminNotification(sb: any, orderId: string, custome
     const { data, error } = await sb
       .from('admin_notifications')
       .insert(notification)
-      .select('*')
+      .select('id, type, title, message, order_id, user_id, product_name, amount, created_at, is_read, metadata')
       .single();
 
     if (error) {

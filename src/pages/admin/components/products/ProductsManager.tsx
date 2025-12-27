@@ -117,17 +117,17 @@ export const ProductsManager: React.FC<ProductsManagerProps> = ({
   };
 
   // Handle product actions
-  const handleViewProduct = async (product: Product) => {
+  const handleViewProduct = async (product: { id: string }) => {
     // TODO: Implement view modal or navigation
     console.log('View product:', product.id);
   };
 
-  const handleEditProduct = async (product: Product) => {
+  const handleEditProduct = async (product: { id: string }) => {
     // TODO: Implement edit modal or navigation
     console.log('Edit product:', product.id);
   };
 
-  const handleDeleteProduct = async (product: Product) => {
+  const handleDeleteProduct = async (product: { id: string }) => {
     if (!window.confirm('Are you sure you want to archive this product? This will hide it from both admin panel and public pages.')) {
       return;
     }

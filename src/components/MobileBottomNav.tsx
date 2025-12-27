@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Heart, User, Plus, MessageSquare, DollarSign } from 'lucide-react';
-import CobraIcon from './icons/CobraIcon';
+import { Home, Search, User } from 'lucide-react';
 import MobileNavItem from './mobile/MobileNavItem';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 
@@ -11,9 +10,7 @@ const MobileBottomNav: React.FC = () => {
 
   const navigationItems = [
     { path: '/', label: 'Beranda', icon: Home, activeIcon: Home },
-    { path: '/products', label: 'Cari', icon: Search, activeIcon: Search },
-    { path: '/feed', label: 'Feed', icon: CobraIcon, activeIcon: CobraIcon, isSpecial: true },
-    { path: '/sell', label: 'Jual', icon: DollarSign, activeIcon: DollarSign },
+    { path: '/products', label: 'Produk', icon: Search, activeIcon: Search },
     { path: user ? '/profile' : '/auth', label: user ? 'Profil' : 'Masuk', icon: User, activeIcon: User },
   ];
 

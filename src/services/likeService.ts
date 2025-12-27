@@ -42,6 +42,9 @@ class LikeService {
   // Get like statistics for a product
   async getLikeStats(productId: string, userId?: string): Promise<LikeStats> {
     try {
+      if (!supabase) {
+        return { total_likes: 0, user_has_liked: false, ip_has_liked: false };
+      }
       const ip = await this.getUserIP();
 
       // Get total likes count
@@ -58,7 +61,7 @@ class LikeService {
       // Check if current user/IP has liked
       const { data: userLike, error: userError } = await supabase
         .from('product_likes')
-        .select('*')
+        .select('id, product_id, user_id, ip_address')
         .eq('product_id', productId)
         .or(userId ? `user_id.eq.${userId},ip_address.eq.${ip}` : `ip_address.eq.${ip}`)
         .maybeSingle();
@@ -81,12 +84,15 @@ class LikeService {
   // Toggle like for a product
   async toggleLike(productId: string, userId?: string): Promise<LikeStats> {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
       const ip = await this.getUserIP();
 
       // Check if already liked
       const { data: existingLike, error: checkError } = await supabase
         .from('product_likes')
-        .select('*')
+        .select('id, product_id, user_id, ip_address')
         .eq('product_id', productId)
         .or(userId ? `user_id.eq.${userId},ip_address.eq.${ip}` : `ip_address.eq.${ip}`)
         .maybeSingle();
@@ -134,6 +140,9 @@ class LikeService {
   // Get likes for multiple products (for product lists)
   async getBulkLikeStats(productIds: string[]): Promise<Record<string, number>> {
     try {
+      if (!supabase) {
+        return {};
+      }
       const { data, error } = await supabase
         .from('product_likes')
         .select('product_id')

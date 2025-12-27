@@ -127,7 +127,7 @@ export class SettingsService {
       console.log('🌐 Fetching from database...');
       const { data, error } = await (supabase as any)
         .from('website_settings')
-        .select('*')
+        .select('*') // Select all columns to ensure we get everything
         .limit(1)
         .maybeSingle();
         

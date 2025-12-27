@@ -24,6 +24,14 @@ function getSupabase(): SupabaseClient {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    global: {
+      headers: {
+        'x-client-info': 'jbalwikobra-auth-api'
+      }
+    },
+    db: {
+      schema: 'public'
     }
   });
   
@@ -45,6 +53,48 @@ function getClientIP(req: VercelRequest): string {
   return req.headers['x-forwarded-for'] as string || 
          req.headers['x-real-ip'] as string || 
          'unknown';
+}
+
+async function verifyTurnstileToken(token: string, clientIp: string): Promise<boolean> {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  
+  // If secret key is not configured, skip verification
+  // This allows the app to work without Turnstile if needed
+  if (!secretKey) {
+    console.warn('Turnstile secret key not configured. Skipping verification.');
+    return true;
+  }
+
+  if (!token) {
+    console.warn('No Turnstile token provided');
+    return false;
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        secret: secretKey,
+        response: token,
+        remoteip: clientIp,
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('Turnstile verification failed:', data['error-codes']);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Turnstile verification error:', error);
+    return false;
+  }
 }
 
 // In-memory rate limiter
@@ -72,6 +122,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Set cache headers - no caching for auth endpoints (sensitive data)
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -111,6 +166,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleLogout(req, res);
       case 'whatsapp-confirm':
         return await handleWhatsAppConfirm(req, res);
+      case 'verify-first-visit':
+        return await handleVerifyFirstVisit(req, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -126,12 +183,23 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { identifier, password } = req.body;
+    const { identifier, password, turnstile_token } = req.body;
 
     console.log('Login attempt for identifier:', identifier ? 'provided' : 'missing');
 
     if (!identifier || !password) {
       return res.status(400).json({ error: 'Identifier and password are required' });
+    }
+
+    // Verify Turnstile token if configured
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    
+    if (turnstileSecretKey && turnstile_token) {
+      const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+      if (!isValidTurnstile) {
+        return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+      }
     }
 
     // Ensure Supabase is properly initialized
@@ -147,7 +215,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     console.log('Attempting to find user in database...');
     const { data: users, error: userError } = await supabaseClient
       .from('users')
-      .select('*')
+      .select('id, email, phone, name, password_hash, is_admin, is_active, created_at')
       .or(`phone.eq.${identifier},email.eq.${identifier}`);
 
     if (userError) {
@@ -239,7 +307,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { phone, password, name } = req.body;
+    const { phone, password, name, turnstile_token } = req.body;
 
     if (!phone) {
       return res.status(400).json({ error: 'Phone number is required' });
@@ -255,6 +323,17 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
 
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Verify Turnstile token if configured
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    
+    if (turnstileSecretKey && turnstile_token) {
+      const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+      if (!isValidTurnstile) {
+        return res.status(400).json({ error: 'Captcha verification failed. Please try again.' });
+      }
     }
 
     // Check if user already exists
@@ -400,7 +479,7 @@ async function handleVerifyPhone(req: VercelRequest, res: VercelResponse) {
     // Find verification record
     const { data: verifications, error: verificationError } = await getSupabase()
       .from('phone_verifications')
-      .select('*')
+      .select('id, user_id, phone, verification_code, expires_at, is_used, created_at')
       .eq('user_id', user_id)
       .eq('verification_code', verification_code)
       .eq('is_used', false);
@@ -632,6 +711,49 @@ async function handleWhatsAppConfirm(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error) {
     console.error('WhatsApp confirm error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleVerifyFirstVisit(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { turnstile_token } = req.body;
+
+    if (!turnstile_token) {
+      return res.status(400).json({ error: 'Turnstile token is required' });
+    }
+
+    // Verify Turnstile token
+    const clientIp = getClientIP(req);
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+
+    // If Turnstile is not configured, allow access (graceful degradation)
+    if (!turnstileSecretKey) {
+      console.warn('Turnstile not configured for first visit verification');
+      return res.status(200).json({
+        success: true,
+        message: 'Verification skipped (not configured)'
+      });
+    }
+
+    const isValidTurnstile = await verifyTurnstileToken(turnstile_token, clientIp);
+    if (!isValidTurnstile) {
+      return res.status(400).json({ 
+        error: 'Verification failed. Please try again.',
+        success: false
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'First visit verified successfully'
+    });
+  } catch (error) {
+    console.error('First visit verification error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

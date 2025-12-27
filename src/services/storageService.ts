@@ -54,7 +54,7 @@ export async function uploadFile(file: File, folder = 'products'): Promise<Uploa
       .from(BUCKET)
       .upload(path, file, {
         upsert: false,
-        cacheControl: '3600',
+        cacheControl: '31536000', // 1 year - files are immutable (unique paths)
         contentType: file.type || `image/${ext}`
       });
     
@@ -197,7 +197,7 @@ export class GameLogoStorage {
       const { data, error } = await (supabase as any).storage
         .from(this.BUCKET)
         .upload(filePath, file, {
-          cacheControl: '3600',
+          cacheControl: '31536000', // 1 year - files are immutable (unique paths)
           upsert: false
         });
 

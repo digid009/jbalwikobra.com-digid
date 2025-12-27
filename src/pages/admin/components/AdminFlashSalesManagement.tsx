@@ -81,6 +81,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   const loadFlashSales = async () => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       // Use direct Supabase query with explicit JOIN to get product data
       const { data, error } = await supabase
         .from('flash_sales')
@@ -129,6 +133,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   const loadProducts = async () => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       setProductsLoading(true);
       const { data, error } = await supabase
         .from('products')
@@ -292,6 +300,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   const handleDelete = async (id: string) => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       // Direct Supabase call since adminService.deleteFlashSale doesn't exist yet
       const { error } = await supabase
         .from('flash_sales')
@@ -310,6 +322,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       // Direct Supabase call since adminService.updateFlashSale doesn't exist yet
       const { error } = await supabase
         .from('flash_sales')
@@ -363,6 +379,10 @@ export const AdminFlashSalesManagement: React.FC<AdminFlashSalesManagementProps>
       };
 
       if (data.id) {
+        if (!supabase) {
+          throw new Error('Supabase client not initialized');
+        }
+        
         // Direct Supabase call since adminService.updateFlashSale doesn't exist yet
         const { error } = await supabase
           .from('flash_sales')

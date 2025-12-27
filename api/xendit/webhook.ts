@@ -43,7 +43,7 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
     };
 
     // Ensure orderId is a valid UUID or null
-    let validOrderId = null;
+    let validOrderId: string | null = null;
     if (orderId && typeof orderId === 'string') {
       const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
       if (isValidUUID) {
@@ -77,7 +77,7 @@ async function createOrderNotification(sb: any, orderId: string, customerName: s
     const { data, error } = await sb
       .from('admin_notifications')
       .insert(notification)
-      .select('*')
+      .select('id, type, title, message, order_id, user_id, product_name, amount, created_at, is_read, metadata')
       .single();
 
     if (error) {
@@ -795,23 +795,13 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Archive product on successful payment
+    // Send notifications on successful payment
     try {
       console.log('[Webhook] Processing complete:', { updated, status, invoiceId, externalId });
       
       if (updated > 0 && (status === 'paid' || status === 'completed')) {
         console.log('[Webhook] Order updated successfully, proceeding with notifications');
         
-        // Find related product id(s) for the updated orders and archive them
-        let q = sb.from('orders').select('product_id').limit(50);
-        if (invoiceId) q = q.eq('xendit_invoice_id', invoiceId);
-        else if (externalId) q = q.eq('client_external_id', externalId);
-        const { data: ordersToArchive } = await q;
-        const productIds = (ordersToArchive || []).map((o: any) => o.product_id).filter(Boolean);
-        if (productIds.length) {
-          await sb.from('products').update({ is_active: false, archived_at: new Date().toISOString() }).in('id', productIds);
-        }
-
         // Send WhatsApp notifications for successful payments
         // Some channels report final state as 'completed' (e.g., SETTLED), not 'paid'
         if (status === 'paid' || status === 'completed') {
@@ -846,7 +836,7 @@ export default async function handler(req: any, res: any) {
         }
       }
     } catch (e) {
-      console.error('Failed to archive product after payment:', e);
+      console.error('Failed to send notifications after payment:', e);
     }
 
     // Final verification: Check if both tables are in sync

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Zap, ShoppingBag, TrendingUp, Rocket, MessageCircle, Star } from 'lucide-react';
 import { PNSection, PNContainer, PNHeading, PNText, PNButton } from '../../ui/PinkNeonDesignSystem';
 import { SettingsService } from '../../../services/settingsService';
+import { ensureUrlProtocol } from '../../../utils/helpers';
 import type { WebsiteSettings } from '../../../types';
 
 const PNHero: React.FC = () => {
@@ -21,10 +22,9 @@ const PNHero: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
-  const topupGameUrl = settings?.topupGameUrl || 'https://default-topup-url.com';
-  const whatsappChannelUrl = settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaC7K3a7DAX9YbCFSb1V';
-  const heroButtonUrl = settings?.heroButtonUrl || 'https://jbalwikobra.com/special-offer';
-  const jualAkunWhatsappUrl = settings?.jualAkunWhatsappUrl || 'https://wa.me/6281234567890?text=Halo%20admin%20JB%20Alwikobra!%20%F0%9F%91%8B%0A%0ASaya%20tertarik%20untuk%20jual%20akun%20dan%20admin%20WA.%20Mohon%20info%20lebih%20lanjut.%20Terima%20kasih!';
+  const topupGameUrl = ensureUrlProtocol(settings?.topupGameUrl || 'https://www.alwikobrastore.com');
+  const whatsappChannelUrl = ensureUrlProtocol(settings?.whatsappChannelUrl || 'https://whatsapp.com/channel/0029VaZgVaZGOj9tyv9b8Y0E');
+  const jualAkunWhatsappUrl = ensureUrlProtocol(settings?.jualAkunWhatsappUrl || 'https://www.alwikobra.com');
   
   // Use hero settings from admin settings
   const heroTitle = settings?.heroTitle || 'Gaming Marketplace #1';
@@ -53,9 +53,9 @@ const PNHero: React.FC = () => {
                   </PNButton>
                 </a>
               </div>
-              {/* New Hero Button */}
+              {/* Jual Akun Button - uses jual_akun_whatsapp_url from website_settings */}
               <div>
-                <a href={heroButtonUrl} target="_blank" rel="noopener noreferrer">
+                <a href={jualAkunWhatsappUrl} target="_blank" rel="noopener noreferrer">
                   <PNButton variant="secondary" size="lg" fullWidth className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
                     <Star size={18} />
                     JUAL AKUN DAN NOMER ADMIN DI SINI

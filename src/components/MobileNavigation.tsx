@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, User, Package, DollarSign } from 'lucide-react';
-import CobraIcon from './icons/CobraIcon';
+import { Home, User, Package } from 'lucide-react';
 import { useAuth } from '../contexts/TraditionalAuthContext';
 
 // Mobile-First iOS Design System V2 Navigation Constants
@@ -61,12 +60,10 @@ const MobileNavigation: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Navigation items - Enhanced for mobile-first with special Feed item
+  // Navigation items - Simplified to 3 items: Home, Products, Profile
   const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Beranda', icon: Home, activeIcon: Home },
     { path: '/products', label: 'Produk', icon: Package, activeIcon: Package },
-    { path: '/feed', label: 'Feed', icon: CobraIcon, activeIcon: CobraIcon, isSpecial: true },
-    { path: '/sell', label: 'Jual', icon: DollarSign, activeIcon: DollarSign },
     { path: user ? '/profile' : '/auth', label: user ? 'Profil' : 'Masuk', icon: User, activeIcon: User },
   ];
 
