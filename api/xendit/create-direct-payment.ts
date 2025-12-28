@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getActivatedPaymentChannels, getXenditChannelCode } from '../config/paymentChannels.js';
+import { fetchProductName } from '../_utils/productUtils.js';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
@@ -45,7 +46,6 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     }
 
     // Fetch product name if product_id is provided
-    const { fetchProductName } = await import('../_utils/productUtils.js');
     const productName = await fetchProductName(supabase, order.product_id);
 
     const orderPayload = {
