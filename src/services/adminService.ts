@@ -12,42 +12,56 @@ import {
 // ⚠️ IMPORTANT SECURITY NOTE:
 // This service is used by frontend admin components and should ONLY use:
 // - REACT_APP_SUPABASE_ANON_KEY for authenticated admin access
-// - NEVER set REACT_APP_SUPABASE_SERVICE_KEY (security risk!)
+// - NEVER use REACT_APP_SUPABASE_SERVICE_KEY (critical security risk!)
 //
 // For this to work properly, you MUST have RLS policies that allow authenticated
 // admin users to access users and orders tables. See:
 // - supabase/migrations/20251228_complete_admin_panel_fix.sql
 // - SUPABASE_ADMIN_CONFIG.md for setup instructions
 const supabaseUrl = getSupabaseUrl();
-// Check for service key first (should never be set), then fall back to anon key
-const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || getSupabaseAnonKey();
-const hasSupabase = !!supabaseUrl && !!serviceKey;
-const supabase = hasSupabase ? createClient(supabaseUrl as string, serviceKey as string) : null;
+const anonKey = getSupabaseAnonKey();
+
+// SECURITY: Check if someone accidentally set a service key in frontend env
+const serviceKeyCheck = process.env.REACT_APP_SUPABASE_SERVICE_KEY;
+if (serviceKeyCheck) {
+  console.error('🚨 CRITICAL SECURITY ERROR: REACT_APP_SUPABASE_SERVICE_KEY is set!');
+  console.error('   Service role keys must NEVER be in frontend environment variables.');
+  console.error('   This exposes full database access to anyone visiting your website.');
+  console.error('   Remove this variable immediately and redeploy.');
+  console.error('   Use REACT_APP_SUPABASE_ANON_KEY instead with proper RLS policies.');
+  console.error('   See SUPABASE_ADMIN_CONFIG.md for proper configuration.');
+}
+
+const hasSupabase = !!supabaseUrl && !!anonKey;
+const supabase = hasSupabase ? createClient(supabaseUrl as string, anonKey as string) : null;
 
 try {
   // Log in dev to make it obvious when running without DB
   if (hasSupabase) {
-    const isServiceKey = isServiceRoleKey(serviceKey as string);
-    
-    // Security warning if service role key is used in frontend
-    if (isServiceKey) {
-      console.error('⚠️ SECURITY WARNING: Service role key detected in frontend AdminService!');
-      console.error('   This is a security risk. Remove REACT_APP_SUPABASE_SERVICE_KEY from your environment.');
-      console.error('   Use REACT_APP_SUPABASE_ANON_KEY with proper RLS policies instead.');
-      console.error('   See SUPABASE_ADMIN_CONFIG.md for proper configuration.');
+    // Double-check the key we're using isn't a service key
+    if (isServiceRoleKey(anonKey)) {
+      console.error('🚨 CRITICAL: Service role key detected in REACT_APP_SUPABASE_ANON_KEY!');
+      console.error('   This variable name suggests anon key but contains a service key.');
+      console.error('   This is a critical security vulnerability.');
     } else {
       console.log('AdminService: Using anonymous key for database access');
       console.log('AdminService: Supabase URL:', supabaseUrl);
+      console.log('AdminService: ✅ Secure configuration (using anon key)');
       console.log('AdminService: Ensure RLS policies allow authenticated admin users to access data');
     }
     
     // Only log key prefix in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('AdminService: Key starts with:', (serviceKey as string).substring(0, 20) + '...');
+      console.log('AdminService: Key starts with:', anonKey.substring(0, 20) + '...');
     }
   } else {
     console.warn('AdminService: Supabase not configured — running with dev fallbacks');
-    console.warn('AdminService: Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY');
+    if (!supabaseUrl) {
+      console.warn('AdminService: Missing REACT_APP_SUPABASE_URL');
+    }
+    if (!anonKey) {
+      console.warn('AdminService: Missing REACT_APP_SUPABASE_ANON_KEY');
+    }
   }
 } catch {}
 
