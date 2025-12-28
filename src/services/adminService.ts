@@ -971,7 +971,7 @@ export const adminService = {
       try {
         console.log('📊 [adminService.getAdminStats] Fetching fresh stats from database...');
         console.log('📊 [adminService.getAdminStats] Using supabase client with key type:', 
-          (serviceKey as string).includes('service_role') ? 'SERVICE_ROLE' : 'ANON');
+          (anonKey as string).includes('service_role') ? 'SERVICE_ROLE' : 'ANON');
         
         // Get all stats in parallel - optimized queries
         const [
