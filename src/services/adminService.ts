@@ -996,7 +996,7 @@ export const adminService = {
           totalReviews,
           averageRating: Math.round(averageRating * 10) / 10,
           pendingOrders: pendingOrders || 0,
-          completedOrders: paidOrders || 0, // Completed orders = Paid orders only
+          completedOrders: (completedOrders || 0) + (paidOrders || 0), // Count both paid and completed orders
           totalFlashSales,
           activeFlashSales
         };
