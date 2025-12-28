@@ -2,7 +2,9 @@
 -- This ensures the admin API can access all necessary data when using service_role key
 
 -- Notifications table - for admin notifications
-CREATE POLICY IF NOT EXISTS "notifications_service_role_all" ON public.notifications
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "notifications_service_role_all" ON public.notifications;
+CREATE POLICY "notifications_service_role_all" ON public.notifications
   FOR ALL
   TO service_role
   USING (true)
@@ -12,7 +14,9 @@ COMMENT ON POLICY "notifications_service_role_all" ON public.notifications IS
 'Allows service role to access notifications for admin dashboard.';
 
 -- Payments table - for order payment information
-CREATE POLICY IF NOT EXISTS "payments_service_role_all" ON public.payments
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "payments_service_role_all" ON public.payments;
+CREATE POLICY "payments_service_role_all" ON public.payments
   FOR ALL
   TO service_role
   USING (true)
@@ -22,7 +26,9 @@ COMMENT ON POLICY "payments_service_role_all" ON public.payments IS
 'Allows service role to access payment records for admin order management.';
 
 -- Products table - for admin product management
-CREATE POLICY IF NOT EXISTS "products_service_role_all" ON public.products
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "products_service_role_all" ON public.products;
+CREATE POLICY "products_service_role_all" ON public.products
   FOR ALL
   TO service_role
   USING (true)
@@ -32,7 +38,9 @@ COMMENT ON POLICY "products_service_role_all" ON public.products IS
 'Allows service role to access products for admin dashboard and product management.';
 
 -- Reviews table - for admin review management
-CREATE POLICY IF NOT EXISTS "reviews_service_role_all" ON public.reviews
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "reviews_service_role_all" ON public.reviews;
+CREATE POLICY "reviews_service_role_all" ON public.reviews
   FOR ALL
   TO service_role
   USING (true)
@@ -42,7 +50,9 @@ COMMENT ON POLICY "reviews_service_role_all" ON public.reviews IS
 'Allows service role to access reviews for admin dashboard statistics.';
 
 -- Flash sales table - for admin flash sales management
-CREATE POLICY IF NOT EXISTS "flash_sales_service_role_all" ON public.flash_sales
+ALTER TABLE public.flash_sales ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "flash_sales_service_role_all" ON public.flash_sales;
+CREATE POLICY "flash_sales_service_role_all" ON public.flash_sales
   FOR ALL
   TO service_role
   USING (true)
@@ -52,7 +62,9 @@ COMMENT ON POLICY "flash_sales_service_role_all" ON public.flash_sales IS
 'Allows service role to access flash sales for admin dashboard statistics.';
 
 -- Website settings table - for admin settings management
-CREATE POLICY IF NOT EXISTS "website_settings_service_role_all" ON public.website_settings
+ALTER TABLE public.website_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "website_settings_service_role_all" ON public.website_settings;
+CREATE POLICY "website_settings_service_role_all" ON public.website_settings
   FOR ALL
   TO service_role
   USING (true)
