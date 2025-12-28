@@ -7,21 +7,17 @@
  * 2. Shows current is_admin status
  * 3. Updates is_admin to true if needed
  * 4. Verifies the update
+ * 
+ * Usage:
+ *   ADMIN_EMAIL=admin@example.com node scripts/fix-admin-status.js
  */
 
 const { createClient } = require('@supabase/supabase-js');
 
-function requiredEnv(name) {
-  const v = process.env[name];
-  if (!v) {
-    console.error(`[fix-admin] Missing env ${name}. Make sure to export SUPABASE_* or REACT_APP_SUPABASE_* variables.`);
-    process.exit(2);
-  }
-  return v;
-}
-
 async function main() {
   // Use service role key for admin operations
+  // Priority: SUPABASE_URL > REACT_APP_SUPABASE_URL (for dev convenience)
+  // Priority: SUPABASE_SERVICE_ROLE_KEY > SUPABASE_SERVICE_KEY
   const url = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
   

@@ -31,8 +31,11 @@ This script will:
 export SUPABASE_URL="your-supabase-url"
 export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
-# Run the script
+# Run the script (defaults to admin@jbalwikobra.com)
 node scripts/fix-admin-status.js
+
+# Or specify a different admin email
+ADMIN_EMAIL="other-admin@example.com" node scripts/fix-admin-status.js
 ```
 
 Or with REACT_APP_ prefix:
