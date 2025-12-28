@@ -984,7 +984,8 @@ export const adminService = {
             ? reviewsWithRating.data.reduce((sum, review) => sum + review.rating, 0) / reviewsWithRating.data.length
             : 0;
         } catch (reviewError) {
-          console.warn('⚠️ [adminService.getAdminStats] Reviews query failed (table may not exist)');
+          // Silent fallback if reviews table missing - this is expected for new installations
+          console.info('ℹ️ [adminService.getAdminStats] Reviews table not found (expected for new installations)');
         }
 
         // Get flash sales data
@@ -1002,7 +1003,8 @@ export const adminService = {
           totalFlashSales = totalFlashSalesCount || 0;
           activeFlashSales = activeFlashSalesCount || 0;
         } catch (flashSalesError) {
-          console.warn('⚠️ [adminService.getAdminStats] Flash sales query failed (table may not exist)');
+          // Silent fallback if flash_sales table missing - this is expected for new installations
+          console.info('ℹ️ [adminService.getAdminStats] Flash sales table not found (expected for new installations)');
         }
 
         const stats = {

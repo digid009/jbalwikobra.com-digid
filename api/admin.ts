@@ -125,7 +125,8 @@ async function dashboardStats() {
       revenue += amount;
     });
     
-    // completedRevenue is the same as revenue (both from paid/completed orders)
+    // Note: completedRevenue kept for API compatibility with existing frontend code
+    // Both revenue and completedRevenue represent the sum of paid/completed orders
     completedRevenue = revenue;
     
     const stats = {
