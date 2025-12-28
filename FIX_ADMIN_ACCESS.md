@@ -76,6 +76,15 @@ If you're still having issues after applying the fix, check the browser console 
 
 Look for any place where `is_admin` or `isAdmin` is `false`, `null`, or `undefined`.
 
+### Removing Debug Logs (Optional)
+
+Once the issue is fixed and verified, you can remove the debug console.log statements from:
+- `api/auth.ts` (lines with `[DEBUG]`)
+- `src/contexts/TraditionalAuthContext.tsx` (lines with `[DEBUG]`)
+- `src/components/RequireAdmin.tsx` (lines with `[DEBUG]`)
+
+These logs are helpful for troubleshooting but not necessary for production.
+
 ## Technical Details
 
 The authentication flow is:
