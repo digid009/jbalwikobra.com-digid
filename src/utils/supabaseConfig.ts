@@ -6,17 +6,21 @@
 /**
  * Check if a string looks like a placeholder value
  * Returns true if the value is:
- * - Empty
- * - Starts with "YOUR_", "your_", etc.
- * - Contains placeholder patterns like "${" or "<"
- * - Is a generic URL like "https://your-project..."
+ * - Empty or whitespace only
+ * - Starts with common placeholder prefixes: YOUR_, your_, REPLACE_, replace_
+ * - Contains template variable patterns: ${ or <
+ * - Is a generic placeholder URL: https://your-project...
  */
 export function looksLikePlaceholder(value: string): boolean {
   if (!value || value.trim() === '') {
     return true;
   }
   
-  // Check for common placeholder patterns
+  // Check for common placeholder patterns:
+  // - YOUR_*, your_* : Common in .env.example files
+  // - REPLACE_*, replace_* : Common replacement instructions
+  // - https://your-project : Supabase placeholder URLs
+  // - ${, < : Template variable patterns
   return /^(YOUR_|your_|https:\/\/your-project|\$\{|<|REPLACE_|replace_)/i.test(value);
 }
 
@@ -45,10 +49,16 @@ export function getSupabaseAnonKey(): string {
 }
 
 /**
+ * Minimum character length for service role keys
+ * Service role keys are typically much longer than anon keys (>500 chars)
+ */
+const SERVICE_ROLE_KEY_MIN_LENGTH = 500;
+
+/**
  * Check if a key is a service role key
  * Service role keys typically:
  * - Contain 'service_role' in metadata when decoded
- * - Are much longer than anon keys
+ * - Are much longer than anon keys (see SERVICE_ROLE_KEY_MIN_LENGTH)
  * - Start with 'eyJ' (JWT format)
  */
 export function isServiceRoleKey(key: string): boolean {
@@ -60,8 +70,7 @@ export function isServiceRoleKey(key: string): boolean {
   }
   
   // Secondary check: JWT pattern and length
-  // Service role keys are typically much longer than anon keys (>500 chars)
-  if (key.startsWith('eyJ') && key.length > 500) {
+  if (key.startsWith('eyJ') && key.length > SERVICE_ROLE_KEY_MIN_LENGTH) {
     return true;
   }
   
