@@ -17,7 +17,10 @@ try {
       `AdminService: Using ${keyType} for database access`
     );
     console.log('AdminService: Supabase URL:', supabaseUrl);
-    console.log('AdminService: Key starts with:', (serviceKey as string).substring(0, 20) + '...');
+    // Only log key prefix in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AdminService: Key starts with:', (serviceKey as string).substring(0, 20) + '...');
+    }
   } else {
     console.warn('AdminService: Supabase not configured — running with dev fallbacks');
   }
