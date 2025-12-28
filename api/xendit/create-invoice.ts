@@ -145,8 +145,27 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
       }
     }
     
+    // Fetch product name if product_id is provided
+    let productName: string | null = null;
+    if (order.product_id) {
+      try {
+        const { data: productData } = await sb
+          .from('products')
+          .select('name')
+          .eq('id', order.product_id)
+          .single();
+        productName = productData?.name || null;
+        if (productName) {
+          console.log('[createOrderIfProvided] Fetched product name:', productName);
+        }
+      } catch (err) {
+        console.warn('[createOrderIfProvided] Failed to fetch product name:', err);
+      }
+    }
+
     const payload: any = {
       product_id: order.product_id || null,
+      product_name: productName, // Add product_name to order payload
       customer_name: order.customer_name,
       customer_email: order.customer_email,
       customer_phone: order.customer_phone,
@@ -183,6 +202,7 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
           .from('orders')
           .update({
             product_id: payload.product_id,
+            product_name: payload.product_name, // Include product_name in update
             customer_name: payload.customer_name,
             customer_email: payload.customer_email,
             customer_phone: payload.customer_phone,

@@ -44,9 +44,28 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
       return existingOrder;
     }
 
+    // Fetch product name if product_id is provided
+    let productName: string | null = null;
+    if (order.product_id) {
+      try {
+        const { data: productData } = await supabase
+          .from('products')
+          .select('name')
+          .eq('id', order.product_id)
+          .single();
+        productName = productData?.name || null;
+        if (productName) {
+          console.log('[Direct Payment] Fetched product name:', productName);
+        }
+      } catch (err) {
+        console.warn('[Direct Payment] Failed to fetch product name:', err);
+      }
+    }
+
     const orderPayload = {
       client_external_id: externalId,
       product_id: order.product_id || null,
+      product_name: productName, // Add product_name to order payload
       customer_name: order.customer_name || 'Customer',
       customer_email: order.customer_email || 'customer@jbalwikobra.com',
       customer_phone: order.customer_phone || '6200000000000',
@@ -62,7 +81,7 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     const { data, error } = await supabase
       .from('orders')
       .insert(orderPayload)
-      .select('id, customer_name, customer_email, customer_phone, amount, status, order_type, rental_duration, product_id, created_at, client_external_id')
+      .select('id, customer_name, product_name, customer_email, customer_phone, amount, status, order_type, rental_duration, product_id, created_at, client_external_id')
       .single();
 
     if (error) {
