@@ -1,23 +1,39 @@
 // Optimized Supabase Query Builder
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  },
-  global: {
-    headers: {
-      'x-client-info': 'jbalwikobra-api'
+// Helper to check if config looks like a placeholder
+function looksLikePlaceholder(v: string) {
+  return !v || /^(YOUR_|your_|https:\/\/your-project|\$\{|<)/i.test(v);
+}
+
+// Only initialize if we have valid configuration
+let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+
+if (!looksLikePlaceholder(supabaseUrl) && !looksLikePlaceholder(supabaseServiceKey)) {
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    global: {
+      headers: {
+        'x-client-info': 'jbalwikobra-api'
+      }
+    },
+    db: {
+      schema: 'public'
     }
-  },
-  db: {
-    schema: 'public'
-  }
-});
+  });
+  console.log('[OptimizedQueries] Supabase admin client initialized');
+} else {
+  console.error('[OptimizedQueries] Cannot initialize Supabase admin client - missing or invalid configuration');
+  console.error('[OptimizedQueries] Required: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+}
+
+export { supabaseAdmin };
 
 // Optimized query templates
 export const OPTIMIZED_QUERIES = {
@@ -62,6 +78,10 @@ export interface QueryOptions {
 
 export class OptimizedQueryBuilder {
   static async getOrdersWithStats(options: QueryOptions = {}) {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+    
     const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
@@ -89,6 +109,10 @@ export class OptimizedQueryBuilder {
   }
 
   static async getUsersWithSearch(options: QueryOptions = {}) {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+    
     const { pagination = { page: 1, limit: 20 }, search } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
@@ -109,6 +133,10 @@ export class OptimizedQueryBuilder {
   }
 
   static async getProductsForAdmin(options: QueryOptions = {}) {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+    
     const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
@@ -140,6 +168,10 @@ export class OptimizedQueryBuilder {
 
   // Efficient count queries
   static async getTableCounts() {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+    
     const [
       { count: ordersCount },
       { count: usersCount },
@@ -162,6 +194,10 @@ export class OptimizedQueryBuilder {
 
   // Efficient revenue calculation
   static async getRevenueStats(daysBack: number = 7) {
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized');
+    }
+    
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - daysBack);
 
