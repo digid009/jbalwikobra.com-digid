@@ -26,9 +26,8 @@ This migration creates a complete `users` table that:
 ### 2. Fixed Code Issues
 
 #### adminService.ts
-- **Line 936**: Changed query from non-existent `users` table to `profiles` table for interim compatibility
-- **Line 929**: Fixed to count **ALL** products instead of only `is_active = true` products
-- **Line 65**: Updated `fetchUserNames` function to query `profiles` instead of `users`
+- **Reverted to original**: Code correctly queries `users` table (migration will create it)
+- Originally, code was incorrectly changed to query `profiles` but this has been fixed
 
 #### api/admin.ts  
 - **Line 292-295**: Added `success: true` to API response for consistent format
@@ -41,8 +40,8 @@ This migration creates a complete `users` table that:
   - Maps `last_login` → `last_sign_in_at`
 
 ## Files Changed
-1. `supabase/migrations/20251228_create_users_table.sql` - New migration
-2. `src/services/adminService.ts` - Fixed queries and product counting
+1. `supabase/migrations/20251228_create_users_table.sql` - New migration to create users table
+2. `src/services/adminService.ts` - Reverted to query users table (as intended)
 3. `api/admin.ts` - Fixed response format and added missing fields
 4. `src/pages/admin/AdminUsers.tsx` - Added response mapping
 5. `ADMIN_PANEL_FIX_README.md` - Comprehensive instructions

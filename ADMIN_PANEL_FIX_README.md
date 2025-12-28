@@ -20,8 +20,7 @@ This migration:
 - Syncs email addresses from `auth.users`
 
 ### 2. Code Fixes
-- **adminService.ts**: Fixed to count all products (not just active ones)
-- **adminService.ts**: Temporarily using `profiles` for user name lookups until migration runs
+- **adminService.ts**: Code correctly queries `users` table (migration will create it)
 - **api/admin.ts**: Fixed to return consistent response format with `success` field
 - **api/admin.ts**: Added `is_admin` and `last_login` to user queries
 - **AdminUsers.tsx**: Added mapping from API response to component format
