@@ -6,6 +6,8 @@ const RequireAdmin: React.FC = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  console.log('[DEBUG] RequireAdmin - user:', user ? `email: ${user.email}, isAdmin: ${user.isAdmin}` : 'null', 'loading:', loading);
+
   if (loading) {
     return (
     <div className="min-h-[50vh] flex items-center justify-center">

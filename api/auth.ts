@@ -231,6 +231,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     const user = users[0];
 
     console.log('User found, verifying password...');
+    console.log('[DEBUG] User from database - is_admin:', user.is_admin, 'email:', user.email);
 
     // Verify password (handle users without password hash gracefully)
     if (!user.password_hash) {
@@ -301,6 +302,8 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     }
 
     const { password_hash, login_attempts, locked_until, ...safeUser } = user;
+
+    console.log('[DEBUG] Sending user response - is_admin:', safeUser.is_admin, 'email:', safeUser.email);
 
     return res.status(200).json({
       success: true,
