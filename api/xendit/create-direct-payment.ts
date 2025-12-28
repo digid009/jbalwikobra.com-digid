@@ -45,22 +45,8 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     }
 
     // Fetch product name if product_id is provided
-    let productName: string | null = null;
-    if (order.product_id) {
-      try {
-        const { data: productData } = await supabase
-          .from('products')
-          .select('name')
-          .eq('id', order.product_id)
-          .single();
-        productName = productData?.name || null;
-        if (productName) {
-          console.log('[Direct Payment] Fetched product name:', productName);
-        }
-      } catch (err) {
-        console.warn('[Direct Payment] Failed to fetch product name:', err);
-      }
-    }
+    const { fetchProductName } = await import('../_utils/productUtils.js');
+    const productName = await fetchProductName(supabase, order.product_id);
 
     const orderPayload = {
       client_external_id: externalId,

@@ -146,22 +146,8 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
     }
     
     // Fetch product name if product_id is provided
-    let productName: string | null = null;
-    if (order.product_id) {
-      try {
-        const { data: productData } = await sb
-          .from('products')
-          .select('name')
-          .eq('id', order.product_id)
-          .single();
-        productName = productData?.name || null;
-        if (productName) {
-          console.log('[createOrderIfProvided] Fetched product name:', productName);
-        }
-      } catch (err) {
-        console.warn('[createOrderIfProvided] Failed to fetch product name:', err);
-      }
-    }
+    const { fetchProductName } = await import('../_utils/productUtils.js');
+    const productName = await fetchProductName(sb, order.product_id);
 
     const payload: any = {
       product_id: order.product_id || null,
