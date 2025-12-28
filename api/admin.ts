@@ -2,10 +2,29 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 
-// Lazy supabase client (service role preferred for admin operations)
+// CRITICAL FIX: Use service role key for admin operations to bypass RLS
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
+// Create client with service role key to bypass RLS for admin operations
+const supabase = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      },
+      db: {
+        schema: 'public'
+      }
+    })
+  : null;
+
+// Log initialization status
+if (!supabase) {
+  console.error('❌ [Admin API] Supabase client not initialized - missing environment variables');
+} else {
+  console.log('✅ [Admin API] Supabase client initialized with service role key');
+}
 
 // Basic in-memory rate limiting
 const rateMap = new Map<string, { count: number; ts: number }>();
@@ -66,18 +85,39 @@ async function dashboardStats() {
     const usersRes = await supabase.from('users').select('id', { count: 'exact', head: true });
     const productsRes = await supabase.from('products').select('id', { count: 'exact', head: true });
     
+    // Check for RLS or permission errors
+    if (ordersRes.error) {
+      console.error('❌ [API /api/admin] dashboardStats: Orders query error:', ordersRes.error);
+      console.error('   - Error code:', ordersRes.error.code);
+      console.error('   - Error message:', ordersRes.error.message);
+      console.error('   - Error details:', ordersRes.error.details);
+    }
+    if (usersRes.error) {
+      console.error('❌ [API /api/admin] dashboardStats: Users query error:', usersRes.error);
+      console.error('   - Error code:', usersRes.error.code);
+      console.error('   - Error message:', usersRes.error.message);
+    }
+    if (productsRes.error) {
+      console.error('❌ [API /api/admin] dashboardStats: Products query error:', productsRes.error);
+      console.error('   - Error code:', productsRes.error.code);
+      console.error('   - Error message:', productsRes.error.message);
+    }
+    
     console.log('📈 [API /api/admin] dashboardStats: Basic counts:', {
       orders: ordersRes.count,
       users: usersRes.count,
       products: productsRes.count,
-      ordersError: ordersRes.error,
-      usersError: usersRes.error,
-      productsError: productsRes.error
+      ordersError: ordersRes.error ? ordersRes.error.message : null,
+      usersError: usersRes.error ? usersRes.error.message : null,
+      productsError: productsRes.error ? productsRes.error.message : null
     });
     
     let flashSalesCount = 0;
     try {
       const flashRes = await supabase.from('flash_sales').select('id', { count: 'exact', head: true });
+      if (flashRes.error) {
+        console.warn('⚠️ [API /api/admin] dashboardStats: Flash sales query error:', flashRes.error.message);
+      }
       flashSalesCount = flashRes.count || 0;
     } catch (e) {
       console.warn('⚠️ [API /api/admin] dashboardStats: Flash sales query failed:', e);
@@ -86,6 +126,9 @@ async function dashboardStats() {
     let reviewsCount = 0;
     try {
       const reviewsRes = await supabase.from('reviews').select('id', { count: 'exact', head: true });
+      if (reviewsRes.error) {
+        console.warn('⚠️ [API /api/admin] dashboardStats: Reviews query error:', reviewsRes.error.message);
+      }
       reviewsCount = reviewsRes.count || 0;
     } catch (e) {
       console.warn('⚠️ [API /api/admin] dashboardStats: Reviews query failed:', e);
@@ -101,6 +144,8 @@ async function dashboardStats() {
     
     if (completedError) {
       console.error('❌ [API /api/admin] dashboardStats: Error fetching completed orders:', completedError);
+      console.error('   - Error code:', completedError.code);
+      console.error('   - Error message:', completedError.message);
     } else {
       console.log('✅ [API /api/admin] dashboardStats: Completed/paid orders fetched:', completedOrders?.length);
     }
@@ -113,6 +158,8 @@ async function dashboardStats() {
     
     if (pendingError) {
       console.error('❌ [API /api/admin] dashboardStats: Error fetching pending orders:', pendingError);
+      console.error('   - Error code:', pendingError.code);
+      console.error('   - Error message:', pendingError.message);
     }
     
     let revenue = 0, completedRevenue = 0;
@@ -162,7 +209,13 @@ async function recentNotifications(limit: number) {
 }
 
 async function listOrders(page: number, limit: number, status?: string) {
-  if (!supabase) return { data: [], count: 0, page };
+  console.log(`📋 [API /api/admin] listOrders: Fetching page ${page}, limit ${limit}, status: ${status || 'all'}`);
+  
+  if (!supabase) {
+    console.error('❌ [API /api/admin] listOrders: Supabase client not available');
+    return { data: [], count: 0, page };
+  }
+  
   const from = (page - 1) * limit; const to = from + limit - 1;
   
   // First get orders
@@ -176,7 +229,16 @@ async function listOrders(page: number, limit: number, status?: string) {
     }
   }
   const { data: orders, error, count } = await query;
-  if (error) return { data: [], count: 0, page };
+  
+  if (error) {
+    console.error('❌ [API /api/admin] listOrders: Query error:', error);
+    console.error('   - Error code:', error.code);
+    console.error('   - Error message:', error.message);
+    console.error('   - Error details:', error.details);
+    return { data: [], count: 0, page };
+  }
+  
+  console.log(`✅ [API /api/admin] listOrders: Found ${orders?.length || 0} orders (total: ${count})`);
   
   // Get payment data for these orders
   const orderRows = orders || [];
@@ -184,12 +246,14 @@ async function listOrders(page: number, limit: number, status?: string) {
   let paymentsMap: { [key: string]: any } = {};
   
   if (externalIds.length > 0) {
-    const { data: payments } = await supabase
+    const { data: payments, error: paymentsError } = await supabase
       .from('payments')
       .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
       .in('external_id', externalIds);
     
-    if (payments) {
+    if (paymentsError) {
+      console.error('❌ [API /api/admin] listOrders: Payments query error:', paymentsError);
+    } else if (payments) {
       payments.forEach(payment => {
         paymentsMap[payment.external_id] = payment;
       });
@@ -228,22 +292,52 @@ async function updateOrderStatus(orderId: string, newStatus: string) {
 }
 
 async function listUsers(page: number, limit: number, search?: string) {
-  if (!supabase) return { data: [], count: 0, page };
+  console.log(`👥 [API /api/admin] listUsers: Fetching page ${page}, limit ${limit}, search: ${search || 'none'}`);
+  
+  if (!supabase) {
+    console.error('❌ [API /api/admin] listUsers: Supabase client not available');
+    return { data: [], count: 0, page };
+  }
+  
   const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('users').select('id,name,email,phone,role,is_admin,created_at,is_active,last_login', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  let query: any = supabase.from('users').select('id,name,email,phone,role,is_admin,created_at,is_active,last_login_at,phone_verified,profile_completed', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (search) query = query.ilike('name', `%${search}%`);
   const { data, error, count } = await query;
-  if (error) return { data: [], count: 0, page };
+  
+  if (error) {
+    console.error('❌ [API /api/admin] listUsers: Query error:', error);
+    console.error('   - Error code:', error.code);
+    console.error('   - Error message:', error.message);
+    console.error('   - Error details:', error.details);
+    return { data: [], count: 0, page };
+  }
+  
+  console.log(`✅ [API /api/admin] listUsers: Found ${data?.length || 0} users (total: ${count})`);
   return { data:data||[], count:count||0, page };
 }
 
 async function listProducts(page: number, limit: number, search?: string) {
-  if (!supabase) return { data: [], count: 0, page };
+  console.log(`📦 [API /api/admin] listProducts: Fetching page ${page}, limit ${limit}, search: ${search || 'none'}`);
+  
+  if (!supabase) {
+    console.error('❌ [API /api/admin] listProducts: Supabase client not available');
+    return { data: [], count: 0, page };
+  }
+  
   const from = (page - 1) * limit; const to = from + limit - 1;
   let query: any = supabase.from('products').select('id,name,description,price,images,is_active,is_flash_sale,stock,created_at', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (search) query = query.ilike('name', `%${search}%`);
   const { data, error, count } = await query;
-  if (error) return { data: [], count: 0, page };
+  
+  if (error) {
+    console.error('❌ [API /api/admin] listProducts: Query error:', error);
+    console.error('   - Error code:', error.code);
+    console.error('   - Error message:', error.message);
+    console.error('   - Error details:', error.details);
+    return { data: [], count: 0, page };
+  }
+  
+  console.log(`✅ [API /api/admin] listProducts: Found ${data?.length || 0} products (total: ${count})`);
   return { data:data||[], count:count||0, page };
 }
 
