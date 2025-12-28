@@ -1287,13 +1287,34 @@ Terima kasih! 🙏`;
     });
 
     if (result.success) {
-      console.log(`[Payment Link Notification] Sent successfully to ${order.customer_phone} for payment ${paymentData.id}`);
+      console.log(`✅ [Payment Link Notification] Sent successfully to ${order.customer_phone} for payment ${paymentData.id}`);
     } else {
-      console.error('[Payment Link Notification] Failed to send:', result.error);
+      // Enhanced error logging based on error type
+      if (result.serviceOff) {
+        console.warn(`⚠️ [Payment Link Notification] WhatsApp service not started (QR not scanned):`, {
+          error: result.error,
+          phone: order.customer_phone,
+          payment_id: paymentData.id,
+          hint: 'Admin needs to scan QR code in WhatsApp service to enable notifications'
+        });
+      } else {
+        console.error(`❌ [Payment Link Notification] Failed to send:`, {
+          error: result.error,
+          phone: order.customer_phone,
+          payment_id: paymentData.id,
+          provider: result.provider,
+          responseTime: result.responseTime
+        });
+      }
     }
 
   } catch (error) {
-    console.error('[Payment Link Notification] Error:', error);
+    console.error('❌ [Payment Link Notification] Unexpected error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      payment_id: paymentData?.id,
+      customer_phone: order?.customer_phone
+    });
   }
 }
 
