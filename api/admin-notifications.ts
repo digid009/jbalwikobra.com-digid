@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 
 // Service-role client (server only)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
@@ -20,6 +21,10 @@ function allow(ip: string) {
 
 function respond(res: VercelResponse, status: number, body: any) {
   res.setHeader('Content-Type', 'application/json');
+  
+  // Admin notifications should not be cached as they need to be real-time
+  setCacheHeaders(res, CacheStrategies.NoCache);
+  
   res.status(status).send(JSON.stringify(body));
 }
 

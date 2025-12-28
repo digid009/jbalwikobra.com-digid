@@ -1,10 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 
 // Shared helpers
 function respond(res: VercelResponse, status: number, body: any) {
   res.setHeader('Content-Type', 'application/json');
+  
+  // WhatsApp admin operations should not be cached as they are real-time actions
+  setCacheHeaders(res, CacheStrategies.NoCache);
+  
   res.status(status).send(JSON.stringify(body));
 }
 

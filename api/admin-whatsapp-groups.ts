@@ -1,8 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // WhatsApp groups data should not be cached as it can change frequently
+  setCacheHeaders(res, CacheStrategies.NoCache);
+  
   if (req.method !== 'GET') {
     res.setHeader('Content-Type', 'application/json');
     return res.status(405).send(JSON.stringify({ error: 'method_not_allowed' }));
