@@ -52,49 +52,98 @@ function normalizeAction(action?: string | string[]): string {
 }
 
 async function dashboardStats() {
-  if (!supabase) return mockDashboard();
-  const ordersRes = await supabase.from('orders').select('id', { count: 'exact', head: true });
-  const usersRes = await supabase.from('users').select('id', { count: 'exact', head: true });
-  const productsRes = await supabase.from('products').select('id', { count: 'exact', head: true });
-  let flashSalesCount = 0;
+  console.log('📊 [API /api/admin] dashboardStats: Starting to fetch dashboard statistics');
+  
+  if (!supabase) {
+    console.error('❌ [API /api/admin] dashboardStats: Supabase client not available');
+    return mockDashboard();
+  }
+  
   try {
-    const flashRes = await supabase.from('flash_sales').select('id', { count: 'exact', head: true });
-    flashSalesCount = flashRes.count || 0;
-  } catch {}
-  let reviewsCount = 0;
-  try {
-    const reviewsRes = await supabase.from('reviews').select('id', { count: 'exact', head: true });
-    reviewsCount = reviewsRes.count || 0;
-  } catch {}
-  // Optimize: Use aggregation instead of fetching all rows
-  // Get completed/paid orders count and sum
-  const { data: completedOrders } = await supabase
-    .from('orders')
-    .select('amount')
-    .in('status', ['completed', 'paid'])
-    .limit(1000); // Reasonable limit for stats
-  
-  const { data: pendingOrders } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('status', 'pending')
-    .limit(1000); // Reasonable limit for stats
-  
-  let revenue = 0, completedRevenue = 0;
-  const completed = completedOrders?.length || 0;
-  const pending = pendingOrders?.length || 0;
-  
-  (completedOrders || []).forEach(r => { 
-    revenue += r.amount || 0;
-    completedRevenue += r.amount || 0;
-  });
-  return {
-    orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
-    users: { count: usersRes.count||0 },
-    products: { count: productsRes.count||0 },
-    flashSales: { count: flashSalesCount },
-    reviews: { count: reviewsCount, averageRating: 0 }
-  } as const;
+    console.log('🔍 [API /api/admin] dashboardStats: Querying database...');
+    
+    const ordersRes = await supabase.from('orders').select('id', { count: 'exact', head: true });
+    const usersRes = await supabase.from('users').select('id', { count: 'exact', head: true });
+    const productsRes = await supabase.from('products').select('id', { count: 'exact', head: true });
+    
+    console.log('📈 [API /api/admin] dashboardStats: Basic counts:', {
+      orders: ordersRes.count,
+      users: usersRes.count,
+      products: productsRes.count,
+      ordersError: ordersRes.error,
+      usersError: usersRes.error,
+      productsError: productsRes.error
+    });
+    
+    let flashSalesCount = 0;
+    try {
+      const flashRes = await supabase.from('flash_sales').select('id', { count: 'exact', head: true });
+      flashSalesCount = flashRes.count || 0;
+    } catch (e) {
+      console.warn('⚠️ [API /api/admin] dashboardStats: Flash sales query failed:', e);
+    }
+    
+    let reviewsCount = 0;
+    try {
+      const reviewsRes = await supabase.from('reviews').select('id', { count: 'exact', head: true });
+      reviewsCount = reviewsRes.count || 0;
+    } catch (e) {
+      console.warn('⚠️ [API /api/admin] dashboardStats: Reviews query failed:', e);
+    }
+    
+    // Get completed/paid orders count and sum
+    console.log('💰 [API /api/admin] dashboardStats: Fetching completed/paid orders...');
+    const { data: completedOrders, error: completedError } = await supabase
+      .from('orders')
+      .select('amount, status')
+      .in('status', ['completed', 'paid'])
+      .limit(2000); // Increased limit to get more accurate stats
+    
+    if (completedError) {
+      console.error('❌ [API /api/admin] dashboardStats: Error fetching completed orders:', completedError);
+    } else {
+      console.log('✅ [API /api/admin] dashboardStats: Completed/paid orders fetched:', completedOrders?.length);
+    }
+    
+    const { data: pendingOrders, error: pendingError } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('status', 'pending')
+      .limit(2000);
+    
+    if (pendingError) {
+      console.error('❌ [API /api/admin] dashboardStats: Error fetching pending orders:', pendingError);
+    }
+    
+    let revenue = 0, completedRevenue = 0;
+    const completed = completedOrders?.length || 0;
+    const pending = pendingOrders?.length || 0;
+    
+    // Calculate revenue from paid and completed orders
+    (completedOrders || []).forEach(r => { 
+      const amount = Number(r.amount) || 0;
+      revenue += amount;
+    });
+    
+    // Note: completedRevenue kept for API compatibility with existing frontend code
+    // Both revenue and completedRevenue represent the sum of paid/completed orders
+    completedRevenue = revenue;
+    
+    const stats = {
+      orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
+      users: { count: usersRes.count||0 },
+      products: { count: productsRes.count||0 },
+      flashSales: { count: flashSalesCount },
+      reviews: { count: reviewsCount, averageRating: 0 }
+    };
+    
+    console.log('✅ [API /api/admin] dashboardStats: Final stats:', JSON.stringify(stats, null, 2));
+    
+    return stats;
+  } catch (error) {
+    console.error('❌ [API /api/admin] dashboardStats: Unexpected error:', error);
+    return mockDashboard();
+  }
 }
 
 function mockDashboard() {
@@ -277,7 +326,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (action) {
       case 'dashboard-stats': {
+        console.log('🎯 [API /api/admin] Handling dashboard-stats request');
         const data = await dashboardStats();
+        console.log('📤 [API /api/admin] Sending dashboard-stats response:', JSON.stringify(data, null, 2));
         return respond(res, 200, data, 60); // Cache for 1 minute
       }
       case 'recent-notifications': {
