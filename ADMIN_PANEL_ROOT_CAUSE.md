@@ -10,6 +10,9 @@ I initially thought the `users` table didn't exist because:
 - The schema JSON provided didn't show it in the initial dump
 - Migration files only showed `profiles` table being created
 
+### Second Diagnosis (INCORRECT)
+I then thought it was a missing service role key configuration.
+
 ### Actual Situation (CONFIRMED)
 **Database queries revealed:**
 ```sql
@@ -18,58 +21,82 @@ SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public' AND table_name IN ('users', 'profiles');
 -- Result: users table EXISTS ✅
 
--- Query 2: Check if profiles table exists  
-SELECT COUNT(*) as profiles_count FROM public.profiles;
--- Result: ERROR - profiles table DOES NOT EXIST ❌
+-- Query 2: Check users table has data
+SELECT COUNT(*) FROM public.users;
+-- Result: 355 users ✅
+
+-- Query 3: Check revenue data exists
+SELECT SUM(amount) FROM orders WHERE status IN ('paid', 'completed');
+-- Result: 161,900,339.00 IDR ✅
 ```
 
-## Real Root Cause
+## Real Root Cause: RLS Circular Dependency
 
-The admin dashboard shows 0 because of **RLS (Row Level Security) blocking access**.
+The admin dashboard shows 0 because of **RLS (Row Level Security) circular dependency on the users table**.
 
 ### The Issue
 
-Both API and frontend have **incorrect Supabase key configuration**:
+The `users` table has **NO RLS policy for service_role**, causing a circular dependency:
 
-#### Backend API (`api/admin.ts` line 7):
-```typescript
-const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                        process.env.SUPABASE_ANON_KEY || 
-                        process.env.REACT_APP_SUPABASE_ANON_KEY;
+#### Users Table RLS Policies:
+```sql
+-- Policy 1: users_select_own (authenticated users read own data)
+FOR SELECT TO authenticated USING (auth.uid() = id)
+
+-- Policy 2: users_update_own (authenticated users update own data)
+FOR UPDATE TO authenticated USING (auth.uid() = id)
+
+-- Policy 3: users_admin_all (admins get all access)
+FOR ALL TO authenticated 
+USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true))
 ```
 
-#### Frontend (`src/services/adminService.ts` line 8):
-```typescript
-const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || 
-                   process.env.REACT_APP_SUPABASE_ANON_KEY;
+**The Problem:** NO policy exists for `service_role`!
+
+#### Other Tables Check users.is_admin:
+```sql
+-- Example: admin_notifications, banners, categories policies
+USING (EXISTS (SELECT 1 FROM users 
+       WHERE users.id = auth.uid() AND users.is_admin = true))
 ```
 
-**If `SUPABASE_SERVICE_ROLE_KEY` is not set**, the code falls back to using the **anon key**:
-- ❌ Anon key has RLS restrictions
-- ❌ Cannot read `users` table (restricted by RLS)
-- ❌ Cannot read order details for revenue calculation
-- ❌ Dashboard shows 0 for everything
+**Circular Dependency:**
+1. Admin API uses service role key to query tables
+2. Table policies check `users.is_admin` 
+3. But `users` table has NO service_role policy
+4. Service role cannot read `users` table
+5. EXISTS query fails → returns 0 rows
 
 ## The Fix
 
-### Option 1: Set Service Role Key (RECOMMENDED)
-Add the service role key to environment variables:
+### Add Service Role Policy to Users Table
 
-**For production (Vercel/deployment):**
-```bash
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+Run this migration to fix the circular dependency:
+
+```sql
+-- supabase/migrations/20251228_fix_users_rls_service_role.sql
+
+CREATE POLICY "users_service_role_all" ON public.users
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 ```
 
-**For local development:**
-```bash
-REACT_APP_SUPABASE_SERVICE_KEY=your_service_role_key_here
-```
+**What this does:**
+- Allows service role to bypass RLS on `users` table
+- Breaks the circular dependency
+- Other table policies can now successfully check `users.is_admin`
+- Admin dashboard queries will return correct data
 
-### Option 2: Fix RLS Policies
-If service role key cannot be set, modify RLS policies on `users` table to allow anon key to read for admin operations. **NOT RECOMMENDED** for security reasons.
+### Why This Works
 
-### Option 3: Create Service Function
-Create a Postgres function that bypasses RLS using `SECURITY DEFINER` and call it from the API. More complex but more secure than Option 2.
+1. Service role key is already configured (confirmed by user)
+2. Service role tries to query tables for admin stats
+3. Table RLS policies check `users.is_admin` via EXISTS query
+4. **NEW:** Service role can now read users table
+5. EXISTS query succeeds, returns true for admins
+6. Dashboard shows correct stats!
 
 ## Verification Steps
 
