@@ -436,7 +436,7 @@ async function handleSignup(req: VercelRequest, res: VercelResponse) {
     // Send WhatsApp verification
     try {
       console.log('Sending WhatsApp verification code to:', phone);
-      const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService');
+      const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService.js');
       const whatsappService = new DynamicWhatsAppService();
       const result = await whatsappService.sendVerificationCode(phone, verificationCode);
       

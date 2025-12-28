@@ -1081,7 +1081,7 @@ async function createNewOrderAdminNotification(sb: any, orderId: string, custome
 // Send WhatsApp group notification for new order
 async function sendNewOrderGroupNotification(customerName: string, productName: string, amount: number, orderType: string, orderId: string) {
   try {
-    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService');
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
     const wa = new DynamicWhatsAppService();
     
     const isRental = orderType === 'rental';
@@ -1163,7 +1163,7 @@ async function sendPaymentLinkNotification(paymentData: any, order: any) {
       return;
     }
 
-    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService');
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
     const wa = new DynamicWhatsAppService();
 
     // Get site URL for payment link
