@@ -37,7 +37,19 @@ We've added comprehensive service_role policies to all admin-related tables:
 
 ## How to Apply the Fix
 
-### Option 1: Via Supabase Dashboard (Recommended)
+### Option 1: Run Consolidated Migration (Easiest)
+1. Go to your Supabase Dashboard
+2. Navigate to SQL Editor
+3. Copy and paste the entire content of:
+   ```
+   supabase/migrations/20251228_complete_admin_panel_fix.sql
+   ```
+4. Click "Run" - this will apply all fixes at once
+5. Check the output for verification that policies were created
+
+### Option 2: Run Individual Migrations
+If you prefer to run migrations separately:
+
 1. Go to your Supabase Dashboard
 2. Navigate to SQL Editor
 3. Run each migration file in order:
@@ -52,7 +64,7 @@ We've added comprehensive service_role policies to all admin-related tables:
    -- Copy and paste: supabase/migrations/20251228_add_service_role_policies_admin_tables.sql
    ```
 
-### Option 2: Via Supabase CLI
+### Option 3: Via Supabase CLI
 If you have Supabase CLI installed:
 ```bash
 supabase db push
