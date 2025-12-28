@@ -3,7 +3,15 @@ import { adminCache } from './adminCache';
 import { ordersService } from './ordersService';
 import { dbRowToDomainProduct } from './mappers/productMapper';
 
-// Use service role key from environment variables for admin operations
+// ⚠️ IMPORTANT SECURITY NOTE:
+// This service is used by frontend admin components and should ONLY use:
+// - REACT_APP_SUPABASE_ANON_KEY for authenticated admin access
+// - NEVER set REACT_APP_SUPABASE_SERVICE_KEY (security risk!)
+//
+// For this to work properly, you MUST have RLS policies that allow authenticated
+// admin users to access users and orders tables. See:
+// - supabase/migrations/20251228_complete_admin_panel_fix.sql
+// - SUPABASE_ADMIN_CONFIG.md for setup instructions
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
 const hasSupabase = !!supabaseUrl && !!serviceKey;
@@ -13,10 +21,18 @@ try {
   // Log in dev to make it obvious when running without DB
   if (hasSupabase) {
     const keyType = (serviceKey as string).includes('service_role') ? 'service role key' : 'anonymous key';
-    console.log(
-      `AdminService: Using ${keyType} for database access`
-    );
-    console.log('AdminService: Supabase URL:', supabaseUrl);
+    
+    // Security warning if service role key is used in frontend
+    if ((serviceKey as string).includes('service_role')) {
+      console.error('⚠️ SECURITY WARNING: Service role key detected in frontend AdminService!');
+      console.error('   This is a security risk. Remove REACT_APP_SUPABASE_SERVICE_KEY from your environment.');
+      console.error('   Use REACT_APP_SUPABASE_ANON_KEY with proper RLS policies instead.');
+    } else {
+      console.log(`AdminService: Using ${keyType} for database access`);
+      console.log('AdminService: Supabase URL:', supabaseUrl);
+      console.log('AdminService: Ensure RLS policies allow authenticated admin users to access data');
+    }
+    
     // Only log key prefix in development
     if (process.env.NODE_ENV === 'development') {
       console.log('AdminService: Key starts with:', (serviceKey as string).substring(0, 20) + '...');

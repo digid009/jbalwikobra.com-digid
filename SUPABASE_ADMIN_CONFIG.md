@@ -1,5 +1,29 @@
 # Supabase Admin Configuration Guide
 
+## ⚠️ Quick Fix for "User table and order table not showing"
+
+**If you're seeing this error, the most likely cause is that your database needs the RLS policy migrations.**
+
+### Quick Solution (5 minutes):
+
+1. **Apply the database migration**:
+   - Open your Supabase Dashboard → SQL Editor
+   - Copy the content from `supabase/migrations/20251228_complete_admin_panel_fix.sql`
+   - Paste and run it in the SQL Editor
+
+2. **Ensure your user is an admin**:
+   ```sql
+   UPDATE public.users 
+   SET is_admin = true 
+   WHERE email = 'your-email@example.com';
+   ```
+
+3. **Log out and log back in** to refresh your session
+
+That's it! The admin panel should now show users and orders.
+
+---
+
 ## Overview
 
 This document explains how to properly configure Supabase environment variables to fix the "[SupabaseAdmin] Missing/invalid service config" error.
