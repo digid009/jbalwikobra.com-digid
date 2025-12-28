@@ -2,6 +2,14 @@
 -- The users table was missing a policy for service_role, causing circular dependency
 -- when other policies tried to check users.is_admin
 
+-- Ensure RLS is enabled
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing service role policy if it exists, then create it
+-- We use DROP + CREATE instead of CREATE IF NOT EXISTS for better PostgreSQL compatibility
+-- and to ensure the policy is always in the correct state
+DROP POLICY IF EXISTS "users_service_role_all" ON public.users;
+
 -- Add service role policy to allow bypassing RLS for admin operations
 CREATE POLICY "users_service_role_all" ON public.users
   FOR ALL
