@@ -61,8 +61,8 @@ async function fetchUserNames(userIds: string[]): Promise<Record<string, string>
   if (!supabase || userIds.length === 0) return {};
   
   try {
-    const { data: userData, error } = await supabase
-      .from('users')
+    const { data: userData, error} = await supabase
+      .from('profiles')
       .select('id, name')
       .in('id', userIds);
     
@@ -933,8 +933,8 @@ export const adminService = {
           { count: paidOrders },
           ordersWithRevenue
         ] = await Promise.all([
-          (supabase as any).from('users').select('id', { count: 'exact', head: true }),
-          (supabase as any).from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+          (supabase as any).from('profiles').select('id', { count: 'exact', head: true }),
+          (supabase as any).from('products').select('id', { count: 'exact', head: true }),
           (supabase as any).from('orders').select('id', { count: 'exact', head: true }),
           (supabase as any).from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           (supabase as any).from('orders').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
