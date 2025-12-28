@@ -905,8 +905,11 @@ export const adminService = {
     return service.completeOrder(orderId);
   },
   async getAdminStats(): Promise<AdminStats> {
+    console.log('🔄 [adminService.getAdminStats] Starting stats fetch...');
+    
     // In development without Supabase, return safe fallback to avoid crashing the Admin UI
     if (!hasSupabase) {
+      console.warn('⚠️ [adminService.getAdminStats] Supabase not configured, returning fallback');
       return {
         totalOrders: 0,
         totalRevenue: 0,
@@ -921,8 +924,14 @@ export const adminService = {
       };
     }
 
+    // Clear cache to ensure fresh data
+    adminCache.invalidate('admin:stats');
+    console.log('🗑️ [adminService.getAdminStats] Cache cleared for admin:stats');
+
     return adminCache.getOrFetch('admin:stats', async () => {
       try {
+        console.log('📊 [adminService.getAdminStats] Fetching fresh stats from database...');
+        
         // Get all stats in parallel - optimized queries
         const [
           { count: totalUsers },
@@ -942,12 +951,24 @@ export const adminService = {
           (supabase as any).from('orders').select('amount, status').in('status', ['paid', 'completed'])
         ]);
 
+        console.log('📈 [adminService.getAdminStats] Query results:', {
+          totalUsers,
+          totalProducts,
+          totalOrders,
+          pendingOrders,
+          completedOrders,
+          paidOrders,
+          revenueOrders: ordersWithRevenue.data?.length
+        });
+
         // Calculate total revenue from paid and completed orders
         let totalRevenue = 0;
         if (ordersWithRevenue.data) {
           totalRevenue = ordersWithRevenue.data.reduce((sum, order) => 
             sum + (Number(order.amount) || 0), 0);
         }
+        
+        console.log('💰 [adminService.getAdminStats] Total revenue calculated:', totalRevenue);
 
         // Try to get reviews (might not exist)
         let totalReviews = 0;
@@ -967,7 +988,7 @@ export const adminService = {
             ? reviewsWithRating.data.reduce((sum, review) => sum + review.rating, 0) / reviewsWithRating.data.length
             : 0;
         } catch (reviewError) {
-          // Silent fallback if reviews table missing
+          console.warn('⚠️ [adminService.getAdminStats] Reviews query failed (table may not exist)');
         }
 
         // Get flash sales data
@@ -985,10 +1006,10 @@ export const adminService = {
           totalFlashSales = totalFlashSalesCount || 0;
           activeFlashSales = activeFlashSalesCount || 0;
         } catch (flashSalesError) {
-          // Silent fallback if flash_sales table missing
+          console.warn('⚠️ [adminService.getAdminStats] Flash sales query failed (table may not exist)');
         }
 
-        return {
+        const stats = {
           totalOrders: totalOrders || 0,
           totalRevenue,
           totalUsers: totalUsers || 0,
@@ -1000,8 +1021,17 @@ export const adminService = {
           totalFlashSales,
           activeFlashSales
         };
+        
+        console.log('✅ [adminService.getAdminStats] Final stats:', JSON.stringify(stats, null, 2));
+        
+        return stats;
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error('❌ [adminService.getAdminStats] Error fetching dashboard stats:', error);
+        console.error('❌ [adminService.getAdminStats] Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        
         return {
           totalOrders: 0,
           totalRevenue: 0,

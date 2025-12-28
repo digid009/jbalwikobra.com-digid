@@ -3,10 +3,34 @@ import { Product, Order, User, FeedPost, DashboardStats } from '../types';
 
 export class AdminService {
   static async fetchDashboardStats(): Promise<DashboardStats> {
+    console.log('🚀 [AdminService.fetchDashboardStats] Starting dashboard stats fetch...');
+    
     try {
-      const response = await fetch('/api/admin?action=dashboard');
+      const timestamp = Date.now();
+      const url = `/api/admin?action=dashboard&_t=${timestamp}`;
+      console.log('🌐 [AdminService.fetchDashboardStats] Fetching from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      console.log('📡 [AdminService.fetchDashboardStats] Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        // Dashboard API failed, using fallback data
+        const errorText = await response.text();
+        console.error('❌ [AdminService.fetchDashboardStats] API request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        
+        // Return fallback with error logging
+        console.warn('⚠️ [AdminService.fetchDashboardStats] Returning fallback zeros due to API error');
         return {
           orders: { count: 0, completed: 0, revenue: 0, completedRevenue: 0 },
           users: { count: 0 },
@@ -14,10 +38,24 @@ export class AdminService {
           flashSales: { count: 0 }
         };
       }
+      
       const data = await response.json();
-      return data.data || data;
+      console.log('📥 [AdminService.fetchDashboardStats] Raw response data:', JSON.stringify(data, null, 2));
+      
+      // Handle both formats: direct data or wrapped in data property
+      const stats = data.data || data;
+      console.log('✅ [AdminService.fetchDashboardStats] Parsed stats:', JSON.stringify(stats, null, 2));
+      
+      return stats;
     } catch (error) {
-      // Dashboard API error, using fallback
+      console.error('❌ [AdminService.fetchDashboardStats] Exception occurred:', error);
+      console.error('❌ [AdminService.fetchDashboardStats] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Return fallback with error logging
+      console.warn('⚠️ [AdminService.fetchDashboardStats] Returning fallback zeros due to exception');
       return {
         orders: { count: 0, completed: 0, revenue: 0, completedRevenue: 0 },
         users: { count: 0 },
