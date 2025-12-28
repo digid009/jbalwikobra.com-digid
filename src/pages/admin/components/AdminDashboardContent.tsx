@@ -129,8 +129,8 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
     }
   };
 
-  // Use 'total' instead of 'created' as it exists in OrderStatusTimeSeries
-  const maxTotal = useMemo(() => Math.max(1, ...series.map(s => s.total)), [series]);
+  // Use 'created' instead of 'total' as it exists in OrderStatusTimeSeries
+  const maxTotal = useMemo(() => Math.max(1, ...series.map(s => s.created)), [series]);
   const maxCompleted = useMemo(() => Math.max(1, ...series.map(s => s.completed)), [series]);
 
   const [filterValues, setFilterValues] = useState({
@@ -326,7 +326,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <path 
                       d={`M 0 100 ${series.map((d, i) => {
                         const x = (i / (series.length - 1)) * 100;
-                        const y = 100 - (d.total / maxTotal) * 85;
+                        const y = 100 - (d.created / maxTotal) * 85;
                         return `L ${x} ${y}`;
                       }).join(' ')} L 100 100 Z`}
                       fill="url(#createdGradient)"
@@ -348,7 +348,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     <path 
                       d={`M ${series.map((d, i) => {
                         const x = (i / (series.length - 1)) * 100;
-                        const y = 100 - (d.total / maxTotal) * 85;
+                        const y = 100 - (d.created / maxTotal) * 85;
                         return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
                       }).join(' ')}`}
                       fill="none"
@@ -375,7 +375,7 @@ export const AdminDashboardContent: React.FC<AdminDashboardContentProps> = ({ on
                     {/* Enhanced data points for orders created */}
                     {series.map((d, i) => {
                       const x = (i / (series.length - 1)) * 100;
-                      const y = 100 - (d.total / maxTotal) * 85;
+                      const y = 100 - (d.created / maxTotal) * 85;
                       return (
                         <g key={`created-${i}`}>
                           <circle

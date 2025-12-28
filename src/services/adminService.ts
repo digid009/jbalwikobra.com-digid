@@ -276,15 +276,17 @@ export interface FeedPost {
 
 export interface AdminNotification {
   id: string;
-  type: 'new_order' | 'paid_order' | 'cancelled_order' | 'new_user' | 'new_review';
+  type: 'new_order' | 'paid_order' | 'cancelled_order' | 'new_user' | 'new_review' | 'order_cancelled' | 'system' | 'new_rent' | 'paid_rent' | 'low_stock';
   title: string;
   message: string;
   order_id?: string;
   user_id?: string;
   product_name?: string;
   amount?: number;
+  customer_name?: string;
   created_at: string;
   is_read: boolean;
+  metadata?: Record<string, any>;
 }
 
 // Dashboard analytics helper types
