@@ -215,7 +215,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     console.log('Attempting to find user in database...');
     const { data: users, error: userError } = await supabaseClient
       .from('users')
-      .select('id, email, phone, name, password_hash, is_admin, is_active, created_at')
+      .select('id, email, phone, name, password_hash, is_admin, is_active, phone_verified, profile_completed, created_at')
       .or(`phone.eq.${identifier},email.eq.${identifier}`);
 
     if (userError) {
@@ -283,6 +283,22 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
       .from('users')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', user.id);
+
+    // CRITICAL FIX: Auto-complete profile for admin users who have email and name
+    // This fixes the issue where admin users keep being asked to complete profile
+    if (user.is_admin && user.email && user.name && !user.profile_completed) {
+      console.log('Auto-completing profile for admin user with existing email and name');
+      await supabaseClient
+        .from('users')
+        .update({ 
+          profile_completed: true,
+          profile_completed_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      // Update the user object to reflect the change
+      user.profile_completed = true;
+    }
 
     const { password_hash, login_attempts, locked_until, ...safeUser } = user;
 
