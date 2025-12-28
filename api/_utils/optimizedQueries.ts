@@ -1,23 +1,54 @@
 // Optimized Supabase Query Builder
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+// Note: We can't import from src/utils in API files due to build constraints
+// So we duplicate the minimal necessary utilities here
+const getSupabaseUrl = () => process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
+const getSupabaseServiceKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+const looksLikePlaceholder = (v: string) => !v || /^(YOUR_|your_|https:\/\/your-project|\$\{|<|REPLACE_)/i.test(v);
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  },
-  global: {
-    headers: {
-      'x-client-info': 'jbalwikobra-api'
-    }
-  },
-  db: {
-    schema: 'public'
+const supabaseUrl = getSupabaseUrl();
+const supabaseServiceKey = getSupabaseServiceKey();
+
+// Helper to ensure admin client is initialized
+function ensureAdminClient<T>(client: T | null): T {
+  if (!client) {
+    throw new Error(
+      'Supabase admin client is not initialized. This usually means:\n' +
+      '1. SUPABASE_URL environment variable is missing or invalid\n' +
+      '2. SUPABASE_SERVICE_ROLE_KEY environment variable is missing or invalid\n' +
+      '3. Environment variables contain placeholder values\n\n' +
+      'See SUPABASE_ADMIN_CONFIG.md for setup instructions.'
+    );
   }
-});
+  return client;
+}
+
+// Only initialize if we have valid configuration
+let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+
+if (!looksLikePlaceholder(supabaseUrl) && !looksLikePlaceholder(supabaseServiceKey)) {
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    global: {
+      headers: {
+        'x-client-info': 'jbalwikobra-api'
+      }
+    },
+    db: {
+      schema: 'public'
+    }
+  });
+  console.log('[OptimizedQueries] Supabase admin client initialized');
+} else {
+  console.error('[OptimizedQueries] Cannot initialize Supabase admin client - missing or invalid configuration');
+  console.error('[OptimizedQueries] Required: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+}
+
+export { supabaseAdmin };
 
 // Optimized query templates
 export const OPTIMIZED_QUERIES = {
@@ -62,11 +93,13 @@ export interface QueryOptions {
 
 export class OptimizedQueryBuilder {
   static async getOrdersWithStats(options: QueryOptions = {}) {
+    const client = ensureAdminClient(supabaseAdmin);
+    
     const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
 
-    let query = supabaseAdmin
+    let query = client
       .from('orders')
       .select(OPTIMIZED_QUERIES.ORDERS_LIST, { count: 'exact' })
       .order('created_at', { ascending: false })
@@ -89,11 +122,13 @@ export class OptimizedQueryBuilder {
   }
 
   static async getUsersWithSearch(options: QueryOptions = {}) {
+    const client = ensureAdminClient(supabaseAdmin);
+    
     const { pagination = { page: 1, limit: 20 }, search } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
 
-    let query = supabaseAdmin
+    let query = client
       .from('users')
       .select(OPTIMIZED_QUERIES.USERS_LIST, { count: 'exact' })
       .order('created_at', { ascending: false })
@@ -109,11 +144,13 @@ export class OptimizedQueryBuilder {
   }
 
   static async getProductsForAdmin(options: QueryOptions = {}) {
+    const client = ensureAdminClient(supabaseAdmin);
+    
     const { pagination = { page: 1, limit: 20 }, filters = {} } = options;
     const { page, limit } = pagination;
     const offset = (page - 1) * limit;
 
-    let query = supabaseAdmin
+    let query = client
       .from('products')
       .select(OPTIMIZED_QUERIES.PRODUCTS_ADMIN, { count: 'exact' })
       .order('created_at', { ascending: false })
@@ -140,16 +177,18 @@ export class OptimizedQueryBuilder {
 
   // Efficient count queries
   static async getTableCounts() {
+    const client = ensureAdminClient(supabaseAdmin);
+    
     const [
       { count: ordersCount },
       { count: usersCount },
       { count: productsCount },
       { count: flashSalesCount }
     ] = await Promise.all([
-      supabaseAdmin.from('orders').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }),
-      supabaseAdmin.from('users').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }),
-      supabaseAdmin.from('products').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }).eq('is_active', true),
-      supabaseAdmin.from('flash_sales').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }).eq('is_active', true)
+      client.from('orders').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }),
+      client.from('users').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }),
+      client.from('products').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }).eq('is_active', true),
+      client.from('flash_sales').select(OPTIMIZED_QUERIES.COUNT_ONLY, { count: 'exact', head: true }).eq('is_active', true)
     ]);
 
     return {
@@ -162,10 +201,12 @@ export class OptimizedQueryBuilder {
 
   // Efficient revenue calculation
   static async getRevenueStats(daysBack: number = 7) {
+    const client = ensureAdminClient(supabaseAdmin);
+    
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - daysBack);
 
-    const { data: orders } = await supabaseAdmin
+    const { data: orders } = await client
       .from('orders')
   .select('amount, status, created_at')
       .gte('created_at', fromDate.toISOString());
