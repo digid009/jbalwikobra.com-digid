@@ -149,8 +149,8 @@ The service_role policies allow full access when using the service role key. Thi
 ### Issue: Getting RLS policy errors
 
 **Possible causes:**
-1. Policy names already exist
-   - **Solution:** Migrations use `CREATE POLICY IF NOT EXISTS` to handle this
+1. Policy names conflict with existing policies
+   - **Solution:** The migrations use `DROP POLICY IF EXISTS` before creating new policies to handle this
 
 2. Syntax errors in migrations
    - **Solution:** Check Supabase logs for specific error messages

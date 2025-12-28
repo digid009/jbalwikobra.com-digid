@@ -17,6 +17,9 @@
 --
 -- USAGE:
 -- Copy this entire script and run it in Supabase SQL Editor
+--
+-- NOTE: We use explicit transaction (BEGIN/COMMIT) to ensure all-or-nothing
+-- behavior. If any statement fails, the entire migration is rolled back.
 -- ===========================================================================
 
 BEGIN;
