@@ -22,6 +22,65 @@ try {
   }
 } catch {}
 
+// Helper functions for fetching related data
+interface ProductNameData {
+  id: string;
+  name: string;
+}
+
+interface UserNameData {
+  id: string;
+  name: string;
+}
+
+async function fetchProductNames(productIds: string[]): Promise<Record<string, string>> {
+  if (!supabase || productIds.length === 0) return {};
+  
+  try {
+    const { data: prodData, error } = await supabase
+      .from('products')
+      .select('id, name')
+      .in('id', productIds);
+    
+    if (error) {
+      console.warn('[fetchProductNames] Failed to fetch product names:', error);
+      return {};
+    }
+    
+    return (prodData as ProductNameData[] || []).reduce((acc: Record<string, string>, p: ProductNameData) => {
+      acc[p.id] = p.name;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.warn('[fetchProductNames] Error fetching product names:', error);
+    return {};
+  }
+}
+
+async function fetchUserNames(userIds: string[]): Promise<Record<string, string>> {
+  if (!supabase || userIds.length === 0) return {};
+  
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', userIds);
+    
+    if (error) {
+      console.warn('[fetchUserNames] Failed to fetch user names:', error);
+      return {};
+    }
+    
+    return (userData as UserNameData[] || []).reduce((acc: Record<string, string>, u: UserNameData) => {
+      acc[u.id] = u.name;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.warn('[fetchUserNames] Error fetching user names:', error);
+    return {};
+  }
+}
+
 export interface AdminStats {
   totalOrders: number;
   totalRevenue: number;
@@ -257,11 +316,7 @@ class AdminService {
 
       // Get product names
       const productIds = Array.from(new Set((ordersData||[]).map((d:any)=>d.product_id).filter(Boolean)));
-      let productsMap: Record<string,string> = {};
-      if (productIds.length) {
-        const { data: prodData } = await supabase.from('products').select('id,name').in('id', productIds);
-        productsMap = (prodData||[]).reduce((acc:any,p:any)=>{acc[p.id]=p.name;return acc;},{});
-      }
+      const productsMap = await fetchProductNames(productIds);
 
       const orders: Order[] = (ordersData || []).map((item: any) => {
         // Get payment data for this order
@@ -527,6 +582,14 @@ class AdminService {
 
       if (error) throw error;
 
+      // Get product names
+      const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
+      const productsMap = await fetchProductNames(productIds);
+
+      // Get user names
+      const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
+      const usersMap = await fetchUserNames(userIds);
+
       const reviews: Review[] = (data || []).map((item: any) => ({
         id: item.id,
         product_id: item.product_id,
@@ -534,8 +597,8 @@ class AdminService {
         rating: item.rating,
         comment: item.comment,
         created_at: item.created_at,
-        product_name: item.product_name,
-        user_name: item.user_name
+        product_name: item.product_id ? productsMap[item.product_id] : undefined,
+        user_name: item.user_id ? usersMap[item.user_id] : undefined
       }));
 
       return { data: reviews, count: count || 0 };
@@ -1011,6 +1074,10 @@ export const adminService = {
         }
       }
 
+      // Get product names
+      const productIds = Array.from(new Set(rows.map((o: any) => o.product_id).filter(Boolean)));
+      const productsMap = await fetchProductNames(productIds);
+
       // Map to Order interface with payment data
       const mapped: Order[] = rows.map((o: any) => {
         const paymentRecord = paymentsMap[o.client_external_id];
@@ -1018,7 +1085,7 @@ export const adminService = {
         return {
           id: o.id,
           customer_name: o.customer_name || 'Unknown Customer',
-          product_name: o.product_name || 'Product Order',
+          product_name: o.product_id ? productsMap[o.product_id] : undefined,
           amount: Number(o.amount) || 0,
           status: o.status || 'pending',
           order_type: o.order_type || 'purchase',
@@ -1219,6 +1286,14 @@ export const adminService = {
 
         if (error) throw error;
         
+        // Get product names
+        const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
+        const productsMap = await fetchProductNames(productIds);
+
+        // Get user names
+        const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
+        const usersMap = await fetchUserNames(userIds);
+
         const mapped: Review[] = (data || []).map((r: any) => ({
           id: r.id,
             product_id: r.product_id,
@@ -1226,8 +1301,8 @@ export const adminService = {
             rating: r.rating,
             comment: r.comment,
             created_at: r.created_at,
-            product_name: r.product_name,
-            user_name: r.user_name
+            product_name: r.product_id ? productsMap[r.product_id] : undefined,
+            user_name: r.user_id ? usersMap[r.user_id] : undefined
         }));
 
         return {
@@ -1728,20 +1803,28 @@ export const adminService = {
           // Generate realistic notifications based on actual orders
           const { data: recentOrders } = await supabase
             .from('orders')
-            .select('id, customer_name, product_name, amount, status, created_at')
+            .select('id, customer_name, product_id, amount, status, created_at')
             .order('created_at', { ascending: false })
             .limit(limit);
 
           if (recentOrders && recentOrders.length > 0) {
-            return recentOrders.map((order, index) => ({
-              id: `order-${order.id}`,
-              type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
-              title: order.status === 'paid' ? 'Payment Received' : 'New Order',
-              message: `${order.customer_name} - ${order.product_name || 'Product Order'} - Rp ${order.amount?.toLocaleString()}`,
-              created_at: order.created_at,
-              is_read: false,
-              amount: order.amount
-            }));
+            // Get product names
+            const productIds = Array.from(new Set(recentOrders.map((o: any) => o.product_id).filter(Boolean)));
+            const productsMap = await fetchProductNames(productIds);
+
+            return recentOrders.map((order: any, index: number) => {
+              const productName = order.product_id ? productsMap[order.product_id] || 'Product Order' : 'Product Order';
+              
+              return {
+                id: `order-${order.id}`,
+                type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
+                title: order.status === 'paid' ? 'Payment Received' : 'New Order',
+                message: `${order.customer_name} - ${productName} - Rp ${order.amount?.toLocaleString()}`,
+                created_at: order.created_at,
+                is_read: false,
+                amount: order.amount
+              };
+            });
           }
 
           // Fallback mock data
@@ -1827,14 +1910,18 @@ export const adminService = {
     // Remove relational selects; search only local columns
     const { data } = await supabase
       .from('orders')
-      .select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id')
+      .select('id, customer_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id')
       .or(`id.ilike.%${query}%,customer_name.ilike.%${query}%,customer_email.ilike.%${query}%`)
       .limit(10);
+
+    // Get product names for the search results
+    const productIds = Array.from(new Set((data || []).map((o: any) => o.product_id).filter(Boolean)));
+    const productsMap = await fetchProductNames(productIds);
 
     return (data || []).map((o: any) => ({
       id: o.id,
       customer_name: o.customer_name || 'Unknown Customer',
-      product_name: o.product_name || 'Product Order',
+      product_name: o.product_id ? productsMap[o.product_id] : undefined,
       amount: Number(o.amount) || 0,
       status: o.status || 'pending',
       order_type: o.order_type || 'purchase',
@@ -1886,6 +1973,14 @@ export const adminService = {
         .or(`comment.ilike.%${query}%`)
         .limit(10);
 
+      // Get product names
+      const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
+      const productsMap = await fetchProductNames(productIds);
+
+      // Get user names
+      const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
+      const usersMap = await fetchUserNames(userIds);
+
       return (data || []).map((r: any) => ({
         id: r.id,
         product_id: r.product_id,
@@ -1893,8 +1988,8 @@ export const adminService = {
         rating: r.rating,
         comment: r.comment,
         created_at: r.created_at,
-        product_name: r.product_name, // may not exist; kept for compatibility
-        user_name: r.user_name
+        product_name: r.product_id ? productsMap[r.product_id] : undefined,
+        user_name: r.user_id ? usersMap[r.user_id] : undefined
       }));
     } catch (error) {
       return [];
