@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getActivatedPaymentChannels, getXenditChannelCode } from '../_config/paymentChannels';
+import { getActivatedPaymentChannels, getXenditChannelCode } from '../config/paymentChannels.js';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
