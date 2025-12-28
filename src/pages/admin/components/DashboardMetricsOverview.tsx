@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { adminService } from '../../../services/adminService';
+import { adminApiService } from '../../../services/adminApiService';
 import { IOSButton } from '../../../components/ios/IOSDesignSystemV2';
 import { RotateCcw, AlertCircle } from 'lucide-react';
 const cn = (...c: any[]) => c.filter(Boolean).join(' ');
@@ -18,7 +18,7 @@ export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({
       setLoading(true);
       setError(null);
       
-      const s = await adminService.getDashboardStats();
+      const s = await adminApiService.getDashboardStats();
       console.log('📊 [DashboardMetricsOverview] Stats received:', JSON.stringify(s, null, 2));
       
       // Guard against undefined/null returns so rendering never breaks
@@ -55,7 +55,7 @@ export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({
     setRefreshing(true);
     try {
       // Clear cache only on manual refresh
-      adminService.clearStatsCache();
+      adminApiService.clearStatsCache();
       console.log('🗑️ [DashboardMetricsOverview] Cache cleared for manual refresh');
       
       await load();

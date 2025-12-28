@@ -292,6 +292,66 @@ class AdminApiService {
     // Kept for compatibility with existing code
     console.log('[AdminApiService] Cache clear requested (no-op for API service)');
   }
+
+  /**
+   * Get product statistics
+   * Returns aggregated stats about products
+   */
+  async getProductStats(): Promise<any> {
+    // This is a placeholder - product stats aren't provided by the current API
+    // Return empty stats for now
+    return {
+      total: 0,
+      active: 0,
+      inactive: 0,
+      flashSale: 0,
+    };
+  }
+
+  /**
+   * Get categories
+   * This method exists for compatibility but categories aren't part of the admin API yet
+   */
+  async getCategories(): Promise<any[]> {
+    console.warn('[AdminApiService] Categories endpoint not implemented in API');
+    return [];
+  }
+
+  /**
+   * Get game titles
+   * This method exists for compatibility but game titles aren't part of the admin API yet
+   */
+  async getGameTitles(): Promise<any[]> {
+    console.warn('[AdminApiService] Game titles endpoint not implemented in API');
+    return [];
+  }
+
+  /**
+   * Get tiers
+   * This method exists for compatibility but tiers aren't part of the admin API yet
+   */
+  async getTiers(): Promise<any[]> {
+    console.warn('[AdminApiService] Tiers endpoint not implemented in API');
+    return [];
+  }
+
+  /**
+   * Update product fields
+   * This method exists for compatibility but needs backend API implementation
+   */
+  async updateProductFields(id: string, fields: Partial<Pick<Product, 'price' | 'stock' | 'is_active'>>): Promise<Product | null> {
+    console.error('[AdminApiService] updateProductFields not implemented - requires backend API endpoint');
+    throw new Error('Product update not implemented in API service');
+  }
+
+  /**
+   * Delete/archive product
+   * This method exists for compatibility but needs backend API implementation
+   */
+  async deleteProduct(id: string): Promise<boolean> {
+    console.error('[AdminApiService] deleteProduct not implemented - requires backend API endpoint');
+    throw new Error('Product delete not implemented in API service');
+  }
 }
 
 // Export singleton instance
