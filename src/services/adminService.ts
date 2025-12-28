@@ -23,6 +23,16 @@ try {
 } catch {}
 
 // Helper functions for fetching related data
+interface ProductNameData {
+  id: string;
+  name: string;
+}
+
+interface UserNameData {
+  id: string;
+  name: string;
+}
+
 async function fetchProductNames(productIds: string[]): Promise<Record<string, string>> {
   if (!supabase || productIds.length === 0) return {};
   
@@ -37,7 +47,7 @@ async function fetchProductNames(productIds: string[]): Promise<Record<string, s
       return {};
     }
     
-    return (prodData || []).reduce((acc: any, p: any) => {
+    return (prodData as ProductNameData[] || []).reduce((acc: Record<string, string>, p: ProductNameData) => {
       acc[p.id] = p.name;
       return acc;
     }, {});
@@ -61,7 +71,7 @@ async function fetchUserNames(userIds: string[]): Promise<Record<string, string>
       return {};
     }
     
-    return (userData || []).reduce((acc: any, u: any) => {
+    return (userData as UserNameData[] || []).reduce((acc: Record<string, string>, u: UserNameData) => {
       acc[u.id] = u.name;
       return acc;
     }, {});
@@ -1802,15 +1812,19 @@ export const adminService = {
             const productIds = Array.from(new Set(recentOrders.map((o: any) => o.product_id).filter(Boolean)));
             const productsMap = await fetchProductNames(productIds);
 
-            return recentOrders.map((order: any, index: number) => ({
-              id: `order-${order.id}`,
-              type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
-              title: order.status === 'paid' ? 'Payment Received' : 'New Order',
-              message: `${order.customer_name} - ${order.product_id ? productsMap[order.product_id] || 'Product Order' : 'Product Order'} - Rp ${order.amount?.toLocaleString()}`,
-              created_at: order.created_at,
-              is_read: false,
-              amount: order.amount
-            }));
+            return recentOrders.map((order: any, index: number) => {
+              const productName = order.product_id ? productsMap[order.product_id] || 'Product Order' : 'Product Order';
+              
+              return {
+                id: `order-${order.id}`,
+                type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
+                title: order.status === 'paid' ? 'Payment Received' : 'New Order',
+                message: `${order.customer_name} - ${productName} - Rp ${order.amount?.toLocaleString()}`,
+                created_at: order.created_at,
+                is_read: false,
+                amount: order.amount
+              };
+            });
           }
 
           // Fallback mock data
