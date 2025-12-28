@@ -21,7 +21,7 @@ import { adminClient, AdminDashboardStats, OrderStatusTimeSeries } from '../../.
 import { AdminNotification } from '../../../services/adminNotificationService';
 import { prefetchManager } from '../../../services/intelligentPrefetch';
 import { OrderAnalyticsChart } from './OrderAnalyticsChart';
-import { adminService } from '../../../services/adminService';
+import { adminApiService } from '../../../services/adminApiService';
 import { AdminTab } from './structure/adminTypes';
 
 interface AdminDashboardContentProps {
@@ -248,14 +248,14 @@ export const AdminDashboardContentV2: React.FC<AdminDashboardContentProps> = ({ 
       setLoading(true);
       console.log('🔄 Loading dashboard data...');
       
-      // Always use direct adminService for consistency
-      console.log('🛠️ Using direct adminService for consistent data');
+      // Always use direct adminApiService for consistency
+      console.log('🛠️ Using direct adminApiService for consistent data');
       
-      // Load stats directly from adminService
-      const statsData = await adminService.getDashboardStats();
+      // Load stats directly from adminApiService
+      const statsData = await adminApiService.getDashboardStats();
       console.log('📈 Dashboard stats loaded (direct):', statsData);
       
-      // Convert adminService format to unifiedAdminClient format
+      // Convert adminApiService format to unifiedAdminClient format
       const convertedStats: AdminDashboardStats = {
         orders: {
           count: statsData.totalOrders,
