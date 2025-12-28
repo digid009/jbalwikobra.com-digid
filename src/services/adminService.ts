@@ -1115,7 +1115,8 @@ export const adminService = {
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
       if (!supabase) {
-        throw new Error('Supabase client not available');
+        console.error('[adminService.getOrders] Supabase client not available - check environment variables');
+        throw new Error('Database connection not configured. Please check REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.');
       }
       let query = supabase
         .from('orders')
@@ -1132,7 +1133,9 @@ export const adminService = {
 
       if (error) {
         console.error('[adminService.getOrders] query error:', error);
-        throw error;
+        console.error('[adminService.getOrders] error code:', error.code);
+        console.error('[adminService.getOrders] error details:', error.details);
+        throw new Error(`Failed to fetch orders: ${error.message}. Check RLS policies and database permissions.`);
       }
 
       const rows = orders || [];
@@ -1143,15 +1146,21 @@ export const adminService = {
       let paymentsMap: { [key: string]: any } = {};
       
       if (externalIds.length > 0) {
-        const { data: payments } = await supabase
-          .from('payments')
-          .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
-          .in('external_id', externalIds);
-        
-        if (payments) {
-          payments.forEach(payment => {
-            paymentsMap[payment.external_id] = payment;
-          });
+        try {
+          const { data: payments, error: paymentError } = await supabase
+            .from('payments')
+            .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
+            .in('external_id', externalIds);
+          
+          if (paymentError) {
+            console.warn('[adminService.getOrders] Payment data fetch error (non-critical):', paymentError.message);
+          } else if (payments) {
+            payments.forEach(payment => {
+              paymentsMap[payment.external_id] = payment;
+            });
+          }
+        } catch (paymentFetchError) {
+          console.warn('[adminService.getOrders] Payment data fetch failed (non-critical):', paymentFetchError);
         }
       }
 
@@ -1219,7 +1228,8 @@ export const adminService = {
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
       if (!supabase) {
-        throw new Error('Supabase client not available');
+        console.error('[adminService.getUsers] Supabase client not available - check environment variables');
+        throw new Error('Database connection not configured. Please check REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.');
       }
       let query = supabase
         .from('users')
@@ -1229,11 +1239,19 @@ export const adminService = {
         query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
       }
 
+      console.log('[adminService.getUsers] querying users table');
       const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[adminService.getUsers] query error:', error);
+        console.error('[adminService.getUsers] error code:', error.code);
+        console.error('[adminService.getUsers] error details:', error.details);
+        throw new Error(`Failed to fetch users: ${error.message}. Check RLS policies and database permissions.`);
+      }
+      
+      console.log('[adminService.getUsers] success:', { rows: data?.length || 0, count });
       
       return {
         data: data || [],

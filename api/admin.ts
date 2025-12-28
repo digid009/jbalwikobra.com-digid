@@ -74,8 +74,9 @@ async function dashboardStats() {
   console.log('📊 [API /api/admin] dashboardStats: Starting to fetch dashboard statistics');
   
   if (!supabase) {
-    console.error('❌ [API /api/admin] dashboardStats: Supabase client not available');
-    return mockDashboard();
+    const errorMsg = 'Database connection not available. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.';
+    console.error('❌ [API /api/admin] dashboardStats:', errorMsg);
+    throw new Error(errorMsg);
   }
   
   try {
@@ -85,22 +86,28 @@ async function dashboardStats() {
     const usersRes = await supabase.from('users').select('id', { count: 'exact', head: true });
     const productsRes = await supabase.from('products').select('id', { count: 'exact', head: true });
     
-    // Check for RLS or permission errors
+    // Check for RLS or permission errors - these are critical
     if (ordersRes.error) {
       console.error('❌ [API /api/admin] dashboardStats: Orders query error:', ordersRes.error);
       console.error('   - Error code:', ordersRes.error.code);
       console.error('   - Error message:', ordersRes.error.message);
       console.error('   - Error details:', ordersRes.error.details);
+      console.error('   - Hint: Check if service_role key is set and RLS policies allow service_role access');
+      // Don't throw, just log - allow dashboard to show with zero orders
     }
     if (usersRes.error) {
       console.error('❌ [API /api/admin] dashboardStats: Users query error:', usersRes.error);
       console.error('   - Error code:', usersRes.error.code);
       console.error('   - Error message:', usersRes.error.message);
+      console.error('   - Hint: Check if service_role key is set and RLS policies allow service_role access');
+      // Don't throw, just log - allow dashboard to show with zero users
     }
     if (productsRes.error) {
       console.error('❌ [API /api/admin] dashboardStats: Products query error:', productsRes.error);
       console.error('   - Error code:', productsRes.error.code);
       console.error('   - Error message:', productsRes.error.message);
+      console.error('   - Hint: Check if service_role key is set and RLS policies allow service_role access');
+      // Don't throw, just log - allow dashboard to show with zero products
     }
     
     console.log('📈 [API /api/admin] dashboardStats: Basic counts:', {
@@ -212,76 +219,84 @@ async function listOrders(page: number, limit: number, status?: string) {
   console.log(`📋 [API /api/admin] listOrders: Fetching page ${page}, limit ${limit}, status: ${status || 'all'}`);
   
   if (!supabase) {
-    console.error('❌ [API /api/admin] listOrders: Supabase client not available');
-    return { data: [], count: 0, page };
+    const errorMsg = 'Database connection not available for orders list';
+    console.error('❌ [API /api/admin] listOrders:', errorMsg);
+    throw new Error(errorMsg);
   }
   
-  const from = (page - 1) * limit; const to = from + limit - 1;
-  
-  // First get orders
-  let query: any = supabase.from('orders').select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (status && status !== 'all') {
-    // Handle "completed" status to include both 'paid' and 'completed' orders
-    if (status === 'completed') {
-      query = query.in('status', ['paid', 'completed']);
-    } else {
-      query = query.eq('status', status);
-    }
-  }
-  const { data: orders, error, count } = await query;
-  
-  if (error) {
-    console.error('❌ [API /api/admin] listOrders: Query error:', error);
-    console.error('   - Error code:', error.code);
-    console.error('   - Error message:', error.message);
-    console.error('   - Error details:', error.details);
-    return { data: [], count: 0, page };
-  }
-  
-  console.log(`✅ [API /api/admin] listOrders: Found ${orders?.length || 0} orders (total: ${count})`);
-  
-  // Get payment data for these orders
-  const orderRows = orders || [];
-  const externalIds = orderRows.map(order => order.client_external_id).filter(Boolean);
-  let paymentsMap: { [key: string]: any } = {};
-  
-  if (externalIds.length > 0) {
-    const { data: payments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
-      .in('external_id', externalIds);
+  try {
+    const from = (page - 1) * limit; const to = from + limit - 1;
     
-    if (paymentsError) {
-      console.error('❌ [API /api/admin] listOrders: Payments query error:', paymentsError);
-    } else if (payments) {
-      payments.forEach(payment => {
-        paymentsMap[payment.external_id] = payment;
-      });
+    // First get orders
+    let query: any = supabase.from('orders').select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+    if (status && status !== 'all') {
+      // Handle "completed" status to include both 'paid' and 'completed' orders
+      if (status === 'completed') {
+        query = query.in('status', ['paid', 'completed']);
+      } else {
+        query = query.eq('status', status);
+      }
     }
-  }
-  
-  // Map orders with payment data
-  const mappedOrders = orderRows.map((order: any) => {
-    const paymentRecord = paymentsMap[order.client_external_id];
+    const { data: orders, error, count } = await query;
     
-    return {
-      ...order,
-      payment_data: paymentRecord ? {
-        xendit_id: paymentRecord.xendit_id,
-        payment_method_type: paymentRecord.payment_method,
-        payment_status: paymentRecord.status,
-        qr_url: paymentRecord.payment_data?.qr_url,
-        qr_string: paymentRecord.payment_data?.qr_string,
-        account_number: paymentRecord.payment_data?.account_number,
-        bank_code: paymentRecord.payment_data?.bank_code,
-        payment_url: paymentRecord.payment_data?.payment_url,
-        payment_code: paymentRecord.payment_data?.payment_code,
-        retail_outlet: paymentRecord.payment_data?.retail_outlet,
-      } : undefined
-    };
-  });
-  
-  return { data: mappedOrders, count: count || 0, page };
+    if (error) {
+      console.error('❌ [API /api/admin] listOrders: Query error:', error);
+      console.error('   - Error code:', error.code);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error details:', error.details);
+      console.error('   - Hint: Verify service_role key and RLS policies for orders table');
+      throw new Error(`Failed to fetch orders: ${error.message || 'Database query error'}`);
+    }
+    
+    console.log(`✅ [API /api/admin] listOrders: Found ${orders?.length || 0} orders (total: ${count})`);
+    
+    // Get payment data for these orders
+    const orderRows = orders || [];
+    const externalIds = orderRows.map(order => order.client_external_id).filter(Boolean);
+    let paymentsMap: { [key: string]: any } = {};
+    
+    if (externalIds.length > 0) {
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('external_id, xendit_id, payment_method, status, payment_data, created_at, expiry_date')
+        .in('external_id', externalIds);
+      
+      if (paymentsError) {
+        console.error('❌ [API /api/admin] listOrders: Payments query error:', paymentsError);
+        // Don't throw - orders can be shown without payment details
+      } else if (payments) {
+        payments.forEach(payment => {
+          paymentsMap[payment.external_id] = payment;
+        });
+      }
+    }
+    
+    // Map orders with payment data
+    const mappedOrders = orderRows.map((order: any) => {
+      const paymentRecord = paymentsMap[order.client_external_id];
+      
+      return {
+        ...order,
+        payment_data: paymentRecord ? {
+          xendit_id: paymentRecord.xendit_id,
+          payment_method_type: paymentRecord.payment_method,
+          payment_status: paymentRecord.status,
+          qr_url: paymentRecord.payment_data?.qr_url,
+          qr_string: paymentRecord.payment_data?.qr_string,
+          account_number: paymentRecord.payment_data?.account_number,
+          bank_code: paymentRecord.payment_data?.bank_code,
+          payment_url: paymentRecord.payment_data?.payment_url,
+          payment_code: paymentRecord.payment_data?.payment_code,
+          retail_outlet: paymentRecord.payment_data?.retail_outlet,
+        } : undefined
+      };
+    });
+    
+    return { data: mappedOrders, count: count || 0, page };
+  } catch (error: any) {
+    console.error('❌ [API /api/admin] listOrders: Unexpected error:', error);
+    throw error; // Re-throw to be handled by the main handler
+  }
 }
 
 async function updateOrderStatus(orderId: string, newStatus: string) {
@@ -295,50 +310,64 @@ async function listUsers(page: number, limit: number, search?: string) {
   console.log(`👥 [API /api/admin] listUsers: Fetching page ${page}, limit ${limit}, search: ${search || 'none'}`);
   
   if (!supabase) {
-    console.error('❌ [API /api/admin] listUsers: Supabase client not available');
-    return { data: [], count: 0, page };
+    const errorMsg = 'Database connection not available for users list';
+    console.error('❌ [API /api/admin] listUsers:', errorMsg);
+    throw new Error(errorMsg);
   }
   
-  const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('users').select('id,name,email,phone,role,is_admin,created_at,is_active,last_login_at,phone_verified,profile_completed', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (search) query = query.ilike('name', `%${search}%`);
-  const { data, error, count } = await query;
-  
-  if (error) {
-    console.error('❌ [API /api/admin] listUsers: Query error:', error);
-    console.error('   - Error code:', error.code);
-    console.error('   - Error message:', error.message);
-    console.error('   - Error details:', error.details);
-    return { data: [], count: 0, page };
+  try {
+    const from = (page - 1) * limit; const to = from + limit - 1;
+    let query: any = supabase.from('users').select('id,name,email,phone,role,is_admin,created_at,is_active,last_login_at,phone_verified,profile_completed', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+    if (search) query = query.ilike('name', `%${search}%`);
+    const { data, error, count } = await query;
+    
+    if (error) {
+      console.error('❌ [API /api/admin] listUsers: Query error:', error);
+      console.error('   - Error code:', error.code);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error details:', error.details);
+      console.error('   - Hint: Verify service_role key and RLS policies for users table');
+      throw new Error(`Failed to fetch users: ${error.message || 'Database query error'}`);
+    }
+    
+    console.log(`✅ [API /api/admin] listUsers: Found ${data?.length || 0} users (total: ${count})`);
+    return { data:data||[], count:count||0, page };
+  } catch (error: any) {
+    console.error('❌ [API /api/admin] listUsers: Unexpected error:', error);
+    throw error; // Re-throw to be handled by the main handler
   }
-  
-  console.log(`✅ [API /api/admin] listUsers: Found ${data?.length || 0} users (total: ${count})`);
-  return { data:data||[], count:count||0, page };
 }
 
 async function listProducts(page: number, limit: number, search?: string) {
   console.log(`📦 [API /api/admin] listProducts: Fetching page ${page}, limit ${limit}, search: ${search || 'none'}`);
   
   if (!supabase) {
-    console.error('❌ [API /api/admin] listProducts: Supabase client not available');
-    return { data: [], count: 0, page };
+    const errorMsg = 'Database connection not available for products list';
+    console.error('❌ [API /api/admin] listProducts:', errorMsg);
+    throw new Error(errorMsg);
   }
   
-  const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('products').select('id,name,description,price,images,is_active,is_flash_sale,stock,created_at', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (search) query = query.ilike('name', `%${search}%`);
-  const { data, error, count } = await query;
-  
-  if (error) {
-    console.error('❌ [API /api/admin] listProducts: Query error:', error);
-    console.error('   - Error code:', error.code);
-    console.error('   - Error message:', error.message);
-    console.error('   - Error details:', error.details);
-    return { data: [], count: 0, page };
+  try {
+    const from = (page - 1) * limit; const to = from + limit - 1;
+    let query: any = supabase.from('products').select('id,name,description,price,images,is_active,is_flash_sale,stock,created_at', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+    if (search) query = query.ilike('name', `%${search}%`);
+    const { data, error, count } = await query;
+    
+    if (error) {
+      console.error('❌ [API /api/admin] listProducts: Query error:', error);
+      console.error('   - Error code:', error.code);
+      console.error('   - Error message:', error.message);
+      console.error('   - Error details:', error.details);
+      console.error('   - Hint: Verify service_role key and RLS policies for products table');
+      throw new Error(`Failed to fetch products: ${error.message || 'Database query error'}`);
+    }
+    
+    console.log(`✅ [API /api/admin] listProducts: Found ${data?.length || 0} products (total: ${count})`);
+    return { data:data||[], count:count||0, page };
+  } catch (error: any) {
+    console.error('❌ [API /api/admin] listProducts: Unexpected error:', error);
+    throw error; // Re-throw to be handled by the main handler
   }
-  
-  console.log(`✅ [API /api/admin] listProducts: Found ${data?.length || 0} products (total: ${count})`);
-  return { data:data||[], count:count||0, page };
 }
 
 async function timeSeries(days?: number, startDate?: string, endDate?: string) {
@@ -420,36 +449,89 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (action) {
       case 'dashboard-stats': {
-        console.log('🎯 [API /api/admin] Handling dashboard-stats request');
-        const data = await dashboardStats();
-        console.log('📤 [API /api/admin] Sending dashboard-stats response:', JSON.stringify(data, null, 2));
-        return respond(res, 200, data, 60); // Cache for 1 minute
+        try {
+          console.log('🎯 [API /api/admin] Handling dashboard-stats request');
+          const data = await dashboardStats();
+          console.log('📤 [API /api/admin] Sending dashboard-stats response:', JSON.stringify(data, null, 2));
+          return respond(res, 200, data, 60); // Cache for 1 minute
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] dashboard-stats error:', error);
+          return respond(res, 500, { 
+            error: 'dashboard_stats_failed', 
+            message: error.message || 'Failed to fetch dashboard statistics',
+            hint: 'Check database connection and RLS policies'
+          });
+        }
       }
       case 'recent-notifications': {
-        const data = await recentNotifications(limit);
-        return respond(res, 200, { data }, 30); // Cache for 30 seconds
+        try {
+          const data = await recentNotifications(limit);
+          return respond(res, 200, { data }, 30); // Cache for 30 seconds
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] recent-notifications error:', error);
+          return respond(res, 500, { 
+            error: 'notifications_failed', 
+            message: error.message || 'Failed to fetch notifications'
+          });
+        }
       }
       case 'orders': {
-        const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-        const data = await listOrders(page, limit, status);
-        return respond(res, 200, data, 60); // Cache for 1 minute
+        try {
+          const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+          const data = await listOrders(page, limit, status);
+          return respond(res, 200, data, 60); // Cache for 1 minute
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] orders error:', error);
+          return respond(res, 500, { 
+            error: 'orders_fetch_failed', 
+            message: error.message || 'Failed to fetch orders',
+            hint: 'Check database connection and RLS policies for orders table'
+          });
+        }
       }
       case 'users': {
-        const search = typeof req.query.search === 'string' ? req.query.search : undefined;
-        const result = await listUsers(page, limit, search);
-        return respond(res, 200, { success: true, ...result }, 120); // Cache for 2 minutes
+        try {
+          const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+          const result = await listUsers(page, limit, search);
+          return respond(res, 200, { success: true, ...result }, 120); // Cache for 2 minutes
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] users error:', error);
+          return respond(res, 500, { 
+            error: 'users_fetch_failed', 
+            message: error.message || 'Failed to fetch users',
+            hint: 'Check database connection and RLS policies for users table'
+          });
+        }
       }
       case 'products': {
-        const search = typeof req.query.search === 'string' ? req.query.search : undefined;
-        const data = await listProducts(page, limit, search);
-        return respond(res, 200, data, 300); // Cache for 5 minutes
+        try {
+          const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+          const data = await listProducts(page, limit, search);
+          return respond(res, 200, data, 300); // Cache for 5 minutes
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] products error:', error);
+          return respond(res, 500, { 
+            error: 'products_fetch_failed', 
+            message: error.message || 'Failed to fetch products',
+            hint: 'Check database connection and RLS policies for products table'
+          });
+        }
       }
       case 'time-series': {
-        const days = req.query.days ? parseIntSafe(req.query.days, 7) : undefined;
-        const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
-        const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
-        const data = await timeSeries(days, startDate, endDate);
-        return respond(res, 200, { data }, 300); // Cache for 5 minutes
+        try {
+          const days = req.query.days ? parseIntSafe(req.query.days, 7) : undefined;
+          const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
+          const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
+          const data = await timeSeries(days, startDate, endDate);
+          return respond(res, 200, { data }, 300); // Cache for 5 minutes
+        } catch (error: any) {
+          console.error('❌ [API /api/admin] time-series error:', error);
+          return respond(res, 500, { 
+            error: 'time_series_failed', 
+            message: error.message || 'Failed to fetch time series data'
+          });
+        }
+      }
       }
       case 'settings': {
         if (!supabase) return respond(res, 500, { error: 'database_unavailable' });

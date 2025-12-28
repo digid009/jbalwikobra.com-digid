@@ -652,7 +652,18 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Session token is required' });
     }
 
-    const { data: sessions, error: sessionError } = await getSupabase()
+    let supabaseClient;
+    try {
+      supabaseClient = getSupabase();
+    } catch (error) {
+      console.error('Session validation - Supabase initialization failed:', error);
+      return res.status(500).json({ 
+        error: 'Database connection error',
+        details: 'Unable to connect to database for session validation'
+      });
+    }
+
+    const { data: sessions, error: sessionError } = await supabaseClient
       .from('user_sessions')
       .select(`
         *,
@@ -664,7 +675,15 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
       .eq('session_token', session_token)
       .eq('is_active', true);
 
-    if (sessionError || !sessions || sessions.length === 0) {
+    if (sessionError) {
+      console.error('Session query error:', sessionError);
+      return res.status(401).json({ 
+        error: 'Session validation failed',
+        details: sessionError.message
+      });
+    }
+
+    if (!sessions || sessions.length === 0) {
       return res.status(401).json({ error: 'Invalid session' });
     }
 
@@ -679,9 +698,12 @@ async function handleValidateSession(req: VercelRequest, res: VercelResponse) {
       success: true,
       user: session.users
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Validate session error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message || 'Failed to validate session'
+    });
   }
 }
 
