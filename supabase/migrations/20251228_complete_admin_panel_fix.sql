@@ -137,6 +137,80 @@ COMMENT ON POLICY "website_settings_service_role_all" ON public.website_settings
 'Allows service role to access and update website settings from admin API.';
 
 -- ===========================================================================
+-- 9. AUTHENTICATED ADMIN POLICIES - For Frontend Access
+-- ===========================================================================
+-- The frontend adminService uses authenticated user sessions, not service role.
+-- We need to add policies for authenticated admin users as well.
+
+-- Users table - authenticated admin access
+DROP POLICY IF EXISTS "users_authenticated_read" ON public.users;
+CREATE POLICY "users_authenticated_read" ON public.users
+  FOR SELECT
+  TO authenticated
+  USING (
+    -- Allow admins to read all users
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+    -- OR allow users to read their own data
+    OR auth.uid() = id
+  );
+
+DROP POLICY IF EXISTS "users_authenticated_admin_write" ON public.users;
+CREATE POLICY "users_authenticated_admin_write" ON public.users
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  );
+
+COMMENT ON POLICY "users_authenticated_read" ON public.users IS 
+'Allows authenticated admin users to read all user data, and regular users to read their own data.';
+
+COMMENT ON POLICY "users_authenticated_admin_write" ON public.users IS 
+'Allows authenticated admin users to manage all user data.';
+
+-- Orders table - authenticated admin access
+DROP POLICY IF EXISTS "orders_authenticated_admin_all" ON public.orders;
+CREATE POLICY "orders_authenticated_admin_all" ON public.orders
+  FOR ALL
+  TO authenticated
+  USING (
+    -- Allow admins to access all orders
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+    -- OR allow users to access their own orders
+    OR auth.uid() = user_id
+  )
+  WITH CHECK (
+    -- Allow admins to manage all orders
+    EXISTS (
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.is_admin = true
+    )
+  );
+
+COMMENT ON POLICY "orders_authenticated_admin_all" ON public.orders IS 
+'Allows authenticated admin users to access and manage all orders, and regular users to access their own orders.';
+
+-- ===========================================================================
 -- VERIFICATION - Check that policies were created
 -- ===========================================================================
 SELECT 
@@ -159,13 +233,30 @@ WHERE schemaname = 'public'
   AND policyname LIKE '%service_role%'
 ORDER BY tablename;
 
+-- Check authenticated policies too
+SELECT 
+  'AUTHENTICATED POLICIES CREATED' as status,
+  tablename,
+  policyname,
+  roles
+FROM pg_policies 
+WHERE schemaname = 'public' 
+  AND tablename IN ('users', 'orders')
+  AND policyname LIKE '%authenticated%'
+ORDER BY tablename;
+
 COMMIT;
 
 -- ===========================================================================
 -- SUCCESS!
 -- ===========================================================================
 -- 
--- All service_role policies have been created. The admin panel should now:
+-- All policies have been created for both service_role AND authenticated users.
+-- The admin panel should now work correctly whether using:
+-- - Backend API (with service_role key)
+-- - Frontend direct queries (with authenticated user session)
+--
+-- The admin panel should now:
 -- ✅ Display correct user count
 -- ✅ Display correct order count
 -- ✅ Display correct revenue statistics
@@ -173,5 +264,5 @@ COMMIT;
 -- ✅ Show paginated user list
 -- ✅ Show product statistics
 --
--- Make sure your environment has SUPABASE_SERVICE_ROLE_KEY configured!
+-- IMPORTANT: Make sure the admin user has is_admin = true in the users table!
 -- ===========================================================================

@@ -4,36 +4,42 @@
 The admin panel shows empty order and user tables with zero revenue statistics, even though the database contains data.
 
 ## Root Cause
-The issue is caused by missing Row Level Security (RLS) policies for the `service_role` on admin-related tables. When the admin API uses the service role key to query data, the tables need explicit service_role policies to allow access.
 
-### Why This Happens
-1. The admin API (`api/admin.ts`) uses the `SUPABASE_SERVICE_ROLE_KEY` to query data
-2. While service_role bypasses RLS by default in some Supabase configurations, explicit policies are needed for consistent behavior
-3. Without these policies, queries return empty results even when data exists
+The admin panel shows empty tables due to **missing RLS policies for authenticated admin users**, NOT missing service role configuration:
+
+### Why Products Work But Orders/Users Don't
+
+1. **Frontend Architecture**: The admin panel frontend (`AdminProductsV2`, `AdminOrdersV2`, `AdminUsersV2`) uses the `adminService` which connects directly to Supabase from the browser using the authenticated user's session.
+
+2. **Products Display Correctly**: Products work because they have public SELECT policies for the `anon` role (from migration `20251226_fix_public_access_rls.sql`), allowing even unauthenticated users to view them.
+
+3. **Orders and Users Are Empty**: These tables lacked RLS policies for `authenticated` users. Even though:
+   - Data exists in the database
+   - You're logged in as an admin
+   - service_role policies were added (but these only work for backend API calls, not frontend)
+   
+   The frontend couldn't query these tables because there was no policy allowing authenticated admin users to read them.
+
+4. **Security Note**: The frontend cannot use the service role key (it would be a security risk to expose it in the browser). Instead, it uses the logged-in user's session, which requires proper authenticated user policies.
 
 ## Solution
-We've added comprehensive service_role policies to all admin-related tables:
+
+Add comprehensive RLS policies for both:
+1. **service_role** - For backend API operations
+2. **authenticated** - For frontend direct queries by admin users
 
 ### Migrations Applied
 1. **20251228_fix_users_rls_service_role.sql** - Adds service_role policy to users table
 2. **20251228_add_service_role_policies_orders.sql** - Adds service_role policy to orders table
-3. **20251228_add_service_role_policies_admin_tables.sql** - Adds service_role policies to:
-   - notifications
-   - payments
-   - products
-   - reviews
-   - flash_sales
-   - website_settings
+3. **20251228_add_service_role_policies_admin_tables.sql** - Adds service_role policies to other tables
+4. **20251228_add_authenticated_admin_policies.sql** - ⭐ **NEW: Adds authenticated admin policies for users and orders**
+5. **20251228_complete_admin_panel_fix.sql** - ⭐ **UPDATED: Consolidated migration with all fixes**
 
-### Tables Affected
-- `users` - User account data for admin user management
-- `orders` - Order data for admin order management and revenue statistics
-- `products` - Product data for admin product management
-- `notifications` - Notification data for admin dashboard
-- `payments` - Payment data linked to orders
-- `reviews` - Review data for statistics
-- `flash_sales` - Flash sale data for statistics
-- `website_settings` - Website configuration
+### Tables Fixed
+- `users` - User account data (now accessible to authenticated admins)
+- `orders` - Order data (now accessible to authenticated admins)
+- `products` - Product data (already had public policies)
+- `notifications`, `payments`, `reviews`, `flash_sales`, `website_settings` - Backend access
 
 ## How to Apply the Fix
 
@@ -74,23 +80,38 @@ supabase db push
 
 After applying the migrations, verify the fix:
 
-1. **Check Policies in Supabase Dashboard:**
-   - Go to Database → Policies
-   - Look for policies named `*_service_role_all` on each table
-   - Each admin table should have one service_role policy
+1. **CRITICAL: Check Admin User Status**
+   ```sql
+   -- In Supabase SQL Editor, check your user is marked as admin:
+   SELECT id, email, name, is_admin FROM users WHERE email = 'your-admin-email@example.com';
+   ```
+   
+   **If `is_admin` is `false` or `NULL`, update it:**
+   ```sql
+   UPDATE users SET is_admin = true WHERE email = 'your-admin-email@example.com';
+   ```
+   
+   ⚠️ **This is CRITICAL** - The policies check `is_admin = true` to grant access!
 
-2. **Run Verification Script:**
+2. **Check Policies in Supabase Dashboard:**
+   - Go to Database → Policies
+   - Look for policies named `*_authenticated_*` on users and orders tables
+   - Each table should have policies for both `service_role` and `authenticated`
+
+3. **Run Verification Script:**
    ```sql
    -- In Supabase SQL Editor, run:
    -- Copy and paste: supabase/migrations/VERIFY_SERVICE_ROLE_POLICIES.sql
    ```
 
 3. **Test Admin Panel:**
-   - Log into the admin panel
+   - **IMPORTANT**: Log out and log back in after running the migration
    - Navigate to Dashboard - should show correct statistics
    - Navigate to Orders - should show order list
    - Navigate to Users - should show user list
    - Revenue statistics should show correct values
+
+**Why logout/login?** The RLS policies check `users.is_admin`, and the session needs to refresh to pick up the policy changes.
 
 ## Environment Configuration
 
