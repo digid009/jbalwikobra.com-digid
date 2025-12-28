@@ -152,7 +152,7 @@ export function useAdminStats() {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminService.getDashboardStats();
+      const data = await adminApiService.getDashboardStats();
       setStats(data);
       performanceMonitor.endMeasure('fetch_admin_stats', { success: true });
     } catch (err: any) {

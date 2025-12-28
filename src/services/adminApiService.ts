@@ -185,7 +185,7 @@ class AdminApiService {
         pendingOrders: apiStats.orders.pending || 0,
         completedOrders: apiStats.orders.completed || 0,
         totalFlashSales: apiStats.flashSales?.count || 0,
-        activeFlashSales: 0, // Not provided by API
+        activeFlashSales: 0, // TODO: Add to API response
       };
     } catch (error) {
       console.error('[AdminApiService] Error fetching dashboard stats:', error);
@@ -296,10 +296,11 @@ class AdminApiService {
   /**
    * Get product statistics
    * Returns aggregated stats about products
+   * TODO: Implement backend endpoint for real stats
    */
   async getProductStats(): Promise<any> {
-    // This is a placeholder - product stats aren't provided by the current API
-    // Return empty stats for now
+    // Placeholder - product stats aren't provided by the current API
+    console.warn('[AdminApiService] getProductStats not implemented - returning placeholder data');
     return {
       total: 0,
       active: 0,
@@ -337,20 +338,22 @@ class AdminApiService {
 
   /**
    * Update product fields
-   * This method exists for compatibility but needs backend API implementation
+   * TODO: Implement backend API endpoint
    */
   async updateProductFields(id: string, fields: Partial<Pick<Product, 'price' | 'stock' | 'is_active'>>): Promise<Product | null> {
     console.error('[AdminApiService] updateProductFields not implemented - requires backend API endpoint');
-    throw new Error('Product update not implemented in API service');
+    console.error('[AdminApiService] Product ID:', id, 'Fields:', fields);
+    throw new Error('Product update not implemented in API service. Backend endpoint needed.');
   }
 
   /**
    * Delete/archive product
-   * This method exists for compatibility but needs backend API implementation
+   * TODO: Implement backend API endpoint
    */
   async deleteProduct(id: string): Promise<boolean> {
     console.error('[AdminApiService] deleteProduct not implemented - requires backend API endpoint');
-    throw new Error('Product delete not implemented in API service');
+    console.error('[AdminApiService] Product ID:', id);
+    throw new Error('Product delete not implemented in API service. Backend endpoint needed.');
   }
 }
 
