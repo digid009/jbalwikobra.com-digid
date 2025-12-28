@@ -22,6 +22,55 @@ try {
   }
 } catch {}
 
+// Helper functions for fetching related data
+async function fetchProductNames(productIds: string[]): Promise<Record<string, string>> {
+  if (!supabase || productIds.length === 0) return {};
+  
+  try {
+    const { data: prodData, error } = await supabase
+      .from('products')
+      .select('id, name')
+      .in('id', productIds);
+    
+    if (error) {
+      console.warn('[fetchProductNames] Failed to fetch product names:', error);
+      return {};
+    }
+    
+    return (prodData || []).reduce((acc: any, p: any) => {
+      acc[p.id] = p.name;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.warn('[fetchProductNames] Error fetching product names:', error);
+    return {};
+  }
+}
+
+async function fetchUserNames(userIds: string[]): Promise<Record<string, string>> {
+  if (!supabase || userIds.length === 0) return {};
+  
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', userIds);
+    
+    if (error) {
+      console.warn('[fetchUserNames] Failed to fetch user names:', error);
+      return {};
+    }
+    
+    return (userData || []).reduce((acc: any, u: any) => {
+      acc[u.id] = u.name;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.warn('[fetchUserNames] Error fetching user names:', error);
+    return {};
+  }
+}
+
 export interface AdminStats {
   totalOrders: number;
   totalRevenue: number;
@@ -257,11 +306,7 @@ class AdminService {
 
       // Get product names
       const productIds = Array.from(new Set((ordersData||[]).map((d:any)=>d.product_id).filter(Boolean)));
-      let productsMap: Record<string,string> = {};
-      if (productIds.length) {
-        const { data: prodData } = await supabase.from('products').select('id,name').in('id', productIds);
-        productsMap = (prodData||[]).reduce((acc:any,p:any)=>{acc[p.id]=p.name;return acc;},{});
-      }
+      const productsMap = await fetchProductNames(productIds);
 
       const orders: Order[] = (ordersData || []).map((item: any) => {
         // Get payment data for this order
@@ -529,25 +574,11 @@ class AdminService {
 
       // Get product names
       const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
-      let productsMap: Record<string, string> = {};
-      if (productIds.length > 0) {
-        const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-        productsMap = (prodData || []).reduce((acc: any, p: any) => {
-          acc[p.id] = p.name;
-          return acc;
-        }, {});
-      }
+      const productsMap = await fetchProductNames(productIds);
 
       // Get user names
       const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
-      let usersMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: userData } = await supabase.from('users').select('id, name').in('id', userIds);
-        usersMap = (userData || []).reduce((acc: any, u: any) => {
-          acc[u.id] = u.name;
-          return acc;
-        }, {});
-      }
+      const usersMap = await fetchUserNames(userIds);
 
       const reviews: Review[] = (data || []).map((item: any) => ({
         id: item.id,
@@ -1035,14 +1066,7 @@ export const adminService = {
 
       // Get product names
       const productIds = Array.from(new Set(rows.map((o: any) => o.product_id).filter(Boolean)));
-      let productsMap: Record<string, string> = {};
-      if (productIds.length > 0) {
-        const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-        productsMap = (prodData || []).reduce((acc: any, p: any) => {
-          acc[p.id] = p.name;
-          return acc;
-        }, {});
-      }
+      const productsMap = await fetchProductNames(productIds);
 
       // Map to Order interface with payment data
       const mapped: Order[] = rows.map((o: any) => {
@@ -1254,25 +1278,11 @@ export const adminService = {
         
         // Get product names
         const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
-        let productsMap: Record<string, string> = {};
-        if (productIds.length > 0) {
-          const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-          productsMap = (prodData || []).reduce((acc: any, p: any) => {
-            acc[p.id] = p.name;
-            return acc;
-          }, {});
-        }
+        const productsMap = await fetchProductNames(productIds);
 
         // Get user names
         const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
-        let usersMap: Record<string, string> = {};
-        if (userIds.length > 0) {
-          const { data: userData } = await supabase.from('users').select('id, name').in('id', userIds);
-          usersMap = (userData || []).reduce((acc: any, u: any) => {
-            acc[u.id] = u.name;
-            return acc;
-          }, {});
-        }
+        const usersMap = await fetchUserNames(userIds);
 
         const mapped: Review[] = (data || []).map((r: any) => ({
           id: r.id,
@@ -1790,14 +1800,7 @@ export const adminService = {
           if (recentOrders && recentOrders.length > 0) {
             // Get product names
             const productIds = Array.from(new Set(recentOrders.map((o: any) => o.product_id).filter(Boolean)));
-            let productsMap: Record<string, string> = {};
-            if (productIds.length > 0) {
-              const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-              productsMap = (prodData || []).reduce((acc: any, p: any) => {
-                acc[p.id] = p.name;
-                return acc;
-              }, {});
-            }
+            const productsMap = await fetchProductNames(productIds);
 
             return recentOrders.map((order: any, index: number) => ({
               id: `order-${order.id}`,
@@ -1899,14 +1902,7 @@ export const adminService = {
 
     // Get product names for the search results
     const productIds = Array.from(new Set((data || []).map((o: any) => o.product_id).filter(Boolean)));
-    let productsMap: Record<string, string> = {};
-    if (productIds.length > 0) {
-      const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-      productsMap = (prodData || []).reduce((acc: any, p: any) => {
-        acc[p.id] = p.name;
-        return acc;
-      }, {});
-    }
+    const productsMap = await fetchProductNames(productIds);
 
     return (data || []).map((o: any) => ({
       id: o.id,
@@ -1965,25 +1961,11 @@ export const adminService = {
 
       // Get product names
       const productIds = Array.from(new Set((data || []).map((r: any) => r.product_id).filter(Boolean)));
-      let productsMap: Record<string, string> = {};
-      if (productIds.length > 0) {
-        const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
-        productsMap = (prodData || []).reduce((acc: any, p: any) => {
-          acc[p.id] = p.name;
-          return acc;
-        }, {});
-      }
+      const productsMap = await fetchProductNames(productIds);
 
       // Get user names
       const userIds = Array.from(new Set((data || []).map((r: any) => r.user_id).filter(Boolean)));
-      let usersMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: userData } = await supabase.from('users').select('id, name').in('id', userIds);
-        usersMap = (userData || []).reduce((acc: any, u: any) => {
-          acc[u.id] = u.name;
-          return acc;
-        }, {});
-      }
+      const usersMap = await fetchUserNames(userIds);
 
       return (data || []).map((r: any) => ({
         id: r.id,
