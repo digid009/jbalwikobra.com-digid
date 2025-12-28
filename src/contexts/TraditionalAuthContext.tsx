@@ -64,12 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userData = JSON.parse(storedUser);
           console.log('[DEBUG] INIT - Loaded from localStorage - isAdmin:', userData.isAdmin, 'email:', userData.email);
           
-          // Validate session
+          // Validate session - this will update user state with fresh data from server
           const isValid = await validateSession(storedToken);
           console.log('[DEBUG] INIT - Session validation result:', isValid);
           if (isValid) {
-            console.log('[DEBUG] INIT - Setting user state with isAdmin:', userData.isAdmin);
-            setUser(userData);
+            // validateSession already updates the user state with fresh data from server
+            // Just update the session metadata here
             setSession({
               expiresAt: localStorage.getItem('session_expires') || '',
               lastActivity: new Date().toISOString()
