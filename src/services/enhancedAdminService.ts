@@ -291,6 +291,7 @@ class EnhancedAdminService {
         { count: totalOrders },
         { count: pendingOrders },
         { count: completedOrders },
+        { count: paidOrders },
         { count: todayOrders },
         ordersWithAmounts,
         todayOrdersWithAmounts,
@@ -301,6 +302,7 @@ class EnhancedAdminService {
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'paid'),
         supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', today),
   supabase.from('orders').select('amount, status').in('status', ['paid', 'completed']),
   supabase.from('orders').select('amount').gte('created_at', today),
@@ -328,7 +330,7 @@ class EnhancedAdminService {
         totalReviews: paidCompletedCount, // updated logic per requirement
         averageRating: Math.round(averageRating * 10) / 10,
         pendingOrders: pendingOrders || 0,
-        completedOrders: completedOrders || 0,
+        completedOrders: (completedOrders || 0) + (paidOrders || 0), // Count both paid and completed orders
         todayOrders: todayOrders || 0,
         todayRevenue
       };
