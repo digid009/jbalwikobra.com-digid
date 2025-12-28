@@ -54,6 +54,7 @@ interface SendMessageResult {
   error?: string;
   provider?: string;
   responseTime?: number;
+  serviceOff?: boolean; // Indicates WhatsApp service is not started (QR not scanned)
 }
 
 export class DynamicWhatsAppService {
@@ -178,6 +179,9 @@ export class DynamicWhatsAppService {
       const isSuccess = this.isResponseSuccessful(responseData, provider);
       const messageId = this.extractMessageId(responseData, provider);
 
+      // Check for SERVICE_OFF error (WhatsApp not started/QR not scanned)
+      const isServiceOff = this.isServiceOff(responseData);
+
       // Log the message
       await this.logMessage({
         apiKeyId: key_id,
@@ -207,13 +211,23 @@ export class DynamicWhatsAppService {
           responseTime
         };
       } else {
-        console.error(`❌ WhatsApp sending failed via ${provider.display_name}:`, responseData);
+        // Special handling for SERVICE_OFF - log as warning, not error
+        if (isServiceOff) {
+          console.warn(`⚠️ WhatsApp service not started via ${provider.display_name}:`, {
+            state: responseData?.results?.state || responseData?.state,
+            message: this.extractErrorMessage(responseData),
+            hint: 'WhatsApp service needs to scan QR code to start'
+          });
+        } else {
+          console.error(`❌ WhatsApp sending failed via ${provider.display_name}:`, responseData);
+        }
 
         return {
           success: false,
-          error: responseData.message || responseData.error || 'Unknown error',
+          error: this.extractErrorMessage(responseData),
           provider: provider.display_name,
-          responseTime
+          responseTime,
+          serviceOff: isServiceOff
         };
       }
 
@@ -290,6 +304,7 @@ export class DynamicWhatsAppService {
 
       const isSuccess = this.isResponseSuccessful(responseData, provider);
       const messageId = this.extractMessageId(responseData, provider);
+      const isServiceOff = this.isServiceOff(responseData);
 
       await this.logCustomMessage({
         phone: `group:${targetGroupId}`,
@@ -307,7 +322,23 @@ export class DynamicWhatsAppService {
       if (isSuccess) {
         return { success: true, messageId, provider: provider.display_name, responseTime };
       }
-      return { success: false, error: responseData?.message || 'Send group failed', provider: provider.display_name, responseTime };
+      
+      // Enhanced error response with serviceOff flag
+      const errorMessage = this.extractErrorMessage(responseData);
+      if (isServiceOff) {
+        console.warn(`⚠️ WhatsApp service not started for group message to ${targetGroupId}:`, {
+          state: responseData?.results?.state || responseData?.state,
+          message: errorMessage
+        });
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage, 
+        provider: provider.display_name, 
+        responseTime,
+        serviceOff: isServiceOff
+      };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       return { success: false, error: error instanceof Error ? error.message : 'Network error', responseTime };
@@ -521,6 +552,24 @@ Ada pertanyaan? Balas pesan ini! 💬`;
     } catch (error) {
       console.error('logCustomMessage error:', error);
     }
+  }
+
+  /**
+   * Check if response indicates SERVICE_OFF error
+   */
+  private isServiceOff(responseData: any): boolean {
+    return responseData?.results?.state === 'SERVICE_OFF' || 
+           responseData?.state === 'SERVICE_OFF';
+  }
+
+  /**
+   * Extract error message from response
+   */
+  private extractErrorMessage(responseData: any): string {
+    return responseData?.results?.message || 
+           responseData?.message || 
+           responseData?.error || 
+           'Unknown error';
   }
 
   /**

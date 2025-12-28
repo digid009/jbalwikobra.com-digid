@@ -12,11 +12,15 @@ const supabase = hasSupabase ? createClient(supabaseUrl as string, serviceKey as
 try {
   // Log in dev to make it obvious when running without DB
   if (hasSupabase) {
+    const keyType = (serviceKey as string).includes('service_role') ? 'service role key' : 'anonymous key';
     console.log(
-      'AdminService: Using',
-      (serviceKey as string).includes('service_role') ? 'service role key' : 'anonymous key',
-      'for database access'
+      `AdminService: Using ${keyType} for database access`
     );
+    console.log('AdminService: Supabase URL:', supabaseUrl);
+    // Only log key prefix in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AdminService: Key starts with:', (serviceKey as string).substring(0, 20) + '...');
+    }
   } else {
     console.warn('AdminService: Supabase not configured — running with dev fallbacks');
   }
@@ -927,6 +931,8 @@ export const adminService = {
     return adminCache.getOrFetch('admin:stats', async () => {
       try {
         console.log('📊 [adminService.getAdminStats] Fetching fresh stats from database...');
+        console.log('📊 [adminService.getAdminStats] Using supabase client with key type:', 
+          (serviceKey as string).includes('service_role') ? 'SERVICE_ROLE' : 'ANON');
         
         // Get all stats in parallel - optimized queries
         const [
@@ -947,21 +953,29 @@ export const adminService = {
           (supabase as any).from('orders').select('amount, status').in('status', ['paid', 'completed'])
         ]);
 
-        console.log('📈 [adminService.getAdminStats] Query results:', {
+        console.log('📈 [adminService.getAdminStats] Raw query results:', {
           totalUsers,
           totalProducts,
           totalOrders,
           pendingOrders,
           completedOrders,
           paidOrders,
-          revenueOrders: ordersWithRevenue.data?.length
+          revenueOrdersCount: ordersWithRevenue.data?.length,
+          revenueOrdersError: ordersWithRevenue.error
         });
+
+        // CRITICAL: Log if ordersWithRevenue query failed
+        if (ordersWithRevenue.error) {
+          console.error('❌ [adminService.getAdminStats] Revenue query error:', ordersWithRevenue.error);
+        }
 
         // Calculate total revenue from paid and completed orders
         let totalRevenue = 0;
         if (ordersWithRevenue.data) {
           totalRevenue = ordersWithRevenue.data.reduce((sum, order) => 
             sum + (Number(order.amount) || 0), 0);
+          console.log('💰 [adminService.getAdminStats] Revenue calculated from', ordersWithRevenue.data.length, 'orders');
+          console.log('💰 [adminService.getAdminStats] Sample orders:', ordersWithRevenue.data.slice(0, 3));
         }
         
         console.log('💰 [adminService.getAdminStats] Total revenue calculated:', totalRevenue);
