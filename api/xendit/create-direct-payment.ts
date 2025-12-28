@@ -1154,14 +1154,20 @@ Customer has been sent payment link.
   }
 }
 
-// Send payment link WhatsApp notification to customer
+// Send payment link notification to customer
+// NOTE: Payment link is automatically included in the payment QR/instructions
+// WhatsApp notification is optional and will only be sent if service is available
 async function sendPaymentLinkNotification(paymentData: any, order: any) {
   try {
     // Skip if no customer phone number
     if (!order?.customer_phone) {
-      console.log('[Payment Link Notification] No customer phone provided, skipping notification');
+      console.log('[Payment Link Notification] No customer phone provided, payment link will be shown in payment interface');
       return;
     }
+
+    // Payment link is always available through the payment interface
+    // WhatsApp notification is optional convenience feature
+    console.log('[Payment Link Notification] Payment link is available in payment interface, attempting optional WhatsApp notification...');
 
     const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
     const wa = new DynamicWhatsAppService();
@@ -1287,33 +1293,34 @@ Terima kasih! 🙏`;
     });
 
     if (result.success) {
-      console.log(`✅ [Payment Link Notification] Sent successfully to ${order.customer_phone} for payment ${paymentData.id}`);
+      console.log(`✅ [Payment Link Notification] WhatsApp reminder sent successfully to ${order.customer_phone} for payment ${paymentData.id}`);
     } else {
-      // Enhanced error logging based on error type
+      // WhatsApp notification failed - this is OK, payment link is still available in the payment interface
       if (result.serviceOff) {
-        console.warn(`⚠️ [Payment Link Notification] WhatsApp service not started (QR not scanned):`, {
-          error: result.error,
+        console.log(`ℹ️ [Payment Link Notification] WhatsApp service not available, but payment link is accessible via payment interface:`, {
           phone: order.customer_phone,
           payment_id: paymentData.id,
-          hint: 'Admin needs to scan QR code in WhatsApp service to enable notifications'
+          payment_link: paymentLink,
+          note: 'Customer can complete payment using the on-screen instructions. WhatsApp reminder is optional.'
         });
       } else {
-        console.error(`❌ [Payment Link Notification] Failed to send:`, {
+        console.warn(`⚠️ [Payment Link Notification] Optional WhatsApp reminder failed (payment link still accessible):`, {
           error: result.error,
           phone: order.customer_phone,
           payment_id: paymentData.id,
           provider: result.provider,
-          responseTime: result.responseTime
+          payment_link: paymentLink
         });
       }
     }
 
   } catch (error) {
-    console.error('❌ [Payment Link Notification] Unexpected error:', {
+    // Non-critical error - payment link is still available through payment interface
+    console.warn('⚠️ [Payment Link Notification] Optional WhatsApp reminder error (payment link still accessible):', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
       payment_id: paymentData?.id,
-      customer_phone: order?.customer_phone
+      customer_phone: order?.customer_phone,
+      note: 'Customer can complete payment using on-screen instructions'
     });
   }
 }
