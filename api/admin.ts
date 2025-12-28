@@ -532,7 +532,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
       }
-      }
       case 'settings': {
         if (!supabase) return respond(res, 500, { error: 'database_unavailable' });
         
