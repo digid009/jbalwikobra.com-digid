@@ -1783,16 +1783,27 @@ export const adminService = {
           // Generate realistic notifications based on actual orders
           const { data: recentOrders } = await supabase
             .from('orders')
-            .select('id, customer_name, product_name, amount, status, created_at')
+            .select('id, customer_name, product_id, amount, status, created_at')
             .order('created_at', { ascending: false })
             .limit(limit);
 
           if (recentOrders && recentOrders.length > 0) {
-            return recentOrders.map((order, index) => ({
+            // Get product names
+            const productIds = Array.from(new Set(recentOrders.map((o: any) => o.product_id).filter(Boolean)));
+            let productsMap: Record<string, string> = {};
+            if (productIds.length > 0) {
+              const { data: prodData } = await supabase.from('products').select('id, name').in('id', productIds);
+              productsMap = (prodData || []).reduce((acc: any, p: any) => {
+                acc[p.id] = p.name;
+                return acc;
+              }, {});
+            }
+
+            return recentOrders.map((order: any, index: number) => ({
               id: `order-${order.id}`,
               type: order.status === 'paid' ? 'paid_order' as const : 'new_order' as const,
               title: order.status === 'paid' ? 'Payment Received' : 'New Order',
-              message: `${order.customer_name} - ${order.product_name || 'Product Order'} - Rp ${order.amount?.toLocaleString()}`,
+              message: `${order.customer_name} - ${order.product_id ? productsMap[order.product_id] || 'Product Order' : 'Product Order'} - Rp ${order.amount?.toLocaleString()}`,
               created_at: order.created_at,
               is_read: false,
               amount: order.amount
