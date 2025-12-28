@@ -18,10 +18,6 @@ export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({
       setLoading(true);
       setError(null);
       
-      // Clear cache before loading
-      adminService.clearStatsCache();
-      console.log('🗑️ [DashboardMetricsOverview] Cache cleared');
-      
       const s = await adminService.getDashboardStats();
       console.log('📊 [DashboardMetricsOverview] Stats received:', JSON.stringify(s, null, 2));
       
@@ -58,6 +54,10 @@ export const DashboardMetricsOverview: React.FC<{ onRefresh?: () => void }> = ({
     console.log('🔄 [DashboardMetricsOverview] Manual refresh triggered');
     setRefreshing(true);
     try {
+      // Clear cache only on manual refresh
+      adminService.clearStatsCache();
+      console.log('🗑️ [DashboardMetricsOverview] Cache cleared for manual refresh');
+      
       await load();
       onRefresh?.();
     } finally { 

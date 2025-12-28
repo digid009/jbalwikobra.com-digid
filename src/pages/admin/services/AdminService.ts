@@ -6,8 +6,7 @@ export class AdminService {
     console.log('🚀 [AdminService.fetchDashboardStats] Starting dashboard stats fetch...');
     
     try {
-      const timestamp = Date.now();
-      const url = `/api/admin?action=dashboard&_t=${timestamp}`;
+      const url = '/api/admin?action=dashboard';
       console.log('🌐 [AdminService.fetchDashboardStats] Fetching from:', url);
       
       const response = await fetch(url, {
@@ -15,7 +14,8 @@ export class AdminService {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       

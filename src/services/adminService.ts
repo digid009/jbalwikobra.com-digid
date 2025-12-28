@@ -924,10 +924,6 @@ export const adminService = {
       };
     }
 
-    // Clear cache to ensure fresh data
-    adminCache.invalidate('admin:stats');
-    console.log('🗑️ [adminService.getAdminStats] Cache cleared for admin:stats');
-
     return adminCache.getOrFetch('admin:stats', async () => {
       try {
         console.log('📊 [adminService.getAdminStats] Fetching fresh stats from database...');

@@ -119,11 +119,14 @@ async function dashboardStats() {
     const completed = completedOrders?.length || 0;
     const pending = pendingOrders?.length || 0;
     
+    // Calculate revenue from paid and completed orders
     (completedOrders || []).forEach(r => { 
       const amount = Number(r.amount) || 0;
       revenue += amount;
-      completedRevenue += amount;
     });
+    
+    // completedRevenue is the same as revenue (both from paid/completed orders)
+    completedRevenue = revenue;
     
     const stats = {
       orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
