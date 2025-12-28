@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getActivatedPaymentChannels, getXenditChannelCode } from '../config/paymentChannels.js';
+import { fetchProductName } from '../_utils/productUtils.js';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
@@ -44,9 +45,13 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
       return existingOrder;
     }
 
+    // Fetch product name if product_id is provided
+    const productName = await fetchProductName(supabase, order.product_id);
+
     const orderPayload = {
       client_external_id: externalId,
       product_id: order.product_id || null,
+      product_name: productName, // Add product_name to order payload
       customer_name: order.customer_name || 'Customer',
       customer_email: order.customer_email || 'customer@jbalwikobra.com',
       customer_phone: order.customer_phone || '6200000000000',
@@ -62,7 +67,7 @@ async function createOrderRecord(order: any, externalId: string, paymentMethodId
     const { data, error } = await supabase
       .from('orders')
       .insert(orderPayload)
-      .select('id, customer_name, customer_email, customer_phone, amount, status, order_type, rental_duration, product_id, created_at, client_external_id')
+      .select('id, customer_name, product_name, customer_email, customer_phone, amount, status, order_type, rental_duration, product_id, created_at, client_external_id')
       .single();
 
     if (error) {

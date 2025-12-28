@@ -1,4 +1,6 @@
 // Best practice: keep secret on server
+import { fetchProductName } from '../_utils/productUtils.js';
+
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
@@ -145,8 +147,12 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
       }
     }
     
+    // Fetch product name if product_id is provided
+    const productName = await fetchProductName(sb, order.product_id);
+
     const payload: any = {
       product_id: order.product_id || null,
+      product_name: productName, // Add product_name to order payload
       customer_name: order.customer_name,
       customer_email: order.customer_email,
       customer_phone: order.customer_phone,
@@ -183,6 +189,7 @@ async function createOrderIfProvided(order: any, clientExternalId?: string) {
           .from('orders')
           .update({
             product_id: payload.product_id,
+            product_name: payload.product_name, // Include product_name in update
             customer_name: payload.customer_name,
             customer_email: payload.customer_email,
             customer_phone: payload.customer_phone,
