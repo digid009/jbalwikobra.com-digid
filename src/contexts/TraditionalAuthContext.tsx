@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userData = JSON.parse(storedUser);
           console.log('[DEBUG] INIT - Loaded from localStorage - isAdmin:', userData.isAdmin, 'email:', userData.email);
           
-          // Validate session - this will update user state with fresh data from server
+          // Validate session - the validateSession function will update user state with fresh data from server
           const isValid = await validateSession(storedToken);
           console.log('[DEBUG] INIT - Session validation result:', isValid);
           if (isValid) {
