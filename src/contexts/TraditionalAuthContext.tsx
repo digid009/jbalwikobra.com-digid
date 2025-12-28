@@ -62,11 +62,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (storedToken && storedUser) {
           const userData = JSON.parse(storedUser);
+          console.log('[DEBUG] INIT - Loaded from localStorage - isAdmin:', userData.isAdmin, 'email:', userData.email);
           
-          // Validate session
+          // Validate session - the validateSession function will update user state with fresh data from server
           const isValid = await validateSession(storedToken);
+          console.log('[DEBUG] INIT - Session validation result:', isValid);
           if (isValid) {
-            setUser(userData);
+            // validateSession already updates the user state with fresh data from server
+            // Just update the session metadata here
             setSession({
               expiresAt: localStorage.getItem('session_expires') || '',
               lastActivity: new Date().toISOString()
@@ -115,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Map backend field names to frontend (robust mapping)
+      console.log('[DEBUG] Login response data.user.is_admin:', data.user.is_admin, 'email:', data.user.email);
       const mappedUser = {
         ...data.user,
         // snake_case -> camelCase
@@ -127,11 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: data.user.email || data.user.user_email || '',
         phone: data.user.phone || data.user.whatsapp || data.user.phone_number || ''
       } as User;
+      console.log('[DEBUG] Mapped user - isAdmin:', mappedUser.isAdmin, 'email:', mappedUser.email);
 
       // Store session data
       localStorage.setItem('session_token', data.session_token);
       localStorage.setItem('user_data', JSON.stringify(mappedUser));
       localStorage.setItem('session_expires', data.expires_at);
+      console.log('[DEBUG] LOGIN - Stored in localStorage - user_data.isAdmin:', mappedUser.isAdmin);
 
       // Update state
       setUser(mappedUser);
@@ -362,6 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[DEBUG] VALIDATE - Response data.user.is_admin:', data.user?.is_admin);
         if (data.success && data.user) {
           // Map backend field names to frontend
           const mappedUser = {
@@ -374,6 +381,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: data.user.email || data.user.user_email || '',
             phone: data.user.phone || data.user.whatsapp || data.user.phone_number || ''
           } as User;
+          console.log('[DEBUG] VALIDATE - Mapped user isAdmin:', mappedUser.isAdmin);
           // Update user data with latest from server
           localStorage.setItem('user_data', JSON.stringify(mappedUser));
           setUser(mappedUser);
