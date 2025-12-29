@@ -134,7 +134,17 @@ const AdminUsersV2: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      // Clear cache to ensure fresh data (avoid stale empty cached responses)
+      if (adminService.clearUsersCache) {
+        adminService.clearUsersCache();
+      }
+
       const result = await adminService.getUsers(1, 1000); // Get all users for now
+      console.log('[AdminUsersV2] Loaded users:', {
+        total: result.data.length,
+        admins: result.data.filter(u => u.is_admin).length,
+        active: result.data.filter(u => u.last_login).length
+      });
       setUsers(result.data);
     } catch (err: any) {
       const message = err?.message || 'Failed to load users';
