@@ -12,6 +12,17 @@ When maintenance mode is enabled, all routes in the application will redirect to
 - Admin dashboard
 - All other routes
 
+**Important:** When maintenance mode is disabled, Turnstile bot protection is automatically re-enabled for security.
+
+## Environment-Specific Configuration
+
+The maintenance mode can be configured per Vercel environment:
+- **Production**: Set for your production deployment
+- **Preview**: Set for preview/staging deployments
+- **Development**: Set for local development branch deployments
+
+This allows you to enable maintenance mode only on specific environments without affecting others.
+
 ## Enabling Maintenance Mode
 
 ### For Local Development
@@ -34,9 +45,16 @@ When maintenance mode is enabled, all routes in the application will redirect to
 4. Add a new environment variable:
    - **Name:** `REACT_APP_MAINTENANCE_MODE`
    - **Value:** `true`
-   - **Environment:** Select Production (or all environments as needed)
+   - **Environment:** Select the specific environment (Production, Preview, or Development)
 5. Click "Save"
 6. Redeploy your application for changes to take effect
+
+### For Preview/Staging Environments Only
+
+To enable maintenance mode only on preview deployments:
+1. In Vercel Environment Variables, select **Preview** environment only
+2. This allows you to test maintenance mode without affecting production
+3. Production and development environments will continue working normally
 
 ## Disabling Maintenance Mode
 
@@ -58,6 +76,36 @@ When maintenance mode is enabled, all routes in the application will redirect to
    - Change `REACT_APP_MAINTENANCE_MODE` to `false`
    - Or delete the environment variable entirely
 4. Redeploy your application
+5. **Important:** Turnstile bot protection will automatically re-enable when maintenance mode is disabled
+
+## Security Features
+
+### Automatic Turnstile Re-enablement
+
+When maintenance mode is disabled:
+- ✅ Turnstile bot protection automatically re-enables
+- ✅ First-visit verification resumes
+- ✅ Enhanced security without manual configuration
+- ✅ No additional steps required
+
+To ensure Turnstile is working:
+1. Verify `REACT_APP_TURNSTILE_SITE_KEY` is set in environment variables
+2. Verify `TURNSTILE_SECRET_KEY` is set in Vercel backend environment variables
+3. Test authentication flows after disabling maintenance mode
+
+## Vercel Preview Domain Support
+
+All API endpoints now support Vercel preview domains out of the box:
+- ✅ Production domains (jbalwikobra.com)
+- ✅ Preview deployments (*.vercel.app)
+- ✅ Local development (localhost)
+
+The CORS configuration automatically detects and allows:
+- All `.vercel.app` preview domains
+- Production domains
+- Local development ports (3000, 5173)
+
+No additional configuration needed for preview deployments!
 
 ## Testing Maintenance Mode
 

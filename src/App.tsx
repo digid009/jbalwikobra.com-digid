@@ -113,9 +113,11 @@ function App() {
 
   // Check if maintenance mode is enabled
   // Vercel automatically injects VERCEL_ENV (production, preview, development)
-  // This respects environment-specific configuration in Vercel
+  // Check maintenance mode for the specific environment
   const isMaintenanceMode = React.useMemo(() => {
-    return process.env.REACT_APP_MAINTENANCE_MODE === 'true';
+    const maintenanceValue = process.env.REACT_APP_MAINTENANCE_MODE;
+    // If value is 'true', enable maintenance mode
+    return maintenanceValue === 'true';
   }, []);
 
   // Initialize favicon and page title
@@ -246,15 +248,15 @@ function App() {
                   </div>
                 } />
               </Routes>
-                  )}
-                <Analytics />
-                <SpeedInsights />
-              </Router>
-              </ConfirmationProvider>
-            </ToastProvider>
-          </WishlistProvider>
-        </AuthProvider>
-      </ThemeProvider>
+                )}
+              <Analytics />
+              <SpeedInsights />
+            </Router>
+            </ConfirmationProvider>
+          </ToastProvider>
+        </WishlistProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 
   return (
