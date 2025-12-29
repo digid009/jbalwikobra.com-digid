@@ -49,8 +49,8 @@
     "webpack-bundle-analyzer": "^4.10.2"
   },
   "scripts": {
-    "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "guard:legacy": "node scripts/assert-no-legacy-fields.js",
     "monitor:payments": "node scripts/monitor-payment-status.js",
     "test:product-names": "node scripts/test-product-name-notification.js",
