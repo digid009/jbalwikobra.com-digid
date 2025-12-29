@@ -113,30 +113,30 @@ export default async function handler(req: any, res: any) {
     // Reference: https://docs.xendit.co/apidocs/create-payment-request
     const methodLower = payment_method_id.toLowerCase();
 
-    // Canonical channel codes per Xendit Payment Request v3
-    const channelMap: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'OVER_THE_COUNTER'; code: string; field: 'qr_code' | 'virtual_account' | 'ewallet' | 'over_the_counter'; }> = {
+    // Canonical channel codes per Payment Request v3 (root-level channel_code)
+    const channelMap: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'OVER_THE_COUNTER'; code: string; requiresPhone?: boolean }> = {
       // QRIS
-      qris: { type: 'QR_CODE', code: 'ID_QRIS', field: 'qr_code' },
+      qris: { type: 'QR_CODE', code: 'QRIS' },
       // Virtual accounts
-      bca: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BCA', field: 'virtual_account' },
-      bni: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BNI', field: 'virtual_account' },
-      bri: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BRI', field: 'virtual_account' },
-      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'ID_MANDIRI', field: 'virtual_account' },
-      permata: { type: 'VIRTUAL_ACCOUNT', code: 'ID_PERMATA', field: 'virtual_account' },
-      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'ID_CIMB', field: 'virtual_account' },
-      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BSI', field: 'virtual_account' },
-      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BJB', field: 'virtual_account' },
+      bca: { type: 'VIRTUAL_ACCOUNT', code: 'BCA' },
+      bni: { type: 'VIRTUAL_ACCOUNT', code: 'BNI' },
+      bri: { type: 'VIRTUAL_ACCOUNT', code: 'BRI' },
+      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'MANDIRI' },
+      permata: { type: 'VIRTUAL_ACCOUNT', code: 'PERMATA' },
+      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'CIMB' },
+      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'BSI' },
+      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'BJB' },
       // E-wallets
-      gopay: { type: 'EWALLET', code: 'ID_GOPAY', field: 'ewallet' },
-      ovo: { type: 'EWALLET', code: 'ID_OVO', field: 'ewallet' },
-      dana: { type: 'EWALLET', code: 'ID_DANA', field: 'ewallet' },
-      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA', field: 'ewallet' },
-      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY', field: 'ewallet' },
-      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY', field: 'ewallet' },
-      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY', field: 'ewallet' },
+      gopay: { type: 'EWALLET', code: 'ID_GOPAY' },
+      ovo: { type: 'EWALLET', code: 'ID_OVO', requiresPhone: true },
+      dana: { type: 'EWALLET', code: 'ID_DANA' },
+      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA' },
+      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY' },
+      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY' },
+      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY' },
       // Over the counter
-      alfamart: { type: 'OVER_THE_COUNTER', code: 'ID_ALFAMART', field: 'over_the_counter' },
-      indomaret: { type: 'OVER_THE_COUNTER', code: 'ID_INDOMARET', field: 'over_the_counter' },
+      alfamart: { type: 'OVER_THE_COUNTER', code: 'ALFAMART' },
+      indomaret: { type: 'OVER_THE_COUNTER', code: 'INDOMARET' },
     };
 
     const channel = channelMap[methodLower];
@@ -150,29 +150,35 @@ export default async function handler(req: any, res: any) {
     }
 
     // Build channel properties per type
-    const channelProperties: Record<string, any> = {};
+    const channel_properties: Record<string, any> = {};
 
     if (channel.type === 'VIRTUAL_ACCOUNT') {
-      channelProperties.customer_name = customer?.given_names || 'Customer';
+      channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
     if (channel.type === 'EWALLET') {
-      if (success_redirect_url) channelProperties.success_return_url = success_redirect_url;
-      if (failure_redirect_url) channelProperties.failure_return_url = failure_redirect_url;
-      if (customer?.mobile_number) channelProperties.mobile_number = customer.mobile_number; // Some e-wallets require phone
+      if (success_redirect_url) channel_properties.success_return_url = success_redirect_url;
+      if (failure_redirect_url) channel_properties.failure_return_url = failure_redirect_url;
+      if (customer?.mobile_number) channel_properties.mobile_number = customer.mobile_number;
+      if (channel.requiresPhone && !customer?.mobile_number) {
+        return res.status(400).json({
+          error: 'Mobile number required for this e-wallet',
+          message: 'Please provide mobile_number for the selected e-wallet',
+          details: { payment_method_id }
+        });
+      }
     }
 
     if (channel.type === 'OVER_THE_COUNTER') {
-      channelProperties.customer_name = customer?.given_names || 'Customer';
+      channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
+    // According to Payment Request v3, channel_code and channel_properties are at the payment_method root
     const paymentMethodPayload: any = {
       type: channel.type,
       reusability: 'ONE_TIME_USE',
-      [channel.field]: {
-        channel_code: channel.code,
-        channel_properties: channelProperties
-      }
+      channel_code: channel.code,
+      channel_properties
     };
 
     console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));

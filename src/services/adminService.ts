@@ -1065,6 +1065,12 @@ export const adminService = {
     console.log('Admin orders cache cleared');
   },
 
+  // Clear users cache to force fresh data
+  clearUsersCache(): void {
+    adminCache.invalidatePattern('admin:users:');
+    console.log('Admin users cache cleared');
+  },
+
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
     console.log('[adminService.getOrders - CACHED] Fetching orders - page:', page, 'limit:', limit, 'statusFilter:', statusFilter);
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
