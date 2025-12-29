@@ -154,7 +154,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    if (config.type === 'OVER_THE_COUNTER') {
+    if (config.type === 'RETAIL_OUTLET') {
       channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
@@ -164,40 +164,6 @@ export default async function handler(req: any, res: any) {
       reusability: 'ONE_TIME_USE',
       [config.type === 'QRIS' ? 'qr_code' : config.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : config.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
         channel_code: channelCode,
-        channel_properties
-      }
-    };
-
-    // Build channel properties per type
-    const channel_properties: Record<string, any> = {};
-
-    if (channel.type === 'VIRTUAL_ACCOUNT') {
-      channel_properties.customer_name = customer?.given_names || 'Customer';
-    }
-
-    if (channel.type === 'EWALLET') {
-      if (success_redirect_url) channel_properties.success_return_url = success_redirect_url;
-      if (failure_redirect_url) channel_properties.failure_return_url = failure_redirect_url;
-      if (customer?.mobile_number) channel_properties.mobile_number = customer.mobile_number;
-      if (channel.requiresPhone && !customer?.mobile_number) {
-        return res.status(400).json({
-          error: 'Mobile number required for this e-wallet',
-          message: 'Please provide mobile_number for the selected e-wallet',
-          details: { payment_method_id }
-        });
-      }
-    }
-
-    if (channel.type === 'OVER_THE_COUNTER') {
-      channel_properties.customer_name = customer?.given_names || 'Customer';
-    }
-
-    // Xendit Payment Request v3 expects channel_code nested inside the type-specific object
-    const paymentMethodPayload: any = {
-      type: channel.type,
-      reusability: 'ONE_TIME_USE',
-      [channel.type === 'QR_CODE' ? 'qr_code' : channel.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : channel.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
-        channel_code: channel.code,
         channel_properties
       }
     };
