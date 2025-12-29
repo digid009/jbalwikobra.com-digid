@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AdminStats, adminService } from '../../services/adminService';
+import { AdminStats, adminApiService } from '../../services/adminApiService';
 import { AdminTab } from './components/structure/adminTypes';
 import DashboardLayout from './layout/DashboardLayout';
 import { DashboardSection } from './layout/DashboardPrimitives';
@@ -99,7 +99,7 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setHasStatsError(false);
       setStatsErrorMessage('');
-      const statsData = await adminService.getDashboardStats();
+      const statsData = await adminApiService.getDashboardStats();
       setStats(statsData);
       performanceMonitor.endMeasure('load_dashboard_stats', { success: true });
     } catch (error: any) {
@@ -120,11 +120,11 @@ const AdminDashboard: React.FC = () => {
       setHasStatsError(false);
       setStatsErrorMessage('');
       
-      // Clear cache and reload
-      adminService.clearStatsCache();
+      // Clear cache and reload (API service doesn't cache, but keep for compatibility)
+      adminApiService.clearStatsCache();
       localStorage.removeItem('adminCache'); // Clear any localStorage cache
       
-      const statsData = await adminService.getDashboardStats();
+      const statsData = await adminApiService.getDashboardStats();
       setStats(statsData);
       
       console.log('✅ Stats refreshed successfully:', statsData);

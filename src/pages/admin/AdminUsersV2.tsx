@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, UserCheck, Shield, Clock, Search, Filter, RefreshCw, Plus, Edit, Trash2, Mail, Phone, Calendar, RotateCcw, TrendingUp, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
-import { adminService, User } from '../../services/adminService';
+import { adminApiService, User } from '../../services/adminApiService';
 import { useToast } from '../../components/Toast';
 
 interface UserStats {
@@ -134,7 +134,7 @@ const AdminUsersV2: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const result = await adminService.getUsers(1, 1000); // Get all users for now
+      const result = await adminApiService.getUsers(1, 1000); // Get all users for now
       setUsers(result.data);
     } catch (err: any) {
       const message = err?.message || 'Failed to load users';

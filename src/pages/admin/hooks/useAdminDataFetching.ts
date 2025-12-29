@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { adminService } from '../../../services/adminService';
-import type { Order, User, Product } from '../../../services/adminService';
+import { adminApiService } from '../../../services/adminApiService';
+import type { Order, User, Product } from '../../../services/adminApiService';
 import { performanceMonitor } from '../utils/performanceMonitor';
 
 interface UsePaginatedDataOptions {
@@ -41,7 +41,7 @@ export function useAdminOrders({
       setLoading(true);
       setError(null);
       
-      const result = await adminService.getOrders(page, limit, filters.status);
+      const result = await adminApiService.getOrders(page, limit, filters.status);
       setData(result.data);
       setTotalCount(result.count);
       performanceMonitor.endMeasure('fetch_admin_orders', { success: true, count: result.count });
@@ -80,7 +80,7 @@ export function useAdminUsers({
       setLoading(true);
       setError(null);
       
-      const result = await adminService.getUsers(page, limit);
+      const result = await adminApiService.getUsers(page, limit);
       setData(result.data);
       setTotalCount(result.count);
       performanceMonitor.endMeasure('fetch_admin_users', { success: true, count: result.count });
@@ -119,7 +119,7 @@ export function useAdminProducts({
       setLoading(true);
       setError(null);
       
-      const result = await adminService.getProducts(page, limit);
+      const result = await adminApiService.getProducts(page, limit);
       setData(result.data || []);
       setTotalCount(result.count || 0);
       performanceMonitor.endMeasure('fetch_admin_products', { success: true, count: result.count });
@@ -152,7 +152,7 @@ export function useAdminStats() {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminService.getDashboardStats();
+      const data = await adminApiService.getDashboardStats();
       setStats(data);
       performanceMonitor.endMeasure('fetch_admin_stats', { success: true });
     } catch (err: any) {

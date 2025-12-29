@@ -20,7 +20,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useToast } from '../../components/Toast';
-import { adminService, type Order as AdminOrder } from '../../services/adminService';
+import { adminApiService, type Order as AdminOrder } from '../../services/adminApiService';
 
 type OrderStatus = 'pending' | 'paid' | 'completed' | 'cancelled';
 type OrderType = 'purchase' | 'rental';
@@ -235,13 +235,13 @@ const AdminOrdersV2: React.FC = () => {
       setError('');
       
       // Clear cache to ensure fresh data
-      if (adminService.clearOrdersCache) {
-        adminService.clearOrdersCache();
+      if (adminApiService.clearOrdersCache) {
+        adminApiService.clearOrdersCache();
       }
       
-      // Use adminService directly instead of API call
+      // Use adminApiService directly instead of API call
       // Increase limit to ensure we get all orders (1000 should be enough for most cases)
-      const result = await adminService.getOrders(1, 1000);
+      const result = await adminApiService.getOrders(1, 1000);
       
       console.log('[AdminOrdersV2] Loaded orders:', {
         total: result.data.length,

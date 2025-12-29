@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Search, Filter, RefreshCw, Plus, Edit, Trash2, Eye, ShoppingCart, DollarSign, Archive, Calendar, Tag, ArrowUpRight, ArrowDownRight, Activity, FileDown, TrendingUp } from 'lucide-react';
-import { adminService, Product } from '../../services/adminService';
+import { adminApiService, Product } from '../../services/adminApiService';
 import { useToast } from '../../components/Toast';
 import ProductModal from './components/ProductModal';
 import { 
@@ -173,8 +173,8 @@ const AdminProductsV2: React.FC = () => {
 
       // For now, load with search only - we'll extend the API later for other filters
       const [productsResult, statsResult] = await Promise.all([
-        adminService.getProducts(queryParams.page, queryParams.limit, queryParams.search),
-        adminService.getProductStats()
+        adminApiService.getProducts(queryParams.page, queryParams.limit, queryParams.search),
+        adminApiService.getProductStats()
       ]);
 
       // Cache the result
@@ -201,9 +201,9 @@ const AdminProductsV2: React.FC = () => {
   const loadDropdownData = async () => {
     try {
       const [categoriesData, gameTitlesData, tiersData] = await Promise.all([
-        adminService.getCategories(),
-        adminService.getGameTitles(),
-        adminService.getTiers()
+        adminApiService.getCategories(),
+        adminApiService.getGameTitles(),
+        adminApiService.getTiers()
       ]);
       
       setCategories(categoriesData);
