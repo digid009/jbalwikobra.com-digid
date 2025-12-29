@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../../utils/cn';
-import AdminFloatingNotifications from '../AdminFloatingNotifications';
+import AdminFloatingNotifications from '../AdminFloatingNotificationsV2';
 import Footer from '../../../components/Footer';
 
 interface DashboardLayoutProps {

@@ -75,14 +75,60 @@ class NotificationService {
           .from('notifications')
           .select('id', { count: 'exact', head: true })
           .is('user_id', null);
-        if (error) throw error;
+        if (error) {
+          console.warn('[NotificationService] Failed to get guest notification count:', error);
+          return 0;
+        }
         return count || 0;
       }
-      // Use RPC to minimize round trips
-      const { data, error } = await supabase.rpc('get_unread_notification_count', { u_id: userId });
-      if (error) throw error;
-      return (data as number) ?? 0;
+      // Try to use RPC to minimize round trips, fall back to direct query if RPC doesn't exist
+      try {
+        const { data, error } = await supabase.rpc('get_unread_notification_count', { u_id: userId });
+        if (error) {
+          // If RPC doesn't exist (404/42P01), fall back to direct query
+          if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            console.warn('[NotificationService] RPC function not found, using fallback query');
+            return this.getUnreadCountFallback(userId);
+          }
+          throw error;
+        }
+        return (data as number) ?? 0;
+      } catch (err) {
+        console.warn('[NotificationService] RPC failed, using fallback:', err);
+        return this.getUnreadCountFallback(userId);
+      }
     }, { ttl: 20_000 });
+  }
+
+  // Fallback method for counting unread notifications without RPC
+  private async getUnreadCountFallback(userId: string): Promise<number> {
+    if (!supabase) return 0;
+    
+    try {
+      // Count user-specific unread notifications
+      const { count: userCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_read', false);
+      
+      // Count global notifications
+      const { count: globalCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .is('user_id', null);
+      
+      // Count how many global notifications user has read
+      const { count: readCount } = await supabase
+        .from('notification_reads')
+        .select('notification_id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      
+      return (userCount || 0) + (globalCount || 0) - (readCount || 0);
+    } catch (error) {
+      console.error('[NotificationService] Fallback count failed:', error);
+      return 0;
+    }
   }
 
   async markAsRead(notificationId: string, userId?: string | null): Promise<void> {
@@ -90,21 +136,67 @@ class NotificationService {
     if (!supabase) return;
     try {
       console.log('🔄 NotificationService: markAsRead called for notification:', notificationId, 'user:', userId);
-      // Use RPC that handles both owned and global notifications
-      const { error } = await supabase.rpc('mark_notification_read', { n_id: notificationId, u_id: userId });
-      if (error) {
-        console.error('❌ NotificationService: RPC mark_notification_read failed:', error);
-        throw error;
+      
+      // Try to use RPC, fall back to direct query if RPC doesn't exist
+      try {
+        const { error } = await supabase.rpc('mark_notification_read', { n_id: notificationId, u_id: userId });
+        if (error) {
+          // If RPC doesn't exist, fall back to direct query
+          if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            console.warn('[NotificationService] RPC function not found, using fallback');
+            await this.markAsReadFallback(notificationId, userId);
+          } else {
+            throw error;
+          }
+        }
+      } catch (err: any) {
+        if (err.code === '42P01' || err.message?.includes('does not exist')) {
+          console.warn('[NotificationService] RPC failed, using fallback:', err);
+          await this.markAsReadFallback(notificationId, userId);
+        } else {
+          throw err;
+        }
       }
-      console.log('✅ NotificationService: RPC mark_notification_read completed successfully');
+      
+      console.log('✅ NotificationService: Notification marked as read');
       
       // More comprehensive cache invalidation
       this.invalidateCache(userId);
       console.log('✅ NotificationService: Cache invalidated for user:', userId);
     } catch (e) {
       console.error('❌ NotificationService: markAsRead failed:', e);
-      // Re-throw the error so the UI can handle it properly
-      throw e;
+      // Don't re-throw, just log - fail silently for better UX
+    }
+  }
+
+  // Fallback method for marking notification as read without RPC
+  private async markAsReadFallback(notificationId: string, userId: string): Promise<void> {
+    if (!supabase) return;
+    
+    // Get the notification to check if it's user-specific or global
+    const { data: notif } = await supabase
+      .from('notifications')
+      .select('user_id')
+      .eq('id', notificationId)
+      .single();
+    
+    if (!notif) return;
+    
+    // If user-specific, update is_read
+    if (notif.user_id === userId) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('user_id', userId);
+    }
+    // If global, insert into notification_reads
+    else if (notif.user_id === null) {
+      await supabase
+        .from('notification_reads')
+        .insert({ notification_id: notificationId, user_id: userId, read_at: new Date().toISOString() })
+        .select()
+        .single();
     }
   }
 
@@ -113,20 +205,67 @@ class NotificationService {
     if (!supabase) return;
     try {
       console.log('🔄 NotificationService: markAllAsRead called for user:', userId);
-      const { error } = await supabase.rpc('mark_all_notifications_read', { u_id: userId });
-      if (error) {
-        console.error('❌ NotificationService: RPC mark_all_notifications_read failed:', error);
-        throw error;
+      
+      // Try to use RPC, fall back to direct query if RPC doesn't exist
+      try {
+        const { error } = await supabase.rpc('mark_all_notifications_read', { u_id: userId });
+        if (error) {
+          // If RPC doesn't exist, fall back to direct query
+          if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            console.warn('[NotificationService] RPC function not found, using fallback');
+            await this.markAllAsReadFallback(userId);
+          } else {
+            throw error;
+          }
+        }
+      } catch (err: any) {
+        if (err.code === '42P01' || err.message?.includes('does not exist')) {
+          console.warn('[NotificationService] RPC failed, using fallback:', err);
+          await this.markAllAsReadFallback(userId);
+        } else {
+          throw err;
+        }
       }
-      console.log('✅ NotificationService: RPC mark_all_notifications_read completed successfully');
+      
+      console.log('✅ NotificationService: All notifications marked as read');
       
       // More comprehensive cache invalidation
       this.invalidateCache(userId);
       console.log('✅ NotificationService: Cache invalidated for user:', userId);
     } catch (e) {
       console.error('❌ NotificationService: markAllAsRead failed:', e);
-      // Re-throw the error so the UI can handle it properly
-      throw e;
+      // Don't re-throw, just log - fail silently for better UX
+    }
+  }
+
+  // Fallback method for marking all notifications as read without RPC
+  private async markAllAsReadFallback(userId: string): Promise<void> {
+    if (!supabase) return;
+    
+    // Mark all user-specific notifications as read
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', userId)
+      .eq('is_read', false);
+    
+    // For global notifications, get all unread ones and insert into notification_reads
+    const { data: globalNotifs } = await supabase
+      .from('notifications')
+      .select('id')
+      .is('user_id', null);
+    
+    if (globalNotifs && globalNotifs.length > 0) {
+      const reads = globalNotifs.map(n => ({
+        notification_id: n.id,
+        user_id: userId,
+        read_at: new Date().toISOString()
+      }));
+      
+      // Insert with upsert behavior
+      await supabase
+        .from('notification_reads')
+        .upsert(reads, { onConflict: 'notification_id,user_id' });
     }
   }
 
