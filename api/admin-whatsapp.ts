@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig.js';
 
 // Shared helpers
 function respond(res: VercelResponse, status: number, body: any) {

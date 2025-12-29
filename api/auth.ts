@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig.js';
 // Remove unused imports to prevent module resolution issues in production
 // import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 // Remove adminNotificationService import to avoid module resolution issues
