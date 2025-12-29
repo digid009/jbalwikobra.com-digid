@@ -25,7 +25,8 @@ import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
 import { enhancedProductService } from './services/enhancedProductService';
 import UserFloatingNotifications from './components/UserFloatingNotifications';
-import FirstVisitVerification from './components/FirstVisitVerification';
+// DISABLED: Cloudflare Turnstile verification
+// import FirstVisitVerification from './components/FirstVisitVerification';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -143,7 +144,8 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <FirstVisitVerification>
+      {/* DISABLED: Cloudflare Turnstile verification */}
+      {/* <FirstVisitVerification> */}
         <ThemeProvider>
         <AuthProvider>
           <WishlistProvider>
@@ -240,7 +242,7 @@ function App() {
           </WishlistProvider>
         </AuthProvider>
         </ThemeProvider>
-      </FirstVisitVerification>
+      {/* </FirstVisitVerification> */}
     </ErrorBoundary>
   );
 }
