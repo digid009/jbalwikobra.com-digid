@@ -255,7 +255,7 @@ const AdminProductsV2: React.FC = () => {
   const handleToggleStatus = async (product: Product) => {
     try {
       const newStatus = !product.is_active;
-      await adminService.updateProductFields(product.id, { 
+      await adminApiService.updateProductFields(product.id, { 
         is_active: newStatus 
       });
       
@@ -275,7 +275,7 @@ const AdminProductsV2: React.FC = () => {
     const prev = products;
     setProducts(prev.map(p => p.id === product.id ? { ...p, archived_at: new Date().toISOString(), is_active: false } : p));
     try {
-      const ok = await adminService.deleteProduct(product.id);
+      const ok = await adminApiService.deleteProduct(product.id);
       if (!ok) throw new Error('Archive failed');
       push(`Product "${product.name}" has been archived successfully`, 'success');
       // Invalidate cache and hard refresh from server bypassing cache
