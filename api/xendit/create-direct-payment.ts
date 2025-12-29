@@ -113,10 +113,31 @@ export default async function handler(req: any, res: any) {
     // Reference: https://docs.xendit.co/apidocs/create-payment-request
     const methodLower = payment_method_id.toLowerCase();
 
-    // Use centralized config to avoid code mismatches
-    const { PaymentMethodUtils } = await import('../../src/config/paymentMethodConfig');
-    const config = PaymentMethodUtils.getConfig(methodLower);
+    // Inline payment method config (avoid cross-boundary imports in serverless)
+    const PAYMENT_CONFIG: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'RETAIL_OUTLET'; code: string }> = {
+      // QRIS
+      qris: { type: 'QRIS', code: 'QRIS' },
+      // Virtual accounts
+      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'BJB' },
+      bni: { type: 'VIRTUAL_ACCOUNT', code: 'BNI' },
+      bri: { type: 'VIRTUAL_ACCOUNT', code: 'BRI' },
+      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'BSI' },
+      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'CIMB' },
+      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'MANDIRI' },
+      permata: { type: 'VIRTUAL_ACCOUNT', code: 'PERMATA' },
+      // E-wallets (Xendit expects ID_ prefix)
+      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY' },
+      gopay: { type: 'EWALLET', code: 'ID_GOPAY' },
+      dana: { type: 'EWALLET', code: 'ID_DANA' },
+      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA' },
+      ovo: { type: 'EWALLET', code: 'ID_OVO' },
+      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY' },
+      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY' },
+      // Retail outlets
+      indomaret: { type: 'RETAIL_OUTLET', code: 'INDOMARET' }
+    };
 
+    const config = PAYMENT_CONFIG[methodLower];
     if (!config) {
       console.error('[Direct Payment] Unsupported payment method:', payment_method_id);
       return res.status(400).json({
@@ -126,12 +147,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Canonical channel_code from config (adjust prefixes when required by Xendit)
-    let channelCode = config.xenditCode;
-    if (config.type === 'EWALLET' && !channelCode.startsWith('ID_')) {
-      // Payment Request v3 expects e-wallet channel_code to start with ID_
-      channelCode = `ID_${channelCode}`;
-    }
+    const channelCode = config.code;
 
     // Some bank codes are already in correct format; keep as-is for VA/OTC/QRIS
     // Build channel properties per type
