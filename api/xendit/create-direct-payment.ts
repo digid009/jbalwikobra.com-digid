@@ -111,58 +111,69 @@ export default async function handler(req: any, res: any) {
 
     // Map payment method ID to Xendit Payment Request API v3 format
     // Reference: https://docs.xendit.co/apidocs/create-payment-request
-    let paymentMethodPayload: any;
     const methodLower = payment_method_id.toLowerCase();
 
-    if (methodLower === 'qris') {
-      paymentMethodPayload = {
-        type: 'QR_CODE',
-        reusability: 'ONE_TIME_USE',
-        qr_code: {
-          channel_code: 'QRIS'
-        }
-      };
-    } else if (['bca', 'bni', 'bri', 'mandiri', 'permata', 'cimb', 'bsi'].includes(methodLower)) {
-      paymentMethodPayload = {
-        type: 'VIRTUAL_ACCOUNT',
-        reusability: 'ONE_TIME_USE',
-        virtual_account: {
-          channel_code: payment_method_id.toUpperCase(),
-          channel_properties: {
-            customer_name: customer?.given_names || 'Customer'
-          }
-        }
-      };
-    } else if (['gopay', 'ovo', 'dana', 'linkaja', 'shopeepay', 'jeniuspay', 'astrapay'].includes(methodLower)) {
-      paymentMethodPayload = {
-        type: 'EWALLET',
-        reusability: 'ONE_TIME_USE',
-        ewallet: {
-          channel_code: payment_method_id.toUpperCase(),
-          channel_properties: {
-            success_return_url: success_redirect_url,
-            failure_return_url: failure_redirect_url
-          }
-        }
-      };
-    } else if (['alfamart', 'indomaret'].includes(methodLower)) {
-      paymentMethodPayload = {
-        type: 'OVER_THE_COUNTER',
-        reusability: 'ONE_TIME_USE',
-        over_the_counter: {
-          channel_code: payment_method_id.toUpperCase(),
-          channel_properties: {
-            customer_name: customer?.given_names || 'Customer'
-          }
-        }
-      };
-    } else {
-      // Default fallback
-      paymentMethodPayload = {
-        type: payment_method_id.toUpperCase(),
-        reusability: 'ONE_TIME_USE'
-      };
+    // Canonical channel codes per Xendit Payment Request v3
+    const channelMap: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'OVER_THE_COUNTER'; code: string; field: 'qr_code' | 'virtual_account' | 'ewallet' | 'over_the_counter'; }> = {
+      // QRIS
+      qris: { type: 'QR_CODE', code: 'ID_QRIS', field: 'qr_code' },
+      // Virtual accounts
+      bca: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BCA', field: 'virtual_account' },
+      bni: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BNI', field: 'virtual_account' },
+      bri: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BRI', field: 'virtual_account' },
+      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'ID_MANDIRI', field: 'virtual_account' },
+      permata: { type: 'VIRTUAL_ACCOUNT', code: 'ID_PERMATA', field: 'virtual_account' },
+      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'ID_CIMB', field: 'virtual_account' },
+      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BSI', field: 'virtual_account' },
+      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'ID_BJB', field: 'virtual_account' },
+      // E-wallets
+      gopay: { type: 'EWALLET', code: 'ID_GOPAY', field: 'ewallet' },
+      ovo: { type: 'EWALLET', code: 'ID_OVO', field: 'ewallet' },
+      dana: { type: 'EWALLET', code: 'ID_DANA', field: 'ewallet' },
+      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA', field: 'ewallet' },
+      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY', field: 'ewallet' },
+      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY', field: 'ewallet' },
+      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY', field: 'ewallet' },
+      // Over the counter
+      alfamart: { type: 'OVER_THE_COUNTER', code: 'ID_ALFAMART', field: 'over_the_counter' },
+      indomaret: { type: 'OVER_THE_COUNTER', code: 'ID_INDOMARET', field: 'over_the_counter' },
+    };
+
+    const channel = channelMap[methodLower];
+    if (!channel) {
+      console.error('[Direct Payment] Unsupported payment method:', payment_method_id);
+      return res.status(400).json({
+        error: 'Unsupported payment method',
+        message: 'Please choose a supported payment method',
+        details: { payment_method_id }
+      });
     }
+
+    // Build channel properties per type
+    const channelProperties: Record<string, any> = {};
+
+    if (channel.type === 'VIRTUAL_ACCOUNT') {
+      channelProperties.customer_name = customer?.given_names || 'Customer';
+    }
+
+    if (channel.type === 'EWALLET') {
+      if (success_redirect_url) channelProperties.success_return_url = success_redirect_url;
+      if (failure_redirect_url) channelProperties.failure_return_url = failure_redirect_url;
+      if (customer?.mobile_number) channelProperties.mobile_number = customer.mobile_number; // Some e-wallets require phone
+    }
+
+    if (channel.type === 'OVER_THE_COUNTER') {
+      channelProperties.customer_name = customer?.given_names || 'Customer';
+    }
+
+    const paymentMethodPayload: any = {
+      type: channel.type,
+      reusability: 'ONE_TIME_USE',
+      [channel.field]: {
+        channel_code: channel.code,
+        channel_properties: channelProperties
+      }
+    };
 
     console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));
 

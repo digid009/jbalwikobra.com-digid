@@ -1066,8 +1066,10 @@ export const adminService = {
   },
 
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
+    console.log('[adminService.getOrders - CACHED] Fetching orders - page:', page, 'limit:', limit, 'statusFilter:', statusFilter);
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
       if (!supabase) {
+        console.error('[adminService.getOrders - CACHED] Supabase client not available');
         throw new Error('Supabase client not available');
       }
       let query = supabase
@@ -1089,7 +1091,7 @@ export const adminService = {
       }
 
       const rows = orders || [];
-      console.log('[adminService.getOrders] success:', { rows: rows.length, count });
+      console.log('[adminService.getOrders - CACHED] Successfully fetched', rows.length, 'orders out of', count || 0, 'total');
 
       // Get payment data for these orders
       const externalIds = rows.map(order => order.client_external_id).filter(Boolean);
@@ -1170,8 +1172,10 @@ export const adminService = {
     const service = new AdminService();
     return service.deleteProduct(id);
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
+    console.log('[adminService.getUsers - CACHED] Fetching users - page:', page, 'limit:', limit, 'searchTerm:', searchTerm);
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
       if (!supabase) {
+        console.error('[adminService.getUsers - CACHED] Supabase client not available');
         throw new Error('Supabase client not available');
       }
       let query = supabase
@@ -1186,7 +1190,12 @@ export const adminService = {
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[adminService.getUsers - CACHED] Query error:', error);
+        throw error;
+      }
+      
+      console.log('[adminService.getUsers - CACHED] Successfully fetched', data?.length || 0, 'users out of', count || 0, 'total');
       
       return {
         data: data || [],
