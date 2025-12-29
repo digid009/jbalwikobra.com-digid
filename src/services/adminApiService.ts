@@ -19,8 +19,8 @@ export interface AdminStats {
   averageRating: number;
   pendingOrders: number;
   completedOrders: number;
-  totalFlashSales?: number;
-  activeFlashSales?: number;
+  totalFlashSales: number;
+  activeFlashSales: number;
 }
 
 export interface AdminDashboardStats {
@@ -87,6 +87,7 @@ export interface User {
   phone?: string;
   created_at: string;
   is_admin?: boolean;
+  last_login?: string;
   last_login_at?: string;
   is_active?: boolean;
   phone_verified?: boolean;
@@ -100,6 +101,13 @@ export interface Product {
   price: number;
   original_price?: number;
   category_id?: string;
+  categoryData?: { id: string; name: string; slug?: string };
+  game_title?: string;
+  game_title_id?: string;
+  tier?: string;
+  tier_id?: string;
+  account_level?: string;
+  account_details?: string;
   stock: number;
   is_active: boolean;
   created_at: string;
