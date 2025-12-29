@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getActivatedPaymentChannels, getXenditChannelCode } from '../config/paymentChannels.js';
-import { fetchProductName } from '../_utils/productUtils.js';
+import { getActivatedPaymentChannels, getXenditChannelCode } from '../config/paymentChannels';
+import { fetchProductName } from '../_utils/productUtils';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
 const XENDIT_BASE_URL = 'https://api.xendit.co';
@@ -1086,7 +1086,7 @@ async function createNewOrderAdminNotification(sb: any, orderId: string, custome
 // Send WhatsApp group notification for new order
 async function sendNewOrderGroupNotification(customerName: string, productName: string, amount: number, orderType: string, orderId: string) {
   try {
-    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService');
     const wa = new DynamicWhatsAppService();
     
     const isRental = orderType === 'rental';
@@ -1174,7 +1174,7 @@ async function sendPaymentLinkNotification(paymentData: any, order: any) {
     // WhatsApp notification is optional convenience feature
     console.log('[Payment Link Notification] Payment link is available in payment interface, attempting optional WhatsApp notification...');
 
-    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService.js');
+    const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService');
     const wa = new DynamicWhatsAppService();
 
     // Get site URL for payment link

@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // WhatsApp groups data should not be cached as it can change frequently
