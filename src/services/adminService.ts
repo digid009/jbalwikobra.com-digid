@@ -546,7 +546,7 @@ class AdminService {
       // Optimize: Select only needed fields to reduce cache egress
       let query = supabase
         .from('users')
-        .select('id, email, name, avatar_url, phone, created_at, is_admin, last_login, is_active, phone_verified', { count: 'exact' })
+        .select('id, email, name, phone, created_at, is_admin, last_login, is_active', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
