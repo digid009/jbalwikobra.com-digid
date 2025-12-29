@@ -211,7 +211,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
     console.log('Attempting to find user in database...');
     const { data: users, error: userError } = await supabaseClient
       .from('users')
-      .select('id, email, phone, name, password_hash, is_admin, is_active, created_at')
+      .select('id, email, phone, name, password_hash, is_admin, is_active, created_at, profile_completed')
       .or(`phone.eq.${identifier},email.eq.${identifier}`);
 
     if (userError) {
@@ -282,9 +282,15 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
 
     const { password_hash, login_attempts, locked_until, ...safeUser } = user;
 
+    // Ensure profile_completed is included (default to true if not set)
+    const userResponse = {
+      ...safeUser,
+      profile_completed: safeUser.profile_completed ?? true
+    };
+
     return res.status(200).json({
       success: true,
-      user: safeUser,
+      user: userResponse,
       session_token: sessionToken,
       expires_at: expiresAt.toISOString()
     });
