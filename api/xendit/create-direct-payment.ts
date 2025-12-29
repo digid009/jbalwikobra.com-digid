@@ -113,34 +113,11 @@ export default async function handler(req: any, res: any) {
     // Reference: https://docs.xendit.co/apidocs/create-payment-request
     const methodLower = payment_method_id.toLowerCase();
 
-    // Canonical channel codes per Payment Request v3 (root-level channel_code)
-    const channelMap: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'OVER_THE_COUNTER'; code: string; requiresPhone?: boolean }> = {
-      // QRIS
-      qris: { type: 'QR_CODE', code: 'QRIS' },
-      // Virtual accounts
-      bca: { type: 'VIRTUAL_ACCOUNT', code: 'BCA' },
-      bni: { type: 'VIRTUAL_ACCOUNT', code: 'BNI' },
-      bri: { type: 'VIRTUAL_ACCOUNT', code: 'BRI' },
-      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'MANDIRI' },
-      permata: { type: 'VIRTUAL_ACCOUNT', code: 'PERMATA' },
-      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'CIMB' },
-      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'BSI' },
-      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'BJB' },
-      // E-wallets
-      gopay: { type: 'EWALLET', code: 'ID_GOPAY' },
-      ovo: { type: 'EWALLET', code: 'ID_OVO', requiresPhone: true },
-      dana: { type: 'EWALLET', code: 'ID_DANA' },
-      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA' },
-      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY' },
-      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY' },
-      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY' },
-      // Over the counter
-      alfamart: { type: 'OVER_THE_COUNTER', code: 'ALFAMART' },
-      indomaret: { type: 'OVER_THE_COUNTER', code: 'INDOMARET' },
-    };
+    // Use centralized config to avoid code mismatches
+    const { PaymentMethodUtils } = await import('../../src/config/paymentMethodConfig');
+    const config = PaymentMethodUtils.getConfig(methodLower);
 
-    const channel = channelMap[methodLower];
-    if (!channel) {
+    if (!config) {
       console.error('[Direct Payment] Unsupported payment method:', payment_method_id);
       return res.status(400).json({
         error: 'Unsupported payment method',
@@ -148,6 +125,48 @@ export default async function handler(req: any, res: any) {
         details: { payment_method_id }
       });
     }
+
+    // Canonical channel_code from config (adjust prefixes when required by Xendit)
+    let channelCode = config.xenditCode;
+    if (config.type === 'EWALLET' && !channelCode.startsWith('ID_')) {
+      // Payment Request v3 expects e-wallet channel_code to start with ID_
+      channelCode = `ID_${channelCode}`;
+    }
+
+    // Some bank codes are already in correct format; keep as-is for VA/OTC/QRIS
+    // Build channel properties per type
+    const channel_properties: Record<string, any> = {};
+
+    if (config.type === 'VIRTUAL_ACCOUNT') {
+      channel_properties.customer_name = customer?.given_names || 'Customer';
+    }
+
+    if (config.type === 'EWALLET') {
+      if (success_redirect_url) channel_properties.success_return_url = success_redirect_url;
+      if (failure_redirect_url) channel_properties.failure_return_url = failure_redirect_url;
+      if (customer?.mobile_number) channel_properties.mobile_number = customer.mobile_number;
+      if (['ovo'].includes(methodLower) && !customer?.mobile_number) {
+        return res.status(400).json({
+          error: 'Mobile number required for this e-wallet',
+          message: 'Please provide mobile_number for the selected e-wallet',
+          details: { payment_method_id }
+        });
+      }
+    }
+
+    if (config.type === 'OVER_THE_COUNTER') {
+      channel_properties.customer_name = customer?.given_names || 'Customer';
+    }
+
+    // Xendit Payment Request v3 expects channel_code nested inside the type-specific object
+    const paymentMethodPayload: any = {
+      type: config.type === 'RETAIL_OUTLET' ? 'OVER_THE_COUNTER' : config.type,
+      reusability: 'ONE_TIME_USE',
+      [config.type === 'QRIS' ? 'qr_code' : config.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : config.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
+        channel_code: channelCode,
+        channel_properties
+      }
+    };
 
     // Build channel properties per type
     const channel_properties: Record<string, any> = {};
@@ -173,12 +192,14 @@ export default async function handler(req: any, res: any) {
       channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
-    // According to Payment Request v3, channel_code and channel_properties are at the payment_method root
+    // Xendit Payment Request v3 expects channel_code nested inside the type-specific object
     const paymentMethodPayload: any = {
       type: channel.type,
       reusability: 'ONE_TIME_USE',
-      channel_code: channel.code,
-      channel_properties
+      [channel.type === 'QR_CODE' ? 'qr_code' : channel.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : channel.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
+        channel_code: channel.code,
+        channel_properties
+      }
     };
 
     console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));

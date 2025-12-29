@@ -1074,10 +1074,44 @@ export const adminService = {
   async getOrders(page: number = 1, limit: number = 10, statusFilter?: string): Promise<PaginatedResponse<Order>> {
     console.log('[adminService.getOrders - CACHED] Fetching orders - page:', page, 'limit:', limit, 'statusFilter:', statusFilter);
     return adminCache.getOrFetch(`admin:orders:${page}:${limit}:${statusFilter || 'all'}`, async () => {
+      // Prefer serverless admin API (service role) to bypass RLS issues in browser
+      try {
+        const params = new URLSearchParams({
+          action: 'orders',
+          page: String(page),
+          limit: String(limit)
+        });
+        if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+
+        const resp = await fetch(`/api/admin?${params.toString()}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (resp.ok) {
+          const payload = await resp.json();
+          const rows = payload.data?.data || payload.data || [];
+          const total = payload.data?.count ?? payload.count ?? rows.length;
+
+          console.log('[adminService.getOrders - CACHED] Fetched via API:', rows.length, 'of', total);
+
+          return {
+            data: rows as Order[],
+            count: total,
+            page,
+            totalPages: Math.ceil((total || 0) / limit)
+          };
+        }
+        console.warn('[adminService.getOrders - CACHED] API fallback failed with status', resp.status);
+      } catch (apiErr) {
+        console.warn('[adminService.getOrders - CACHED] API fetch failed, falling back to direct supabase:', apiErr);
+      }
+
       if (!supabase) {
         console.error('[adminService.getOrders - CACHED] Supabase client not available');
         throw new Error('Supabase client not available');
       }
+
       let query = supabase
         .from('orders')
         .select('*', { count: 'exact' });
@@ -1116,20 +1150,14 @@ export const adminService = {
         }
       }
 
-      // Get product names
-      const productIds = Array.from(new Set(rows.map((o: any) => o.product_id).filter(Boolean)));
-      const productsMap = await fetchProductNames(productIds);
-
-      // Map to Order interface with payment data
-      const mapped: Order[] = rows.map((o: any) => {
-        const paymentRecord = paymentsMap[o.client_external_id];
-        
+      // Normalize fallback for missing customer_name/product_id
+      const normalizeOrder = (o: any) => {
         return {
           id: o.id,
-          customer_name: o.customer_name || 'Unknown Customer',
+          customer_name: o.customer_name || o.customer || o.client_name || 'Unknown Customer',
           product_name: o.product_id ? productsMap[o.product_id] : undefined,
           amount: Number(o.amount) || 0,
-          status: o.status || 'pending',
+          status: (o.status || 'pending').toLowerCase(),
           order_type: o.order_type || 'purchase',
           rental_duration: o.rental_duration ?? null,
           created_at: o.created_at,
@@ -1141,20 +1169,31 @@ export const adminService = {
           payment_method: o.payment_method,
           xendit_invoice_id: o.xendit_invoice_id,
           // Payment information from payments table
-          payment_data: paymentRecord ? {
-            xendit_id: paymentRecord.xendit_id,
-            payment_method_type: paymentRecord.payment_method,
-            payment_status: paymentRecord.status,
-            qr_url: paymentRecord.payment_data?.qr_url,
-            qr_string: paymentRecord.payment_data?.qr_string,
-            account_number: paymentRecord.payment_data?.account_number,
-            bank_code: paymentRecord.payment_data?.bank_code,
-            payment_url: paymentRecord.payment_data?.payment_url,
-            payment_code: paymentRecord.payment_data?.payment_code,
-            retail_outlet: paymentRecord.payment_data?.retail_outlet,
-          } : undefined
+          payment_data: (() => {
+            const paymentRecord = paymentsMap[o.client_external_id];
+            if (!paymentRecord) return undefined;
+            return {
+              xendit_id: paymentRecord.xendit_id,
+              payment_method_type: paymentRecord.payment_method,
+              payment_status: paymentRecord.status,
+              qr_url: paymentRecord.payment_data?.qr_url,
+              qr_string: paymentRecord.payment_data?.qr_string,
+              account_number: paymentRecord.payment_data?.account_number,
+              bank_code: paymentRecord.payment_data?.bank_code,
+              payment_url: paymentRecord.payment_data?.payment_url,
+              payment_code: paymentRecord.payment_data?.payment_code,
+              retail_outlet: paymentRecord.payment_data?.retail_outlet,
+            };
+          })()
         };
-      });
+      };
+
+      // Get product names
+      const productIds = Array.from(new Set(rows.map((o: any) => o.product_id).filter(Boolean)));
+      const productsMap = await fetchProductNames(productIds);
+
+      // Map to Order interface with payment data
+      const mapped: Order[] = rows.map(normalizeOrder);
 
       return {
         data: mapped,
@@ -1180,6 +1219,51 @@ export const adminService = {
   },  async getUsers(page: number = 1, limit: number = 10, searchTerm?: string): Promise<PaginatedResponse<User>> {
     console.log('[adminService.getUsers - CACHED] Fetching users - page:', page, 'limit:', limit, 'searchTerm:', searchTerm);
     return adminCache.getOrFetch(`admin:users:${page}:${limit}:${searchTerm || ''}`, async () => {
+      // Prefer serverless admin API (service role) to bypass RLS issues in browser
+      try {
+        const params = new URLSearchParams({
+          action: 'users',
+          page: String(page),
+          limit: String(limit)
+        });
+        if (searchTerm) params.set('search', searchTerm);
+
+        const resp = await fetch(`/api/admin?${params.toString()}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (resp.ok) {
+          const payload = await resp.json();
+          const rows = payload.data || payload.data?.data || [];
+          const total = payload.count ?? payload.data?.count ?? rows.length;
+
+          console.log('[adminService.getUsers - CACHED] Fetched via API:', rows.length, 'of', total);
+
+          // Normalize fields to UI expectations
+          const normalized = rows.map((u: any) => ({
+            id: u.id,
+            email: u.email || u.user_email || '',
+            name: u.name || u.full_name || u.username || u.email || 'Unknown',
+            avatar_url: u.avatar_url || u.avatar,
+            phone: u.phone || u.phone_number,
+            created_at: u.created_at,
+            is_admin: u.is_admin ?? (u.role === 'admin'),
+            last_login: u.last_login || u.last_sign_in_at || u.updated_at
+          }));
+
+          return {
+            data: normalized,
+            count: total,
+            page,
+            totalPages: Math.ceil((total || 0) / limit)
+          };
+        }
+        console.warn('[adminService.getUsers - CACHED] API fallback failed with status', resp.status);
+      } catch (apiErr) {
+        console.warn('[adminService.getUsers - CACHED] API fetch failed, falling back to direct supabase:', apiErr);
+      }
+
       if (!supabase) {
         console.error('[adminService.getUsers - CACHED] Supabase client not available');
         throw new Error('Supabase client not available');
@@ -1201,13 +1285,45 @@ export const adminService = {
         throw error;
       }
       
-      console.log('[adminService.getUsers - CACHED] Successfully fetched', data?.length || 0, 'users out of', count || 0, 'total');
+      let usersData = data || [];
+      let usersCount = count || 0;
+
+      // Fallback: if no rows returned, try profiles table (common Supabase schema)
+      if (usersData.length === 0) {
+        console.warn('[adminService.getUsers - CACHED] users table empty, trying profiles fallback');
+        const { data: profiles, error: profilesError, count: profilesCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range((page - 1) * limit, page * limit - 1);
+
+        if (!profilesError && profiles) {
+          usersData = profiles;
+          usersCount = profilesCount || profiles.length;
+        } else {
+          console.error('[adminService.getUsers - CACHED] profiles fallback error:', profilesError);
+        }
+      }
+
+      // Normalize fields to UI expectations
+      const normalized = usersData.map((u: any) => ({
+        id: u.id,
+        email: u.email || u.user_email || '',
+        name: u.name || u.full_name || u.username || u.email || 'Unknown',
+        avatar_url: u.avatar_url || u.avatar,
+        phone: u.phone || u.phone_number,
+        created_at: u.created_at,
+        is_admin: u.is_admin ?? (u.role === 'admin'),
+        last_login: u.last_login || u.last_sign_in_at || u.updated_at
+      }));
+
+      console.log('[adminService.getUsers - CACHED] Successfully fetched', normalized.length, 'users out of', usersCount, 'total');
       
       return {
-        data: data || [],
-        count: count || 0,
+        data: normalized,
+        count: usersCount,
         page,
-        totalPages: Math.ceil((count || 0) / limit)
+        totalPages: Math.ceil((usersCount) / limit)
       };
     });
   },
