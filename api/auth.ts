@@ -127,10 +127,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
 
   try {
     // Early environment check to prevent framework HTML 500s

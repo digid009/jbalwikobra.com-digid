@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 import { createClient } from '@supabase/supabase-js';
 import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 
