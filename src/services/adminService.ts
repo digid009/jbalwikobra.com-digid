@@ -261,8 +261,12 @@ class AdminService {
   async getOrders(page = 1, limit = 20, status?: string): Promise<{ data: Order[], count: number }> {
     try {
       if (!supabase) {
+        console.error('[adminService.getOrders] Supabase client not available');
         throw new Error('Supabase client not available');
       }
+      
+      console.log('[adminService.getOrders] Fetching orders - page:', page, 'limit:', limit, 'status:', status);
+      
       // Build the query with optional status filter
       let query = supabase
         .from('orders')
@@ -281,9 +285,11 @@ class AdminService {
       const { data: ordersData, error: ordersError, count } = await query;
 
       if (ordersError) {
-        console.error('Orders query error:', ordersError);
+        console.error('[adminService.getOrders] Query error:', ordersError);
         throw ordersError;
       }
+      
+      console.log('[adminService.getOrders] Successfully fetched', ordersData?.length || 0, 'orders out of', count || 0, 'total');
 
       // Get payment data for orders that have client_external_id
       const externalIds = (ordersData || [])

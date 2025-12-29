@@ -109,68 +109,97 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Map payment method ID to Xendit Payment Request API format
-    const paymentMethodMap: Record<string, string> = {
-      'qris': 'QR_CODE',
-      'bca': 'VIRTUAL_ACCOUNT',
-      'bni': 'VIRTUAL_ACCOUNT',
-      'bri': 'VIRTUAL_ACCOUNT',
-      'mandiri': 'VIRTUAL_ACCOUNT',
-      'permata': 'VIRTUAL_ACCOUNT',
-      'gopay': 'EWALLET',
-      'ovo': 'EWALLET',
-      'dana': 'EWALLET',
-      'linkaja': 'EWALLET',
-      'shopeepay': 'EWALLET',
-      'alfamart': 'OVER_THE_COUNTER',
-      'indomaret': 'OVER_THE_COUNTER'
-    };
+    // Map payment method ID to Xendit Payment Request API v3 format
+    // Reference: https://docs.xendit.co/apidocs/create-payment-request
+    let paymentMethodPayload: any;
+    const methodLower = payment_method_id.toLowerCase();
 
-    const xenditPaymentType = paymentMethodMap[payment_method_id.toLowerCase()] || payment_method_id;
-    console.log('[Direct Payment] Mapped payment method:', payment_method_id, '->', xenditPaymentType);
+    if (methodLower === 'qris') {
+      paymentMethodPayload = {
+        type: 'QR_CODE',
+        reusability: 'ONE_TIME_USE',
+        qr_code: {
+          channel_code: 'QRIS'
+        }
+      };
+    } else if (['bca', 'bni', 'bri', 'mandiri', 'permata', 'cimb', 'bsi'].includes(methodLower)) {
+      paymentMethodPayload = {
+        type: 'VIRTUAL_ACCOUNT',
+        reusability: 'ONE_TIME_USE',
+        virtual_account: {
+          channel_code: payment_method_id.toUpperCase(),
+          channel_properties: {
+            customer_name: customer?.given_names || 'Customer'
+          }
+        }
+      };
+    } else if (['gopay', 'ovo', 'dana', 'linkaja', 'shopeepay', 'jeniuspay', 'astrapay'].includes(methodLower)) {
+      paymentMethodPayload = {
+        type: 'EWALLET',
+        reusability: 'ONE_TIME_USE',
+        ewallet: {
+          channel_code: payment_method_id.toUpperCase(),
+          channel_properties: {
+            success_return_url: success_redirect_url,
+            failure_return_url: failure_redirect_url
+          }
+        }
+      };
+    } else if (['alfamart', 'indomaret'].includes(methodLower)) {
+      paymentMethodPayload = {
+        type: 'OVER_THE_COUNTER',
+        reusability: 'ONE_TIME_USE',
+        over_the_counter: {
+          channel_code: payment_method_id.toUpperCase(),
+          channel_properties: {
+            customer_name: customer?.given_names || 'Customer'
+          }
+        }
+      };
+    } else {
+      // Default fallback
+      paymentMethodPayload = {
+        type: payment_method_id.toUpperCase(),
+        reusability: 'ONE_TIME_USE'
+      };
+    }
 
-    // Call Xendit Payment Request API (V3)
-    // Using Payment Request API for direct payment methods
-    const xenditPayload = {
+    console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));
+
+    // Call Xendit Payment Request API v3
+    const xenditPayload: any = {
       amount,
       currency,
-      payment_method: {
-        type: xenditPaymentType,
-        reusability: 'ONE_TIME_USE',
-        ...(xenditPaymentType === 'VIRTUAL_ACCOUNT' && {
-          virtual_account: {
-            channel_code: payment_method_id.toUpperCase()
-          }
-        }),
-        ...(xenditPaymentType === 'EWALLET' && {
-          ewallet: {
-            channel_code: payment_method_id.toUpperCase()
-          }
-        }),
-        ...(xenditPaymentType === 'OVER_THE_COUNTER' && {
-          over_the_counter: {
-            channel_code: payment_method_id.toUpperCase()
-          }
-        })
-      },
-      customer,
+      payment_method: paymentMethodPayload,
       description: description || `Payment for ${external_id}`,
       reference_id: external_id,
-      success_return_url: success_redirect_url,
-      failure_return_url: failure_redirect_url,
       metadata: {
         order_id: createdOrder?.id || external_id
       }
     };
 
+    // Add customer if provided
+    if (customer) {
+      xenditPayload.customer = customer;
+    }
+
+    // Add return URLs for payment methods that support them
+    if (success_redirect_url) {
+      xenditPayload.success_return_url = success_redirect_url;
+    }
+    if (failure_redirect_url) {
+      xenditPayload.failure_return_url = failure_redirect_url;
+    }
+
+    console.log('[Direct Payment] Xendit payload:', JSON.stringify(xenditPayload, null, 2));
     console.log('[Direct Payment] Calling Xendit API...');
 
-    const response = await fetch('https://api.xendit.co/payment_requests', {
+    const response = await fetch('https://api.xendit.co/v3/payment_requests', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
         'Content-Type': 'application/json',
-        'api-version': '2022-07-31'
+        'api-version': '2024-11-11'
       },
       body: JSON.stringify(xenditPayload)
     });
