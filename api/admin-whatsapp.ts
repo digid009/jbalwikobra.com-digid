@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 
 // Shared helpers
 function respond(res: VercelResponse, status: number, body: any) {
@@ -125,6 +126,10 @@ async function handleValidation(sb: any, res: VercelResponse) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  setCorsHeaders(req, res);
+  if (handleCorsPreFlight(req, res)) return;
+
   try {
     const sb = getSupabase();
     // Development fallback: allow local UI testing without real Supabase credentials

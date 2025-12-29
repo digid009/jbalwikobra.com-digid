@@ -1,8 +1,13 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  setCorsHeaders(req, res);
+  if (handleCorsPreFlight(req, res)) return;
+
   if (req.method !== 'GET') {
     res.setHeader('Content-Type', 'application/json');
     return res.status(405).send(JSON.stringify({ error: 'method_not_allowed' }));

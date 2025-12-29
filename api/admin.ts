@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 
 // Lazy supabase client (service role preferred for admin operations)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
@@ -269,6 +270,10 @@ async function timeSeries(days?: number, startDate?: string, endDate?: string) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  setCorsHeaders(req, res);
+  if (handleCorsPreFlight(req, res)) return;
+
   try {
     const action = normalizeAction(req.query.action);
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || 'unknown';

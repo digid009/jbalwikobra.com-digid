@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 
 // Service-role client (server only)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
@@ -26,6 +27,10 @@ function respond(res: VercelResponse, status: number, body: any) {
 function parseLimit(v: any, def: number) { const n = parseInt(v as string, 10); return Number.isFinite(n) && n > 0 ? Math.min(n, 50) : def; }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  setCorsHeaders(req, res);
+  if (handleCorsPreFlight(req, res)) return;
+
   try {
     const ip = ((req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown').toString();
     if (!allow(ip)) return respond(res, 429, { error: 'rate_limited' });
