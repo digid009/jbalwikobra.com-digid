@@ -62,17 +62,20 @@ async function dashboardStats() {
   try {
     console.log('🔍 [API /api/admin] dashboardStats: Querying database...');
     
-    const ordersRes = await supabase.from('orders').select('id', { count: 'exact', head: true });
-    const usersRes = await supabase.from('users').select('id', { count: 'exact', head: true });
-    const productsRes = await supabase.from('products').select('id', { count: 'exact', head: true });
+    // Use optimized approach with separate queries and error handling
+    const [ordersRes, usersRes, productsRes] = await Promise.all([
+      supabase.from('orders').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e })),
+      supabase.from('users').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e })),
+      supabase.from('products').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e }))
+    ]);
     
     console.log('📈 [API /api/admin] dashboardStats: Basic counts:', {
       orders: ordersRes.count,
       users: usersRes.count,
       products: productsRes.count,
-      ordersError: ordersRes.error,
-      usersError: usersRes.error,
-      productsError: productsRes.error
+      ordersError: ordersRes.error?.message,
+      usersError: usersRes.error?.message,
+      productsError: productsRes.error?.message
     });
     
     let flashSalesCount = 0;
@@ -84,57 +87,62 @@ async function dashboardStats() {
     }
     
     let reviewsCount = 0;
+    let averageRating = 0;
     try {
-      const reviewsRes = await supabase.from('reviews').select('id', { count: 'exact', head: true });
+      const reviewsRes = await supabase.from('reviews').select('id, rating', { count: 'exact' });
       reviewsCount = reviewsRes.count || 0;
+      if (reviewsRes.data && reviewsRes.data.length > 0) {
+        const totalRating = reviewsRes.data.reduce((sum, r) => sum + (Number(r.rating) || 0), 0);
+        averageRating = totalRating / reviewsRes.data.length;
+      }
     } catch (e) {
       console.warn('⚠️ [API /api/admin] dashboardStats: Reviews query failed:', e);
     }
     
-    // Get completed/paid orders count and sum
-    console.log('💰 [API /api/admin] dashboardStats: Fetching completed/paid orders...');
-    const { data: completedOrders, error: completedError } = await supabase
+    // Get completed/paid orders count and sum - more efficient with single query
+    console.log('💰 [API /api/admin] dashboardStats: Fetching order statistics...');
+    const { data: orderStats, error: statsError } = await supabase
       .from('orders')
       .select('amount, status')
-      .in('status', ['completed', 'paid'])
-      .limit(2000); // Increased limit to get more accurate stats
+      .limit(5000); // Increased limit for better accuracy
     
-    if (completedError) {
-      console.error('❌ [API /api/admin] dashboardStats: Error fetching completed orders:', completedError);
+    if (statsError) {
+      console.error('❌ [API /api/admin] dashboardStats: Error fetching order stats:', statsError);
     } else {
-      console.log('✅ [API /api/admin] dashboardStats: Completed/paid orders fetched:', completedOrders?.length);
+      console.log('✅ [API /api/admin] dashboardStats: Order stats fetched:', orderStats?.length, 'orders');
     }
     
-    const { data: pendingOrders, error: pendingError } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('status', 'pending')
-      .limit(2000);
+    // Calculate statistics from fetched orders
+    let revenue = 0;
+    let completedRevenue = 0;
+    let completed = 0;
+    let pending = 0;
     
-    if (pendingError) {
-      console.error('❌ [API /api/admin] dashboardStats: Error fetching pending orders:', pendingError);
-    }
-    
-    let revenue = 0, completedRevenue = 0;
-    const completed = completedOrders?.length || 0;
-    const pending = pendingOrders?.length || 0;
-    
-    // Calculate revenue from paid and completed orders
-    (completedOrders || []).forEach(r => { 
-      const amount = Number(r.amount) || 0;
-      revenue += amount;
+    (orderStats || []).forEach(order => {
+      const amount = Number(order.amount) || 0;
+      const status = (order.status || '').toLowerCase();
+      
+      if (status === 'completed' || status === 'paid') {
+        completed++;
+        revenue += amount;
+        completedRevenue += amount;
+      } else if (status === 'pending') {
+        pending++;
+      }
     });
     
-    // Note: completedRevenue kept for API compatibility with existing frontend code
-    // Both revenue and completedRevenue represent the sum of paid/completed orders
-    completedRevenue = revenue;
-    
     const stats = {
-      orders: { count: ordersRes.count||0, completed, pending, revenue, completedRevenue },
-      users: { count: usersRes.count||0 },
-      products: { count: productsRes.count||0 },
+      orders: { 
+        count: ordersRes.count || 0, 
+        completed, 
+        pending, 
+        revenue, 
+        completedRevenue 
+      },
+      users: { count: usersRes.count || 0 },
+      products: { count: productsRes.count || 0 },
       flashSales: { count: flashSalesCount },
-      reviews: { count: reviewsCount, averageRating: 0 }
+      reviews: { count: reviewsCount, averageRating: Math.round(averageRating * 10) / 10 }
     };
     
     console.log('✅ [API /api/admin] dashboardStats: Final stats:', JSON.stringify(stats, null, 2));
@@ -142,6 +150,8 @@ async function dashboardStats() {
     return stats;
   } catch (error) {
     console.error('❌ [API /api/admin] dashboardStats: Unexpected error:', error);
+    // Return mock data but log the error for debugging
+    console.error('❌ [API /api/admin] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return mockDashboard();
   }
 }

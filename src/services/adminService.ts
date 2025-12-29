@@ -1911,7 +1911,43 @@ export const adminService = {
 
   // Alias for backwards compatibility
   async getDashboardStats(): Promise<AdminStats> {
-    return this.getAdminStats();
+    // Use the admin API endpoint instead of direct Supabase queries
+    // This ensures we use service_role key for proper data access
+    try {
+      console.log('[adminService.getDashboardStats] Calling /api/admin endpoint...');
+      
+      const response = await fetch('/api/admin?action=dashboard-stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('[adminService.getDashboardStats] API response:', data);
+
+      // Transform API response to AdminStats format
+      return {
+        totalOrders: data.orders?.count || 0,
+        totalRevenue: data.orders?.revenue || 0,
+        totalUsers: data.users?.count || 0,
+        totalProducts: data.products?.count || 0,
+        totalReviews: data.reviews?.count || 0,
+        averageRating: data.reviews?.averageRating || 0,
+        pendingOrders: data.orders?.pending || 0,
+        completedOrders: data.orders?.completed || 0,
+        totalFlashSales: data.flashSales?.count || 0,
+        activeFlashSales: 0
+      };
+    } catch (error) {
+      console.error('[adminService.getDashboardStats] Error calling API:', error);
+      // Fallback to direct Supabase queries if API fails
+      return this.getAdminStats();
+    }
   },
 
   // Search functionality
