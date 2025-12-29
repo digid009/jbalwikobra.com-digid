@@ -47,7 +47,7 @@ export default async function handler(req: any, res: any) {
     console.log('[Direct Payment] Creating payment with method:', payment_method_id);
 
     // Create order in database if order data is provided
-    let createdOrder = null;
+    let createdOrder: { id: string; customer_name: string; product_name: string; amount: number; status: string } | null = null;
     if (order && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const { createClient } = await import('@supabase/supabase-js');

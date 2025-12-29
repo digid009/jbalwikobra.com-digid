@@ -64,9 +64,9 @@ async function dashboardStats() {
     
     // Use optimized approach with separate queries and error handling
     const [ordersRes, usersRes, productsRes] = await Promise.all([
-      supabase.from('orders').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e })),
-      supabase.from('users').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e })),
-      supabase.from('products').select('id', { count: 'exact', head: true }).catch(e => ({ count: 0, error: e }))
+      supabase.from('orders').select('id', { count: 'exact', head: true }),
+      supabase.from('users').select('id', { count: 'exact', head: true }),
+      supabase.from('products').select('id', { count: 'exact', head: true })
     ]);
     
     console.log('📈 [API /api/admin] dashboardStats: Basic counts:', {
