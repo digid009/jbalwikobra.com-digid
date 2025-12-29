@@ -899,7 +899,7 @@ export const adminService = {
     console.log('🔄 [adminService.getAdminStats] Starting stats fetch...');
     
     // In development without Supabase, return safe fallback to avoid crashing the Admin UI
-    if (!hasSupabase) {
+    if (!supabase) {
       console.warn('⚠️ [adminService.getAdminStats] Supabase not configured, returning fallback');
       return {
         totalOrders: 0,
