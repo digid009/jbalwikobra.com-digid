@@ -67,12 +67,36 @@ export default async function handler(req: any, res: any) {
           client_external_id: external_id || null,
         };
 
-        // Upsert to avoid duplicates
-        const { data, error } = await sb
+        // Check if order already exists with this external_id
+        const { data: existingOrder } = await sb
           .from('orders')
-          .upsert(orderPayload, { onConflict: 'client_external_id' })
           .select('id, customer_name, product_name, amount, status')
-          .single();
+          .eq('client_external_id', external_id)
+          .maybeSingle();
+
+        let data, error;
+        
+        if (existingOrder) {
+          // Update existing order
+          console.log('[Direct Payment] Updating existing order:', existingOrder.id);
+          const updateResult = await sb
+            .from('orders')
+            .update(orderPayload)
+            .eq('id', existingOrder.id)
+            .select('id, customer_name, product_name, amount, status')
+            .single();
+          data = updateResult.data;
+          error = updateResult.error;
+        } else {
+          // Create new order
+          const insertResult = await sb
+            .from('orders')
+            .insert(orderPayload)
+            .select('id, customer_name, product_name, amount, status')
+            .single();
+          data = insertResult.data;
+          error = insertResult.error;
+        }
 
         if (error) {
           console.error('[Direct Payment] Order creation error:', error);
@@ -85,14 +109,49 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    // Map payment method ID to Xendit Payment Request API format
+    const paymentMethodMap: Record<string, string> = {
+      'qris': 'QR_CODE',
+      'bca': 'VIRTUAL_ACCOUNT',
+      'bni': 'VIRTUAL_ACCOUNT',
+      'bri': 'VIRTUAL_ACCOUNT',
+      'mandiri': 'VIRTUAL_ACCOUNT',
+      'permata': 'VIRTUAL_ACCOUNT',
+      'gopay': 'EWALLET',
+      'ovo': 'EWALLET',
+      'dana': 'EWALLET',
+      'linkaja': 'EWALLET',
+      'shopeepay': 'EWALLET',
+      'alfamart': 'OVER_THE_COUNTER',
+      'indomaret': 'OVER_THE_COUNTER'
+    };
+
+    const xenditPaymentType = paymentMethodMap[payment_method_id.toLowerCase()] || payment_method_id;
+    console.log('[Direct Payment] Mapped payment method:', payment_method_id, '->', xenditPaymentType);
+
     // Call Xendit Payment Request API (V3)
     // Using Payment Request API for direct payment methods
     const xenditPayload = {
       amount,
       currency,
       payment_method: {
-        type: payment_method_id,
-        reusability: 'ONE_TIME_USE'
+        type: xenditPaymentType,
+        reusability: 'ONE_TIME_USE',
+        ...(xenditPaymentType === 'VIRTUAL_ACCOUNT' && {
+          virtual_account: {
+            channel_code: payment_method_id.toUpperCase()
+          }
+        }),
+        ...(xenditPaymentType === 'EWALLET' && {
+          ewallet: {
+            channel_code: payment_method_id.toUpperCase()
+          }
+        }),
+        ...(xenditPaymentType === 'OVER_THE_COUNTER' && {
+          over_the_counter: {
+            channel_code: payment_method_id.toUpperCase()
+          }
+        })
       },
       customer,
       description: description || `Payment for ${external_id}`,
