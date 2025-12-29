@@ -532,8 +532,12 @@ class AdminService {
   async getUsers(page = 1, limit = 20, search?: string): Promise<{ data: User[], count: number }> {
     try {
       if (!supabase) {
+        console.error('[adminService.getUsers] Supabase client not available');
         throw new Error('Supabase client not available');
       }
+      
+      console.log('[adminService.getUsers] Fetching users - page:', page, 'limit:', limit, 'search:', search);
+      
       // Optimize: Select only needed fields to reduce cache egress
       let query = supabase
         .from('users')
@@ -547,11 +551,16 @@ class AdminService {
 
       const { data, error, count } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('[adminService.getUsers] Query error:', error);
+        throw error;
+      }
+      
+      console.log('[adminService.getUsers] Successfully fetched', data?.length || 0, 'users out of', count || 0, 'total');
 
       return { data: data || [], count: count || 0 };
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('[adminService.getUsers] Error fetching users:', error);
       return { data: [], count: 0 };
     }
   }
