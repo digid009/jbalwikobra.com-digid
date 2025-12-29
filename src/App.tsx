@@ -27,11 +27,11 @@ import { enhancedProductService } from './services/enhancedProductService';
 import UserFloatingNotifications from './components/UserFloatingNotifications';
 import FirstVisitVerification from './components/FirstVisitVerification';
 
-// CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
+// CRITICAL PERFORMANCE FIX: Lazy load ALL pages to reduce initial JS bundle size
 // This reduces initial JS bundle by 70%+
 
 // Lazy load ALL pages for maximum performance
-const HomePage = React.lazy(() => import('./pages/HomePage'));
+const MaintenancePage = React.lazy(() => import('./pages/MaintenancePage'));
 const TraditionalAuthPage = React.lazy(() => import('./pages/TraditionalAuthPage'));
 
 // Lazy load all other pages
@@ -200,8 +200,8 @@ function App() {
                       
                       <Suspense fallback={<PageLoader />}>
                         <Routes>
-                          {/* Core pages - loaded immediately */}
-                          <Route path="/" element={<HomePage />} />
+                          {/* Core pages - main route shows maintenance page */}
+                          <Route path="/" element={<MaintenancePage />} />
                           <Route path="/auth" element={<TraditionalAuthPage />} />
                           
                           {/* Lazy loaded pages */}
