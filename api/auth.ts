@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig';
 // Remove unused imports to prevent module resolution issues in production
 // import { DynamicWhatsAppService } from './_utils/dynamicWhatsAppService';
 // Remove adminNotificationService import to avoid module resolution issues
@@ -118,19 +119,14 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Handle CORS
+  setCorsHeaders(req, res);
+  if (handleCorsPreFlight(req, res)) return;
   
   // Set cache headers - no caching for auth endpoints (sensitive data)
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
 
   try {
     // Early environment check to prevent framework HTML 500s

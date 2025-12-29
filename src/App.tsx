@@ -25,8 +25,8 @@ import { productionMonitor } from './utils/productionMonitor';
 import { onIdle, warmImport } from './utils/prefetch';
 import { enhancedProductService } from './services/enhancedProductService';
 import UserFloatingNotifications from './components/UserFloatingNotifications';
-// DISABLED: Cloudflare Turnstile verification
-// import FirstVisitVerification from './components/FirstVisitVerification';
+// Cloudflare Turnstile verification - enabled when maintenance mode is off
+import FirstVisitVerification from './components/FirstVisitVerification';
 
 // CRITICAL PERFORMANCE FIX: Lazy load ALL pages including HomePage
 // This reduces initial JS bundle by 70%+
@@ -112,7 +112,13 @@ function App() {
   });
 
   // Check if maintenance mode is enabled
-  const isMaintenanceMode = process.env.REACT_APP_MAINTENANCE_MODE === 'true';
+  // Vercel automatically injects VERCEL_ENV (production, preview, development)
+  // Check maintenance mode for the specific environment
+  const isMaintenanceMode = React.useMemo(() => {
+    const maintenanceValue = process.env.REACT_APP_MAINTENANCE_MODE;
+    // If value is 'true', enable maintenance mode
+    return maintenanceValue === 'true';
+  }, []);
 
   // Initialize favicon and page title
   React.useEffect(() => {
@@ -146,29 +152,27 @@ function App() {
     }
   }, []);
 
-  return (
-    <ErrorBoundary>
-      {/* DISABLED: Cloudflare Turnstile verification */}
-      {/* <FirstVisitVerification> */}
-        <ThemeProvider>
-        <AuthProvider>
-          <WishlistProvider>
-            <ToastProvider>
-              <ConfirmationProvider>
-                <Router
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true
-                  }}
-                >
-                  <ScrollToTop />
-                  {/* Maintenance Mode - Show maintenance page for all routes */}
-                  {isMaintenanceMode ? (
-                    <Suspense fallback={<PageLoader />}>
-                      <MaintenancePage />
-                    </Suspense>
-                  ) : (
-                  <Routes>
+  // Wrap content conditionally with Turnstile verification
+  const AppContent = () => (
+    <ThemeProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          <ToastProvider>
+            <ConfirmationProvider>
+              <Router
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true
+                }}
+              >
+                <ScrollToTop />
+                {/* Maintenance Mode - Show maintenance page for all routes */}
+                {isMaintenanceMode ? (
+                  <Suspense fallback={<PageLoader />}>
+                    <MaintenancePage />
+                  </Suspense>
+                ) : (
+                <Routes>
                 {/* Admin routes - Direct access without sidebar layout */}
                 {process.env.NODE_ENV === 'development' ? (
                   // Development: Allow admin access without authentication
@@ -244,16 +248,27 @@ function App() {
                   </div>
                 } />
               </Routes>
-                  )}
-                <Analytics />
-                <SpeedInsights />
-              </Router>
-              </ConfirmationProvider>
-            </ToastProvider>
-          </WishlistProvider>
-        </AuthProvider>
-        </ThemeProvider>
-      {/* </FirstVisitVerification> */}
+                )}
+              <Analytics />
+              <SpeedInsights />
+            </Router>
+            </ConfirmationProvider>
+          </ToastProvider>
+        </WishlistProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+
+  return (
+    <ErrorBoundary>
+      {/* Cloudflare Turnstile verification - enabled when maintenance mode is off */}
+      {!isMaintenanceMode && process.env.REACT_APP_TURNSTILE_SITE_KEY ? (
+        <FirstVisitVerification>
+          <AppContent />
+        </FirstVisitVerification>
+      ) : (
+        <AppContent />
+      )}
     </ErrorBoundary>
   );
 }
