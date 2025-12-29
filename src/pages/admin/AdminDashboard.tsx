@@ -19,7 +19,7 @@ const AdminFeedManagement = lazy(() => import('./components/AdminFeedManagement'
 const AdminBannersManagement = lazy(() => import('./components/AdminBannersManagement').then(m => ({ default: m.AdminBannersManagement })));
 const AdminFlashSalesManagement = lazy(() => import('../../components/admin/flash-sales').then(m => ({ default: m.AdminFlashSalesManagement })));
 const AdminReviewsManagement = lazy(() => import('./components/AdminReviewsManagement').then(m => ({ default: m.AdminReviewsManagement })));
-const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPage').then(m => ({ default: m.AdminNotificationsPage })));
+const AdminNotificationsPage = lazy(() => import('./components/AdminNotificationsPageV2').then(m => ({ default: m.AdminNotificationsPageV2 })));
 const AdminHeaderV2 = lazy(() => import('./components/AdminHeaderV2'));
 const AdminWhatsAppSettings = lazy(() => import('./AdminWhatsAppSettings'));
 const AdminSettings = lazy(() => import('./AdminSettings'));

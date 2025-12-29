@@ -1,22 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
 import { adminCache } from './adminCache';
 import { ordersService } from './ordersService';
 import { dbRowToDomainProduct } from './mappers/productMapper';
+import { supabase } from './supabase';
 
-// Use service role key from environment variables for admin operations
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const serviceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-const hasSupabase = !!supabaseUrl && !!serviceKey;
-const supabase = hasSupabase ? createClient(supabaseUrl as string, serviceKey as string) : null;
-
+// Use the shared authenticated Supabase client
+// This ensures RLS policies work correctly with the user's session
 try {
-  // Log in dev to make it obvious when running without DB
-  if (hasSupabase) {
-    console.log(
-      'AdminService: Using',
-      (serviceKey as string).includes('service_role') ? 'service role key' : 'anonymous key',
-      'for database access'
-    );
+  if (supabase) {
+    console.log('AdminService: Using authenticated Supabase client with user session');
   } else {
     console.warn('AdminService: Supabase not configured — running with dev fallbacks');
   }
