@@ -116,7 +116,7 @@ export default async function handler(req: any, res: any) {
     // Inline payment method config (avoid cross-boundary imports in serverless)
     const PAYMENT_CONFIG: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'RETAIL_OUTLET'; code: string }> = {
       // QRIS
-      qris: { type: 'QRIS', code: 'QRIS' },
+      qris: { type: 'QR_CODE', code: 'QRIS' },
       // Virtual accounts
       bjb: { type: 'VIRTUAL_ACCOUNT', code: 'BJB' },
       bni: { type: 'VIRTUAL_ACCOUNT', code: 'BNI' },
@@ -178,7 +178,7 @@ export default async function handler(req: any, res: any) {
     const paymentMethodPayload: any = {
       type: config.type === 'RETAIL_OUTLET' ? 'OVER_THE_COUNTER' : config.type,
       reusability: 'ONE_TIME_USE',
-      [config.type === 'QRIS' ? 'qr_code' : config.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : config.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
+      [config.type === 'QR_CODE' ? 'qr_code' : config.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : config.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
         channel_code: channelCode,
         channel_properties
       }
