@@ -52,6 +52,7 @@ const FeedPage = React.lazy(() => import('./pages/FeedPage'));
 const DesignSystemShowcase = React.lazy(() => import('./pages/DesignSystemShowcase'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'));
 const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
+const MaintenancePage = React.lazy(() => import('./pages/MaintenancePage'));
 
 // Lazy load admin pages (biggest performance impact)
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
@@ -110,6 +111,9 @@ function App() {
     hasSupabaseKey: !!process.env.REACT_APP_SUPABASE_ANON_KEY
   });
 
+  // Check if maintenance mode is enabled
+  const isMaintenanceMode = process.env.REACT_APP_MAINTENANCE_MODE === 'true';
+
   // Initialize favicon and page title
   React.useEffect(() => {
     FaviconService.updateFavicon();
@@ -158,6 +162,12 @@ function App() {
                   }}
                 >
                   <ScrollToTop />
+                  {/* Maintenance Mode - Show maintenance page for all routes */}
+                  {isMaintenanceMode ? (
+                    <Suspense fallback={<PageLoader />}>
+                      <MaintenancePage />
+                    </Suspense>
+                  ) : (
                   <Routes>
                 {/* Admin routes - Direct access without sidebar layout */}
                 {process.env.NODE_ENV === 'development' ? (
@@ -234,6 +244,7 @@ function App() {
                   </div>
                 } />
               </Routes>
+                  )}
                 <Analytics />
                 <SpeedInsights />
               </Router>
