@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl';
 
 // Shared helpers
 function respond(res: VercelResponse, status: number, body: any) {

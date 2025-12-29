@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
+import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl';
 
 // CRITICAL FIX: Use service role key for admin operations to bypass RLS
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;

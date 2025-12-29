@@ -1,5 +1,5 @@
 // Best practice: keep secret on server
-import { fetchProductName } from '../_utils/productUtils.js';
+import { fetchProductName } from '../_utils/productUtils';
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
