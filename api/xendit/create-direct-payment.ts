@@ -1,6 +1,6 @@
-// Xendit Payment Links v2 API
-// Documentation: https://developers.xendit.co/api-reference/#create-payment-link
-// This is the primary payment endpoint - handles all payment methods
+// Xendit Invoice API v2 for Direct Payment
+// Documentation: https://developers.xendit.co/api-reference/#create-invoice
+// This endpoint creates an invoice for a specific payment method
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -33,12 +33,13 @@ interface PaymentRequest {
   };
 }
 
-// Payment method mapping for Xendit Payment Links v2
-// Reference: https://developers.xendit.co/api-reference/#create-payment-link
+// Payment method mapping for Xendit Invoice API v2
+// Reference: https://developers.xendit.co/api-reference/#create-invoice
+// IMPORTANT: Only include payment methods activated on your Xendit account
 const PAYMENT_METHODS: Record<string, string> = {
-  // QRIS
+  // QRIS - Activated
   'qris': 'QRIS',
-  // Virtual Accounts
+  // Virtual Accounts - Activated on your account
   'bjb': 'BJB',
   'bni': 'BNI',
   'bri': 'BRI',
@@ -46,17 +47,12 @@ const PAYMENT_METHODS: Record<string, string> = {
   'cimb': 'CIMB',
   'mandiri': 'MANDIRI',
   'permata': 'PERMATA',
-  // E-Wallets - These require specific channel codes in Payment Links v2
-  'shopeepay': 'ID_SHOPEEPAY',
-  'gopay': 'ID_GOPAY',
-  'dana': 'ID_DANA',
-  'linkaja': 'ID_LINKAJA',
-  'ovo': 'ID_OVO',
+  // E-Wallets - Only ASTRAPAY is activated
   'astrapay': 'ASTRAPAY',
-  'jeniuspay': 'JENIUSPAY',
-  // Retail
-  'indomaret': 'INDOMARET',
-  'alfamart': 'ALFAMART'
+  // Retail - Activated
+  'indomaret': 'INDOMARET'
+  // NOTE: Other e-wallets (SHOPEEPAY, GOPAY, DANA, LINKAJA, OVO) are NOT activated
+  // Activate them in Xendit dashboard first before adding here
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -159,13 +155,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Build Xendit Payment Links v2 payload
+    // Build Xendit Invoice API v2 payload
     const payload: any = {
       external_id,
       amount,
       description: description || 'Payment',
       currency,
-      payment_methods: [channelCode]
+      payment_methods: [channelCode],
+      payer_email: customer?.email || 'noreply@jbalwikobra.com'
     };
 
     // Add customer info
@@ -180,14 +177,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (success_redirect_url) payload.success_redirect_url = success_redirect_url;
     if (failure_redirect_url) payload.failure_redirect_url = failure_redirect_url;
 
+    // Set expiry to 24 hours
+    payload.expiry_date = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
     console.log('[Payment] Xendit payload:', JSON.stringify(payload, null, 2));
 
-    // Call Xendit API
-    const xenditResponse = await fetch('https://api.xendit.co/v2/payment_links', {
+    // Call Xendit Invoice API v2 (not Payment Links)
+    const xenditResponse = await fetch('https://api.xendit.co/v2/invoices', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-IDEMPOTENCY-KEY': external_id
       },
       body: JSON.stringify(payload)
     });
@@ -219,16 +220,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Return standardized response
+    // Return standardized response (Invoice API format)
     return res.status(200).json({
       id: xenditData.id,
       status: xenditData.status,
-      payment_url: xenditData.invoice_url || xenditData.url,
-      invoice_url: xenditData.invoice_url || xenditData.url,
+      payment_url: xenditData.invoice_url,
+      invoice_url: xenditData.invoice_url,
       payment_method: payment_method_id,
       amount: xenditData.amount,
       currency: xenditData.currency,
-      external_id: xenditData.external_id
+      external_id: xenditData.external_id,
+      expiry_date: xenditData.expiry_date
     });
 
   } catch (error: any) {
