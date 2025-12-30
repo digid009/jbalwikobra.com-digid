@@ -117,12 +117,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('[Get Payment] QRIS check:', { isQRISPayment, hasQRString });
       
       if (isQRISPayment && !hasQRString) {
-        console.log('[Get Payment] 🔄 QRIS payment missing QR string - attempting to fetch from Xendit API');
+        console.log('[Get Payment] 🔄 QRIS payment missing QR string - attempting to fetch from Xendit Invoice API');
         
         try {
           const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
           if (XENDIT_SECRET_KEY) {
-            const xenditResponse = await fetch(`https://api.xendit.co/v3/payment_requests/${paymentData.xendit_id}`, {
+            // Try Invoice API v2 first (the one we used to create the payment)
+            const xenditResponse = await fetch(`https://api.xendit.co/v2/invoices/${paymentData.xendit_id}`, {
               headers: {
                 'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
                 'Content-Type': 'application/json'
@@ -131,18 +132,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             
             if (xenditResponse.ok) {
               const xenditData = await xenditResponse.json();
-              console.log('[Get Payment] 📥 Xendit API response received');
+              console.log('[Get Payment] 📥 Xendit Invoice API response received');
               
-              if (xenditData.actions && xenditData.actions.length > 0) {
-                const presentAction = xenditData.actions.find((action: any) => action.type === 'PRESENT_TO_CUSTOMER');
-                if (presentAction && presentAction.value) {
-                  console.log('[Get Payment] ✅ Found QR string in Xendit API!');
+              // Check available_banks for QRIS QR string
+              if (xenditData.available_banks && xenditData.available_banks.length > 0) {
+                const qrisBank = xenditData.available_banks.find((bank: any) => 
+                  bank.bank_code === 'QRIS' || bank.bank_code === 'ID_SHOPEEPAY'
+                );
+                
+                if (qrisBank && qrisBank.bank_branch) {
+                  console.log('[Get Payment] ✅ Found QR string in Invoice API!');
                   
                   // Update our database with the QR string
                   const updatedPaymentData = {
                     ...paymentData.payment_data,
-                    qr_string: presentAction.value,
-                    qr_url: presentAction.value
+                    qr_string: qrisBank.bank_branch,
+                    qr_url: qrisBank.bank_branch
                   };
                   
                   await supabase
@@ -162,9 +167,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     description: paymentData.description,
                     expiry_date: paymentData.expiry_date,
                     
-                    // QR string from Xendit API
-                    qr_string: presentAction.value,
-                    qr_url: presentAction.value,
+                    // QR string from Xendit Invoice API
+                    qr_string: qrisBank.bank_branch,
+                    qr_url: qrisBank.bank_branch,
                     
                     // Other payment data
                     virtual_account_number: paymentData.payment_data?.virtual_account_number || paymentData.payment_data?.account_number,
