@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig.js';
+import { validateAdminAuth } from './_middleware/authMiddleware.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
@@ -14,6 +15,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // ✅ SECURITY: Validate admin authentication
+    const auth = await validateAdminAuth(req);
+    if (!auth.valid) {
+      console.warn('[API /api/admin-whatsapp-groups] Unauthorized access attempt:', {
+        error: auth.error,
+        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        userAgent: req.headers['user-agent']
+      });
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(401).send(JSON.stringify({ 
+        error: 'unauthorized', 
+        message: auth.error || 'Authentication required'
+      }));
+    }
+
+    console.log('[API /api/admin-whatsapp-groups] Authenticated admin access:', {
+      userId: auth.userId,
+      email: auth.userEmail
+    });
+
     // In local development without DB config, return a mock list
     const hasSupabase = !!(process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL);
     if (!hasSupabase && process.env.NODE_ENV !== 'production') {
