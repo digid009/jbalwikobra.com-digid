@@ -176,8 +176,8 @@ async function listOrders(page: number, limit: number, status?: string) {
   if (!supabase) return { data: [], count: 0, page };
   const from = (page - 1) * limit; const to = from + limit - 1;
   
-  // First get orders
-  let query: any = supabase.from('orders').select('id, customer_name, product_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, xendit_invoice_id, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  // First get orders - only select columns that exist in the table
+  let query: any = supabase.from('orders').select('id, customer_name, amount, status, order_type, rental_duration, created_at, updated_at, user_id, product_id, customer_email, customer_phone, payment_method, client_external_id', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
   if (status && status !== 'all') {
     // Handle "completed" status to include both 'paid' and 'completed' orders
     if (status === 'completed') {
@@ -207,12 +207,30 @@ async function listOrders(page: number, limit: number, status?: string) {
     }
   }
   
-  // Map orders with payment data
+  // Get product names for orders that have product_id
+  const productIds = Array.from(new Set(orderRows.map(order => order.product_id).filter(Boolean)));
+  let productsMap: { [key: string]: string } = {};
+  
+  if (productIds.length > 0) {
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name')
+      .in('id', productIds);
+    
+    if (products) {
+      products.forEach(product => {
+        productsMap[product.id] = product.name;
+      });
+    }
+  }
+  
+  // Map orders with payment data and product names
   const mappedOrders = orderRows.map((order: any) => {
     const paymentRecord = paymentsMap[order.client_external_id];
     
     return {
       ...order,
+      product_name: order.product_id ? productsMap[order.product_id] : undefined,
       payment_data: paymentRecord ? {
         xendit_id: paymentRecord.xendit_id,
         payment_method_type: paymentRecord.payment_method,
