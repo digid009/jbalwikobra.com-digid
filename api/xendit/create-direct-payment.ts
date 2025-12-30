@@ -149,50 +149,35 @@ export default async function handler(req: any, res: any) {
 
     const channelCode = config.code;
 
-    // Some bank codes are already in correct format; keep as-is for VA/OTC/QRIS
-    // Build channel properties per type
-    const channel_properties: Record<string, any> = {};
-
-    if (config.type === 'VIRTUAL_ACCOUNT') {
-      channel_properties.customer_name = customer?.given_names || 'Customer';
+    // Validate OVO requires mobile number
+    if (methodLower === 'ovo' && !customer?.mobile_number) {
+      return res.status(400).json({
+        error: 'Mobile number required for this e-wallet',
+        message: 'Please provide mobile_number for OVO payments',
+        details: { payment_method_id }
+      });
     }
 
-    if (config.type === 'EWALLET') {
-      if (success_redirect_url) channel_properties.success_return_url = success_redirect_url;
-      if (failure_redirect_url) channel_properties.failure_return_url = failure_redirect_url;
-      if (customer?.mobile_number) channel_properties.mobile_number = customer.mobile_number;
-      if (['ovo'].includes(methodLower) && !customer?.mobile_number) {
-        return res.status(400).json({
-          error: 'Mobile number required for this e-wallet',
-          message: 'Please provide mobile_number for the selected e-wallet',
-          details: { payment_method_id }
-        });
-      }
-    }
-
-    if (config.type === 'RETAIL_OUTLET') {
-      channel_properties.customer_name = customer?.given_names || 'Customer';
-    }
-
-    // Build simple Xendit payload based on error message structure
-    // The API expects: { reference_id, currency, amount, checkout_method, channel_code }
+    // Build Payment Links v2 payload
+    // Documentation: https://developers.xendit.co/api-reference/#create-payment-link
     const xenditPayload: any = {
-      reference_id: external_id,
-      currency,
-      amount,
-      checkout_method: 'ONE_TIME_PAYMENT',
-      channel_code: channelCode
+      external_id: external_id,
+      amount: amount,
+      description: description || 'Payment',
+      currency: currency
     };
 
-    // Add channel_properties if present (for customer info, etc.)
-    if (Object.keys(channel_properties).length > 0) {
-      xenditPayload.channel_properties = channel_properties;
+    // Add customer info if provided
+    if (customer) {
+      xenditPayload.customer = {
+        given_names: customer.given_names,
+        email: customer.email,
+        mobile_number: customer.mobile_number
+      };
     }
 
-    // Add customer if provided
-    if (customer) {
-      xenditPayload.customer = customer;
-    }
+    // Add payment methods - specify which method to use
+    xenditPayload.payment_methods = [channelCode];
 
     // Add return URLs
     if (success_redirect_url) {
@@ -202,23 +187,17 @@ export default async function handler(req: any, res: any) {
       xenditPayload.failure_redirect_url = failure_redirect_url;
     }
 
-    // Add description
-    if (description) {
-      xenditPayload.description = description;
+    // Add channel-specific properties
+    if (config.type === 'VIRTUAL_ACCOUNT' && customer?.given_names) {
+      xenditPayload.customer_name = customer.given_names;
     }
-
-    // Validate required fields
-    if (!xenditPayload.channel_code) {
-      console.error('[Direct Payment] ERROR: channel_code is missing!');
-      return res.status(500).json({
-        error: 'Payment configuration error',
-        message: 'channel_code is required',
-        details: { channel_code: channelCode }
-      });
+    
+    if (config.type === 'EWALLET' && customer?.mobile_number) {
+      xenditPayload.phone_number = customer.mobile_number;
     }
 
     console.log('[Direct Payment] Xendit payload:', JSON.stringify(xenditPayload, null, 2));
-    console.log('[Direct Payment] Calling Xendit API...');
+    console.log('[Direct Payment] Calling Xendit Payment Links v2 API...');
 
     const response = await fetch('https://api.xendit.co/v2/payment_links', {
       method: 'POST',
