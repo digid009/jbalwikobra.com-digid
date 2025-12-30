@@ -174,111 +174,59 @@ export default async function handler(req: any, res: any) {
       channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
-    // Xendit Payment Request v3 API structure:
-    // The payment_method object needs BOTH:
-    // 1. type-specific nested object (qr_code, virtual_account, etc.) with channel_code
-    // 2. Top-level channel_code (this is what the error is complaining about!)
-    
-    // Map type to the correct property name for the payload
-    const typeToProperty: Record<string, string> = {
-      'QR_CODE': 'qr_code',
-      'VIRTUAL_ACCOUNT': 'virtual_account',
-      'EWALLET': 'ewallet',
-      'RETAIL_OUTLET': 'over_the_counter'
-    };
-    
-    const propertyName = typeToProperty[config.type];
-    const payloadType = config.type === 'RETAIL_OUTLET' ? 'OVER_THE_COUNTER' : config.type;
-    
-    // Build the nested payment method object
-    const nestedPayload: any = {
+    // Build simple Xendit payload based on error message structure
+    // The API expects: { reference_id, currency, amount, checkout_method, channel_code }
+    const xenditPayload: any = {
+      reference_id: external_id,
+      currency,
+      amount,
+      checkout_method: 'ONE_TIME_PAYMENT',
       channel_code: channelCode
     };
-    
-    // Only include channel_properties if it has values
+
+    // Add channel_properties if present (for customer info, etc.)
     if (Object.keys(channel_properties).length > 0) {
-      nestedPayload.channel_properties = channel_properties;
+      xenditPayload.channel_properties = channel_properties;
     }
-    
-    // Build the payment method payload with BOTH channel_code locations
-    const paymentMethodPayload: any = {
-      type: payloadType,
-      channel_code: channelCode,  // ← ADD THIS! Xendit needs it at top level too
-      reusability: 'ONE_TIME_USE',
-      [propertyName]: nestedPayload
-    };
-
-    // Validate the payload structure
-    if (!paymentMethodPayload.channel_code) {
-      console.error('[Direct Payment] ERROR: channel_code is missing from top-level payload!');
-      console.error('[Direct Payment] channelCode:', channelCode);
-      console.error('[Direct Payment] config:', config);
-      return res.status(500).json({
-        error: 'Payment configuration error',
-        message: 'Failed to construct payment request',
-        details: { type: config.type, channel_code: channelCode }
-      });
-    }
-    
-    if (!paymentMethodPayload[propertyName]?.channel_code) {
-      console.error('[Direct Payment] ERROR: channel_code is missing from nested payload!');
-      console.error('[Direct Payment] propertyName:', propertyName);
-      console.error('[Direct Payment] nestedPayload:', nestedPayload);
-      return res.status(500).json({
-        error: 'Payment configuration error',
-        message: 'Failed to construct nested payment request',
-        details: { type: config.type, property: propertyName }
-      });
-    }
-
-    console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));
-
-    // Call Xendit Payment Request API v3
-    const xenditPayload: any = {
-      amount,
-      currency,
-      payment_method: paymentMethodPayload,
-      description: description || `Payment for ${external_id}`,
-      reference_id: external_id,
-      metadata: {
-        order_id: createdOrder?.id || external_id
-      }
-    };
 
     // Add customer if provided
     if (customer) {
       xenditPayload.customer = customer;
     }
 
-    // Add return URLs for payment methods that support them
+    // Add return URLs
     if (success_redirect_url) {
-      xenditPayload.success_return_url = success_redirect_url;
+      xenditPayload.success_redirect_url = success_redirect_url;
     }
     if (failure_redirect_url) {
-      xenditPayload.failure_return_url = failure_redirect_url;
+      xenditPayload.failure_redirect_url = failure_redirect_url;
     }
 
-    console.log('[Direct Payment] Final Xendit payload:', JSON.stringify(xenditPayload, null, 2));
-    console.log('[Direct Payment] Payment method property check:', {
-      propertyName,
-      hasProperty: !!xenditPayload.payment_method[propertyName],
-      hasChannelCode: !!xenditPayload.payment_method[propertyName]?.channel_code,
-      channelCodeValue: xenditPayload.payment_method[propertyName]?.channel_code
-    });
+    // Add description
+    if (description) {
+      xenditPayload.description = description;
+    }
+
+    // Validate required fields
+    if (!xenditPayload.channel_code) {
+      console.error('[Direct Payment] ERROR: channel_code is missing!');
+      return res.status(500).json({
+        error: 'Payment configuration error',
+        message: 'channel_code is required',
+        details: { channel_code: channelCode }
+      });
+    }
+
+    console.log('[Direct Payment] Xendit payload:', JSON.stringify(xenditPayload, null, 2));
     console.log('[Direct Payment] Calling Xendit API...');
 
-    const bodyString = JSON.stringify(xenditPayload);
-    console.log('[Direct Payment] Request body length:', bodyString.length);
-    console.log('[Direct Payment] Request body (raw):', bodyString);
-
-    const response = await fetch('https://api.xendit.co/v3/payment_requests', {
+    const response = await fetch('https://api.xendit.co/v2/payment_links', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
-        'Content-Type': 'application/json',
-        'api-version': '2024-11-11'
+        'Content-Type': 'application/json'
       },
-      body: bodyString
+      body: JSON.stringify(xenditPayload)
     });
 
     const responseData = await response.json();
@@ -314,16 +262,16 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Return payment details
+    // Return payment details - Payment Links API response structure
     return res.status(200).json({
       id: responseData.id,
       status: responseData.status,
-      payment_url: responseData.actions?.desktop_web_checkout_url || responseData.actions?.mobile_web_checkout_url,
-      invoice_url: responseData.actions?.desktop_web_checkout_url || responseData.actions?.mobile_web_checkout_url,
+      payment_url: responseData.invoice_url || responseData.url,
+      invoice_url: responseData.invoice_url || responseData.url,
       payment_method: payment_method_id,
       amount: responseData.amount,
       currency: responseData.currency,
-      reference_id: responseData.reference_id
+      reference_id: responseData.external_id || external_id
     });
 
   } catch (error: any) {
