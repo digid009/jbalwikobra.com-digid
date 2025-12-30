@@ -226,7 +226,7 @@ class UnifiedAdminClient {
   }
 
   /**
-   * Fetch with timeout support
+   * Fetch with timeout support and authentication
    */
   private async fetchWithTimeout(endpoint: string, timeout: number): Promise<Response> {
     const url = endpoint.startsWith('http') ? endpoint : `${this.BASE_URL}${endpoint}`;
@@ -235,14 +235,36 @@ class UnifiedAdminClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
+      // ✅ SECURITY: Get session token and include in Authorization header
+      const sessionToken = localStorage.getItem('session_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if session token exists
+      if (sessionToken) {
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+      
       const response = await fetch(url, {
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       
       clearTimeout(timeoutId);
+      
+      // Handle 401 Unauthorized - session expired
+      if (response.status === 401) {
+        console.warn('[unifiedAdminClient] Session expired or unauthorized');
+        // Clear local storage and redirect to login
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('session_expires');
+        window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.pathname);
+        throw new Error('Session expired. Please login again.');
+      }
+      
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
@@ -526,13 +548,30 @@ class UnifiedAdminClient {
    */
   async updateOrderStatus(orderId: string, status: string): Promise<boolean> {
     try {
+      // ✅ SECURITY: Get session token for authorization
+      const sessionToken = localStorage.getItem('session_token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (sessionToken) {
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+      
       const response = await fetch(`${this.BASE_URL}?action=update-order`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ orderId, status }),
       });
+
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        console.warn('[unifiedAdminClient] Unauthorized - session expired');
+        localStorage.clear();
+        window.location.href = '/auth';
+        throw new Error('Session expired');
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to update order: ${response.statusText}`);

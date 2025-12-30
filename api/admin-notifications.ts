@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig.js';
+import { validateAdminAuth } from './_middleware/authMiddleware.js';
 
 // Service-role client (server only)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
@@ -38,6 +39,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!sb) return respond(res, 500, { error: 'server_not_configured' });
 
     const action = (req.query.action as string) || (req.method === 'GET' ? 'recent' : 'unknown');
+
+    // ✅ SECURITY: Require admin authentication for all actions except create-demo with token
+    if (action !== 'create-demo') {
+      const auth = await validateAdminAuth(req);
+      if (!auth.valid) {
+        console.warn('[API /api/admin-notifications] Unauthorized access attempt:', {
+          error: auth.error,
+          action,
+          ip,
+          userAgent: req.headers['user-agent']
+        });
+        return respond(res, 401, { 
+          error: 'unauthorized', 
+          message: auth.error || 'Authentication required'
+        });
+      }
+      
+      console.log('[API /api/admin-notifications] Authenticated admin access:', {
+        userId: auth.userId,
+        email: auth.userEmail,
+        action
+      });
+    }
 
     if (action === 'recent' && req.method === 'GET') {
       const limit = parseLimit(req.query.limit, 10);

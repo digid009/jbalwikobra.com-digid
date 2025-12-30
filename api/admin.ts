@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { setCacheHeaders, CacheStrategies } from './_utils/cacheControl.js';
 import { setCorsHeaders, handleCorsPreFlight } from './_utils/corsConfig.js';
+import { validateAdminAuth } from './_middleware/authMiddleware.js';
 
 // Lazy supabase client (service role preferred for admin operations)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
@@ -297,6 +298,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCorsPreFlight(req, res)) return;
 
   try {
+    // ✅ SECURITY: Validate admin authentication
+    const auth = await validateAdminAuth(req);
+    if (!auth.valid) {
+      console.warn('[API /api/admin] Unauthorized access attempt:', {
+        error: auth.error,
+        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        userAgent: req.headers['user-agent']
+      });
+      return respond(res, 401, { 
+        error: 'unauthorized', 
+        message: auth.error || 'Authentication required'
+      });
+    }
+
+    // Log successful admin access
+    console.log('[API /api/admin] Authenticated admin access:', {
+      userId: auth.userId,
+      email: auth.userEmail,
+      action: req.query.action
+    });
+
     const action = normalizeAction(req.query.action);
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || 'unknown';
     if (!rateLimit(ip + ':' + action)) return respond(res, 429, { error: 'rate_limited' });
