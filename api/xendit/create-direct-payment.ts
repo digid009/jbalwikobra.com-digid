@@ -1,11 +1,12 @@
-// Xendit Direct Payment API for specific payment methods (V3 API)
-// This endpoint creates a payment link for a specific payment method (e-wallet, VA, QRIS, etc.)
+// Xendit Payment Links v2 API
+// Documentation: https://developers.xendit.co/api-reference/#create-payment-link
+// This is the primary payment endpoint - handles all payment methods
 
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 
-interface DirectPaymentRequest {
+interface PaymentRequest {
   amount: number;
   currency: string;
   payment_method_id: string;
@@ -18,8 +19,41 @@ interface DirectPaymentRequest {
   external_id: string;
   success_redirect_url?: string;
   failure_redirect_url?: string;
-  order?: any;
+  order?: {
+    product_id?: string;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string;
+    order_type?: 'purchase' | 'rental';
+    amount: number;
+    rental_duration?: string | null;
+    user_id?: string | null;
+  };
 }
+
+// Payment method mapping for Xendit Payment Links v2
+const PAYMENT_METHODS: Record<string, string> = {
+  // QRIS
+  'qris': 'QRIS',
+  // Virtual Accounts
+  'bjb': 'BJB',
+  'bni': 'BNI',
+  'bri': 'BRI',
+  'bsi': 'BSI',
+  'cimb': 'CIMB',
+  'mandiri': 'MANDIRI',
+  'permata': 'PERMATA',
+  // E-Wallets (without ID_ prefix for Payment Links v2)
+  'shopeepay': 'SHOPEEPAY',
+  'gopay': 'GOPAY',
+  'dana': 'DANA',
+  'linkaja': 'LINKAJA',
+  'ovo': 'OVO',
+  'astrapay': 'ASTRAPAY',
+  'jeniuspay': 'JENIUSPAY',
+  // Retail
+  'indomaret': 'INDOMARET'
+};
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -27,7 +61,7 @@ export default async function handler(req: any, res: any) {
   }
 
   if (!XENDIT_SECRET_KEY) {
-    console.error('[Direct Payment] Missing XENDIT_SECRET_KEY');
+    console.error('[Payment] Missing XENDIT_SECRET_KEY');
     return res.status(500).json({ error: 'Payment gateway not configured' });
   }
 
@@ -42,18 +76,42 @@ export default async function handler(req: any, res: any) {
       success_redirect_url,
       failure_redirect_url,
       order
-    }: DirectPaymentRequest = req.body;
+    }: PaymentRequest = req.body;
 
-    console.log('[Direct Payment] Creating payment with method:', payment_method_id);
+    // Validate required fields
+    if (!external_id || !amount || !payment_method_id) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'external_id, amount, and payment_method_id are required'
+      });
+    }
 
-    // Create order in database if order data is provided
-    let createdOrder: { id: string; customer_name: string; product_name: string; amount: number; status: string } | null = null;
+    console.log('[Payment] Creating payment link:', { 
+      external_id, 
+      amount, 
+      payment_method: payment_method_id 
+    });
+
+    // Get Xendit channel code
+    const methodKey = payment_method_id.toLowerCase();
+    const channelCode = PAYMENT_METHODS[methodKey];
+    
+    if (!channelCode) {
+      return res.status(400).json({
+        error: 'Unsupported payment method',
+        message: `Payment method '${payment_method_id}' is not supported`,
+        supported_methods: Object.keys(PAYMENT_METHODS)
+      });
+    }
+
+    // Create order in database if provided
+    let createdOrder: any = null;
     if (order && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const { createClient } = await import('@supabase/supabase-js');
-        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         
-        const orderPayload: any = {
+        const orderData = {
           product_id: order.product_id || null,
           customer_name: order.customer_name,
           customer_email: order.customer_email,
@@ -64,200 +122,116 @@ export default async function handler(req: any, res: any) {
           payment_method: 'xendit',
           rental_duration: order.rental_duration || null,
           user_id: order.user_id || null,
-          client_external_id: external_id || null,
+          client_external_id: external_id,
         };
 
-        // Check if order already exists with this external_id
-        const { data: existingOrder } = await sb
+        // Check for existing order
+        const { data: existing } = await supabase
           .from('orders')
-          .select('id, customer_name, product_name, amount, status')
+          .select('id')
           .eq('client_external_id', external_id)
           .maybeSingle();
 
-        let data, error;
-        
-        if (existingOrder) {
-          // Update existing order
-          console.log('[Direct Payment] Updating existing order:', existingOrder.id);
-          const updateResult = await sb
+        if (existing) {
+          const { data } = await supabase
             .from('orders')
-            .update(orderPayload)
-            .eq('id', existingOrder.id)
-            .select('id, customer_name, product_name, amount, status')
+            .update(orderData)
+            .eq('id', existing.id)
+            .select()
             .single();
-          data = updateResult.data;
-          error = updateResult.error;
-        } else {
-          // Create new order
-          const insertResult = await sb
-            .from('orders')
-            .insert(orderPayload)
-            .select('id, customer_name, product_name, amount, status')
-            .single();
-          data = insertResult.data;
-          error = insertResult.error;
-        }
-
-        if (error) {
-          console.error('[Direct Payment] Order creation error:', error);
-        } else {
           createdOrder = data;
-          console.log('[Direct Payment] Order created:', data.id);
+          console.log('[Payment] Order updated:', existing.id);
+        } else {
+          const { data } = await supabase
+            .from('orders')
+            .insert(orderData)
+            .select()
+            .single();
+          createdOrder = data;
+          console.log('[Payment] Order created:', data?.id);
         }
-      } catch (dbError) {
-        console.error('[Direct Payment] Database error:', dbError);
+      } catch (err) {
+        console.error('[Payment] Database error:', err);
       }
     }
 
-    // Map payment method ID to Xendit Payment Request API v3 format
-    // Reference: https://docs.xendit.co/apidocs/create-payment-request
-    const methodLower = payment_method_id.toLowerCase();
-
-    // Inline payment method config (avoid cross-boundary imports in serverless)
-    const PAYMENT_CONFIG: Record<string, { type: 'QR_CODE' | 'VIRTUAL_ACCOUNT' | 'EWALLET' | 'RETAIL_OUTLET'; code: string }> = {
-      // QRIS
-      qris: { type: 'QR_CODE', code: 'QRIS' },
-      // Virtual accounts
-      bjb: { type: 'VIRTUAL_ACCOUNT', code: 'BJB' },
-      bni: { type: 'VIRTUAL_ACCOUNT', code: 'BNI' },
-      bri: { type: 'VIRTUAL_ACCOUNT', code: 'BRI' },
-      bsi: { type: 'VIRTUAL_ACCOUNT', code: 'BSI' },
-      cimb: { type: 'VIRTUAL_ACCOUNT', code: 'CIMB' },
-      mandiri: { type: 'VIRTUAL_ACCOUNT', code: 'MANDIRI' },
-      permata: { type: 'VIRTUAL_ACCOUNT', code: 'PERMATA' },
-      // E-wallets (Xendit expects ID_ prefix)
-      shopeepay: { type: 'EWALLET', code: 'ID_SHOPEEPAY' },
-      gopay: { type: 'EWALLET', code: 'ID_GOPAY' },
-      dana: { type: 'EWALLET', code: 'ID_DANA' },
-      linkaja: { type: 'EWALLET', code: 'ID_LINKAJA' },
-      ovo: { type: 'EWALLET', code: 'ID_OVO' },
-      astrapay: { type: 'EWALLET', code: 'ID_ASTRAPAY' },
-      jeniuspay: { type: 'EWALLET', code: 'ID_JENIUSPAY' },
-      // Retail outlets
-      indomaret: { type: 'RETAIL_OUTLET', code: 'INDOMARET' }
-    };
-
-    const config = PAYMENT_CONFIG[methodLower];
-    if (!config) {
-      console.error('[Direct Payment] Unsupported payment method:', payment_method_id);
-      return res.status(400).json({
-        error: 'Unsupported payment method',
-        message: 'Please choose a supported payment method',
-        details: { payment_method_id }
-      });
-    }
-
-    const channelCode = config.code;
-
-    // Validate OVO requires mobile number
-    if (methodLower === 'ovo' && !customer?.mobile_number) {
-      return res.status(400).json({
-        error: 'Mobile number required for this e-wallet',
-        message: 'Please provide mobile_number for OVO payments',
-        details: { payment_method_id }
-      });
-    }
-
-    // Build Payment Links v2 payload
-    // Documentation: https://developers.xendit.co/api-reference/#create-payment-link
-    const xenditPayload: any = {
-      external_id: external_id,
-      amount: amount,
+    // Build Xendit Payment Links v2 payload
+    const payload: any = {
+      external_id,
+      amount,
       description: description || 'Payment',
-      currency: currency
+      currency,
+      payment_methods: [channelCode]
     };
 
-    // Add customer info if provided
+    // Add customer info
     if (customer) {
-      xenditPayload.customer = {
-        given_names: customer.given_names,
-        email: customer.email,
-        mobile_number: customer.mobile_number
-      };
+      payload.customer = {};
+      if (customer.given_names) payload.customer.given_names = customer.given_names;
+      if (customer.email) payload.customer.email = customer.email;
+      if (customer.mobile_number) payload.customer.mobile_number = customer.mobile_number;
     }
 
-    // Add payment methods - specify which method to use
-    xenditPayload.payment_methods = [channelCode];
+    // Add redirect URLs
+    if (success_redirect_url) payload.success_redirect_url = success_redirect_url;
+    if (failure_redirect_url) payload.failure_redirect_url = failure_redirect_url;
 
-    // Add return URLs
-    if (success_redirect_url) {
-      xenditPayload.success_redirect_url = success_redirect_url;
-    }
-    if (failure_redirect_url) {
-      xenditPayload.failure_redirect_url = failure_redirect_url;
-    }
+    console.log('[Payment] Xendit payload:', JSON.stringify(payload, null, 2));
 
-    // Add channel-specific properties
-    if (config.type === 'VIRTUAL_ACCOUNT' && customer?.given_names) {
-      xenditPayload.customer_name = customer.given_names;
-    }
-    
-    if (config.type === 'EWALLET' && customer?.mobile_number) {
-      xenditPayload.phone_number = customer.mobile_number;
-    }
-
-    console.log('[Direct Payment] Xendit payload:', JSON.stringify(xenditPayload, null, 2));
-    console.log('[Direct Payment] Calling Xendit Payment Links v2 API...');
-
-    const response = await fetch('https://api.xendit.co/v2/payment_links', {
+    // Call Xendit API
+    const xenditResponse = await fetch('https://api.xendit.co/v2/payment_links', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(xenditPayload)
+      body: JSON.stringify(payload)
     });
 
-    const responseData = await response.json();
+    const xenditData = await xenditResponse.json();
 
-    if (!response.ok) {
-      console.error('[Direct Payment] Xendit API error:', {
-        status: response.status,
-        data: responseData
-      });
-      return res.status(response.status).json({
-        error: responseData.message || 'Payment creation failed',
-        details: responseData,
-        available_methods: responseData.errors
+    if (!xenditResponse.ok) {
+      console.error('[Payment] Xendit error:', xenditData);
+      return res.status(xenditResponse.status).json({
+        error: xenditData.message || 'Payment creation failed',
+        details: xenditData
       });
     }
 
-    console.log('[Direct Payment] Payment created successfully:', responseData.id);
+    console.log('[Payment] Payment link created:', xenditData.id);
 
-    // Update order with Xendit payment ID if order was created
+    // Update order with Xendit payment ID
     if (createdOrder && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const { createClient } = await import('@supabase/supabase-js');
-        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         
-        await sb
+        await supabase
           .from('orders')
-          .update({ xendit_invoice_id: responseData.id })
+          .update({ xendit_invoice_id: xenditData.id })
           .eq('id', createdOrder.id);
-        
-        console.log('[Direct Payment] Order updated with payment ID');
-      } catch (updateError) {
-        console.error('[Direct Payment] Failed to update order:', updateError);
+      } catch (err) {
+        console.error('[Payment] Failed to update order with payment ID:', err);
       }
     }
 
-    // Return payment details - Payment Links API response structure
+    // Return standardized response
     return res.status(200).json({
-      id: responseData.id,
-      status: responseData.status,
-      payment_url: responseData.invoice_url || responseData.url,
-      invoice_url: responseData.invoice_url || responseData.url,
+      id: xenditData.id,
+      status: xenditData.status,
+      payment_url: xenditData.invoice_url || xenditData.url,
+      invoice_url: xenditData.invoice_url || xenditData.url,
       payment_method: payment_method_id,
-      amount: responseData.amount,
-      currency: responseData.currency,
-      reference_id: responseData.external_id || external_id
+      amount: xenditData.amount,
+      currency: xenditData.currency,
+      external_id: xenditData.external_id
     });
 
   } catch (error: any) {
-    console.error('[Direct Payment] Handler error:', error);
+    console.error('[Payment] Error:', error);
     return res.status(500).json({
       error: 'Internal server error',
-      message: error?.message || 'Unknown error occurred'
+      message: error?.message || 'Unknown error'
     });
   }
 }
