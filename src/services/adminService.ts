@@ -1090,8 +1090,9 @@ export const adminService = {
 
         if (resp.ok) {
           const payload = await resp.json();
-          const rows = payload.data?.data || payload.data || [];
-          const total = payload.data?.count ?? payload.count ?? rows.length;
+          // API returns { success: true, data: [...], count: 1387, page: 1 }
+          const rows = payload.data || [];
+          const total = payload.count ?? rows.length;
 
           console.log('[adminService.getOrders - CACHED] Fetched via API:', rows.length, 'of', total);
 
