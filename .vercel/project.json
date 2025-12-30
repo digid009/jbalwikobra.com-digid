@@ -1,16 +1,1 @@
-{
-  "projectId": "prj_SHFIVuH7f6u55k04qGl3VYtZ94He",
-  "orgId": "team_jzKzelKhJFTfV2wCLjDeB1qq",
-  "projectName": "jbalwikobra-com-digid",
-  "settings": {
-    "createdAt": 1757558931556,
-    "framework": "create-react-app",
-    "devCommand": null,
-    "installCommand": null,
-    "buildCommand": "npm run build",
-    "outputDirectory": "build",
-    "rootDirectory": null,
-    "directoryListing": false,
-    "nodeVersion": "22.x"
-  }
-}
+{"projectId":"prj_SHFIVuH7f6u55k04qGl3VYtZ94He","orgId":"team_dlW65m8byaHOA8Wmc4vwvVHD","projectName":"jbalwikobra-com-digid"}
