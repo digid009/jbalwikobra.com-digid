@@ -2,6 +2,8 @@
 // Documentation: https://developers.xendit.co/api-reference/#create-payment-link
 // This is the primary payment endpoint - handles all payment methods
 
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY as string | undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL as string | undefined;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
@@ -55,7 +57,7 @@ const PAYMENT_METHODS: Record<string, string> = {
   'indomaret': 'INDOMARET'
 };
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
