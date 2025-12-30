@@ -6,8 +6,21 @@ import { validateAdminAuth } from './_middleware/authMiddleware.js';
 
 // Lazy supabase client (service role preferred for admin operations)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+// CRITICAL: Use service role key for admin operations to bypass RLS
+const supabaseKey = supabaseServiceKey || supabaseAnonKey;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Log which key is being used (for debugging)
+if (supabase) {
+  const keyType = supabaseServiceKey ? 'SERVICE_ROLE' : 'ANON';
+  console.log(`[admin.ts] Supabase initialized with ${keyType} key`);
+  if (!supabaseServiceKey) {
+    console.warn('[admin.ts] WARNING: Using ANON key instead of SERVICE_ROLE key - RLS policies will apply!');
+  }
+}
 
 // Basic in-memory rate limiting
 const rateMap = new Map<string, { count: number; ts: number }>();
@@ -258,17 +271,41 @@ async function updateOrderStatus(orderId: string, newStatus: string) {
 }
 
 async function listUsers(page: number, limit: number, search?: string) {
-  if (!supabase) return { data: [], count: 0, page };
-  const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('users').select('id,name,email,phone,avatar_url,is_admin,created_at,is_active,last_login', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
-  const { data, error, count } = await query;
-  if (error) {
-    console.error('[listUsers] Query error:', error);
+  if (!supabase) {
+    console.error('[listUsers] Supabase client not initialized');
     return { data: [], count: 0, page };
   }
-  console.log('[listUsers] Successfully fetched', data?.length || 0, 'users');
-  return { data:data||[], count:count||0, page };
+  
+  console.log('[listUsers] Querying users - page:', page, 'limit:', limit, 'search:', search);
+  
+  const from = (page - 1) * limit; 
+  const to = from + limit - 1;
+  
+  let query: any = supabase
+    .from('users')
+    .select('id,name,email,phone,avatar_url,is_admin,created_at,is_active,last_login', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
+    
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+  }
+  
+  const { data, error, count } = await query;
+  
+  if (error) {
+    console.error('[listUsers] Query error:', error);
+    console.error('[listUsers] Error details:', JSON.stringify(error, null, 2));
+    return { data: [], count: 0, page };
+  }
+  
+  console.log('[listUsers] Successfully fetched', data?.length || 0, 'users out of', count || 0, 'total');
+  
+  if ((count || 0) === 0) {
+    console.warn('[listUsers] WARNING: No users found in database. Check RLS policies or table data.');
+  }
+  
+  return { data: data || [], count: count || 0, page };
 }
 
 async function listProducts(page: number, limit: number, search?: string) {
