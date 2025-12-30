@@ -34,6 +34,7 @@ interface PaymentRequest {
 }
 
 // Payment method mapping for Xendit Payment Links v2
+// Reference: https://developers.xendit.co/api-reference/#create-payment-link
 const PAYMENT_METHODS: Record<string, string> = {
   // QRIS
   'qris': 'QRIS',
@@ -45,16 +46,17 @@ const PAYMENT_METHODS: Record<string, string> = {
   'cimb': 'CIMB',
   'mandiri': 'MANDIRI',
   'permata': 'PERMATA',
-  // E-Wallets (without ID_ prefix for Payment Links v2)
-  'shopeepay': 'SHOPEEPAY',
-  'gopay': 'GOPAY',
-  'dana': 'DANA',
-  'linkaja': 'LINKAJA',
-  'ovo': 'OVO',
+  // E-Wallets - These require specific channel codes in Payment Links v2
+  'shopeepay': 'ID_SHOPEEPAY',
+  'gopay': 'ID_GOPAY',
+  'dana': 'ID_DANA',
+  'linkaja': 'ID_LINKAJA',
+  'ovo': 'ID_OVO',
   'astrapay': 'ASTRAPAY',
   'jeniuspay': 'JENIUSPAY',
   // Retail
-  'indomaret': 'INDOMARET'
+  'indomaret': 'INDOMARET',
+  'alfamart': 'ALFAMART'
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
