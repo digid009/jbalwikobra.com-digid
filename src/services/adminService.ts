@@ -1235,10 +1235,10 @@ export const adminService = {
 
         if (resp.ok) {
           const payload = await resp.json();
-          const rows = payload.data || payload.data?.data || [];
-          const total = payload.count ?? payload.data?.count ?? rows.length;
+          const rows = payload.data || [];
+          const total = payload.count ?? rows.length;
 
-          console.log('[adminService.getUsers - CACHED] Fetched via API:', rows.length, 'of', total);
+          console.log('[adminService.getUsers - CACHED] Fetched via API:', rows.length, 'of', total, 'sample:', rows[0]);
 
           // Normalize fields to UI expectations
           const normalized = rows.map((u: any) => ({
@@ -1259,9 +1259,10 @@ export const adminService = {
             totalPages: Math.ceil((total || 0) / limit)
           };
         }
-        console.warn('[adminService.getUsers - CACHED] API fallback failed with status', resp.status);
+        const errText = await resp.text().catch(() => 'no body');
+        console.warn('[adminService.getUsers - CACHED] API fallback failed with status', resp.status, 'body:', errText);
       } catch (apiErr) {
-        console.warn('[adminService.getUsers - CACHED] API fetch failed, falling back to direct supabase:', apiErr);
+        console.error('[adminService.getUsers - CACHED] API fetch failed, falling back to direct supabase:', apiErr);
       }
 
       if (!supabase) {

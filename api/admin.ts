@@ -241,10 +241,14 @@ async function updateOrderStatus(orderId: string, newStatus: string) {
 async function listUsers(page: number, limit: number, search?: string) {
   if (!supabase) return { data: [], count: 0, page };
   const from = (page - 1) * limit; const to = from + limit - 1;
-  let query: any = supabase.from('users').select('id,name,email,phone,role,is_admin,created_at,is_active,last_login', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
-  if (search) query = query.ilike('name', `%${search}%`);
+  let query: any = supabase.from('users').select('id,name,email,phone,avatar_url,is_admin,created_at,is_active,last_login', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+  if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
   const { data, error, count } = await query;
-  if (error) return { data: [], count: 0, page };
+  if (error) {
+    console.error('[listUsers] Query error:', error);
+    return { data: [], count: 0, page };
+  }
+  console.log('[listUsers] Successfully fetched', data?.length || 0, 'users');
   return { data:data||[], count:count||0, page };
 }
 
