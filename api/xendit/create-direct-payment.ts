@@ -182,63 +182,90 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Payment] Xendit payload:', JSON.stringify(payload, null, 2));
 
-    // Call Xendit Invoice API v2 (not Payment Links)
-    const xenditResponse = await fetch('https://api.xendit.co/v2/invoices', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
-        'Content-Type': 'application/json',
-        'X-IDEMPOTENCY-KEY': external_id
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const xenditData = await xenditResponse.json();
-
-    if (!xenditResponse.ok) {
-      console.error('[Payment] Xendit error:', xenditData);
-      return res.status(xenditResponse.status).json({
-        error: xenditData.message || 'Payment creation failed',
-        details: xenditData
-      });
-    }
-
-    console.log('[Payment] Payment link created:', xenditData.id);
-
-    // Extract payment-specific data (QR code for QRIS, VA number for VA, etc.)
-    let paymentSpecificData: any = {
-      invoice_url: xenditData.invoice_url,
-      payment_url: xenditData.invoice_url
-    };
-
-    // For QRIS payments, store the QR code URL if available
+    // For QRIS, use QR Code API instead of Invoice API
+    let xenditData: any;
+    let paymentSpecificData: any = {};
+    
     if (channelCode === 'QRIS') {
-      console.log('[Payment] QRIS payment detected, checking for available_banks...');
+      console.log('[Payment] 🔄 Using Xendit QR Code API for QRIS');
       
-      // Xendit Invoice API v2 provides QR string in available_banks array
-      if (xenditData.available_banks && xenditData.available_banks.length > 0) {
-        const qrisBank = xenditData.available_banks.find((bank: any) => 
-          bank.bank_code === 'QRIS' || bank.bank_code === 'ID_SHOPEEPAY'
-        );
-        
-        if (qrisBank) {
-          console.log('[Payment] ✅ Found QRIS bank data');
-          
-          // The QR string is typically in the bank_branch field or another field
-          // Let's extract all relevant fields
-          paymentSpecificData.qr_string = qrisBank.bank_branch || qrisBank.qr_string;
-          paymentSpecificData.qr_url = qrisBank.bank_branch || qrisBank.qr_string;
-          
-          console.log('[Payment] QR string stored:', paymentSpecificData.qr_string ? 'YES' : 'NO');
-        } else {
-          console.log('[Payment] ⚠️ QRIS bank not found in available_banks');
-        }
-      } else {
-        console.log('[Payment] ⚠️ No available_banks in response');
+      // Create QR Code using Xendit QR Code API
+      const qrPayload = {
+        external_id,
+        type: 'DYNAMIC',
+        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jbalwikobra.com'}/api/xendit/callback`,
+        amount: amount.toString(),
+        currency
+      };
+      
+      const qrResponse = await fetch('https://api.xendit.co/qr_codes', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+          'Content-Type': 'application/json',
+          'X-IDEMPOTENCY-KEY': external_id
+        },
+        body: JSON.stringify(qrPayload)
+      });
+      
+      const qrData = await qrResponse.json();
+      
+      if (!qrResponse.ok) {
+        console.error('[Payment] QR Code API error:', qrData);
+        return res.status(qrResponse.status).json({
+          error: qrData.message || 'QR Code creation failed',
+          details: qrData
+        });
       }
       
-      // Log full response for debugging
-      console.log('[Payment] Full Xendit response for QRIS:', JSON.stringify(xenditData, null, 2));
+      console.log('[Payment] ✅ QR Code created:', qrData.id);
+      console.log('[Payment] QR String length:', qrData.qr_string?.length || 0);
+      
+      // Format response to match Invoice API structure
+      xenditData = {
+        id: qrData.id,
+        external_id: qrData.external_id,
+        status: qrData.status,
+        amount: parseFloat(qrData.amount),
+        currency: qrData.currency,
+        created: qrData.created,
+        expiry_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+      
+      paymentSpecificData = {
+        qr_string: qrData.qr_string,
+        qr_url: qrData.qr_string,
+        payment_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.jbalwikobra.com'}/payment?id=${qrData.id}&method=qris`
+      };
+      
+    } else {
+      // For non-QRIS payments, use Invoice API v2
+      const xenditResponse = await fetch('https://api.xendit.co/v2/invoices', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(XENDIT_SECRET_KEY + ':').toString('base64')}`,
+          'Content-Type': 'application/json',
+          'X-IDEMPOTENCY-KEY': external_id
+        },
+        body: JSON.stringify(payload)
+      });
+
+      xenditData = await xenditResponse.json();
+
+      if (!xenditResponse.ok) {
+        console.error('[Payment] Xendit error:', xenditData);
+        return res.status(xenditResponse.status).json({
+          error: xenditData.message || 'Payment creation failed',
+          details: xenditData
+        });
+      }
+
+      console.log('[Payment] Payment link created:', xenditData.id);
+
+      paymentSpecificData = {
+        invoice_url: xenditData.invoice_url,
+        payment_url: xenditData.invoice_url
+      };
     }
 
     // Save payment to database
