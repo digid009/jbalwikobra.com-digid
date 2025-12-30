@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService');
+    const { DynamicWhatsAppService } = await import('./_utils/dynamicWhatsAppService.js');
     const wa = new DynamicWhatsAppService();
     
     // Get test parameters
