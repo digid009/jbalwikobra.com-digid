@@ -149,6 +149,101 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .single();
           createdOrder = data;
           console.log('[Payment] Order created:', data?.id);
+          
+          // Send WhatsApp notification to customer about new order
+          if (data && customer?.mobile_number) {
+            try {
+              const { DynamicWhatsAppService } = await import('../_utils/dynamicWhatsAppService');
+              const wa = new DynamicWhatsAppService();
+              
+              // Normalize phone number
+              let customerPhone = String(customer.mobile_number || '').replace(/\D/g, '');
+              if (customerPhone.startsWith('8')) customerPhone = '62' + customerPhone;
+              else if (customerPhone.startsWith('08')) customerPhone = '62' + customerPhone.substring(1);
+              else if (customerPhone.startsWith('0')) customerPhone = '62' + customerPhone.substring(1);
+              else if (!customerPhone.startsWith('62') && customerPhone.length >= 8) customerPhone = '62' + customerPhone;
+              
+              if (/^62\d{8,15}$/.test(customerPhone)) {
+                const isRental = orderData.order_type === 'rental';
+                const productName = product_name || 'Produk Digital';
+                
+                const message = isRental
+                  ? `🎮 *ORDER RENTAL CREATED!*
+
+Halo ${customer.given_names || 'Customer'} 👋
+
+Order rental Anda telah *BERHASIL DIBUAT* ✅
+
+📋 **DETAIL RENTAL:**
+• Order ID: *${data.id}*
+• Product: *${productName}*
+• Duration: *${orderData.rental_duration || 'Sesuai pesanan'}*
+• Total: *Rp ${Number(amount || 0).toLocaleString('id-ID')}*
+• Status: *Menunggu Pembayaran* ⏳
+
+💳 **LANGKAH SELANJUTNYA:**
+• Selesaikan pembayaran dalam 24 jam
+• Akses rental akan diaktifkan setelah payment verified
+• Detail login akan dikirim via WhatsApp
+
+🔗 **Link Pembayaran:**
+Silakan klik link yang dikirim atau check halaman payment
+
+⚠️ **PENTING:**
+• Pesanan akan otomatis dibatalkan jika tidak dibayar dalam 24 jam
+• Simpan Order ID untuk tracking
+
+💬 **Support:** wa.me/6289653510125
+🌐 **Website:** https://jbalwikobra.com
+
+Terima kasih! 🎮✨`
+                  : `🎮 *ORDER PURCHASE CREATED!*
+
+Halo ${customer.given_names || 'Customer'} 👋
+
+Order Anda telah *BERHASIL DIBUAT* ✅
+
+📋 **DETAIL PURCHASE:**
+• Order ID: *${data.id}*
+• Product: *${productName}*
+• Total: *Rp ${Number(amount || 0).toLocaleString('id-ID')}*
+• Status: *Menunggu Pembayaran* ⏳
+
+💳 **LANGKAH SELANJUTNYA:**
+• Selesaikan pembayaran dalam 24 jam
+• Akun akan diproses setelah payment verified
+• Detail akun akan dikirim via WhatsApp
+
+🔗 **Link Pembayaran:**
+Silakan klik link yang dikirim atau check halaman payment
+
+⚠️ **PENTING:**
+• Pesanan akan otomatis dibatalkan jika tidak dibayar dalam 24 jam
+• Simpan Order ID untuk tracking
+
+💬 **Support:** wa.me/6289653510125
+🌐 **Website:** https://jbalwikobra.com
+
+Terima kasih! 🎮✨`;
+
+                const contextId = `order:${data.id}:created`;
+                const sendRes = await wa.sendMessage({
+                  phone: customerPhone,
+                  message,
+                  contextType: 'order-created-customer',
+                  contextId
+                });
+                
+                if (sendRes.success) {
+                  console.log('[WhatsApp] New order notification sent to customer:', customerPhone);
+                } else {
+                  console.error('[WhatsApp] Failed to send new order notification:', sendRes.error);
+                }
+              }
+            } catch (waError) {
+              console.error('[WhatsApp] Error sending new order notification:', waError);
+            }
+          }
         }
       } catch (err) {
         console.error('[Payment] Database error:', err);
