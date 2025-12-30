@@ -34,13 +34,20 @@ git push origin main
 - Fixed comparison logic for QR_CODE payment method
 
 ### 2. **Admin Users API**
-- File: `api/admin.ts` line 244
+- File: `api/admin.ts` line 261
 - Removed non-existent `role` field from SELECT query
 - Added `avatar_url` field
 - Improved search: now checks both name AND email
 - Added error logging
 
-### 3. **Enhanced Logging**
+### 3. **Admin Orders API**
+- File: `api/admin.ts` line 180
+- Removed non-existent `product_name` from SELECT query (orders table doesn't have this column)
+- Removed legacy `xendit_invoice_id` field
+- Added separate query to fetch product names from products table
+- Product names now properly joined via product_id relationship
+
+### 4. **Enhanced Logging**
 - File: `src/services/adminService.ts`
 - Added sample data logging
 - Added detailed error response logging
