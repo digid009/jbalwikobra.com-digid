@@ -1,15 +1,17 @@
-import { getActivatedPaymentChannels, getXenditChannelCode, isChannelActivated } from '../config/paymentChannels';
+/**
+ * Payment Service - Unified Xendit Payment Links v2
+ * Single endpoint for all payment methods
+ */
 
 export type CreateInvoiceInput = {
   externalId: string;
-  // Optional alias for clarity; we still send externalId to server
-  clientExternalId?: string;
+  clientExternalId?: string; // Alias for clarity
   amount: number;
   payerEmail?: string;
   description?: string;
   successRedirectUrl?: string;
   failureRedirectUrl?: string;
-  paymentMethod?: string; // Add payment method selection
+  paymentMethod?: string;
   customer?: {
     given_names?: string;
     email?: string;
@@ -23,116 +25,75 @@ export type CreateInvoiceInput = {
     order_type?: 'purchase' | 'rental';
     amount: number;
     rental_duration?: string | null;
-  user_id?: string | null;
+    user_id?: string | null;
   };
 };
 
 export async function createXenditInvoice(input: CreateInvoiceInput) {
-  console.log('[paymentService] Creating invoice with input:', {
+  console.log('[Payment] Creating payment:', {
     externalId: input.externalId,
     amount: input.amount,
-    hasOrder: !!input.order,
-    orderProductId: input.order?.product_id,
-    orderCustomer: input.order?.customer_name,
-    paymentMethod: input.paymentMethod
+    method: input.paymentMethod,
+    hasOrder: !!input.order
   });
   
-  // Performance optimization: Shorter timeout for better UX
+  // Timeout for better UX
   const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 8000); // 8 seconds instead of default browser timeout
+  const timeout = setTimeout(() => controller.abort(), 10000);
   
   try {
-    // If a specific payment method is selected, use direct payment API
-    if (input.paymentMethod && input.paymentMethod.trim() !== '') {
-      console.log('[paymentService] Using direct payment API for method:', input.paymentMethod);
-      
-      const paymentPayload = {
-        amount: input.amount,
-        currency: 'IDR',
-        payment_method_id: input.paymentMethod,
-        customer: input.customer,
-        description: input.description,
-        external_id: input.clientExternalId || input.externalId,
-        success_redirect_url: input.successRedirectUrl,
-        failure_redirect_url: input.failureRedirectUrl,
-        order: input.order // Include order data for database tracking
-      };
-      
-      console.log('[paymentService] Payment payload:', paymentPayload);
-      
-      const res = await fetch('/api/xendit/create-direct-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentPayload),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeout);
-      console.log('[paymentService] Direct payment response status:', res.status);
-      
-      const data = await res.json();
-      console.log('[paymentService] Direct payment response data:', data);
-      
-      if (!res.ok) {
-        console.error('[paymentService] Direct payment failed:', {
-          status: res.status,
-          statusText: res.statusText,
-          error: data?.error,
-          details: data?.details,
-          available_methods: data?.available_methods,
-          fullResponse: data
-        });
-        
-        // Log the details object specifically for debugging
-        if (data?.details) {
-          console.error('[paymentService] Error details:', JSON.stringify(data.details, null, 2));
-        }
-        
-        throw new Error(data?.error || 'Failed to validate the request, 1 error occurred.');
-      }
-      
-      // Convert direct payment response to invoice format
-      return {
-        id: data.id,
-        invoice_url: data.payment_url || data.invoice_url,
-        status: data.status
-      };
-    } else {
-      // Fallback to generic invoice for payment method selection
-      console.log('[paymentService] Using generic invoice API (no specific payment method)');
-      
-      const res = await fetch('/api/xendit/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          external_id: input.clientExternalId || input.externalId,
-          amount: input.amount,
-          payer_email: input.payerEmail,
-          description: input.description,
-          success_redirect_url: input.successRedirectUrl,
-          failure_redirect_url: input.failureRedirectUrl,
-          customer: input.customer,
-          order: input.order
-        }),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeout);
-      console.log('[paymentService] Invoice response status:', res.status);
-      
-      const data = await res.json();
-      console.log('[paymentService] Invoice response data:', data);
-      
-      if (!res.ok) throw new Error(data?.error || 'Failed to create invoice');
-      return data as { id: string; invoice_url: string; status: string };
+    // Always use create-direct-payment (it handles all methods via Payment Links v2)
+    if (!input.paymentMethod) {
+      throw new Error('Payment method is required');
     }
+
+    const payload = {
+      amount: input.amount,
+      currency: 'IDR',
+      payment_method_id: input.paymentMethod,
+      customer: input.customer || {
+        given_names: input.order?.customer_name,
+        email: input.order?.customer_email || input.payerEmail,
+        mobile_number: input.order?.customer_phone
+      },
+      description: input.description || 'Payment',
+      external_id: input.clientExternalId || input.externalId,
+      success_redirect_url: input.successRedirectUrl,
+      failure_redirect_url: input.failureRedirectUrl,
+      order: input.order
+    };
+    
+    console.log('[Payment] Calling API with method:', input.paymentMethod);
+    
+    const response = await fetch('/api/xendit/create-direct-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeout);
+    
+    const data = await response.json();
+    console.log('[Payment] Response:', { status: response.status, hasUrl: !!data.payment_url });
+    
+    if (!response.ok) {
+      console.error('[Payment] Failed:', data);
+      throw new Error(data?.error || data?.message || 'Payment creation failed');
+    }
+    
+    return {
+      id: data.id,
+      invoice_url: data.payment_url || data.invoice_url,
+      status: data.status
+    };
+    
   } catch (error) {
     clearTimeout(timeout);
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Koneksi terlalu lambat. Silakan coba lagi.');
     }
+    console.error('[Payment] Error:', error);
     throw error;
   }
 }
