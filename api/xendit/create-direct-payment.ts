@@ -165,7 +165,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               
               if (/^62\d{8,15}$/.test(customerPhone)) {
                 const isRental = orderData.order_type === 'rental';
-                const productName = product_name || 'Produk Digital';
+                const productName = (req.body.product_name as string) || 'Produk Digital';
                 
                 const message = isRental
                   ? `🎮 *ORDER RENTAL CREATED!*

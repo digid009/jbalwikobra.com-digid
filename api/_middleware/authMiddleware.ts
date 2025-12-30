@@ -137,7 +137,7 @@ export async function validateAdminAuth(req: VercelRequest): Promise<AuthResult>
     }
 
     // 5. Verify user data exists
-    const user = sessions.users;
+    const user = sessions.users as any;
     
     if (!user) {
       console.error('[authMiddleware] User data missing for session:', sessions.id);
