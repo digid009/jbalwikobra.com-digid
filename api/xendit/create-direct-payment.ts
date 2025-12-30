@@ -174,7 +174,11 @@ export default async function handler(req: any, res: any) {
       channel_properties.customer_name = customer?.given_names || 'Customer';
     }
 
-    // Xendit Payment Request v3 expects channel_code nested inside the type-specific object
+    // Xendit Payment Request v3 API structure:
+    // The payment_method object needs BOTH:
+    // 1. type-specific nested object (qr_code, virtual_account, etc.) with channel_code
+    // 2. Top-level channel_code (this is what the error is complaining about!)
+    
     // Map type to the correct property name for the payload
     const typeToProperty: Record<string, string> = {
       'QR_CODE': 'qr_code',
@@ -196,21 +200,33 @@ export default async function handler(req: any, res: any) {
       nestedPayload.channel_properties = channel_properties;
     }
     
+    // Build the payment method payload with BOTH channel_code locations
     const paymentMethodPayload: any = {
       type: payloadType,
+      channel_code: channelCode,  // ← ADD THIS! Xendit needs it at top level too
       reusability: 'ONE_TIME_USE',
       [propertyName]: nestedPayload
     };
 
     // Validate the payload structure
-    if (!paymentMethodPayload[propertyName]?.channel_code) {
-      console.error('[Direct Payment] ERROR: channel_code is missing from payload!');
-      console.error('[Direct Payment] propertyName:', propertyName);
+    if (!paymentMethodPayload.channel_code) {
+      console.error('[Direct Payment] ERROR: channel_code is missing from top-level payload!');
       console.error('[Direct Payment] channelCode:', channelCode);
       console.error('[Direct Payment] config:', config);
       return res.status(500).json({
         error: 'Payment configuration error',
         message: 'Failed to construct payment request',
+        details: { type: config.type, channel_code: channelCode }
+      });
+    }
+    
+    if (!paymentMethodPayload[propertyName]?.channel_code) {
+      console.error('[Direct Payment] ERROR: channel_code is missing from nested payload!');
+      console.error('[Direct Payment] propertyName:', propertyName);
+      console.error('[Direct Payment] nestedPayload:', nestedPayload);
+      return res.status(500).json({
+        error: 'Payment configuration error',
+        message: 'Failed to construct nested payment request',
         details: { type: config.type, property: propertyName }
       });
     }
@@ -242,8 +258,18 @@ export default async function handler(req: any, res: any) {
       xenditPayload.failure_return_url = failure_redirect_url;
     }
 
-    console.log('[Direct Payment] Xendit payload:', JSON.stringify(xenditPayload, null, 2));
+    console.log('[Direct Payment] Final Xendit payload:', JSON.stringify(xenditPayload, null, 2));
+    console.log('[Direct Payment] Payment method property check:', {
+      propertyName,
+      hasProperty: !!xenditPayload.payment_method[propertyName],
+      hasChannelCode: !!xenditPayload.payment_method[propertyName]?.channel_code,
+      channelCodeValue: xenditPayload.payment_method[propertyName]?.channel_code
+    });
     console.log('[Direct Payment] Calling Xendit API...');
+
+    const bodyString = JSON.stringify(xenditPayload);
+    console.log('[Direct Payment] Request body length:', bodyString.length);
+    console.log('[Direct Payment] Request body (raw):', bodyString);
 
     const response = await fetch('https://api.xendit.co/v3/payment_requests', {
       method: 'POST',
@@ -252,7 +278,7 @@ export default async function handler(req: any, res: any) {
         'Content-Type': 'application/json',
         'api-version': '2024-11-11'
       },
-      body: JSON.stringify(xenditPayload)
+      body: bodyString
     });
 
     const responseData = await response.json();
