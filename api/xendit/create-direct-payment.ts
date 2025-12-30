@@ -205,18 +205,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Payment] Payment link created:', xenditData.id);
 
-    // Update order with Xendit payment ID
-    if (createdOrder && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    // Extract payment-specific data (QR code for QRIS, VA number for VA, etc.)
+    let paymentSpecificData: any = {
+      invoice_url: xenditData.invoice_url,
+      payment_url: xenditData.invoice_url
+    };
+
+    // For QRIS payments, store the QR code URL if available
+    if (channelCode === 'QRIS') {
+      console.log('[Payment] QRIS payment detected, checking for available_banks...');
+      
+      // Xendit Invoice API v2 provides QR string in available_banks array
+      if (xenditData.available_banks && xenditData.available_banks.length > 0) {
+        const qrisBank = xenditData.available_banks.find((bank: any) => 
+          bank.bank_code === 'QRIS' || bank.bank_code === 'ID_SHOPEEPAY'
+        );
+        
+        if (qrisBank) {
+          console.log('[Payment] ✅ Found QRIS bank data');
+          
+          // The QR string is typically in the bank_branch field or another field
+          // Let's extract all relevant fields
+          paymentSpecificData.qr_string = qrisBank.bank_branch || qrisBank.qr_string;
+          paymentSpecificData.qr_url = qrisBank.bank_branch || qrisBank.qr_string;
+          
+          console.log('[Payment] QR string stored:', paymentSpecificData.qr_string ? 'YES' : 'NO');
+        } else {
+          console.log('[Payment] ⚠️ QRIS bank not found in available_banks');
+        }
+      } else {
+        console.log('[Payment] ⚠️ No available_banks in response');
+      }
+      
+      // Log full response for debugging
+      console.log('[Payment] Full Xendit response for QRIS:', JSON.stringify(xenditData, null, 2));
+    }
+
+    // Save payment to database
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         
-        await supabase
-          .from('orders')
-          .update({ xendit_invoice_id: xenditData.id })
-          .eq('id', createdOrder.id);
+        // Create payment record
+        const paymentRecord = {
+          xendit_id: xenditData.id,
+          external_id: xenditData.external_id,
+          payment_method: payment_method_id,
+          amount: xenditData.amount,
+          currency: xenditData.currency || 'IDR',
+          status: xenditData.status || 'PENDING',
+          payment_data: paymentSpecificData,
+          created_at: xenditData.created || new Date().toISOString(),
+          expiry_date: xenditData.expiry_date,
+          description: description || 'Payment'
+        };
+
+        console.log('[Payment] Saving to database:', paymentRecord);
+
+        const { data: savedPayment, error: saveError } = await supabase
+          .from('payments')
+          .upsert(paymentRecord, { onConflict: 'xendit_id' })
+          .select()
+          .single();
+
+        if (saveError) {
+          console.error('[Payment] Failed to save payment:', saveError);
+        } else {
+          console.log('[Payment] ✅ Payment saved to database');
+        }
+
+        // Update order with Xendit payment ID
+        if (createdOrder) {
+          await supabase
+            .from('orders')
+            .update({ xendit_invoice_id: xenditData.id })
+            .eq('id', createdOrder.id);
+        }
       } catch (err) {
-        console.error('[Payment] Failed to update order with payment ID:', err);
+        console.error('[Payment] Database error:', err);
       }
     }
 
@@ -230,7 +297,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       amount: xenditData.amount,
       currency: xenditData.currency,
       external_id: xenditData.external_id,
-      expiry_date: xenditData.expiry_date
+      expiry_date: xenditData.expiry_date,
+      qr_string: paymentSpecificData.qr_string, // Include QR string in response
+      qr_url: paymentSpecificData.qr_url
     });
 
   } catch (error: any) {
