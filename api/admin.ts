@@ -397,7 +397,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'orders': {
         const status = typeof req.query.status === 'string' ? req.query.status : undefined;
         const data = await listOrders(page, limit, status);
-        return respond(res, 200, data, 60); // Cache for 1 minute
+        return respond(res, 200, { success: true, ...data }, 60); // Cache for 1 minute
       }
       case 'users': {
         const search = typeof req.query.search === 'string' ? req.query.search : undefined;
