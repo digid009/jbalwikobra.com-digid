@@ -175,14 +175,45 @@ export default async function handler(req: any, res: any) {
     }
 
     // Xendit Payment Request v3 expects channel_code nested inside the type-specific object
-    const paymentMethodPayload: any = {
-      type: config.type === 'RETAIL_OUTLET' ? 'OVER_THE_COUNTER' : config.type,
-      reusability: 'ONE_TIME_USE',
-      [config.type === 'QR_CODE' ? 'qr_code' : config.type === 'VIRTUAL_ACCOUNT' ? 'virtual_account' : config.type === 'EWALLET' ? 'ewallet' : 'over_the_counter']: {
-        channel_code: channelCode,
-        channel_properties
-      }
+    // Map type to the correct property name for the payload
+    const typeToProperty: Record<string, string> = {
+      'QR_CODE': 'qr_code',
+      'VIRTUAL_ACCOUNT': 'virtual_account',
+      'EWALLET': 'ewallet',
+      'RETAIL_OUTLET': 'over_the_counter'
     };
+    
+    const propertyName = typeToProperty[config.type];
+    const payloadType = config.type === 'RETAIL_OUTLET' ? 'OVER_THE_COUNTER' : config.type;
+    
+    // Build the nested payment method object
+    const nestedPayload: any = {
+      channel_code: channelCode
+    };
+    
+    // Only include channel_properties if it has values
+    if (Object.keys(channel_properties).length > 0) {
+      nestedPayload.channel_properties = channel_properties;
+    }
+    
+    const paymentMethodPayload: any = {
+      type: payloadType,
+      reusability: 'ONE_TIME_USE',
+      [propertyName]: nestedPayload
+    };
+
+    // Validate the payload structure
+    if (!paymentMethodPayload[propertyName]?.channel_code) {
+      console.error('[Direct Payment] ERROR: channel_code is missing from payload!');
+      console.error('[Direct Payment] propertyName:', propertyName);
+      console.error('[Direct Payment] channelCode:', channelCode);
+      console.error('[Direct Payment] config:', config);
+      return res.status(500).json({
+        error: 'Payment configuration error',
+        message: 'Failed to construct payment request',
+        details: { type: config.type, property: propertyName }
+      });
+    }
 
     console.log('[Direct Payment] Payment method payload:', JSON.stringify(paymentMethodPayload, null, 2));
 
